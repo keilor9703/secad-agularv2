@@ -52,14 +52,23 @@ export class BreadcrumbComponent implements OnDestroy {
   }
 
   private collectBreadcrumbs(
-    route: ActivatedRoute,
+    route: ActivatedRoute | null | undefined,
     parentUrl: string,
     breadcrumbs: BreadcrumbItem[]
   ): void {
-    for (const child of route.children) {
-      const routeUrl = child.snapshot.url.map((segment) => segment.path).join('/');
+    if (!route) {
+      return;
+    }
+
+    for (const child of route.children ?? []) {
+      const snapshot = child?.snapshot;
+      if (!snapshot) {
+        continue;
+      }
+
+      const routeUrl = (snapshot.url ?? []).map((segment) => segment.path).join('/');
       const nextUrl = routeUrl ? `${parentUrl}/${routeUrl}` : parentUrl;
-      const label = child.snapshot.data['breadcrumb'] as string | undefined;
+      const label = snapshot.data?.['breadcrumb'] as string | undefined;
 
       if (label) {
         breadcrumbs.push({
