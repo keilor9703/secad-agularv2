@@ -1,0 +1,136 @@
+<header class="modern-header">
+    <!-- Trigger Sidebar -->
+    <button class="menu-trigger" type="button" (click)="toggleMenu()">
+        <i class="fa-solid fa-bars"></i>
+        <span>Ver menú</span>
+    </button>
+
+    <!-- Barra de Búsqueda -->
+    <div class="header-search">
+        <input type="text" placeholder="Buscar..." [(ngModel)]="searchQuery" (keyup.enter)="onSearch()"
+            class="search-input">
+        <button class="search-btn" (click)="onSearch()">
+            <i class="fa-solid fa-search"></i>
+        </button>
+    </div>
+
+    <!-- Notificaciones / Eventos -->
+    <div class="header-notifications">
+        <div class="notification-wrapper" *ngFor="let notif of notifications">
+            <button class="notification-btn" [class]="'notification-' + notif.color"
+                (click)="onNotificationClick(notif)" [title]="notif.tooltip">
+                <i [class]="'fa-solid ' + notif.icon"></i>
+                <span class="notification-badge" *ngIf="notif.count > 0">
+                    {{ notif.count > 9 ? '9+' : notif.count }}
+                </span>
+            </button>
+
+            <!-- Dropdown de Eventos -->
+            <div class="events-dropdown" *ngIf="notif.id === 4 && isCalendarDropdownOpen">
+                <div class="dropdown-header">
+                    <span>Próximos Eventos</span>
+                    <i class="fa-solid fa-calendar-day"></i>
+                </div>
+                <div class="dropdown-list" *ngIf="proximosEventos.length > 0; else noEvents">
+                    <div class="event-item" *ngFor="let ev of proximosEventos" (click)="openEventoDetail(ev)">
+                        <div class="event-item__info">
+                            <span class="event-item__name">{{ ev.nombreEvento }}</span>
+                            <span class="event-item__date">{{ getEventoFechaRango(ev) }}</span>
+                        </div>
+                        <i class="fa-solid fa-chevron-right"></i>
+                    </div>
+                </div>
+                <ng-template #noEvents>
+                    <div class="dropdown-empty">No hay eventos próximos</div>
+                </ng-template>
+            </div>
+        </div>
+    </div>
+
+    <!-- Usuario -->
+    <div class="header-user">
+        <div class="user-info" (click)="onProfileClick()">
+            <div class="user-avatar">
+                <img *ngIf="userPhotoUrl; else userIconTpl" [src]="userPhotoUrl" alt="Foto usuario"
+                    class="user-avatar-img">
+                <ng-template #userIconTpl>
+                    <i class="fa-solid fa-user"></i>
+                </ng-template>
+            </div>
+            <div class="user-details">
+                <span class="user-name">{{ userName }}</span>
+                <span class="user-role">{{ userRole }}</span>
+            </div>
+            <i class="fa-solid fa-chevron-down"></i>
+        </div>
+
+        <div class="user-dropdown">
+            <a href="#" class="dropdown-item" (click)="$event.preventDefault(); openProfileModal()">
+                <i class="fa-solid fa-user-circle"></i>
+                Mi Perfil
+            </a>
+            <a routerLink="/administracion" class="dropdown-item">
+                <i class="fa-solid fa-cog"></i>
+                Configuración
+            </a>
+            <div class="dropdown-divider"></div>
+            <a (click)="onLogout()" class="dropdown-item logout">
+                <i class="fa-solid fa-sign-out-alt"></i>
+                Cerrar Sesión
+            </a>
+        </div>
+    </div>
+</header>
+
+<!-- Modal Perfil -->
+<div class="profile-modal-backdrop" *ngIf="profileModalOpen" (click)="closeProfileModal()">
+    <div class="profile-modal" (click)="$event.stopPropagation()">
+        <div class="profile-modal__head">
+            <h3>Mi Perfil</h3>
+            <button type="button" class="close-btn" (click)="closeProfileModal()">✕</button>
+        </div>
+        <div class="profile-modal__body" *ngIf="!profileLoading; else loadingTpl">
+            <div class="profile-photo">
+                <img *ngIf="userPhotoUrl; else profileIconTpl" [src]="userPhotoUrl" alt="Foto de perfil">
+                <ng-template #profileIconTpl>
+                    <i class="fa-solid fa-user"></i>
+                </ng-template>
+            </div>
+            <div class="profile-fields">
+                <div><strong>Grado:</strong> {{ perfil?.grado || 'Sin información' }}</div>
+                <div><strong>Nombre:</strong> {{ perfil?.nombreCompleto || userName }}</div>
+                <div><strong>Cargo:</strong> {{ perfil?.cargo || 'Sin información' }}</div>
+                <div><strong>Situación laboral:</strong> {{ perfil?.situacionLaboral || 'Sin información' }}</div>
+                <div><strong>Tiempo servicio:</strong> {{ perfil?.tiempoServicio || 'Sin información' }}</div>
+            </div>
+        </div>
+        <ng-template #loadingTpl>
+            <div class="profile-modal__loading">Cargando perfil...</div>
+        </ng-template>
+    </div>
+</div>
+
+<!-- Modal Detalle Evento -->
+<div class="profile-modal-backdrop" *ngIf="isEventoModalOpen" (click)="closeEventoModal()">
+    <div class="profile-modal event-detail-modal" (click)="$event.stopPropagation()">
+        <div class="profile-modal__head">
+            <h3>Detalle del Evento</h3>
+            <button type="button" class="close-btn" (click)="closeEventoModal()">✕</button>
+        </div>
+
+        <div class="profile-modal__body" *ngIf="selectedEvento as ev">
+            <h4 class="event-detail-title">{{ ev.nombreEvento }}</h4>
+
+            <div class="event-detail-img-container" *ngIf="getEventoImageUrl(ev.imagenEvento) as imgUrl">
+                <img [src]="imgUrl" [alt]="ev.nombreEvento" class="event-detail-img">
+            </div>
+
+            <div class="profile-fields">
+                <div><i class="fa-regular fa-calendar-days"></i> <strong>Fecha:</strong> {{ getEventoFechaRango(ev) }}</div>
+                <div><i class="fa-solid fa-location-dot"></i> <strong>Lugar:</strong> {{ ev.direccionEvento }}</div>
+                <div><i class="fa-solid fa-building"></i> <strong>Ciudad:</strong> {{ ev.ciudad }} - {{ ev.departamento }}</div>
+                <div><i class="fa-solid fa-user-tie"></i> <strong>Responsable:</strong> {{ ev.nombreResponsable }}</div>
+            </div>
+        </div>
+    </div>
+</div>

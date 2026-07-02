@@ -1,0 +1,25 @@
+:host {
+  display: block;
+}
+
+.table-pagination {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: .75rem;
+  justify-content: space-between;
+}
+
+.pagination-actions {
+  align-items: center;
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+}
+
+.pagination-page,
+.pagination-summary {
+  color: var(--ui-muted);
+  font-size: calc(13px * var(--font-size-scale));
+  font-weight: 800;
+}

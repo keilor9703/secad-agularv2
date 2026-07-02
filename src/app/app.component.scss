@@ -1,0 +1,80 @@
+:root {
+  --header-height: 70px;
+  --footer-height: 56px;
+  --collapsed-width: 78px;
+  --expanded-width: 260px;
+  --transition-speed: 0.3s;
+}
+
+/* --- SHELL DEL SISTEMA --- */
+.app-shell {
+  min-height: 100vh;
+  background: #f3f6fb;
+  display: flex;
+}
+
+body.no-scroll{
+  overflow: hidden;
+}
+/* Sidebar fijo a la izquierda */
+.app-sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: var(--collapsed-width);
+  height: 100vh;
+  z-index: 950;
+  transition: width var(--transition-speed) cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+
+/* Cuando el sidebar está expandido (clase aplicada desde Angular) */
+.app-sidebar.expanded {
+  width: var(--expanded-width);
+}
+
+/* Contenido principal que se desplaza */
+.shell {
+  flex: 1;
+  min-height: 100vh;
+  margin-left: var(--collapsed-width);
+  display: flex;
+  flex-direction: column;
+  transition: margin-left var(--transition-speed) cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.shell.shell-expanded {
+  margin-left: var(--expanded-width);
+}
+
+/* Header y Footer: ya no necesitan ajustes especiales,
+   porque .shell los empuja automáticamente */
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  width: 100%;
+}
+
+.app-footer {
+  margin-top: auto;
+  width: 100%;
+}
+
+/* --- ESTILOS DEL CONTENIDO PRINCIPAL --- */
+.main {
+  flex: 1;
+  padding: 24px;
+}
+
+.content {
+  max-width: 85%;
+  margin: 0 auto;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid var(--policia-neutral-claro);
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(21, 27, 59, 0.08);
+  padding: 20px;
+  backdrop-filter: blur(8px);
+}

@@ -1,0 +1,104 @@
+:root {
+  --collapsed-width: 78px;
+  --expanded-width: 260px;
+  --sidebar-collapsed-total: calc(var(--collapsed-width) + 5px);
+  --sidebar-expanded-total: calc(var(--expanded-width) + 5px);
+  --app-shell-bg: #f3f6fb;
+  --content-bg: rgba(255, 255, 255, 0.8);
+  --content-border: var(--policia-neutral-claro);
+  --content-shadow: 0 10px 30px rgba(21, 27, 59, 0.08);
+}
+
+html.dark-mode {
+  --app-shell-bg: #0f1927;
+  --content-bg: rgba(30, 40, 64, 0.8);
+  --content-border: rgba(200, 200, 200, 0.1);
+  --content-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+/* --- SHELL DEL SISTEMA --- */
+.app-shell {
+  height: 100vh;
+  overflow: hidden;
+  background: var(--app-shell-bg);
+  display: flex;
+  flex-direction: column;
+  transition: background-color 0.3s ease;
+}
+
+.app-sidebar{
+  position: fixed;    
+  top: 0;
+  left: 0;
+  width: auto;       
+  z-index: 1200;    
+}
+
+.app-sidebar.expanded {
+  width: var(--expanded-width);
+}
+
+.shell {
+  flex: 1;
+  height: 100vh;
+  margin-left: 0; 
+  display: flex;
+  flex-direction: column;
+  transition: none;
+  position: relative;
+  overflow-x: hidden;
+  overflow-y: hidden;
+  padding-top: var(--header-height, 70px);
+  padding-bottom: 0;
+}
+
+.shell.shell-expanded {
+  margin-left: var(--sidebar-expanded-total);
+}
+
+.main {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding-bottom: var(--footer-height, 56px);
+}
+
+.content {
+  margin: 10px;
+  width: calc(100% - 20px);
+  background: var(--content-bg);
+  border: 1px solid var(--content-border);
+  border-radius: 12px;
+  box-shadow: var(--content-shadow);
+  backdrop-filter: blur(8px);
+  position: relative;
+  padding: 10px;
+  transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.app-footer-fixed {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  z-index: 100;
+}
+
+.app-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(8, 14, 28, 0.42);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 1150;
+}
+
+.app-shell.menu-open .main{
+  overflow: hidden !important;
+}
+
+.app-shell.menu-open ~ app-accessibility-menu {
+  pointer-events: none;
+}

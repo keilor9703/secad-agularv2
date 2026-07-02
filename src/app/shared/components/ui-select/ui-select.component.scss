@@ -1,0 +1,30 @@
+:host {
+  display: block;
+}
+
+.ui-select {
+  width: 100%;
+}
+
+.ui-field__hint,
+.ui-field__error {
+  font-size: calc(12px * var(--font-size-scale));
+  line-height: 1.35;
+}
+
+.ui-field__hint {
+  color: var(--ui-muted);
+}
+
+.ui-field__error {
+  color: #b91c1c;
+  font-weight: 800;
+}
+
+.ui-field--invalid .ui-control {
+  border-color: rgba(220, 38, 38, .75);
+}
+
+.ui-field--invalid .ui-control:focus {
+  box-shadow: 0 0 0 4px rgba(220, 38, 38, .14);
+}

@@ -1,0 +1,331 @@
+/* 
+  Footer institucional - Estilos internos únicamente
+  Responsable de: apariencia, tipografía, colores
+  NO responsable de: posicionamiento sticky, relación con sidebar
+*/
+
+.modern-footer {
+  width: 100%;
+  height: var(--footer-height, 56px);
+  box-sizing: border-box;
+  position: relative;
+  background: var(--policia-gradiente-principal);
+  box-shadow: var(--ui-shadow);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 30px;
+  gap: 16px;
+  z-index: 900;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 10px,
+        rgba(255, 255, 255, 0.02) 10px,
+        rgba(255, 255, 255, 0.02) 20px
+      );
+    pointer-events: none;
+  }
+
+  /* Línea superior de acento */
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--policia-acento);
+    opacity: 0.9;
+  }
+}
+
+.footer-left {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  position: relative;
+  z-index: 1;
+  min-width: 320px;
+}
+
+.radio-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.radio-logo {
+  width: 60px;
+  // height: 22px;
+  object-fit: contain;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.35));
+}
+
+.radio-label {
+  color: #fff;
+  font-size: calc(0.78rem * var(--font-size-scale));
+  font-weight: 800;
+  letter-spacing: 0.2px;
+  max-width: 220px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.radio-play {
+  width: 30px;
+  height: 30px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--transition-speed) ease, transform var(--transition-speed) ease;
+}
+
+.radio-play:hover {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.radio-play.is-playing {
+  background: var(--policia-acento);
+  color: var(--policia-oscuro);
+  border-color: var(--policia-acento);
+  animation: soundPulse 1.5s infinite;
+}
+
+@keyframes soundPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(205, 255, 0, 0.55);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(205, 255, 0, 0);
+    transform: scale(1.03);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(205, 255, 0, 0);
+    transform: scale(1);
+  }
+}
+
+.radio-select {
+  min-width: 130px;
+  height: 30px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.2);
+  color: #fff;
+  font-size: calc(0.75rem * var(--font-size-scale));
+  font-weight: 700;
+  padding: 0 10px;
+  outline: none;
+}
+
+.radio-select option {
+  color: #111827;
+}
+
+.radio-error {
+  color: #fde68a;
+  font-size: calc(0.68rem * var(--font-size-scale));
+  font-weight: 700;
+}
+
+.footer-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1;
+}
+
+.footer-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--policia-acento);
+  box-shadow: 0 0 10px rgba(205, 255, 0, 0.4);
+  flex: 0 0 auto;
+}
+
+.footer-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
+
+.footer-title {
+  color: #fff;
+  font-size: calc(0.9rem * var(--font-size-scale));
+  font-weight: 700;
+  margin: 0;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.footer-meta {
+  margin-top: 2px;
+  color: var(--policia-cielo);
+  font-size: calc(0.7rem * var(--font-size-scale));
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.footer-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  position: relative;
+  z-index: 1;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.footer-link {
+  color: rgba(255, 255, 255, 0.9);
+  text-decoration: none;
+  font-size: calc(0.75rem * var(--font-size-scale));
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: var(--ui-radius-sm);
+  transition: all var(--transition-speed) ease;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--policia-acento);
+  }
+}
+
+.footer-sep {
+  color: rgba(255, 255, 255, 0.2);
+  font-weight: 700;
+}
+
+@media (max-width: 768px) {
+  .modern-footer {
+    padding: 0 15px;
+    gap: 10px;
+  }
+
+  .footer-center {
+    position: static;
+    transform: none;
+    flex: 1;
+    justify-content: center;
+  }
+
+  .footer-left {
+    min-width: 0;
+  }
+
+  .radio-label {
+    max-width: 100px;
+  }
+
+  .radio-logo {
+    width: 20px;
+    height: 20px;
+  }
+
+  .radio-select {
+    min-width: 100px;
+  }
+
+  .footer-right {
+    gap: 6px;
+  }
+
+  .footer-link {
+    padding: 4px 8px;
+  }
+
+  .footer-title {
+    font-size: calc(0.8rem * var(--font-size-scale));
+  }
+}
+
+/* --- POLICY TEXT (Optimized with existing typography) --- */
+.ui-policy {
+  color: var(--policia-neutral-medio);
+  font-size: calc(14px * var(--font-size-scale));
+  line-height: 1.55;
+}
+
+.ui-policy h4 {
+  margin: 14px 0 6px;
+  font-weight: 900;
+  color: var(--policia-oscuro);
+}
+
+.ui-policy p {
+  margin: 10px 0;
+}
+
+.ui-policy ul {
+  margin: 8px 0 12px 18px;
+}
+
+.ui-policy li {
+  margin: 6px 0;
+}
+
+.ui-policy code {
+  background: rgba(21, 27, 59, 0.06);
+  border: 1px solid var(--ui-border);
+  padding: 2px 6px;
+  border-radius: var(--ui-radius-sm);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: calc(12px * var(--font-size-scale));
+}
+
+.ui-policy__hr {
+  border: none;
+  height: 1px;
+  background: var(--ui-border);
+  margin: 14px 0;
+}
+
+/* --- ACCESSIBILITY (Added) --- */
+.footer-link:focus-visible {
+  outline: none;
+  box-shadow: var(--ui-focus-ring);
+}
+
+/* --- HIGH CONTRAST MODE (Added) --- */
+@media (prefers-contrast: high) {
+  .modern-footer::after {
+    height: 4px;
+    opacity: 1;
+  }
+  
+  .footer-link:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
+}
+
+/* --- REDUCED MOTION (Added) --- */
+@media (prefers-reduced-motion: reduce) {
+  .footer-link {
+    transition: none;
+  }
+  
+  .modern-footer::before {
+    animation: none;
+  }
+}

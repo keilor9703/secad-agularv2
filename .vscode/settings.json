@@ -1,0 +1,35 @@
+{
+    "liveServer.settings.port": 5501,
+    
+    // Accesibilidad: Ayuda a detectar font-size sin calc()
+    "scss.lint.unknownProperties": "warning",
+    
+    // Mostrar advertencias para patrones problemáticos
+    "search.exclude": {
+        "**/node_modules": true,
+        "**/bower_components": true,
+        "**/*.code-search": true
+    },
+    
+    // Snippets personalizados para accesibilidad (ver más abajo)
+    "editor.quickSuggestions": {
+        "other": true,
+        "comments": false,
+        "strings": true
+    },
+    
+    // Resaltar TODOs relacionados con accesibilidad
+    "todohighlight.keywords": [
+        {
+            "text": "A11Y:",
+            "color": "#fff",
+            "backgroundColor": "#ff6347",
+            "overviewRulerColor": "#ff6347"
+        },
+        {
+            "text": "FIXME:",
+            "color": "#fff",
+            "backgroundColor": "#ff6347" 
+        }
+    ]
+}

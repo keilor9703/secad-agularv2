@@ -1,0 +1,28 @@
+<div class="ui-modal" *ngIf="open" (click)="handleBackdropClick()">
+  <div
+    class="ui-modal__dialog"
+    [ngClass]="dialogClass"
+    role="dialog"
+    aria-modal="true"
+    (click)="$event.stopPropagation()"
+  >
+    <div class="ui-modal__head" *ngIf="title">
+      <div class="ui-modal__title">
+        <i [class]="icon" *ngIf="icon"></i>
+        {{ title }}
+      </div>
+
+      <button class="ui-icon-btn" type="button" aria-label="Cerrar" (click)="requestClose()">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <div class="ui-modal__body">
+      <ng-content></ng-content>
+    </div>
+
+    <div class="ui-modal__foot">
+      <ng-content select="[modal-actions]"></ng-content>
+    </div>
+  </div>
+</div>

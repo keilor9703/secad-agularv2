@@ -1,0 +1,224 @@
+<section class="home-view correos-home">
+  <div class="correos-container">
+
+    <!-- Barra Lateral -->
+    <aside class="correos-sidebar">
+      <div class="sidebar-header">
+        <h3><i class="fa-solid fa-envelope-open-text"></i> Mensajería</h3>
+        <button class="btn-compose" (click)="setView('compose')">
+          <i class="fa-solid fa-pen"></i> Redactar
+        </button>
+      </div>
+
+      <div class="sidebar-menu">
+        <div class="menu-section">
+          <div class="section-title">Navegación</div>
+          <div class="menu-item" [class.active]="view === 'history'" (click)="setView('history')">
+            <i class="fa-solid fa-paper-plane"></i> Enviados
+          </div>
+        </div>
+
+        <div class="menu-section">
+          <div class="section-title">Cuentas Activas</div>
+          <div class="menu-item" *ngFor="let c of cuentas">
+            <i class="fa-solid fa-circle-check" style="color: #9cc522; font-size: 10px;"></i>
+            {{ c.nombreCuenta }}
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Contenido Principal -->
+    <main class="correos-content">
+
+      <!-- Vista: Redactar -->
+      <ng-container *ngIf="view === 'compose'">
+        <div class="content-header">
+          <h2>Nuevo Mensaje Electrónico</h2>
+        </div>
+
+        <div class="composer-form">
+          <div class="form-row">
+            <span class="form-label">De:</span>
+            <select class="email-input" [(ngModel)]="selectedCuentaId" (ngModelChange)="onCuentaChange()">
+              <option *ngFor="let c of cuentas" [value]="c.idCuenta">{{ c.nombreCuenta }} &lt;{{ c.email }}&gt;</option>
+            </select>
+          </div>
+
+          <div class="form-row">
+            <span class="form-label">Para:</span>
+            <input type="text" class="email-input" placeholder="ejemplo@correo.com (opcional si usa CCO)" [(ngModel)]="emailForm.para">
+          </div>
+
+          <div class="form-row">
+            <span class="form-label">CCO:</span>
+            <input type="text" class="email-input" placeholder="Opcional si usa Para · separar múltiples con ; o ," [(ngModel)]="emailForm.cc">
+          </div>
+
+          <div class="form-row">
+            <span class="form-label">Clasificación de la Información:</span>
+            <select class="email-input" [(ngModel)]="emailForm.idClasificacion">
+              <option [ngValue]="null">-- Seleccione Clasificación --</option>
+              <option *ngFor="let cl of clasificaciones" [ngValue]="cl.idDominio">{{ cl.descripcion }}</option>
+            </select>
+          </div>
+
+          <div class="form-row">
+            <span class="form-label">Asunto:</span>
+            <input type="text" class="email-input" placeholder="Asunto del mensaje" [(ngModel)]="emailForm.asunto">
+          </div>
+
+          <div class="editor-wrapper">
+            <ngx-editor-menu [editor]="editor" [toolbar]="toolbar"></ngx-editor-menu>
+            <ngx-editor [editor]="editor" [(ngModel)]="emailForm.cuerpo" (paste)="onPaste($event)" [placeholder]="'Escribe el cuerpo del mensaje aquí...'"></ngx-editor>
+            <div class="opciones-envio-bar">
+              <label class="opcion-envio-check">
+                <input type="checkbox" [(ngModel)]="emailForm.prioridadAlta">
+                <i class="fa-solid fa-circle-exclamation"></i>
+                Importancia Alta
+              </label>
+              <label class="opcion-envio-check">
+                <input type="checkbox" [(ngModel)]="emailForm.acuseRecibido">
+                <i class="fa-solid fa-envelope-circle-check"></i>
+                Acuse de Recibido
+              </label>
+            </div>
+          </div>
+
+          <div class="attachments-area">
+            <div style="margin-bottom: 10px; font-weight: 600; font-size: 0.9rem;">
+              <i class="fa-solid fa-paperclip"></i> Adjuntos
+            </div>
+            <input type="file" multiple (change)="onFileSelected($event)" #fileInput style="display: none;">
+            <button class="ui-btn secondary" (click)="fileInput.click()" style="padding: 5px 15px; font-size: 0.8rem;">
+              Seleccionar archivos
+            </button>
+
+            <div class="attachments-list" *ngIf="adjuntos.length > 0">
+              <div class="attachment-item" *ngFor="let f of adjuntos; let i = index">
+                <i class="fa-solid fa-file-lines"></i>
+                <span>{{ f.name }}</span>
+                <i class="fa-solid fa-xmark btn-remove" (click)="removeAttachment(i)"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="composer-footer">
+          <button class="ui-btn neutral" (click)="limpiarFormulario()">Descartar</button>
+          <button class="btn-send" (click)="enviarCorreo()" [disabled]="isSending">
+            <i class="fa-solid" [class.fa-paper-plane]="!isSending" [class.fa-spinner]="isSending" [class.fa-spin]="isSending"></i>
+            {{ isSending ? 'Enviando Correo...' : 'Enviar Correo' }}
+          </button>
+        </div>
+      </ng-container>
+
+      <!-- Vista: Historial (Enviados) -->
+      <ng-container *ngIf="view === 'history'">
+        <div class="content-header">
+          <h2>Correos Enviados</h2>
+        </div>
+
+        <div class="ui-panel__body">
+          <div class="ui-table-wrap">
+            <table class="ui-table">
+              <thead>
+                <tr>
+                  <th>Radicado</th>
+                  <th>Enviado por</th>
+                  <th>Destinatario</th>
+                  <th>Asunto</th>
+                  <th>Fecha</th>
+                  <th>Acción</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let h of paginatedHistorial">
+                  <td><span class="radicado-text">{{ h.radicado }}</span></td>
+                  <td><small>{{ h.nombreCompleto }}</small></td>
+                  <td>{{ h.para }}</td>
+                  <td>
+                    <i class="fa-solid fa-paperclip" *ngIf="h.tieneAdjuntos" style="margin-right: 5px; color: #64748b;"></i>
+                    {{ h.asunto }}
+                  </td>
+                  <td>{{ h.fecha | date:'dd/MM/yyyy HH:mm' }}</td>
+                  <td class="text-center">
+                    <button class="ui-btn-icon" (click)="verDetalle(h)" title="Ver mensaje completo">
+                      <i class="fa-solid fa-eye"></i>
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Controles de Paginación -->
+          <div class="table-pagination" *ngIf="historial.length > pageSize">
+            <span class="pagination-summary">
+              Página {{ p }} de {{ totalPages }} | Registros: {{ historial.length }}
+            </span>
+            <div class="pagination-actions">
+              <button class="ui-btn secondary" type="button" (click)="prevPage()" [disabled]="p === 1">
+                <i class="fa-solid fa-chevron-left"></i> Anterior
+              </button>
+              <button class="ui-btn secondary" type="button" (click)="nextPage()" [disabled]="p === totalPages">
+                Siguiente <i class="fa-solid fa-chevron-right"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </ng-container>
+
+    </main>
+  </div>
+
+  <!-- Modal de Éxito -->
+  <div class="success-modal-overlay" *ngIf="showSuccessModal" (click)="closeSuccessModal()">
+    <div class="success-modal-card" (click)="$event.stopPropagation()">
+      <div class="success-icon-wrapper">
+        <div class="success-icon-circle">
+          <i class="fa-solid fa-check"></i>
+        </div>
+      </div>
+      <h2>¡Envío Exitoso!</h2>
+      <p>El mensaje ha sido procesado correctamente.</p>
+      <div class="radicado-display">
+        <span class="radicado-label">Número de Radicado:</span>
+        <span class="radicado-value">{{ lastRadicado }}</span>
+      </div>
+      <button class="ui-btn primary full-width" (click)="closeSuccessModal()">Aceptar</button>
+    </div>
+  </div>
+
+  <!-- Modal de Detalle de Correo -->
+  <div class="ui-modal" *ngIf="selectedCorreo" (click)="selectedCorreo = null">
+    <div class="ui-modal__dialog" (click)="$event.stopPropagation()" role="dialog" aria-modal="true">
+      <div class="ui-modal__head">
+        <div class="ui-modal__title">
+          <i class="fa-solid fa-envelope-open-text"></i>
+          Detalle del Envío
+        </div>
+        <button class="ui-modal__close" type="button" (click)="selectedCorreo = null" aria-label="Cerrar">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <div class="ui-modal__body">
+        <div class="detail-info">
+          <p><strong>Radicado:</strong> {{ selectedCorreo.radicado }}</p>
+          <p><strong>Para:</strong> {{ selectedCorreo.para }}</p>
+          <p><strong>Asunto:</strong> {{ selectedCorreo.asunto }}</p>
+          <p><strong>Fecha:</strong> {{ selectedCorreo.fecha | date:'dd/MM/yyyy HH:mm:ss' }}</p>
+        </div>
+        <div class="detail-body-container">
+          <ngx-editor [editor]="detailEditor" [ngModel]="selectedCorreo!.cuerpo" [disabled]="true"></ngx-editor>
+        </div>
+      </div>
+      <div class="ui-modal__foot">
+        <button class="ui-btn secondary" type="button" (click)="selectedCorreo = null">
+          <i class="fa-solid fa-xmark"></i>
+          Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,212 @@
+/* Configuración Base */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Aplicar Montserrat a todo EXCEPTO iconos */
+body, input, button, textarea, select, label, p, h1, h2, h3, h4, h5, h6, a, span {
+    font-family: 'Montserrat', sans-serif;
+}
+
+/* Asegurar que Font Awesome use su propia fuente */
+.fa, .fas, .far, .fal, .fab, .fa-solid, .fa-regular, .fa-light, .fa-brands {
+    font-family: "Font Awesome 6 Free", "Font Awesome 6 Pro", "Font Awesome 6 Brands" !important;
+}
+
+/* Carrusel de Fondo Animado */
+.background-carousel {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    overflow: hidden;
+}
+
+.slide {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    opacity: 0;
+    transition: opacity .9s ease-in-out;
+}
+
+.slide.active {
+    opacity: 1;
+}
+
+/* Contenedor Glassmorphism */
+.login-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+    background: radial-gradient(circle at 20% 20%, rgba(28, 181, 224, 0.22), rgba(0, 0, 70, 0.88));
+}
+
+.glass-card {
+    background: rgba(0, 44, 86, 0.04); /* Azul Ponal con transparencia */
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 25px;
+    padding: 40px;
+    width: 100%;
+    max-width: 450px;
+    text-align: center;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+/* Textos e Imagen */
+.system-title {
+    color: #ffffff;
+    font-size: 4rem;
+    font-weight: 900;
+    margin-bottom: 10px;
+}
+
+.logo-institucional {
+    width: 120px;
+    margin-bottom: 15px;
+}
+
+.security-text {
+    color: white;
+    font-size: 0.75rem;
+    line-height: 1.4;
+    margin-bottom: 25px;
+    text-align: justify;
+}
+
+/* Campos de Entrada */
+.input-group {
+    position: relative;
+    margin-bottom: 15px;
+}
+
+.input-group i {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #666;
+}
+
+.input-group input {
+    width: 100%;
+    padding: 12px 44px 12px 45px;
+    border-radius: 10px;
+    border: none;
+    background: rgba(255, 255, 255, 0.9);
+    font-size: 1rem;
+}
+
+.toggle-password-btn {
+    position: absolute;
+    top: 50%;
+    right: 10px;
+    transform: translateY(-50%);
+    width: 30px;
+    height: 30px;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    color: #4b5563;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.toggle-password-btn:hover {
+    background: rgba(0, 0, 0, 0.08);
+}
+
+/* Botón Iniciar */
+.btn-login {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 25px;
+    // background: linear-gradient(to right, #000046, #1cb5e0);
+    color: white;
+    font-weight: bold;
+    font-size: 1.1rem;
+    cursor: pointer;
+    // transition: transform 0.2s;
+    margin-top: 10px;
+    display: inline-block;
+    text-align: center;
+    text-decoration: none;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(90deg, #000046, #1cb5e0, #000046);
+    background-size: 200% auto;
+    transition: 0.5s ease;
+}
+.icon-key {
+    font-size: 0;          /* Invisible al inicio */
+    opacity: 0;
+    transform: translateX(20px) rotate(-45deg);
+    transition: all 0.4s ease;
+}
+// .btn-login:hover {
+//     gap: 12px;             /* Abre espacio para la llave */
+//     padding-right: 30px;   /* Ajusta el balance visual */
+//     background: var(--policia-gradiente-principal);
+//     transform: translateY(-3px);
+//     box-shadow: 0 10px 25px rgba(205, 255, 0, 0.25); /* Resplandor Verde Limón */
+// }
+.btn-login:hover .icon-key {
+    font-size: 1.2rem;     /* Aparece el icono */
+    opacity: 1;
+    transform: translateX(0) rotate(0deg); /* Se endereza y entra */
+    color: var(--policia-acento);         /* La llave brilla en verde limón */
+}
+.btn-login:hover {
+  transform: scale(1.02);
+  box-shadow: 0 0 20px rgba(28, 181, 224, 0.3);
+}
+.btn-login::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    120deg,
+    transparent,
+    rgba(255, 255, 255, 0.3),
+    transparent
+  );
+  transition: 0.5s;
+}
+.btn-login:hover::before {
+  left: 100%;
+}
+.btn-login:active {
+  transform: translateY(0);
+}
+.form-options {
+    text-align: right;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+}
+
+.forgot-password {
+    color: white;
+    font-size: 0.8rem;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.forgot-password:hover {
+    color: #1cb5e0;
+    text-decoration: underline;
+}

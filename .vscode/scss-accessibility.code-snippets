@@ -1,0 +1,125 @@
+{
+  "Accessible Font Size (px)": {
+    "prefix": "a11y-font-px",
+    "body": [
+      "font-size: calc(${1:14}px * var(--font-size-scale));"
+    ],
+    "description": "Font size responsive con calc() y px"
+  },
+  
+  "Accessible Font Size (rem)": {
+    "prefix": "a11y-font-rem",
+    "body": [
+      "font-size: calc(${1:1}rem * var(--font-size-scale));"
+    ],
+    "description": "Font size responsive con calc() y rem"
+  },
+  
+  "Accessible Component Base": {
+    "prefix": "a11y-component",
+    "body": [
+      ".${1:component-name} {",
+      "  // Tamaño base responsive",
+      "  font-size: calc(${2:14}px * var(--font-size-scale));",
+      "  ${3}",
+      "}"
+    ],
+    "description": "Estructura base de componente accesible"
+  },
+  
+  "Accessible Text Styles": {
+    "prefix": "a11y-text",
+    "body": [
+      "// Textos con accesibilidad",
+      ".text-small { font-size: calc(12px * var(--font-size-scale)); }",
+      ".text-base { font-size: calc(14px * var(--font-size-scale)); }",
+      ".text-large { font-size: calc(16px * var(--font-size-scale)); }"
+    ],
+    "description": "Clases de texto con tamaños accesibles"
+  },
+  
+  "Accessible Heading Hierarchy": {
+    "prefix": "a11y-headings",
+    "body": [
+      "h1 { font-size: calc(28px * var(--font-size-scale)); }",
+      "h2 { font-size: calc(24px * var(--font-size-scale)); }",
+      "h3 { font-size: calc(20px * var(--font-size-scale)); }",
+      "h4 { font-size: calc(18px * var(--font-size-scale)); }",
+      "h5 { font-size: calc(16px * var(--font-size-scale)); }",
+      "h6 { font-size: calc(14px * var(--font-size-scale)); }"
+    ],
+    "description": "Jerarquía completa de headings accesibles"
+  },
+  
+  "Comment - Fixed Font Size (Documented Exception)": {
+    "prefix": "a11y-fixed-comment",
+    "body": [
+      "/* FIJO: ${1:Razón por la cual este font-size debe ser fijo} */",
+      "font-size: ${2:16}px;"
+    ],
+    "description": "Documenta una excepción de font-size fijo"
+  },
+  
+  "Accessibility Service Integration": {
+    "prefix": "a11y-service",
+    "body": [
+      "import { AccessibilityService } from '@core/services/accessibility.service';",
+      "",
+      "constructor(private accessibilityService: AccessibilityService) {}",
+      "",
+      "ngOnInit(): void {",
+      "  this.accessibilityService.accessibility$.subscribe(state => {",
+      "    // Reaccionar a cambios de accesibilidad si es necesario",
+      "    console.log('Nivel de fuente:', state.fontSize);",
+      "    console.log('Modo oscuro:', state.darkMode);",
+      "  });",
+      "}"
+    ],
+    "description": "Integración con AccessibilityService en componente"
+  },
+  
+  "CSS Variable - Font Scale": {
+    "prefix": "a11y-var",
+    "body": [
+      "var(--font-size-scale)"
+    ],
+    "description": "Variable CSS de escala de fuente"
+  },
+  
+  "Accessible Button Sizes": {
+    "prefix": "a11y-buttons",
+    "body": [
+      ".btn {",
+      "  font-size: calc(14px * var(--font-size-scale));",
+      "  ",
+      "  &.btn-sm { font-size: calc(12px * var(--font-size-scale)); }",
+      "  &.btn-lg { font-size: calc(16px * var(--font-size-scale)); }",
+      "}"
+    ],
+    "description": "Botones con tamaños accesibles"
+  },
+  
+  "Responsive With Accessibility": {
+    "prefix": "a11y-responsive",
+    "body": [
+      "// Desktop",
+      "@media (min-width: 1024px) {",
+      "  font-size: calc(${1:16}px * var(--font-size-scale));",
+      "}",
+      "",
+      "// Mobile",
+      "@media (max-width: 767px) {",
+      "  font-size: calc(${2:14}px * var(--font-size-scale));",
+      "}"
+    ],
+    "description": "Media queries con font-size accesible"
+  },
+  
+  "TODO Accessibility": {
+    "prefix": "todo-a11y",
+    "body": [
+      "// A11Y: ${1:Descripción del problema o mejora de accesibilidad}"
+    ],
+    "description": "Marca un TODO de accesibilidad"
+  }
+}

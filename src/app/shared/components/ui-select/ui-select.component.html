@@ -1,0 +1,26 @@
+<label class="ui-field ui-select" [class.ui-field--invalid]="error">
+  <span class="ui-label" *ngIf="label" [attr.for]="inputId">{{ label }}</span>
+
+  <select
+    class="ui-control"
+    [id]="inputId"
+    [value]="selectedIndex"
+    [disabled]="isDisabled"
+    [attr.aria-describedby]="describedBy"
+    [attr.aria-invalid]="!!error"
+    (change)="handleChange($event)"
+    (blur)="markAsTouched()"
+  >
+    <option value="" *ngIf="placeholder">{{ placeholder }}</option>
+    <option
+      *ngFor="let option of options; let index = index; trackBy: trackOption"
+      [value]="index"
+      [disabled]="option.disabled"
+    >
+      {{ option.label }}
+    </option>
+  </select>
+
+  <small class="ui-field__error" *ngIf="error" [id]="inputId + '-error'">{{ error }}</small>
+  <small class="ui-field__hint" *ngIf="hint && !error" [id]="inputId + '-hint'">{{ hint }}</small>
+</label>

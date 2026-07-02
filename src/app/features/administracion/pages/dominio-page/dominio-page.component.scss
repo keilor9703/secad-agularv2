@@ -1,0 +1,122 @@
+.dominio-admin-page {
+  display: block;
+}
+
+.admin-grid {
+  display: grid;
+  grid-template-columns: minmax(300px, 420px) 1fr;
+  gap: 1rem;
+}
+
+.dominio-form {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.dominio-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.dominio-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  border: 1px solid var(--ui-border, #dbe2ef);
+  border-radius: 12px;
+  padding: 0.85rem;
+  background: #fff;
+}
+
+.dominio-item.is-parent {
+  background: linear-gradient(135deg, #f8fafc 0%, #eef2f7 100%);
+  border-left: 4px solid #4a90d9;
+}
+
+.dominio-item.is-child {
+  margin-left: 1.5rem;
+  border-left: 3px solid #a0aec0;
+}
+
+.dominio-item.is-grandchild {
+  margin-left: 3rem;
+  border-left: 2px solid #cbd5e0;
+  background: #fafbfc;
+}
+
+.dominio-children {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.dominio-icon {
+  margin-right: 0.5rem;
+  color: #718096;
+}
+
+.expand-icon {
+  cursor: pointer;
+  transition: transform 0.2s ease;
+  
+  &:hover {
+    transform: scale(1.1);
+  }
+  
+  &.is-hidden {
+    visibility: hidden;
+    pointer-events: none;
+  }
+}
+
+.is-parent .dominio-icon {
+  color: #4a90d9;
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  border-radius: 20px;
+  background: #e53e3e;
+  color: #fff;
+  text-transform: uppercase;
+}
+
+.badge.active {
+  background: #38a169;
+}
+
+.dominio-item__content {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.dominio-item__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 960px) {
+  .admin-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dominio-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .dominio-item__actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}

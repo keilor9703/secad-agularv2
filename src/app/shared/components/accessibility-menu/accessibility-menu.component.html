@@ -1,0 +1,189 @@
+<div class="accessibility-menu">
+  <!-- Mensaje de error voz a texto -->
+  <div *ngIf="speechError" class="speech-error-msg" role="alert" aria-live="assertive">
+    {{ speechError }}
+  </div>
+  <!-- Botón Modo Oscuro -->
+  <button 
+    class="accessibility-btn dark-mode-btn"
+    [class.active]="isDarkMode"
+    (click)="toggleDarkMode()"
+    title="Modo oscuro"
+    aria-label="Activar o desactivar modo oscuro">
+    <span class="icon" [attr.aria-hidden]="true">
+      <svg *ngIf="!isDarkMode" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <!-- Icono Sol -->
+        <circle cx="12" cy="12" r="5"></circle>
+        <line x1="12" y1="1" x2="12" y2="3"></line>
+        <line x1="12" y1="21" x2="12" y2="23"></line>
+        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+        <line x1="1" y1="12" x2="3" y2="12"></line>
+        <line x1="21" y1="12" x2="23" y2="12"></line>
+        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+      </svg>
+      <svg *ngIf="isDarkMode" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <!-- Icono Luna -->
+        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+      </svg>
+    </span>
+    <span class="tooltip">{{ isDarkMode ? 'Modo claro' : 'Modo oscuro' }}</span>
+  </button>
+
+  <!-- Botón Aumentar Letra -->
+  <button 
+    class="accessibility-btn font-size-btn"
+    [class.disabled]="isFontSizeLarge"
+    (click)="increaseFontSize()"
+    [disabled]="isFontSizeLarge"
+    title="Aumentar tamaño de letra"
+    aria-label="Aumentar tamaño de letra">
+    <span class="icon" [attr.aria-hidden]="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <!-- Icono A+ -->
+        <text x="6" y="16" font-size="16" font-weight="bold"></text>
+        <text x="14" y="16" font-size="14" font-weight="bold"></text>
+      </svg>
+      <span style="position: absolute; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: bold;">A+</span>
+    </span>
+    <span class="tooltip">Aumentar letra ({{ currentFontLevel }})</span>
+  </button>
+
+  <!-- Botón Restablecer Letra -->
+  <button
+    class="accessibility-btn font-size-btn"
+    [class.disabled]="isFontSizeDefault"
+    (click)="resetFontSize()"
+    [disabled]="isFontSizeDefault"
+    title="Restablecer tamaño de letra"
+    aria-label="Restablecer tamaño de letra al valor predeterminado">
+    <span class="icon" [attr.aria-hidden]="true">
+      <span style="position: absolute; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: bold;">A↺</span>
+    </span>
+    <span class="tooltip">Restablecer letra</span>
+  </button>
+
+  <!-- Botón Disminuir Letra -->
+  <button 
+    class="accessibility-btn font-size-btn"
+    [class.disabled]="isFontSizeSmall"
+    (click)="decreaseFontSize()"
+    [disabled]="isFontSizeSmall"
+    title="Disminuir tamaño de letra"
+    aria-label="Disminuir tamaño de letra">
+    <span class="icon" [attr.aria-hidden]="true">
+      <span style="position: absolute; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: bold;">A−</span>
+    </span>
+    <span class="tooltip">Disminuir letra ({{ currentFontLevel }})</span>
+  </button>
+
+  <!-- Botón Voz a Texto -->
+  <button 
+    class="accessibility-btn speech-to-text-btn"
+    [class.active]="isListening"
+    [class.disabled]="!speechToTextAvailable"
+    (click)="toggleSpeechToText()"
+    [disabled]="!speechToTextAvailable"
+    title="Voz a texto"
+    aria-label="Convertir voz a texto">
+    <span class="icon" [attr.aria-hidden]="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <!-- Icono Micrófono -->
+        <path d="M12 1a3 3 0 0 0-3 3v12a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+        <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+        <line x1="12" y1="19" x2="12" y2="23"></line>
+        <line x1="8" y1="23" x2="16" y2="23"></line>
+      </svg>
+    </span>
+    <span class="tooltip">{{ isListening ? 'Escuchando...' : 'Voz a texto' }}</span>
+  </button>
+
+  <!-- Botón Texto a Voz -->
+  <button 
+    class="accessibility-btn text-to-speech-btn "
+    [class.active]="isHoverMode"
+    [class.speaking]="isSpeaking"
+    [class.disabled]="!textToSpeechAvailable"
+    (click)="toggleTextToSpeech()"
+    [disabled]="!textToSpeechAvailable"
+    title="Texto a voz (pase el cursor sobre cualquier elemento)"
+    aria-label="Activar o desactivar texto a voz al pasar el cursor">
+    <span class="icon" [attr.aria-hidden]="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <!-- Icono Altavoz -->
+        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+        <path d="M15.54 8.46a6.5 6.5 0 0 1 0 9.07"></path>
+        <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+      </svg>
+    </span>
+    <span class="tooltip">{{ isSpeaking ? 'Leyendo...' : isHoverMode ? 'Pase el cursor...' : 'Texto a voz' }}</span>
+  </button>
+
+  <button
+    class="accessibility-btn social-toggle-btn"
+    [class.active]="socialExpanded"
+    (click)="toggleSocial()"
+    title="Redes sociales"
+    aria-label="Mostrar redes sociales">
+    <span class="icon" [attr.aria-hidden]="true">
+      <svg viewBox="0 0 24 24" fill="none">
+        <rect x="7" y="2.5" width="10" height="19" rx="2.2" stroke="currentColor" stroke-width="1.8"></rect>
+        <rect x="10.5" y="18.2" width="3" height="1.2" rx="0.6" fill="currentColor"></rect>
+        <path d="M4.8 9.2c0-1.8 1.5-3.3 3.3-3.3h1.3c1.8 0 3.3 1.5 3.3 3.3s-1.5 3.3-3.3 3.3H8.2L6.4 14v-1.5c-1-.5-1.6-1.7-1.6-2.8z" fill="currentColor"></path>
+        <path d="M11.2 8.4c0-2 1.6-3.6 3.6-3.6h1.4c2 0 3.6 1.6 3.6 3.6s-1.6 3.6-3.6 3.6h-1l-1.9 1.6v-1.6c-1.2-.4-2.1-1.8-2.1-3.6z" fill="currentColor"></path>
+        <path d="M15.7 7.9v1.1M15.1 8.45h1.1" stroke="#fff" stroke-width="1.1" stroke-linecap="round"></path>
+      </svg>
+    </span>
+    <span class="tooltip">Redes sociales</span>
+  </button>
+
+  <div
+    class="social-list"
+    [class.social-list--expanded]="socialExpanded"
+    [attr.aria-hidden]="!socialExpanded">
+    <button
+      type="button"
+      class="accessibility-btn social-network-btn"
+      *ngFor="let group of socialGroups"
+      [style.--social-color]="group.color"
+      [attr.aria-label]="'Abrir ' + group.networkName"
+      [title]="group.networkName"
+      (click)="openSocialGroup(group)">
+      <span class="icon" [attr.aria-hidden]="true">
+        <i [class]="'fa-brands ' + group.icon"></i>
+      </span>
+      <span class="tooltip">{{ group.networkName }}</span>
+    </button>
+  </div>
+</div>
+
+<div class="social-backdrop" *ngIf="panelOpen" (click)="closeSocialPanel()"></div>
+
+<aside class="social-drawer" [class.is-open]="panelOpen" role="dialog" aria-modal="true" *ngIf="panelOpen">
+  <header class="social-drawer__head">
+    <div class="social-drawer__title">
+      <i class="fa-solid fa-share-nodes"></i>
+      {{ selectedGroup?.networkName || 'Red social' }}
+    </div>
+    <button class="social-drawer__close" type="button" aria-label="Cerrar panel" (click)="closeSocialPanel()">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+  </header>
+
+  <div class="social-drawer__body">
+    <article class="social-account" *ngFor="let account of selectedGroup?.accounts ?? []">
+      <div class="social-account__avatar">
+        <span>{{ (account.accountName || 'C').charAt(0).toUpperCase() }}</span>
+      </div>
+      <div class="social-account__meta">
+        <div class="social-account__name-row">
+          <strong>{{ account.accountName }}</strong>
+          <span class="social-account__badge" *ngIf="(account.notifications ?? 0) > 0">{{ account.notifications }}</span>
+        </div>
+        <div class="social-account__handle">{{ getHandle(account) }}</div>
+        <a [href]="account.url" target="_blank" rel="noopener noreferrer">Abrir perfil</a>
+      </div>
+    </article>
+  </div>
+</aside>

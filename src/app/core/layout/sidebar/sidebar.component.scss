@@ -1,0 +1,603 @@
+// /* 
+//   Sidebar institucional - Estilos internos únicamente
+//   Responsable de: apariencia, interacciones visuales, submenús
+//   NO responsable de: posicionamiento global, ancho fijo, márgenes
+// */
+
+// // .sidebar {
+// //   width: 100%;
+// //   height: 100%;
+// //   position: relative;
+// //   background: var(--policia-oscuro);
+// //   box-shadow: var(--ui-shadow);
+// //   border-right: 1px solid var(--ui-border);
+// //   overflow: visible;      
+// //   z-index: 1000;
+// // }
+// .sidebar{
+//   position: fixed;
+//   top: 0;
+//   left: 0;
+//   height: 100vh;
+//   width: 320px;
+//   background: var(--policia-oscuro);
+//   box-shadow: var(--ui-shadow);
+//   border-right: 1px solid var(--ui-border);
+//   max-width: 90vw;
+//   transform: translateX(-105%);
+//   transition: transform var(--transition-speed) ease;
+//   z-index: 1200;
+// }
+// .sidebar-scroll {
+//   height: calc(100% - var(--header-height));
+//   overflow-y: auto;         
+//   overflow-x: hidden;
+// }
+// .sidebar.open{
+//   transform: translateX(0);
+// }
+
+// /* Tramado sutil institucional */
+// .sidebar::before {
+//   content: '';
+//   position: absolute;
+//   inset: 0;
+//   pointer-events: none;
+//   z-index: 0;
+//   background-image:
+//     repeating-linear-gradient(
+//       45deg,
+//       transparent,
+//       transparent 12px,
+//       rgba(255, 255, 255, 0.02) 12px,
+//       rgba(255, 255, 255, 0.02) 24px
+//     );
+// }
+
+// /* Brillos ambientales */
+// .sidebar::after {
+//   content: '';
+//   position: absolute;
+//   inset: 0;
+//   pointer-events: none;
+//   z-index: 0;
+//   background:
+//     radial-gradient(circle at 20% 10%, rgba(205, 255, 0, 0.04), transparent 55%),
+//     radial-gradient(circle at 80% 30%, rgba(8, 166, 203, 0.04), transparent 60%);
+// }
+
+// /* --- HEADER DEL SIDEBAR (Optimized) --- */
+// .sidebar-header {
+//   height: var(--header-height);
+//   display: flex;
+//   align-items: center;
+//   padding: 0 14px;
+//   color: white;
+//   border-bottom: 1px solid var(--ui-border);
+//   position: relative;
+//   z-index: 1;
+// }
+
+// .header-brand-link {
+//   display: flex;
+//   align-items: center;
+//   gap: 10px;           
+//   text-decoration: none;
+//   width: 100%;
+// }
+
+// .logo-icon {
+//   display: flex;
+//   align-items: center;
+//   justify-content: center;
+//   width: 42px;         
+//   flex: 0 0 auto;
+//   margin-left: 20px;
+// }
+
+// .header-logo-img {
+//   width: 32px;
+//   height: 32px;
+//   object-fit: contain;
+//   filter: drop-shadow(0 0 5px rgba(205, 255, 0, 0.3));
+// }
+
+// .logo-name {
+//   font-size: 25px;
+//   font-weight: 800;
+//   margin-left: 0;
+//   line-height: 1;
+//   color: white;
+//   opacity: 0;
+//   visibility: hidden;
+//   white-space: nowrap;
+//   transition: opacity var(--transition-speed) ease, visibility var(--transition-speed) ease;
+// }
+
+// /* Mostrar nombre SOLO cuando el sidebar está expandido */
+// :host(.expanded) .logo-name {
+//   opacity: 1;
+//   visibility: visible;
+// }
+
+// /* --- NAVEGACIÓN (Optimized) --- */
+// .sidebar-nav {
+//   margin-top: 20px;
+//   position: relative;
+//   z-index: 1;
+// }
+
+// .menu-item {
+//   position: relative;
+//   overflow: visible;
+// }
+
+// .menu-link {
+//   display: flex;
+//   align-items: center;
+//   padding: 12px 15px;
+//   margin: 5px 10px;
+//   border-radius: var(--ui-radius-sm);
+//   color: var(--policia-neutral-claro);
+//   text-decoration: none;
+//   transition: all var(--transition-speed) ease;
+//   cursor: pointer;
+// }
+
+// .menu-link:hover {
+//   background: rgba(255, 255, 255, 0.08);
+//   color: var(--policia-acento);
+// }
+
+// .icon {
+//   min-width: 50px;
+//   text-align: center;
+//   font-size: 20px;
+//   flex-shrink: 0;
+// }
+
+// .label {
+//   opacity: 0;
+//   visibility: hidden;
+//   white-space: nowrap;
+//   transition: opacity var(--transition-speed) ease, visibility var(--transition-speed) ease;
+//   margin-left: 10px;
+//   font-weight: 600;
+// }
+
+// .arrow {
+//   font-size: 10px;
+//   transition: opacity var(--transition-speed) ease;
+//   opacity: 0;
+//   background-color: var(--btn-primary);
+//   margin-left: auto;
+// }
+
+// /* Mostrar texto y flecha SOLO cuando expandido */
+// :host(.expanded) .label,
+// :host(.expanded) .logo-name,
+// :host(.expanded) .arrow {
+//   opacity: 1;
+//   visibility: visible;
+// }
+
+// /* --- SUBMENÚ (Optimized) --- */
+// // .submenu {
+ 
+// //   overflow: hidden;
+// //   max-height: 0;
+// //   opacity: 0;
+// //   transform: translateY(-6px);
+// //   transition: max-height var(--transition-speed) ease, opacity var(--transition-speed) ease, transform var(--transition-speed) ease;
+// //   pointer-events: none;
+// //   margin: 0 10px 6px 10px;
+// //   border-radius: var(--ui-radius-sm);
+// //   background: rgba(255, 255, 255, 0.06);
+// // }
+
+// .menu-item{
+//   position: relative; // para que el flyout se ancle al item
+// }
+
+// /* Flyout: aparece a la derecha del sidebar */
+// .submenu{
+//   position: absolute;
+//   top: 0;
+//   left: calc(100% - 12px);  // sale pegado y un poco encima del borde
+//   width: 240px;
+//   max-width: 70vw;
+
+//   background: rgba(255, 255, 255, 0.10);
+//   border: 1px solid rgba(255, 255, 255, 0.12);
+//   border-radius: var(--ui-radius-sm);
+//   box-shadow: 0 12px 30px rgba(0,0,0,.25);
+
+//   padding: 8px 0;
+
+//   opacity: 0;
+//   transform: translateX(-6px);
+//   pointer-events: none;
+
+//   transition: opacity var(--transition-speed) ease,
+//               transform var(--transition-speed) ease;
+// }
+
+// .menu-item:hover .submenu {
+//   max-height: 500px;   
+//   opacity: 1;
+//   transform: translateY(0);
+//   pointer-events: auto;
+// }
+
+// .sidebar {
+//   overflow-x: hidden;
+// }
+
+// .submenu a {
+//   display: block;
+//   padding: 10px 16px;
+//   color: rgba(255, 255, 255, 0.75);
+//   text-decoration: none;
+//   border-left: 3px solid transparent;
+//   transition: all var(--transition-speed) ease;
+// }
+
+// .submenu a:hover {
+//   background: rgba(255, 255, 255, 0.06);
+//   color: var(--policia-acento);
+//   border-left-color: var(--policia-acento);
+// }
+
+// /* Scrollbar personalizada (Optimized) */
+// .sidebar::-webkit-scrollbar {
+//   width: 4px;
+// }
+
+// .sidebar::-webkit-scrollbar-thumb {
+//   background: var(--policia-claro);
+//   border-radius: var(--ui-radius-sm);
+// }
+
+// .sidebar::-webkit-scrollbar-track {
+//   background: transparent;
+// }
+
+// /* --- RESPONSIVE (Optimized) --- */
+// @media (max-width: 768px) {
+//   .sidebar-header {
+//     padding: 0 10px;
+//   }
+  
+//   .logo-icon {
+//     margin-left: 10px;
+//   }
+  
+//   .menu-link {
+//     padding: 10px 12px;
+//     margin: 3px 8px;
+//   }
+  
+//   .icon {
+//     min-width: 40px;
+//   }
+// }
+
+// /* Focus states for accessibility */
+// .menu-link:focus-visible {
+//   outline: none;
+//   box-shadow: var(--ui-focus-ring);
+// }
+
+// .submenu a:focus-visible {
+//   outline: none;
+//   box-shadow: inset 0 0 0 2px var(--policia-acento);
+// }
+
+/* 
+  Sidebar institucional - Estilos internos únicamente
+  Responsable de: apariencia, interacciones visuales, submenús
+  NO responsable de: posicionamiento global, ancho fijo, márgenes
+*/
+
+/* --- CONTENEDOR OFF-CANVAS (Amazon-like) --- */
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  width: 320px;
+  max-width: 90vw;
+
+  background: var(--policia-oscuro);
+  box-shadow: var(--ui-shadow);
+  border-right: 1px solid var(--ui-border);
+
+  transform: translateX(-105%);
+  transition: transform var(--transition-speed) ease;
+  z-index: 1200;
+
+  overflow-x: visible; /* importante para no cortar flyout */
+}
+
+.sidebar.open {
+  transform: translateX(0);
+}
+
+/* Scroll solo si se necesita (si no hay overflow, no aparece scrollbar) */
+.sidebar-scroll {
+  height: calc(100vh - var(--header-height));
+  overflow-y: auto;
+  overflow-x: visible; /* permite que el flyout salga sin recortarse */
+}
+
+/* Tramado sutil institucional */
+.sidebar::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 12px,
+    rgba(255, 255, 255, 0.02) 12px,
+    rgba(255, 255, 255, 0.02) 24px
+  );
+}
+
+/* Brillos ambientales */
+.sidebar::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(circle at 20% 10%, rgba(205, 255, 0, 0.04), transparent 55%),
+    radial-gradient(circle at 80% 30%, rgba(8, 166, 203, 0.04), transparent 60%);
+}
+
+/* --- HEADER DEL SIDEBAR --- */
+.sidebar-header {
+  height: var(--header-height);
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  color: white;
+  border-bottom: 1px solid var(--ui-border);
+  position: relative;
+  z-index: 1;
+}
+
+.header-brand-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  width: 100%;
+}
+
+.logo-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  flex: 0 0 auto;
+  margin-left: 20px;
+}
+
+.header-logo-img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 5px rgba(205, 255, 0, 0.3));
+}
+
+.logo-name {
+  font-size: calc(25px * var(--font-size-scale));
+  font-weight: 800;
+  line-height: 1;
+  color: white;
+
+  opacity: 0;
+  visibility: hidden;
+  white-space: nowrap;
+  transition: opacity var(--transition-speed) ease, visibility var(--transition-speed) ease;
+}
+
+/* Mostrar nombre SOLO cuando el sidebar está expandido */
+:host(.expanded) .logo-name {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Botón cerrar (si lo estás usando) */
+.btn-close {
+  margin-left: auto;
+  background: transparent;
+  border: 0;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: calc(18px * var(--font-size-scale));
+  cursor: pointer;
+  padding: 8px 10px;
+  border-radius: var(--ui-radius-sm);
+}
+
+.btn-close:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* --- NAVEGACIÓN --- */
+.sidebar-nav {
+  margin-top: 20px;
+  position: relative;
+  z-index: 1;
+}
+
+.menu-item {
+  position: relative; /* ancla del flyout */
+  overflow: visible;
+}
+
+.menu-link {
+  display: flex;
+  align-items: center;
+  padding: 12px 15px;
+  margin: 5px 10px;
+  border-radius: var(--ui-radius-sm);
+  color: var(--policia-neutral-claro);
+  text-decoration: none;
+  transition: all var(--transition-speed) ease;
+  cursor: pointer;
+}
+
+.menu-link:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--policia-acento);
+}
+
+.icon {
+  min-width: 50px;
+  text-align: center;
+  font-size: calc(20px * var(--font-size-scale));
+  flex-shrink: 0;
+}
+
+.label {
+  opacity: 0;
+  visibility: hidden;
+  white-space: nowrap;
+  transition: opacity var(--transition-speed) ease, visibility var(--transition-speed) ease;
+  margin-left: 10px;
+  font-weight: 600;
+}
+
+/* Flecha */
+.arrow {
+  font-size: calc(10px * var(--font-size-scale));
+  opacity: 0;
+  visibility: hidden;
+  margin-left: auto;
+  transition: transform var(--transition-speed) ease, opacity var(--transition-speed) ease;
+}
+
+/* Botón de la flecha (si lo usas en HTML) */
+.arrow-btn {
+  margin-left: auto;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  padding: 6px 8px;
+  border-radius: var(--ui-radius-sm);
+}
+
+.arrow-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* Mostrar texto y flecha SOLO cuando expandido */
+:host(.expanded) .label,
+:host(.expanded) .arrow {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Rotación cuando el item está expandido (tu HTML pone class.expanded) */
+.menu-item.expanded .arrow {
+  transform: rotate(180deg);
+}
+
+/* --- SUBMENÚ FLYOUT (a la derecha) --- */
+.submenu {
+  position: fixed; /* CLAVE: no se recorta por overflow */
+  top: 0;
+  left: 0;
+  width: 240px;
+  max-width: 70vw;
+  background: var(--policia-oscuro);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: var(--ui-radius-sm);
+  box-shadow: 0 16px 30px rgba(0, 0, 0, 0.25);
+  padding: 8px 0;
+  opacity: 0;
+  transform: translateX(-6px);
+  pointer-events: none;
+  z-index: 1300;
+  display: none; 
+  transition: opacity var(--transition-speed) ease,
+  transform var(--transition-speed) ease;
+}
+
+.submenu.open {
+  display: block;
+  opacity: 1;
+  transform: translateX(0);
+  pointer-events: auto;
+}
+
+.submenu-item {
+  display: block;
+  padding: 10px 16px;
+  color: rgba(255, 255, 255, 0.75);
+  text-decoration: none;
+  border-left: 3px solid transparent;
+  transition: all var(--transition-speed) ease;
+}
+
+.submenu-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--policia-acento);
+  border-left-color: var(--policia-acento);
+}
+
+/* Scrollbar personalizada */
+.sidebar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+  background: var(--policia-claro);
+  border-radius: var(--ui-radius-sm);
+}
+
+.sidebar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* --- RESPONSIVE --- */
+@media (max-width: 768px) {
+  .sidebar-header {
+    padding: 0 10px;
+  }
+
+  .logo-icon {
+    margin-left: 10px;
+  }
+
+  .menu-link {
+    padding: 10px 12px;
+    margin: 3px 8px;
+  }
+
+  .icon {
+    min-width: 40px;
+  }
+
+  /* Flyout en móvil: que no se salga de pantalla */
+  .submenu {
+    width: 220px;
+    left: calc(100% - 6px);
+  }
+}
+
+/* Focus states */
+.menu-link:focus-visible {
+  outline: none;
+  box-shadow: var(--ui-focus-ring);
+}
+
+.submenu-item:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--policia-acento);
+}

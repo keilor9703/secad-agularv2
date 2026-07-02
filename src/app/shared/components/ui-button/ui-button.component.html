@@ -1,0 +1,13 @@
+<button
+  class="ui-btn"
+  [ngClass]="classes"
+  [type]="type"
+  [title]="title"
+  [attr.aria-label]="ariaLabel || null"
+  [disabled]="disabled || loading"
+  (click)="handleClick($event)"
+>
+  <i class="fa-solid fa-spinner fa-spin" *ngIf="loading"></i>
+  <i [class]="icon" *ngIf="!loading && icon"></i>
+  <ng-content></ng-content>
+</button>

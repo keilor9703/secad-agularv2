@@ -1,0 +1,26 @@
+<div class="app-shell" [class.menu-open]="isMenuOpen()">
+  <app-sidebar class="app-sidebar"></app-sidebar>
+
+  <div class="app-backdrop"
+       *ngIf="isMenuOpen()"
+       (click)="closeMenu()"
+       aria-hidden="true"></div>
+
+  <div class="shell">
+    <app-topbar></app-topbar>
+
+    <main class="main">
+      <app-breadcrumb></app-breadcrumb>
+
+      <div class="content">
+        <router-outlet></router-outlet>
+      </div>
+    </main>
+  </div>
+
+  <app-footer class="app-footer-fixed"></app-footer>
+</div>
+
+<!-- Menú de Accesibilidad Flotante -->
+<app-accessibility-menu [socialGroups]="socialGroups"></app-accessibility-menu>
+

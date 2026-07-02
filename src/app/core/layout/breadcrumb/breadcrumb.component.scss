@@ -1,0 +1,46 @@
+.breadcrumb-nav {
+  padding: 12px 20px;
+  background: rgba(21, 27, 59, 0.03);
+  border-bottom: 1px solid rgba(21, 27, 59, 0.08);
+}
+
+.breadcrumb-list {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.breadcrumb-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.breadcrumb-link {
+  color: var(--policia-medio, #002a66);
+  text-decoration: none;
+  font-size: calc(13px * var(--font-size-scale));
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+.breadcrumb-link:hover {
+  color: var(--policia-oscuro, #0a1929);
+  text-decoration: underline;
+}
+
+.breadcrumb-current {
+  color: rgba(21, 27, 59, 0.7);
+  font-size: calc(13px * var(--font-size-scale));
+  font-weight: 600;
+}
+
+.breadcrumb-separator {
+  font-size: calc(10px * var(--font-size-scale));
+  color: rgba(21, 27, 59, 0.4);
+  margin: 0 2px;
+}

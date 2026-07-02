@@ -1,0 +1,26 @@
+ {
+    "/api": {
+      "target": "http://localhost:5224",
+      "secure": false,
+      "changeOrigin": true,
+      "logLevel": "debug"
+    },
+    "/uploads": {
+      "target": "http://localhost:5224",
+      "secure": false,
+      "changeOrigin": true,
+      "logLevel": "debug"
+    },
+    "/jsonapi": {
+      "target": "https://www.policia.gov.co",
+      "secure": true,
+      "changeOrigin": true,
+      "logLevel": "debug"
+    },
+    "/es/jsonapi": {
+      "target": "https://www.policia.gov.co",
+      "secure": true,
+      "changeOrigin": true,
+      "logLevel": "debug"
+    }
+  }

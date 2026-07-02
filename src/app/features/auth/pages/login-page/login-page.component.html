@@ -1,0 +1,64 @@
+<div class="background-carousel">
+    <div
+        class="slide"
+        *ngFor="let item of slides; let i = index"
+        [class.active]="i === currentSlideIndex"
+        [style.background-image]="'url(' + item.url + ')'">
+    </div>
+</div>
+
+<main class="login-container">
+    <div class="glass-card">
+        <h1 class="system-title">{{ systemName }}</h1>
+
+        <img [src]="logoUrl" alt="Logo sistema" class="logo-institucional">
+
+        <form class="login-form" (ngSubmit)="onSubmit()">
+            <div class="input-group">
+                <i class="fa fa-user"></i>
+                <input
+                    type="text"
+                    name="usuario"
+                    [(ngModel)]="usuario"
+                    placeholder="Usuario empresarial"
+                    autocomplete="username"
+                    required>
+            </div>
+
+            <div class="input-group">
+                <i class="fa fa-lock"></i>
+                <input
+                    [type]="showPassword ? 'text' : 'password'"
+                    name="contrasena"
+                    [(ngModel)]="contrasena"
+                    placeholder="Contraseña"
+                    autocomplete="current-password"
+                    required>
+                <button
+                    type="button"
+                    class="toggle-password-btn"
+                    (click)="togglePasswordVisibility()"
+                    [attr.aria-label]="showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'">
+                    <i class="fa-solid" [ngClass]="showPassword ? 'fa-eye-slash' : 'fa-eye'"></i>
+                </button>
+            </div>
+
+            <div class="form-options">
+                <a href="#" class="forgot-password">¿Olvidó su contraseña?</a>
+            </div>
+
+            <p *ngIf="errorMessage" style="color:#ffb3b3; font-size:13px; margin:4px 0 10px 0;">
+                {{ errorMessage }}
+            </p>
+
+            <p class="security-text">
+                Está ingresando a un sistema de información de propiedad de la Policía Nacional, su uso no autorizado incurre en el incumplimiento de las políticas de seguridad de la Institución establecidas en el Manual del Sistema de Gestión de Seguridad de la Información para la Policía Nacional y acarrea sanciones penales, disciplinarias y/o administrativas a que haya lugar; ayúdenos a prevenir la divulgación no autorizada, pérdida y/o fuga de la información institucional.
+            </p>
+
+            <button type="submit" class="btn-login" [disabled]="isLoading">
+                <span>{{ isLoading ? 'Validando...' : 'Iniciar sesión' }}</span>
+                <i class="fas fa-key icon-key"></i>
+            </button>
+        </form>
+    </div>
+</main>

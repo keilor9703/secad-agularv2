@@ -1,0 +1,67 @@
+<aside class="sidebar" [class.open]="isOpen()" (click)="$event.stopPropagation()">
+  <div class="sidebar-content">
+    <div class="sidebar-header">
+      <a routerLink="/home" class="header-brand-link" (click)="closeSidebar()">
+        <div class="logo-icon">
+          <img [src]="logoUrl" [alt]="systemName" class="header-logo-img">
+        </div>
+        <span class="logo-name">{{ systemName }}</span>
+      </a>
+ 
+      <button class="btn-close" type="button" (click)="closeSidebar()" aria-label="Cerrar menú">✕</button>
+    </div>
+
+    <nav class="sidebar-scroll">
+      <div class="sidebar-nav">
+        @for (item of menuItems; track item.id) {
+          <div class="menu-item" [class.expanded]="isExpandedItem(item)">
+            @if (item.isExternal) {
+              <a
+                class="menu-link"
+                [href]="item.route"
+                target="_blank"
+                rel="noopener noreferrer">
+                <i class="icon" [class]="item.icon"></i>
+                <span class="label">{{ item.label }}</span>
+              </a>
+            } @else {
+              <a
+                class="menu-link"
+                [routerLink]="item.route && !item.submenu ? [item.route] : null"
+                (click)="onItemTap(item, $event)"
+                routerLinkActive="active">
+
+                <i class="icon" [class]="item.icon"></i>
+                <span class="label">{{ item.label }}</span>
+
+                @if (item.submenu) {
+                  <button type="button" class="arrow-btn" (click)="toggleItem(item, $event)">
+                    <i class="arrow fa-solid fa-chevron-down"></i>
+                  </button>
+                }
+              </a>
+            }
+
+           @if (item.submenu) {
+            <div class="submenu"
+                 [class.open]="isOpen() && isExpandedItem(item)"
+                 [ngStyle]="(isOpen() && isExpandedItem(item)) ? getSubmenuStyle() : null">
+              @for (subItem of item.submenu; track subItem.id) {
+                @if (subItem.isExternal) {
+                  <a [href]="subItem.route" target="_blank" rel="noopener noreferrer" class="submenu-item">
+                    {{ subItem.label }}
+                  </a>
+                } @else {
+                  <a [routerLink]="[subItem.route]" class="submenu-item" (click)="onNavigate()">
+                    {{ subItem.label }}
+                  </a>
+                }
+              }
+            </div>
+          }
+          </div>
+        }
+      </div>
+    </nav>
+  </div>
+</aside>

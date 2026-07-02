@@ -1,0 +1,436 @@
+
+  <section class="home-view ">
+  <!-- PANEL: FORMULARIO -->
+  <div class="ui-panel" *ngIf="visible">
+    <div class="ui-panel__head">
+      <div class="ui-panel__title">
+        <i class="fa-solid fa-clipboard-list"></i>
+        Título del Formulario
+      </div>
+
+      <div class="ui-panel__actions ui-window-controls">
+         <button
+        class="ui-icon-btn ui-win-btn is-close"
+        type="button"
+        title="Cerrar"
+        (click)="closePanel()">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+
+          <button
+        class="ui-icon-btn ui-win-btn is-min"
+        type="button"
+        title="Minimizar"
+        (click)="toggleMinimize()">
+        <i class="fa-solid fa-minus"></i>
+      </button>
+      </div>
+       <div class="ui-panel__body" *ngIf="!minimized"></div>
+    </div>
+
+    <div class="ui-panel__body">
+      <div class="ui-grid">
+        <div class="ui-field ui-col-3">
+          <label class="ui-label">Fecha</label>
+          <input class="ui-control" type="date">
+        </div>
+
+        <div class="ui-field ui-col-6">
+          <label class="ui-label">Apellidos y Nombres</label>
+          <input class="ui-control" type="text" placeholder="Digite...">
+        </div>
+
+        <div class="ui-field ui-col-3">
+          <label class="ui-label">No. Identificación</label>
+          <div class="ui-input-group">
+            <input class="ui-control" type="text" placeholder="Ej: 123...">
+            <button class="ui-addon-btn" type="button" title="Buscar">
+              <i class="fa-solid fa-magnifying-glass"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="ui-field ui-col-6">
+          <label class="ui-label">Dirección</label>
+          <input class="ui-control" type="text">
+        </div>
+
+        <div class="ui-field ui-col-3">
+          <label class="ui-label">Teléfono</label>
+          <input class="ui-control" type="text">
+        </div>
+
+    <div class="ui-field ui-col-3">
+  <label class="ui-label">Activar Usuario</label>
+
+  <label class="ui-check">
+    <input type="checkbox" />
+    <span class="ui-check__box"></span>
+    <span class="ui-check__text">Activo</span>
+  </label>
+</div>
+
+        <div class="ui-field ui-col-4">
+          <label class="ui-label">Departamento</label>
+          <select class="ui-control">
+            <option>Seleccione</option>
+          </select>
+        </div>
+
+        <div class="ui-field ui-col-4">
+          <label class="ui-label">Ciudad</label>
+          <select class="ui-control">
+            <option>Seleccione</option>
+          </select>
+        </div>
+
+        <div class="ui-field ui-col-4">
+          <label class="ui-label">Barrio</label>
+          <input class="ui-control" type="text">
+        </div>
+
+        <div class="ui-field ui-col-12">
+          <label class="ui-label">Observaciones</label>
+          <textarea class="ui-control" rows="4" placeholder="Escriba aquí..."></textarea>
+        </div>
+      </div>
+
+      <!-- Barra de acciones (como tu sistema) -->
+      <div class="ui-toolbar">
+       <button class="ui-btn primary ui-btn--fx" type="button">
+  <i class="fa-solid fa-floppy-disk"></i> Guardar
+</button>
+
+<button class="ui-btn secondary ui-btn--fx" type="button" (click)="onBuscar()">
+  <i class="fa-solid fa-magnifying-glass"></i> Buscar
+</button>
+
+<button class="ui-btn info" type="button" (click)="onNuevo()">
+  <i class="fa-solid fa-plus"></i> Nuevo
+</button>
+
+<button class="ui-btn danger" type="button" (click)="onEliminar()">
+  <i class="fa-solid fa-trash"></i> Eliminar
+</button>
+
+<button class="ui-btn warning" type="button" >
+  <i class="fa-solid fa-print"></i> Imprimir
+</button>
+
+<button class="ui-btn ghost" type="button">
+  <i class="fa-solid fa-rotate"></i> Actualizar
+</button>
+
+<button class="ui-btn outline" type="button">
+  <i class="fa-solid fa-table"></i> Grilla
+</button>
+
+<button class="ui-btn outline" type="button">
+  <i class="fa-solid fa-xmark"></i> Cerrar
+</button>
+<button class="ui-btn warning" type="button" (click)="btnAdvertencia()">Alert Pantalla</button>
+<button class="ui-btn danger" type="button" (click)="btnError()">Boton Error</button>
+<button class="ui-btn outline" type="button" (click)="btnInfo()">Boton Info</button>
+
+
+      </div>
+    </div>
+  </div>
+
+  <!-- PANEL: LISTADO -->
+  <div class="ui-panel">
+    <div class="ui-panel__head">
+      <div class="ui-panel__title">
+        <i class="fa-solid fa-list"></i>
+        Listado de Funcionarios
+      </div>
+
+      <div class="ui-panel__actions">
+        <span class="ui-badge info">Registros: 25</span>
+      </div>
+    </div>
+
+    <div class="ui-panel__body">
+      <!-- Filtros -->
+      <div class="ui-grid">
+        <div class="ui-field ui-col-4">
+          <label class="ui-label">Especialidad</label>
+          <input class="ui-control" placeholder="Filtrar...">
+        </div>
+        <div class="ui-field ui-col-4">
+          <label class="ui-label">Identificación</label>
+          <input class="ui-control" placeholder="Filtrar...">
+        </div>
+        <div class="ui-field ui-col-4">
+          <label class="ui-label">Nombres / Apellidos</label>
+          <input class="ui-control" placeholder="Filtrar...">
+        </div>
+      </div>
+
+      <div class="ui-spacer"></div>
+      <!-- Tabla demo -->
+      <br><br>
+      <div class="ui-table-wrap">
+        <table class="ui-table">
+          <thead>
+            <tr>
+              <th>Identificación</th>
+              <th>Nombre</th>
+              <th>Especialidad</th>
+              <th>Estado</th>
+              <th style="width:120px">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>123456</td>
+              <td>Juan Pérez</td>
+              <td>General</td>
+              <td><span class="ui-badge success">Activo</span></td>
+              <td>
+                <button class="ui-mini-btn" type="button" title="Editar"><i class="fa-solid fa-pen"></i></button>
+                <button class="ui-mini-btn danger" type="button" title="Eliminar"><i class="fa-solid fa-trash"></i></button>
+              </td>
+            </tr>
+            <tr>
+              <td>987654</td>
+              <td>María Gómez</td>
+              <td>Judicial</td>
+              <td><span class="ui-badge warning">Pendiente</span></td>
+              <td>
+                <button class="ui-mini-btn" type="button" title="Editar"><i class="fa-solid fa-pen"></i></button>
+                <button class="ui-mini-btn danger" type="button" title="Eliminar"><i class="fa-solid fa-trash"></i></button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="ui-toolbar ui-toolbar--bottom">
+        <button class="ui-btn outline" type="button">
+          <i class="fa-solid fa-file-arrow-down"></i> Exportar
+        </button>
+        <button class="ui-btn primary" type="button">
+          <i class="fa-solid fa-magnifying-glass"></i> Buscar
+        </button>
+      </div>
+    </div>
+  </div>
+
+
+  <div class="ui-panel">
+  <div class="ui-panel__head">
+    <h3 class="ui-panel__title">
+      <i class="fa-solid fa-layer-group"></i>
+      Tabs + Acordeón + Cards
+    </h3>
+    <span class="ui-badge info">UI Gallery</span>
+  </div>
+<br>
+  <!-- TABS (CSS-only con radios) -->
+  <div class="ui-tabs">
+    <input class="ui-tabs__radio" type="radio" name="tabs-demo" id="tab-1" checked>
+    <label class="ui-tabs__tab" for="tab-1"><i class="fa-solid fa-sliders"></i> Tab</label>
+
+    <input class="ui-tabs__radio" type="radio" name="tabs-demo" id="tab-2">
+    <label class="ui-tabs__tab" for="tab-2"><i class="fa-solid fa-circle-info"></i> Acordeón</label>
+
+    <input class="ui-tabs__radio" type="radio" name="tabs-demo" id="tab-3">
+    <label class="ui-tabs__tab" for="tab-3"><i class="fa-solid fa-images"></i> Cards con imagen</label>
+
+    <input class="ui-tabs__radio" type="radio" name="tabs-demo" id="tab-4">
+    <label class="ui-tabs__tab" for="tab-4"><i class="fa-solid fa-id-card"></i> Card con icono</label>
+
+
+    <div class="ui-tabs__panels">
+      <!-- Panel 1 -->
+      <div class="ui-tabs__panel" data-for="tab-1">
+        <div class="ui-grid">
+          <div class="ui-field ui-col-6">
+            <label class="ui-label">Nombre</label>
+            <input class="ui-control" placeholder="Ej: Javier Lopez">
+          </div>
+          <div class="ui-field ui-col-6">
+            <label class="ui-label">Estado</label>
+            <select class="ui-control">
+              <option>Seleccione...</option>
+              <option>Activo</option>
+              <option>Inactivo</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="ui-spacer"></div>
+
+        <label class="ui-check">
+          <input type="checkbox">
+          <span class="ui-check__box"></span>
+          <span class="ui-check__text">Habilitar opción avanzada</span>
+        </label>
+      </div>
+
+      <!-- Panel 2 -->
+      <div class="ui-tabs__panel" data-for="tab-2">
+        <div class="ui-accordion">
+          <details class="ui-acc" open>
+            <summary class="ui-acc__summary">
+              <span><i class="fa-solid fa-circle-question"></i> ¿Qué es esta galería?</span>
+              <i class="fa-solid fa-chevron-down ui-acc__chev"></i>
+            </summary>
+            <div class="ui-acc__content">
+<p class="parrafo">Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.</p>
+
+            </div>
+          </details>
+
+          <details class="ui-acc">
+            <summary class="ui-acc__summary">
+              <span><i class="fa-solid fa-shield-halved"></i> Estándares institucionales</span>
+              <i class="fa-solid fa-chevron-down ui-acc__chev"></i>
+            </summary>
+            <div class="ui-acc__content">
+<p class="parrafo">Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.</p>
+
+            </div>
+          </details>
+
+          <details class="ui-acc">
+            <summary class="ui-acc__summary">
+              <span><i class="fa-solid fa-gears"></i> Tips de uso</span>
+              <i class="fa-solid fa-chevron-down ui-acc__chev"></i>
+            </summary>
+            <div class="ui-acc__content">
+<p class="parrafo">Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.</p>
+            </div>
+          </details>
+        </div>
+      </div>
+
+      <!-- Panel 3 -->
+      <div class="ui-tabs__panel" data-for="tab-3">
+        <div class="ui-card-grid">
+          <article class="ui-imgcard">
+            <div class="ui-imgcard__media">
+              <img src="imagenes/imagen-card1.jpg" alt="Demo 1">
+            </div>
+            <div class="ui-imgcard__body">
+              <div class="ui-imgcard__title">Card institucional</div>
+              <div class="ui-imgcard__text">
+                Descripción breve. Útil para mostrar módulos, accesos rápidos o reportes.
+              </div>
+              <div class="ui-imgcard__actions">
+                <button class="ui-btn sm outline" type="button">
+                  <i class="fa-solid fa-eye"></i> Ver
+                </button>
+                <button class="ui-btn sm primary ui-btn--fx" type="button">
+                  <i class="fa-solid fa-play"></i> Abrir
+                </button>
+              </div>
+            </div>
+          </article>
+
+          <article class="ui-imgcard">
+            <div class="ui-imgcard__media">
+              <img src="imagenes/imagen-card2.png" alt="Demo 2">
+            </div>
+            <div class="ui-imgcard__body">
+              <div class="ui-imgcard__title">Acceso rápido</div>
+              <div class="ui-imgcard__text">
+                Tarjetas con imagen + texto para home administrativo o dashboards.
+              </div>
+              <div class="ui-imgcard__actions">
+                <button class="ui-btn sm secondary ui-btn--fx" type="button">
+                  <i class="fa-solid fa-arrow-right"></i> Ir
+                </button>
+                <button class="ui-btn sm ghost" type="button">
+                  <i class="fa-solid fa-star"></i> Favorito
+                </button>
+              </div>
+            </div>
+          </article>
+
+          <article class="ui-imgcard">
+            <div class="ui-imgcard__media">
+              <img src="imagenes/imagen-card3.jpg" alt="Demo 3">
+            </div>
+            <div class="ui-imgcard__body">
+              <div class="ui-imgcard__title">Reporte</div>
+              <div class="ui-imgcard__text">
+                Puedes usar badges, iconos y botones pequeños para acciones.
+              </div>
+              <div class="ui-imgcard__actions">
+                <button class="ui-btn sm warning" type="button">
+                  <i class="fa-solid fa-print"></i> Imprimir
+                </button>
+                <button class="ui-btn sm danger" type="button">
+                  <i class="fa-solid fa-trash"></i> Borrar
+                </button>
+              </div>
+            </div>
+          </article>
+        </div>
+      </div>
+
+      <!-- Panel 4 -->
+
+      <div class="ui-tabs__panel" data-for="tab-4">
+        <div class="ui-card-grid ui-card-grid--cards">
+          <article class="ui-feature-card">
+            <div class="ui-feature-card__icon">
+              <i class="fa-solid fa-calendar-check"></i>
+            </div>
+
+            <h3 class="ui-feature-card__title">Generar turnos de pago</h3>
+
+            <p class="ui-feature-card__text">
+              Asigne y gestione los turnos de pago correspondientes a las sentencias radicadas en la institución,
+              asegurando trazabilidad y cumplimiento.
+            </p>
+
+            <a class="ui-feature-card__link" href="javascript:void(0)">
+              Acceder <span class="ui-feature-card__arrow">→</span>
+            </a>
+          </article>
+
+          <article class="ui-feature-card">
+  <div class="ui-feature-card__icon">
+    <i class="fa-solid fa-file-shield"></i>
+  </div>
+
+  <h3 class="ui-feature-card__title">Validar requisitos</h3>
+
+  <p class="ui-feature-card__text">
+    Revise listas de verificación y documentos asociados antes de avanzar con el trámite, garantizando
+    cumplimiento y control institucional.
+  </p>
+
+  <a class="ui-feature-card__link" href="javascript:void(0)">
+    Acceder <span class="ui-feature-card__arrow">→</span>
+  </a>
+</article>
+
+<article class="ui-feature-card">
+  <div class="ui-feature-card__icon">
+    <i class="fa-solid fa-chart-line"></i>
+  </div>
+
+  <h3 class="ui-feature-card__title">Consultar reportes</h3>
+
+  <p class="ui-feature-card__text">
+    Visualice indicadores, estados y trazabilidad de procesos en tiempo real. Exporte resultados para
+    auditoría y seguimiento administrativo.
+  </p>
+
+  <a class="ui-feature-card__link" href="javascript:void(0)">
+    Acceder <span class="ui-feature-card__arrow">→</span>
+  </a>
+</article>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+</section>

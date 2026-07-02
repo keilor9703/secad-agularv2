@@ -1,0 +1,41 @@
+<label class="ui-field ui-input" [class.ui-field--invalid]="error">
+  <span class="ui-label" *ngIf="label" [attr.for]="inputId">{{ label }}</span>
+
+  <textarea
+    *ngIf="multiline; else singleLineInput"
+    class="ui-control"
+    [id]="inputId"
+    [rows]="rows"
+    [placeholder]="placeholder"
+    [readonly]="readonly"
+    [disabled]="isDisabled"
+    [attr.maxlength]="maxlength"
+    [attr.aria-describedby]="describedBy"
+    [attr.aria-invalid]="!!error"
+    [value]="value"
+    (input)="handleInput($event)"
+    (blur)="markAsTouched()"
+  ></textarea>
+
+  <ng-template #singleLineInput>
+    <input
+      class="ui-control"
+      [id]="inputId"
+      [type]="type"
+      [placeholder]="placeholder"
+      [autocomplete]="autocomplete"
+      [readonly]="readonly"
+      [disabled]="isDisabled"
+      [attr.maxlength]="maxlength"
+      [attr.aria-describedby]="describedBy"
+      [attr.aria-invalid]="!!error"
+      [value]="value"
+      (input)="handleInput($event)"
+      (blur)="markAsTouched()"
+      (keydown.enter)="handleEnter()"
+    />
+  </ng-template>
+
+  <small class="ui-field__error" *ngIf="error" [id]="inputId + '-error'">{{ error }}</small>
+  <small class="ui-field__hint" *ngIf="hint && !error" [id]="inputId + '-hint'">{{ hint }}</small>
+</label>
