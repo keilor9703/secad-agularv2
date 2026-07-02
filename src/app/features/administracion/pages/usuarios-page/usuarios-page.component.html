@@ -7,403 +7,107 @@
       </div>
 
       <div class="ui-panel__actions ui-window-controls">
-        <button class="ui-icon-btn ui-win-btn is-min" type="button" title="Minimizar" (click)="toggleMinimize()">
+        <button
+          class="ui-icon-btn ui-win-btn is-min"
+          type="button"
+          title="Minimizar"
+          (click)="toggleMinimize()"
+        >
           <i class="fa-solid fa-minus"></i>
         </button>
-        <button class="ui-icon-btn ui-win-btn is-close" type="button" title="Cerrar" (click)="closePanel()">
+
+        <button
+          class="ui-icon-btn ui-win-btn is-close"
+          type="button"
+          title="Cerrar"
+          (click)="closePanel()"
+        >
           <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
     </div>
 
-    
-
     <div class="ui-panel__body" *ngIf="!minimized">
-      <div class="admin-grid" *ngIf="user; else emptyState">
-        <aside class="left-column">
-          <article class="profile-card">
-            <div class="profile-card__cover" [class.inactive]="!user.activo"></div>
-            <div class="profile-card__body">
-              <img
-                class="profile-avatar"
-                [src]="user.fotoUrl || 'https://ui-avatars.com/api/?name=' + user.nombreCompleto + '&background=002a66&color=fff&size=160'"
-                alt="Foto de usuario"
-              >
-
-              <h3 class="profile-name">{{ user.nombreCompleto }}</h3>
-              <p class="profile-role">{{ user.cargo }}</p>
-
-              <div class="state-box">
-                <div>
-                  <span class="state-box__label">Estado de usuario</span>
-                  <span class="state-box__value" [class.inactive]="!user.activo">
-                    {{ user.activo ? 'ACTIVO' : 'INACTIVO' }}
-                  </span>
-                </div>
-                <button class="switch" type="button" [class.active]="user.activo" (click)="toggleEstadoUsuario()">
-                  <span></span>
-                </button>
-              </div>
-            </div>
-          </article>
-
-          <article class="access-summary">
-            <h4><i class="fa-solid fa-circle-info"></i> Resumen de acceso</h4>
-            <div class="summary-row">
-              <span>Roles activos</span>
-              <strong>{{ activeRolesCount }}</strong>
-            </div>
-            <div class="summary-row">
-              <span>Último ingreso</span>
-              <strong>{{ user.ultimoIngreso }}</strong>
-            </div>
-          </article>
-        </aside>
-
-        <section class="right-column">
-          <div class="tabs-shell">
-            <button
-              type="button"
-              class="tab-btn"
-              [class.active]="activeTab === 'datos'"
-              (click)="setTab('datos')"
-            >
-              <i class="fa-solid fa-user"></i>
-              Datos personales
-            </button>
-
-            <button
-              type="button"
-              class="tab-btn"
-              [class.active]="activeTab === 'roles'"
-              (click)="setTab('roles')"
-            >
-              <i class="fa-solid fa-shield-halved"></i>
-              Roles y permisos
-            </button>
-          </div>
-
-          <article class="tab-card" *ngIf="activeTab === 'datos'">
-            <div class="ui-grid">
-              <div class="ui-field ui-col-6">
-                <label class="ui-label">Identificación</label>
-                <div class="ui-input-group">
-                  <input class="ui-control" type="text" [(ngModel)]="searchIdentification" placeholder="Ej: 10203040"
-                    (keyup.enter)="consultarUsuario()">
-                  <button class="ui-addon-btn search-btn" type="button" (click)="consultarUsuario()" [disabled]="loading">
-                    <i class="fa-solid fa-magnifying-glass"></i>
-                  </button>
-                </div>
-              </div>
-          
-              <div class="ui-field ui-col-6">
-                <label class="ui-label">Usuario empresarial</label>
-                <input class="ui-control" type="text" [(ngModel)]="user.usuarioEmpresarial" readonly>
-              </div>
-          
-              <div class="ui-field ui-col-6">
-                <label class="ui-label">Grado</label>
-                <input class="ui-control" type="text" [(ngModel)]="user.grado" readonly>
-              </div>
-          
-              <div class="ui-field ui-col-6">
-                <label class="ui-label">Nombre completo</label>
-                <input class="ui-control" type="text" [(ngModel)]="user.nombreCompleto" readonly>
-              </div>
-          
-              <div class="ui-field ui-col-6">
-                <label class="ui-label">Correo institucional</label>
-                <input class="ui-control" type="email" [(ngModel)]="user.email" readonly>
-              </div>
-          
-              <div class="ui-field ui-col-6">
-                <label class="ui-label">Teléfono</label>
-                <input class="ui-control" type="text" [(ngModel)]="user.telefono" readonly>
-              </div>
-          
-              <div class="ui-field ui-col-6">
-                <label class="ui-label">Situación laboral</label>
-                <input class="ui-control" type="text" [(ngModel)]="user.situacionLaboral" readonly>
-              </div>
-          
-              <div class="ui-field ui-col-6">
-                <label class="ui-label">Unidad</label>
-                <input class="ui-control" type="text" [(ngModel)]="user.unidadFisica" readonly>
-              </div>
-          
-              <div class="ui-field ui-col-6">
-                <label class="ui-label">Grupo donde labora</label>
-                <input class="ui-control" type="text" [(ngModel)]="user.unidad" readonly>
-              </div>
-          
-          
-              <div class="ui-field ui-col-6">
-                <label class="ui-label">Cargo</label>
-                <input class="ui-control" type="text" [(ngModel)]="user.cargo" readonly>
-              </div>
-          
-            </div>
-          
-            <div class="tab-actions" *ngIf="activeTab === 'datos'">
-              <div class="tab-actions tab-actions--separated" *ngIf="activeTab === 'datos'">
-                <button class="ui-btn primary" type="button" (click)="guardarDatosUsuario()" [disabled]="loading">
-                  <i class="fa-solid fa-floppy-disk"></i>
-                  {{ loading ? 'Guardando...' : 'Guardar' }}
-                </button>
-          
-                <button class="ui-btn secondary" type="button" (click)="prepararNuevoUsuario()" *ngIf="user">
-                  <i class="fa-solid fa-user-plus"></i>
-                  Nuevo usuario
-                </button>
-              </div>
-            </div>
-          
-          </article>
-
-          
-
-          <article class="tab-card" *ngIf="activeTab === 'roles'">
-            <div class="roles-head">
-              <h3>Control de acceso</h3>
-              <button class="ui-btn secondary" type="button" (click)="agregarRol()">
-                <i class="fa-solid fa-plus"></i>
-                Agregar rol
-              </button>
-            </div>
-
-            <div class="role-add-form" *ngIf="showAddRoleForm">
-              <div class="ui-grid">
-                <div class="ui-field ui-col-6">
-                  <label class="ui-label">Rol</label>
-                  <select class="ui-control" [(ngModel)]="newRole.rolId" [disabled]="editingRole !== null">
-                    <option [ngValue]="null">Seleccione un rol</option>
-                    <option *ngFor="let role of rolesCatalogo" [ngValue]="role.id">
-                      {{ role.nombre || ('Rol ' + role.id) }}
-                    </option>
-                  </select>
-                </div>
-
-                <div class="ui-field ui-col-6">
-                  <label class="ui-label">Fecha fin</label>
-                  <input class="ui-control" type="date" [(ngModel)]="newRole.fechaFin">
-                </div>
-
-                <div class="ui-field ui-col-12">
-                  <label class="ui-label">Justificación</label>
-                  <textarea class="ui-control" rows="3" [(ngModel)]="newRole.justificacion" placeholder="Motivo de la asignación"></textarea>
-                </div>
-              </div>
-
-              <div class="tab-actions">
-                <button class="ui-btn secondary" type="button" (click)="cancelarNuevoRol()">
-                  <i class="fa-solid fa-ban"></i>
-                  Cancelar
-                </button>
-                <button class="ui-btn primary" type="button" (click)="guardarRoles()" [disabled]="savingRole">
-                  <i class="fa-solid fa-floppy-disk"></i>
-                  {{ savingRole ? 'Guardando...' : (editingRole ? 'Actualizar cambios' : 'Guardar rol') }}
-                </button>
-              </div>
-            </div>
-
-            <div class="roles-list" *ngIf="rolesVigentes.length > 0; else noRoles">
-              <div class="role-item" *ngFor="let rol of rolesVigentes">
-                <div class="role-grid role-grid--labels">
-                  <div class="role-label">
-                    <span class="role-label__title">Rol</span>
-                    <strong>{{ rol.nombre }}</strong>
-                  </div>
-
-                  <div class="role-label">
-                    <span class="role-label__title">Estado</span>
-                    <span class="ui-badge" [class.success]="rol.estado === 'Vigente'" [class.warning]="rol.estado === 'Vencido'">
-                      {{ rol.estado }}
-                    </span>
-                  </div>
-
-                  <div class="role-label">
-                    <span class="role-label__title">Fecha expiración</span>
-                    <strong>{{ rol.fechaExpiracion || 'Sin fecha' }}</strong>
-                  </div>
-
-                  <div class="role-label role-label--full">
-                    <span class="role-label__title">Justificación</span>
-                    <strong>{{ rol.justificacion || 'Sin justificación' }}</strong>
-                  </div>
-                </div>
-
-                <div class="tab-actions">
-                  <button
-                    class="ui-btn secondary"
-                    type="button"
-                    (click)="prepararEdicionRol(rol)"
-                  >
-                    <i class="fa-solid fa-pen-to-square"></i>
-                    Editar
-                  </button>
-                  <button
-                    class="ui-btn secondary"
-                    type="button"
-                    (click)="eliminarRol(rol)"
-                    *ngIf="rol.id === superAdministradorRolId"
-                    [disabled]="deletingRoleId === rol.id"
-                  >
-                    <i class="fa-solid fa-trash"></i>
-                    {{ deletingRoleId === rol.id ? 'Retirando...' : 'Retirar rol' }}
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <ng-template #noRoles>
-              <div class="news-state">
-                El usuario no tiene roles asignados actualmente.
-              </div>
-            </ng-template>
-          </article>          
-        </section>
-        
-      </div>
-
-      <ng-template #emptyState>
-        <div class="empty-state">
-          <i class="fa-solid fa-user-plus"></i>
-          <h3>Consulta un usuario para iniciar</h3>
-          <p>Ingresa la identificación y consulta para administrar datos y permisos.</p>
-
-          <div class="empty-search">
-            <input class="ui-control" type="text" [(ngModel)]="searchIdentification" placeholder="Identificación" (keyup.enter)="consultarUsuario()">
-            <button class="ui-btn secondary" type="button" (click)="consultarUsuario()" [disabled]="loading">
-              <i class="fa-solid fa-magnifying-glass"></i>
-              {{ loading ? 'Consultando...' : 'Consultar' }}
-            </button>
-          </div>
-        </div>
-      </ng-template>    
-      
-      
+      <app-usuario-form
+        [user]="user"
+        [rolesCatalogo]="rolesCatalogo"
+        [loading]="loading"
+        [savingRole]="savingRole"
+        [deletingRoleId]="deletingRoleId"
+        [superAdministradorRolId]="superAdministradorRolId"
+        (consultar)="consultarUsuario($event)"
+        (guardarDatos)="guardarDatosUsuario($event)"
+        (nuevoUsuario)="prepararNuevoUsuario()"
+        (guardarRol)="guardarRoles($event)"
+        (eliminarRol)="eliminarRol($event)"
+      ></app-usuario-form>
     </div>
   </div>
 
-  <div class="ui-panel users-table-card">
-        <div class="ui-panel__head">
-          <div class="ui-panel__title">
-            <i class="fa-solid fa-users"></i>
-            Usuarios existentes
-          </div>
-          <div class="ui-panel__actions">
-            <span class="ui-badge info" *ngIf="totalUsuariosListado > 0">
-              Registros: {{ totalUsuariosListado }}
-            </span>  
-          </div>
-        </div>
-
-        <div class="ui-panel__body">
-          <div class="ui-grid">
-            <div class="ui-field ui-col-6">
-              <label class="ui-label">Buscar por nombre</label>
-              <input
-                class="ui-control"
-                type="text"
-                [(ngModel)]="searchNombreListado"
-                (ngModelChange)="onSearchNombreListadoChange()"
-                placeholder="Escribe un nombre (mínimo 6 caracteres)..."
-              >
-              <small class="search-hint">Al buscar, la tabla mostrará solo coincidencias desde el carácter {{ minSearchChars }}.</small>
-            </div>
-          </div>
-
-          <div class="empty-state" *ngIf="loadingListado">
-            <i class="fa-solid fa-circle-notch fa-spin"></i>
-            <p>Consultando usuarios...</p>
-          </div>
-
-          <div class="ui-table-wrap" *ngIf="!loadingListado && usuariosListado.length > 0; else noUsersTable">
-            <table class="ui-table">
-              <thead>
-                <tr>
-                  <th>Usuario empresarial</th>
-                  <th>Grado y nombre</th>
-                  <th>Rol</th>
-                  <th>Fecha vencimiento rol</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr *ngFor="let item of usuariosListadoPaginado">
-                  <td>{{ item.username || 'N/A' }}</td>
-                  <td>{{ item.nombreCompleto || 'N/A' }}</td>
-                  <td>{{ item.rol || 'Sin rol' }}</td>
-                  <td>{{ item.fechaFinRol || 'Sin fecha' }}</td>
-                  <td>
-                    <div class="table-actions">
-                      <button class="ui-btn secondary" type="button" (click)="editarDesdeListado(item)">
-                        <i class="fa-solid fa-pen-to-square"></i>
-                      </button>
-                      <button class="ui-btn secondary danger" type="button" (click)="abrirModalEliminarUsuario(item)">
-                        <i class="fa-solid fa-user-xmark"></i>
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-
-            <div class="table-pagination" *ngIf="totalUsuariosListado > 0">
-              <span class="pagination-summary">
-                Página {{ currentPage }} de {{ totalPaginasListado }} | Registros: {{ totalUsuariosListado }}
-              </span>
-              <div class="pagination-actions">
-                <button class="ui-btn secondary" type="button" (click)="prevPaginaListado()" [disabled]="!canGoPrevListado()">
-                  <i class="fa-solid fa-chevron-left"></i>
-                  Anterior
-                </button>
-                <button class="ui-btn secondary" type="button" (click)="nextPaginaListado()" [disabled]="!canGoNextListado()">
-                  Siguiente
-                  <i class="fa-solid fa-chevron-right"></i>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <ng-template #noUsersTable>
-            <div class="empty-state" *ngIf="!loadingListado">
-              <i class="fa-solid fa-users"></i>
-              <p>{{
-                isSearchMode
-                  ? ((searchNombreListado || '').trim().length < minSearchChars
-                      ? ('Escribe mínimo ' + minSearchChars + ' caracteres para activar la búsqueda.')
-                      : 'No hay resultados para la búsqueda.')
-                  : 'No hay usuarios para mostrar.'
-              }}</p>
-            </div>
-          </ng-template>
-        </div>
-      </div>
+  <app-usuarios-table
+    [usuarios]="usuariosListadoPaginado"
+    [loading]="loadingListado"
+    [isSearchMode]="isSearchMode"
+    [minSearchChars]="minSearchChars"
+    [currentPage]="currentPage"
+    [totalPaginas]="totalPaginasListado"
+    [totalUsuarios]="totalUsuariosListado"
+    [canGoPrev]="canGoPrevListado()"
+    [canGoNext]="canGoNextListado()"
+    [searchTerm]="searchNombreListado"
+    (buscar)="onSearchNombreListadoChange($event)"
+    (paginaAnterior)="prevPaginaListado()"
+    (paginaSiguiente)="nextPaginaListado()"
+    (editar)="editarDesdeListado($event)"
+    (eliminar)="abrirModalEliminarUsuario($event)"
+  ></app-usuarios-table>
 
   <div class="modal-backdrop" *ngIf="showDeleteUserModal">
     <div class="modal-card">
       <h3>Confirmar eliminación de usuario</h3>
+
       <p>
-        Para eliminar el usuario <strong>{{ deletingTarget?.username }}</strong>, escribe
-        <strong>ELIMINAR</strong>.
+        Para eliminar el usuario <strong>{{ deletingTarget?.username }}</strong
+        >, escribe <strong>ELIMINAR</strong>.
       </p>
 
-      <input
-        class="ui-control"
-        type="text"
-        [(ngModel)]="deleteConfirmText"
-        placeholder="Escribe ELIMINAR"
-      >
+      <form [formGroup]="deleteConfirmForm" (ngSubmit)="confirmarEliminarUsuario()">
+        <input
+          class="ui-control"
+          type="text"
+          formControlName="confirmacion"
+          placeholder="Escribe ELIMINAR"
+        />
 
-      <div class="tab-actions">
-        <button class="ui-btn secondary" type="button" (click)="cerrarModalEliminarUsuario()" [disabled]="deletingUser">
-          Cancelar
-        </button>
-        <button class="ui-btn primary" type="button" (click)="confirmarEliminarUsuario()" [disabled]="deletingUser">
-          {{ deletingUser ? 'Eliminando...' : 'Confirmar eliminación' }}
-        </button>
-      </div>
+        <small
+          class="field-error"
+          *ngIf="
+            deleteConfirmForm.controls.confirmacion.invalid &&
+            deleteConfirmForm.controls.confirmacion.touched
+          "
+        >
+          Este campo es obligatorio.
+        </small>
+
+        <div class="tab-actions">
+          <button
+            class="ui-btn secondary"
+            type="button"
+            (click)="cerrarModalEliminarUsuario()"
+            [disabled]="deletingUser"
+          >
+            Cancelar
+          </button>
+
+          <button
+            class="ui-btn primary"
+            type="submit"
+            [disabled]="deletingUser || deleteConfirmForm.invalid"
+          >
+            {{ deletingUser ? 'Eliminando...' : 'Confirmar eliminación' }}
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 </section>

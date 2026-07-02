@@ -1,0 +1,371 @@
+<div class="admin-grid" *ngIf="user; else emptyState">
+  <aside class="left-column">
+    <article class="profile-card">
+      <div class="profile-card__cover" [class.inactive]="!usuarioForm.controls.activo.value"></div>
+
+      <div class="profile-card__body">
+        <img
+          class="profile-avatar"
+          [src]="
+            user.fotoUrl ||
+            'https://ui-avatars.com/api/?name=' +
+              user.nombreCompleto +
+              '&background=002a66&color=fff&size=160'
+          "
+          alt="Foto de usuario"
+        />
+
+        <h3 class="profile-name">{{ usuarioForm.controls.nombreCompleto.value }}</h3>
+        <p class="profile-role">{{ usuarioForm.controls.cargo.value }}</p>
+
+        <div class="state-box">
+          <div>
+            <span class="state-box__label">Estado de usuario</span>
+            <span class="state-box__value" [class.inactive]="!usuarioForm.controls.activo.value">
+              {{ usuarioForm.controls.activo.value ? 'ACTIVO' : 'INACTIVO' }}
+            </span>
+          </div>
+
+          <button
+            class="switch"
+            type="button"
+            [class.active]="usuarioForm.controls.activo.value"
+            (click)="toggleEstadoUsuario()"
+          >
+            <span></span>
+          </button>
+        </div>
+      </div>
+    </article>
+
+    <article class="access-summary">
+      <h4><i class="fa-solid fa-circle-info"></i> Resumen de acceso</h4>
+
+      <div class="summary-row">
+        <span>Roles activos</span>
+        <strong>{{ activeRolesCount }}</strong>
+      </div>
+
+      <div class="summary-row">
+        <span>Último ingreso</span>
+        <strong>{{ usuarioForm.controls.ultimoIngreso.value }}</strong>
+      </div>
+    </article>
+  </aside>
+
+  <section class="right-column">
+    <div class="tabs-shell">
+      <button
+        type="button"
+        class="tab-btn"
+        [class.active]="activeTab === 'datos'"
+        (click)="setTab('datos')"
+      >
+        <i class="fa-solid fa-user"></i>
+        Datos personales
+      </button>
+
+      <button
+        type="button"
+        class="tab-btn"
+        [class.active]="activeTab === 'roles'"
+        (click)="setTab('roles')"
+      >
+        <i class="fa-solid fa-shield-halved"></i>
+        Roles y permisos
+      </button>
+    </div>
+
+    <article class="tab-card" *ngIf="activeTab === 'datos'">
+      <form [formGroup]="consultaForm" class="consulta-form" (ngSubmit)="onConsultar()">
+        <div class="ui-grid">
+          <div class="ui-col-6">
+            <app-ui-input
+              formControlName="identificacion"
+              label="Identificación"
+              placeholder="Ej: 10203040"
+              [maxlength]="20"
+              [error]="getFieldError('consulta', 'identificacion') || ''"
+              (enterPressed)="onConsultar()"
+            ></app-ui-input>
+          </div>
+
+          <div class="ui-col-6 consulta-actions">
+            <app-ui-button
+              type="submit"
+              variant="secondary"
+              icon="fa-solid fa-magnifying-glass"
+              [disabled]="loading || consultaForm.invalid"
+              [loading]="loading"
+            >
+              {{ loading ? 'Consultando...' : 'Consultar' }}
+            </app-ui-button>
+          </div>
+        </div>
+      </form>
+
+      <form [formGroup]="usuarioForm" (ngSubmit)="onGuardarDatos()">
+        <div class="ui-grid">
+          <div class="ui-col-6">
+            <app-ui-input
+              formControlName="usuarioEmpresarial"
+              label="Usuario empresarial"
+              [readonly]="true"
+              [error]="getFieldError('usuario', 'usuarioEmpresarial') || ''"
+            ></app-ui-input>
+          </div>
+
+          <div class="ui-col-6">
+            <app-ui-input
+              formControlName="grado"
+              label="Grado"
+              [readonly]="true"
+              [error]="getFieldError('usuario', 'grado') || ''"
+            ></app-ui-input>
+          </div>
+
+          <div class="ui-col-6">
+            <app-ui-input
+              formControlName="nombreCompleto"
+              label="Nombre completo"
+              [readonly]="true"
+              [error]="getFieldError('usuario', 'nombreCompleto') || ''"
+            ></app-ui-input>
+          </div>
+
+          <div class="ui-col-6">
+            <app-ui-input
+              formControlName="email"
+              label="Correo institucional"
+              type="email"
+              [readonly]="true"
+              [error]="getFieldError('usuario', 'email') || ''"
+            ></app-ui-input>
+          </div>
+
+          <div class="ui-col-6">
+            <app-ui-input
+              formControlName="telefono"
+              label="Teléfono"
+              [readonly]="true"
+              [error]="getFieldError('usuario', 'telefono') || ''"
+            ></app-ui-input>
+          </div>
+
+          <div class="ui-col-6">
+            <app-ui-input
+              formControlName="situacionLaboral"
+              label="Situación laboral"
+              [readonly]="true"
+              [error]="getFieldError('usuario', 'situacionLaboral') || ''"
+            ></app-ui-input>
+          </div>
+
+          <div class="ui-col-6">
+            <app-ui-input
+              formControlName="unidadFisica"
+              label="Unidad"
+              [readonly]="true"
+              [error]="getFieldError('usuario', 'unidadFisica') || ''"
+            ></app-ui-input>
+          </div>
+
+          <div class="ui-col-6">
+            <app-ui-input
+              formControlName="unidad"
+              label="Grupo donde labora"
+              [readonly]="true"
+              [error]="getFieldError('usuario', 'unidad') || ''"
+            ></app-ui-input>
+          </div>
+
+          <div class="ui-col-6">
+            <app-ui-input
+              formControlName="cargo"
+              label="Cargo"
+              [readonly]="true"
+              [error]="getFieldError('usuario', 'cargo') || ''"
+            ></app-ui-input>
+          </div>
+        </div>
+
+        <div class="tab-actions tab-actions--separated">
+          <app-ui-button
+            type="submit"
+            variant="primary"
+            icon="fa-solid fa-floppy-disk"
+            [disabled]="loading || usuarioForm.invalid"
+            [loading]="loading"
+          >
+            {{ loading ? 'Guardando...' : 'Guardar' }}
+          </app-ui-button>
+
+          <app-ui-button
+            variant="secondary"
+            icon="fa-solid fa-user-plus"
+            (buttonClick)="onNuevoUsuario()"
+          >
+            Nuevo usuario
+          </app-ui-button>
+        </div>
+      </form>
+    </article>
+
+    <article class="tab-card" *ngIf="activeTab === 'roles'">
+      <div class="roles-head">
+        <h3>Control de acceso</h3>
+
+        <app-ui-button variant="secondary" icon="fa-solid fa-plus" (buttonClick)="agregarRol()">
+          Agregar rol
+        </app-ui-button>
+      </div>
+
+      <form
+        class="role-add-form"
+        *ngIf="showAddRoleForm"
+        [formGroup]="rolForm"
+        (ngSubmit)="onGuardarRol()"
+      >
+        <div class="ui-grid">
+          <div class="ui-col-6">
+            <app-ui-select
+              formControlName="rolId"
+              label="Rol"
+              placeholder="Seleccione un rol"
+              [options]="rolOptions"
+              [disabled]="editingRole !== null"
+              [error]="getFieldError('rol', 'rolId') || ''"
+            ></app-ui-select>
+          </div>
+
+          <div class="ui-col-6">
+            <app-ui-input
+              formControlName="fechaFin"
+              label="Fecha fin"
+              type="date"
+              [error]="getFieldError('rol', 'fechaFin') || ''"
+            ></app-ui-input>
+          </div>
+
+          <div class="ui-col-12">
+            <app-ui-input
+              formControlName="justificacion"
+              label="Justificación"
+              placeholder="Motivo de la asignación"
+              [maxlength]="500"
+              [rows]="3"
+              [multiline]="true"
+              [error]="getFieldError('rol', 'justificacion') || ''"
+            ></app-ui-input>
+          </div>
+        </div>
+
+        <div class="tab-actions">
+          <app-ui-button
+            variant="secondary"
+            icon="fa-solid fa-ban"
+            (buttonClick)="cancelarNuevoRol()"
+          >
+            Cancelar
+          </app-ui-button>
+
+          <app-ui-button
+            type="submit"
+            variant="primary"
+            icon="fa-solid fa-floppy-disk"
+            [disabled]="savingRole || rolForm.invalid"
+            [loading]="savingRole"
+          >
+            {{ savingRole ? 'Guardando...' : editingRole ? 'Actualizar cambios' : 'Guardar rol' }}
+          </app-ui-button>
+        </div>
+      </form>
+
+      <div class="roles-list" *ngIf="rolesVigentes.length > 0; else noRoles">
+        <div class="role-item" *ngFor="let rol of rolesVigentes">
+          <div class="role-grid role-grid--labels">
+            <div class="role-label">
+              <span class="role-label__title">Rol</span>
+              <strong>{{ rol.nombre }}</strong>
+            </div>
+
+            <div class="role-label">
+              <span class="role-label__title">Estado</span>
+              <span
+                class="ui-badge"
+                [class.success]="rol.estado === 'Vigente'"
+                [class.warning]="rol.estado === 'Vencido'"
+              >
+                {{ rol.estado }}
+              </span>
+            </div>
+
+            <div class="role-label">
+              <span class="role-label__title">Fecha expiración</span>
+              <strong>{{ rol.fechaExpiracion || 'Sin fecha' }}</strong>
+            </div>
+
+            <div class="role-label role-label--full">
+              <span class="role-label__title">Justificación</span>
+              <strong>{{ rol.justificacion || 'Sin justificación' }}</strong>
+            </div>
+          </div>
+
+          <div class="tab-actions">
+            <app-ui-button
+              variant="secondary"
+              icon="fa-solid fa-pen-to-square"
+              (buttonClick)="prepararEdicionRol(rol)"
+            >
+              Editar
+            </app-ui-button>
+
+            <app-ui-button
+              *ngIf="rol.id === superAdministradorRolId"
+              variant="danger"
+              icon="fa-solid fa-trash"
+              [disabled]="deletingRoleId === rol.id"
+              [loading]="deletingRoleId === rol.id"
+              (buttonClick)="eliminarRol.emit(rol)"
+            >
+              {{ deletingRoleId === rol.id ? 'Retirando...' : 'Retirar rol' }}
+            </app-ui-button>
+          </div>
+        </div>
+      </div>
+
+      <ng-template #noRoles>
+        <div class="news-state">El usuario no tiene roles asignados actualmente.</div>
+      </ng-template>
+    </article>
+  </section>
+</div>
+
+<ng-template #emptyState>
+  <div class="empty-state">
+    <i class="fa-solid fa-user-plus"></i>
+    <h3>Consulta un usuario para iniciar</h3>
+    <p>Ingresa la identificación y consulta para administrar datos y permisos.</p>
+
+    <form class="empty-search" [formGroup]="consultaForm" (ngSubmit)="onConsultar()">
+      <app-ui-input
+        formControlName="identificacion"
+        label="Identificación"
+        placeholder="Identificación"
+        [maxlength]="20"
+        [error]="getFieldError('consulta', 'identificacion') || ''"
+        (enterPressed)="onConsultar()"
+      ></app-ui-input>
+
+      <app-ui-button
+        type="submit"
+        variant="secondary"
+        icon="fa-solid fa-magnifying-glass"
+        [disabled]="loading || consultaForm.invalid"
+        [loading]="loading"
+      >
+        {{ loading ? 'Consultando...' : 'Consultar' }}
+      </app-ui-button>
+    </form>
+  </div>
+</ng-template>
