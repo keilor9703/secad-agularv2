@@ -4,10 +4,11 @@
 
 .access-section {
   position: relative;
-  border: 1px solid rgba(var(--policia-oscuro-rgb), 0.12);
+  border: 1px solid rgba(21, 27, 59, 0.14);
   border-radius: 12px;
   background: var(--ui-surface);
-  padding: 22px 14px 14px;
+  padding: 26px 14px 14px;
+  margin-top: 8px;
 }
 
 .access-section h3 {
@@ -28,20 +29,12 @@
   gap: 14px;
 }
 
-.roles-block__head {
+.access-section__toolbar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 12px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid rgba(var(--policia-oscuro-rgb), 0.1);
-}
-
-.roles-block__head h4 {
-  margin: 0;
-  color: var(--policia-oscuro);
-  font-size: calc(14px * var(--font-size-scale));
-  font-weight: 900;
+  padding-bottom: 2px;
 }
 
 .role-add-form {
@@ -98,7 +91,7 @@
 }
 
 @media (max-width: 760px) {
-  .roles-block__head,
+  .access-section__toolbar,
   .form-actions,
   .table-actions {
     align-items: stretch;
@@ -113,7 +106,6 @@
   }
 
   .access-section h3,
-  .roles-block__head h4,
   .roles-table td,
   .roles-table th {
     color: var(--ui-text);
