@@ -207,23 +207,6 @@
   padding: 16px;
 }
 
-.consulta-cargo-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
-  margin-bottom: 16px;
-}
-
-.consulta-form,
-.cargo-field {
-  min-width: 0;
-}
-
-.user-data-form {
-  display: grid;
-  gap: 16px;
-}
-
 .form-section {
   position: relative;
   border: 1px solid rgba(var(--policia-oscuro-rgb), 0.12);
@@ -236,6 +219,11 @@
 .form-section--plain {
   margin-top: 0;
   padding-top: 14px;
+}
+
+.user-data-grid {
+  align-items: start;
+  row-gap: 10px;
 }
 
 .form-section h3 {
@@ -317,7 +305,7 @@
     grid-template-columns: 1fr;
   }
 
-  .consulta-cargo-grid {
+  .user-data-grid {
     grid-template-columns: 1fr;
   }
 
