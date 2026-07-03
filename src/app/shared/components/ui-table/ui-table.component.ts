@@ -1,8 +1,17 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
+import {
+  Component,
+  EventEmitter,
+  Input,
+  OnChanges,
+  OnDestroy,
+  Output,
+  SimpleChanges,
+} from '@angular/core';
 import { ReactiveFormsModule, UntypedFormControl, UntypedFormGroup } from '@angular/forms';
+import { Subscription } from 'rxjs';
 
-import { UiPaginationComponent } from '../ui-pagination/ui-pagination.component';
+import { UiInputComponent } from '../ui-input/ui-input.component';
 import {
   UiTableAction,
   UiTableActionEvent,
@@ -16,11 +25,11 @@ import {
 @Component({
   selector: 'app-ui-table',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, UiPaginationComponent],
+  imports: [CommonModule, ReactiveFormsModule, UiInputComponent],
   templateUrl: './ui-table.component.html',
   styleUrls: ['./ui-table.component.scss'],
 })
-export class UiTableComponent<T = any> implements OnChanges {
+export class UiTableComponent<T = any> implements OnChanges, OnDestroy {
   @Input() labelledBy: string | null = null;
   @Input() title = '';
   @Input() titleIcon = 'fa-solid fa-table-list';
@@ -42,6 +51,9 @@ export class UiTableComponent<T = any> implements OnChanges {
 
   readonly titleId = `ui-table-title-${Math.random().toString(36).slice(2)}`;
   readonly filterForm = new UntypedFormGroup({});
+  private readonly filterChangesSubscription: Subscription = this.filterForm.valueChanges.subscribe(() =>
+    this.emitFilterChange(),
+  );
 
   sortedColumn: string | null = null;
   sortDirection: UiTableSortDirection = 'asc';
@@ -50,6 +62,10 @@ export class UiTableComponent<T = any> implements OnChanges {
     if (changes['filters']) {
       this.syncFilterControls();
     }
+  }
+
+  ngOnDestroy(): void {
+    this.filterChangesSubscription.unsubscribe();
   }
 
   /** Mantiene los controles reactivos alineados con la configuración de filtros recibida. */
@@ -96,6 +112,34 @@ export class UiTableComponent<T = any> implements OnChanges {
 
   get totalRecords(): number {
     return this.total || this.rows.length;
+  }
+
+  get totalPages(): number {
+    return Math.max(1, Math.ceil(this.totalRecords / Math.max(this.pageSize, 1)));
+  }
+
+  get startItem(): number {
+    if (this.totalRecords === 0) {
+      return 0;
+    }
+
+    return (this.page - 1) * this.pageSize + 1;
+  }
+
+  get endItem(): number {
+    return Math.min(this.page * this.pageSize, this.totalRecords);
+  }
+
+  get visiblePages(): number[] {
+    return Array.from({ length: this.totalPages }, (_, index) => index + 1).slice(0, 5);
+  }
+
+  goToPage(nextPage: number): void {
+    const targetPage = Math.min(Math.max(nextPage, 1), this.totalPages);
+
+    if (targetPage !== this.page) {
+      this.pageChange.emit(targetPage);
+    }
   }
 
   getCellValue(row: T, column: UiTableColumn<T>): string | number {

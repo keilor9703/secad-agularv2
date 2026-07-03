@@ -6,6 +6,7 @@ export type UiTableSortDirection = 'asc' | 'desc';
 export interface UiTableBadge {
   text: string;
   variant?: UiTableBadgeVariant;
+  icon?: string;
 }
 
 export interface UiTableColumn<T> {

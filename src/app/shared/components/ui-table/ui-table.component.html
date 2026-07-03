@@ -14,16 +14,13 @@
     <div class="ui-panel__body">
       <form class="ui-table-filters" *ngIf="filters.length > 0" [formGroup]="filterForm">
         <div class="ui-table-filter" *ngFor="let filter of filters">
-          <label class="ui-label" [for]="filterControlId(filter)">{{ filter.label }}</label>
-
-          <input
-            class="ui-control"
-            [id]="filterControlId(filter)"
+          <app-ui-input
+            [inputId]="filterControlId(filter)"
             [type]="filter.type ?? 'text'"
-            [formControlName]="filter.key"
+            [label]="filter.label"
             [placeholder]="filter.placeholder ?? 'Filtrar...'"
-            (input)="emitFilterChange()"
-          />
+            [formControlName]="filter.key"
+          ></app-ui-input>
         </div>
       </form>
 
@@ -49,7 +46,10 @@
             <tr *ngFor="let row of rows; trackBy: trackByIndex">
               <td *ngFor="let column of columns" [class]="getCellClass(column)">
                 <ng-container *ngIf="getBadge(row, column) as badge; else textCell">
-                  <span [class]="getBadgeClass(badge)">{{ badge.text }}</span>
+                  <span [class]="getBadgeClass(badge)">
+                    {{ badge.text }}
+                    <i *ngIf="badge.icon" [class]="badge.icon"></i>
+                  </span>
                 </ng-container>
 
                 <ng-template #textCell>{{ getCellValue(row, column) }}</ng-template>
@@ -82,13 +82,36 @@
         <span>{{ emptyMessage }}</span>
       </div>
 
-      <app-ui-pagination
-        *ngIf="showPagination && totalRecords > pageSize"
-        [total]="totalRecords"
-        [page]="page"
-        [pageSize]="pageSize"
-        (pageChange)="pageChange.emit($event)"
-      ></app-ui-pagination>
+      <div class="ui-table-pagination" *ngIf="showPagination && totalRecords > 0">
+        <span class="ui-table-pagination__summary">
+          Showing {{ startItem }} to {{ endItem }} of {{ totalRecords }} results
+        </span>
+
+        <div class="ui-table-pagination__actions">
+          <button class="ui-table-page-btn" type="button" [disabled]="page <= 1" (click)="goToPage(page - 1)">
+            Previous
+          </button>
+
+          <button
+            class="ui-table-page-btn"
+            type="button"
+            *ngFor="let pageNumber of visiblePages"
+            [class.active]="pageNumber === page"
+            (click)="goToPage(pageNumber)"
+          >
+            {{ pageNumber }}
+          </button>
+
+          <button
+            class="ui-table-page-btn"
+            type="button"
+            [disabled]="page >= totalPages"
+            (click)="goToPage(page + 1)"
+          >
+            Next
+          </button>
+        </div>
+      </div>
     </div>
   </section>
 </ng-container>

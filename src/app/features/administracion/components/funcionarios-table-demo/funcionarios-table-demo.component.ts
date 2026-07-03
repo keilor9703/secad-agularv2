@@ -1,11 +1,8 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 
-import { ToastService } from '../../../../core/services/toast.service';
 import { UiTableComponent } from '../../../../shared/components/ui-table/ui-table.component';
 import {
-  UiTableAction,
-  UiTableActionEvent,
   UiTableColumn,
   UiTableFilter,
   UiTableSortEvent,
@@ -25,8 +22,6 @@ import { FuncionariosDemoTableService } from '../../services/funcionarios-demo-t
 })
 export class FuncionariosTableDemoComponent {
   private readonly funcionariosDemoTableService = inject(FuncionariosDemoTableService);
-  private readonly toast = inject(ToastService);
-
   private readonly funcionarios = this.funcionariosDemoTableService.getFuncionarios();
 
   currentPage = 1;
@@ -38,62 +33,34 @@ export class FuncionariosTableDemoComponent {
    * Para reutilizar la tabla con otro modelo:
    * 1. Cambie FuncionarioListado por la interfaz del nuevo modelo.
    * 2. Envie el arreglo al input [rows].
-   * 3. Defina columnas usando la propiedad key o una funcion value.
+   * 3. Defina columnas usando key, value o badge.
    * 4. Cambie [title] para nombrar el nuevo listado.
+   * 5. Si necesita acciones, envie [actions] y escuche (actionClick); este demo no las usa para respetar la imagen.
    */
   readonly columns: UiTableColumn<FuncionarioListado>[] = [
-    { key: 'especialidad', label: 'Especialidad', sortable: true, width: '17%' },
-    { key: 'identificacion', label: 'Identificación', sortable: true, width: '16%' },
-    { key: 'nombresApellidos', label: 'Nombres / Apellidos', sortable: true, width: '22%' },
-    { key: 'correo', label: 'Email', sortable: true, width: '20%' },
-    { key: 'cargo', label: 'Cargo', sortable: true, width: '18%' },
+    { key: 'name', label: 'Name', sortable: true, width: '12%' },
+    { key: 'email', label: 'Email', sortable: true, width: '24%' },
+    { key: 'position', label: 'Position', sortable: true, width: '22%' },
+    { key: 'company', label: 'Company', sortable: true, width: '18%' },
+    { key: 'country', label: 'Country', sortable: true, width: '16%' },
     {
       key: 'estado',
-      label: 'Estado',
+      label: 'Status',
       align: 'center',
       sortable: true,
-      width: '10%',
+      width: '8%',
       badge: (row) => this.getEstadoBadge(row.estado),
     },
   ];
 
   /**
-   * Los filtros se conectan por key; el componente emite filterChange y este demo decide como filtrar.
-   * Para otra pantalla, puede cambiar estas keys por campos de su propio modelo o enviarlas a un servicio.
+   * Los filtros se renderizan con app-ui-input y Reactive Forms dentro de app-ui-table.
+   * Para otro modulo, cambie estas keys por campos del modelo o envie sus valores al servicio.
    */
   readonly filters: UiTableFilter[] = [
     { key: 'especialidad', label: 'Especialidad', placeholder: 'Filtrar...' },
     { key: 'identificacion', label: 'Identificación', placeholder: 'Filtrar...' },
-    { key: 'nombresApellidos', label: 'Nombres / Apellidos', placeholder: 'Filtrar...' },
-  ];
-
-  /**
-   * Cada accion recibe la fila completa en actionClick.
-   * Para ocultar o bloquear acciones por fila, use visible(row) o disabled(row).
-   */
-  readonly actions: UiTableAction<FuncionarioListado>[] = [
-    {
-      id: 'ver',
-      label: 'Ver',
-      icon: 'fa-solid fa-eye',
-      variant: 'info',
-      title: 'Ver funcionario',
-    },
-    {
-      id: 'editar',
-      label: 'Editar',
-      icon: 'fa-solid fa-pen-to-square',
-      variant: 'secondary',
-      title: 'Editar funcionario',
-    },
-    {
-      id: 'retirar',
-      label: 'Retirar',
-      icon: 'fa-solid fa-user-xmark',
-      variant: 'danger',
-      title: 'Retirar funcionario',
-      disabled: (row) => row.estado === 'Inactivo',
-    },
+    { key: 'name', label: 'Nombres / Apellidos', placeholder: 'Filtrar...' },
   ];
 
   get totalFuncionarios(): number {
@@ -120,11 +87,6 @@ export class FuncionariosTableDemoComponent {
   /** Cambia la pagina visible sin modificar los datos originales. */
   onPageChange(page: number): void {
     this.currentPage = page;
-  }
-
-  /** Atiende acciones de ejemplo; en un modulo real aqui se llama el servicio o se abre un modal. */
-  onTableAction(event: UiTableActionEvent<FuncionarioListado>): void {
-    this.toast.info('Tabla de funcionarios', `${event.actionId}: ${event.row.nombresApellidos}`);
   }
 
   private get filteredFuncionarios(): FuncionarioListado[] {
@@ -156,16 +118,18 @@ export class FuncionariosTableDemoComponent {
     });
   }
 
-  private getEstadoBadge(estado: FuncionarioEstado): { text: string; variant: 'success' | 'warning' | 'danger' } {
-    if (estado === 'Activo') {
-      return { text: estado, variant: 'success' };
+  private getEstadoBadge(
+    estado: FuncionarioEstado,
+  ): { text: string; variant: 'success' | 'warning' | 'danger'; icon: string } {
+    if (estado === 'Success') {
+      return { text: estado, variant: 'success', icon: 'fa-solid fa-check' };
     }
 
-    if (estado === 'Novedad') {
-      return { text: estado, variant: 'warning' };
+    if (estado === 'Pending') {
+      return { text: estado, variant: 'warning', icon: 'fa-solid fa-clock' };
     }
 
-    return { text: estado, variant: 'danger' };
+    return { text: estado, variant: 'danger', icon: 'fa-solid fa-xmark' };
   }
 
   private normalize(value: unknown): string {
