@@ -1,5 +1,102 @@
-<div class="ui-table-wrap">
-  <table class="ui-table" [attr.aria-labelledby]="labelledBy">
-    <ng-content></ng-content>
-  </table>
-</div>
+<ng-container *ngIf="hasConfiguredTable; else projectedTable">
+  <section class="ui-panel ui-table-panel">
+    <div class="ui-panel__head" *ngIf="title">
+      <div class="ui-panel__title" [id]="titleId">
+        <i [class]="titleIcon"></i>
+        {{ title }}
+      </div>
+
+      <div class="ui-panel__actions" *ngIf="showRecordBadge">
+        <span class="ui-badge info">Registros: {{ totalRecords }}</span>
+      </div>
+    </div>
+
+    <div class="ui-panel__body">
+      <form class="ui-table-filters" *ngIf="filters.length > 0" [formGroup]="filterForm">
+        <div class="ui-table-filter" *ngFor="let filter of filters">
+          <label class="ui-label" [for]="filterControlId(filter)">{{ filter.label }}</label>
+
+          <input
+            class="ui-control"
+            [id]="filterControlId(filter)"
+            [type]="filter.type ?? 'text'"
+            [formControlName]="filter.key"
+            [placeholder]="filter.placeholder ?? 'Filtrar...'"
+            (input)="emitFilterChange()"
+          />
+        </div>
+      </form>
+
+      <div class="ui-table-wrap">
+        <table class="ui-table" [attr.aria-labelledby]="labelledBy || titleId">
+          <thead>
+            <tr>
+              <th
+                *ngFor="let column of columns"
+                [class]="getHeaderClass(column)"
+                [style.width]="column.width"
+                (click)="toggleSort(column)"
+              >
+                <span>{{ column.label }}</span>
+                <i *ngIf="column.sortable" [class]="getSortIcon(column)"></i>
+              </th>
+
+              <th *ngIf="actions.length > 0" class="align-center">Acciones</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr *ngFor="let row of rows; trackBy: trackByIndex">
+              <td *ngFor="let column of columns" [class]="getCellClass(column)">
+                <ng-container *ngIf="getBadge(row, column) as badge; else textCell">
+                  <span [class]="getBadgeClass(badge)">{{ badge.text }}</span>
+                </ng-container>
+
+                <ng-template #textCell>{{ getCellValue(row, column) }}</ng-template>
+              </td>
+
+              <td *ngIf="actions.length > 0">
+                <div class="ui-table-actions">
+                  <ng-container *ngFor="let action of actions">
+                    <button
+                      *ngIf="isActionVisible(action, row)"
+                      [class]="getActionClass(action)"
+                      type="button"
+                      [title]="action.title ?? action.label"
+                      [disabled]="isActionDisabled(action, row)"
+                      (click)="emitAction(action, row)"
+                    >
+                      <i [class]="action.icon"></i>
+                      <span>{{ action.label }}</span>
+                    </button>
+                  </ng-container>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="ui-table-empty" *ngIf="rows.length === 0">
+        <i class="fa-solid fa-table"></i>
+        <span>{{ emptyMessage }}</span>
+      </div>
+
+      <app-ui-pagination
+        *ngIf="showPagination && totalRecords > pageSize"
+        [total]="totalRecords"
+        [page]="page"
+        [pageSize]="pageSize"
+        (pageChange)="pageChange.emit($event)"
+      ></app-ui-pagination>
+    </div>
+  </section>
+</ng-container>
+
+<ng-template #projectedTable>
+  <div class="ui-table-wrap">
+    <table class="ui-table" [attr.aria-labelledby]="labelledBy">
+      <ng-content></ng-content>
+    </table>
+  </div>
+</ng-template>

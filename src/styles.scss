@@ -1245,6 +1245,18 @@ section.home-view {
   background: rgba(255, 255, 255, 0.16);
   color: #ffffff;
 }
+.ui-badge.neutral {
+  background: rgba(100, 116, 139, 0.14);
+  color: #334155;
+}
+.ui-badge.danger {
+  background: rgba(239, 68, 68, 0.14);
+  color: #991b1b;
+}
+.ui-badge.primary {
+  background: rgba(8, 166, 203, 0.16);
+  color: var(--policia-medio);
+}
 
 /* Mini buttons */
 .ui-mini-btn.danger {

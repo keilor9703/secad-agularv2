@@ -1,0 +1,16 @@
+<app-ui-table
+  title="Listado de Funcionarios"
+  titleIcon="fa-solid fa-list"
+  emptyMessage="No hay funcionarios para mostrar con los filtros aplicados."
+  [columns]="columns"
+  [rows]="funcionariosPaginados"
+  [filters]="filters"
+  [actions]="actions"
+  [total]="totalFuncionarios"
+  [page]="currentPage"
+  [pageSize]="pageSize"
+  (filterChange)="onFiltersChange($event)"
+  (sortChange)="onSortChange($event)"
+  (actionClick)="onTableAction($event)"
+  (pageChange)="onPageChange($event)"
+></app-ui-table>

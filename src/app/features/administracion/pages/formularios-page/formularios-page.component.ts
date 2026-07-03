@@ -3,6 +3,7 @@ import { Component, inject } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { ToastService } from '../../../../core/services/toast.service';
+import { FuncionariosTableDemoComponent } from '../../components/funcionarios-table-demo/funcionarios-table-demo.component';
 import { UiButtonComponent } from '../../../../shared/components/ui-button/ui-button.component';
 import { UiInputComponent } from '../../../../shared/components/ui-input/ui-input.component';
 import { UiSearchInputComponent } from '../../../../shared/components/ui-search-input/ui-search-input.component';
@@ -33,6 +34,7 @@ interface FormulariosDemoForm {
     UiInputComponent,
     UiSearchInputComponent,
     UiSelectComponent,
+    FuncionariosTableDemoComponent,
   ],
   templateUrl: './formularios-page.component.html',
   styleUrls: ['./formularios-page.component.scss'],
