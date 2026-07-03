@@ -35,6 +35,7 @@ export class UiSearchInputComponent implements ControlValueAccessor {
   @Input() hint = '';
   @Input() inputId = `ui-search-input-${nextUiSearchInputId++}`;
   @Input({ transform: numberAttribute }) maxlength: number | null = null;
+  @Input({ transform: booleanAttribute }) iconOnly = false;
   @Input({ transform: booleanAttribute }) required = false;
   @Input({ transform: booleanAttribute }) disabled = false;
   @Input({ transform: booleanAttribute }) clearable = true;
@@ -104,5 +105,9 @@ export class UiSearchInputComponent implements ControlValueAccessor {
     if (this.error) return `${this.inputId}-error`;
     if (this.hint) return `${this.inputId}-hint`;
     return null;
+  }
+
+  get searchLabel(): string {
+    return this.buttonText || 'Buscar';
   }
 }

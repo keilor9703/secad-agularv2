@@ -222,6 +222,11 @@
   margin-top: 8px;
 }
 
+.form-section--plain {
+  margin-top: 0;
+  padding-top: 14px;
+}
+
 .form-section h3 {
   position: absolute;
   top: -12px;
@@ -243,6 +248,17 @@
   justify-content: flex-end;
   gap: 10px;
   flex-wrap: wrap;
+}
+
+.roles-section {
+  display: grid;
+  gap: 16px;
+  margin-top: 0;
+}
+
+.roles-toolbar {
+  display: flex;
+  justify-content: flex-end;
 }
 
 .roles-head {
@@ -279,9 +295,7 @@
   background: rgba(var(--policia-oscuro-rgb), 0.02);
   padding: 12px;
   display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 10px;
-  align-items: start;
+  gap: 12px;
 }
 
 .role-grid {
@@ -321,6 +335,8 @@
 }
 
 .item-actions {
+  padding-top: 10px;
+  border-top: 1px solid rgba(var(--policia-oscuro-rgb), 0.1);
   display: flex;
   justify-content: flex-end;
   gap: 8px;

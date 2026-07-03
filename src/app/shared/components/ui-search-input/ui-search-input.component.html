@@ -39,12 +39,15 @@
 
     <button
       class="search-field__button"
+      [class.search-field__button--icon-only]="iconOnly"
       type="button"
       [disabled]="isDisabled"
+      [title]="searchLabel"
+      [attr.aria-label]="iconOnly ? searchLabel : null"
       (click)="emitSearch()"
     >
       <i [class]="icon" *ngIf="icon"></i>
-      <span>{{ buttonText }}</span>
+      <span *ngIf="!iconOnly">{{ buttonText }}</span>
     </button>
   </div>
 

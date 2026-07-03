@@ -75,6 +75,12 @@
   gap: 7px;
 }
 
+.search-field__button--icon-only {
+  width: var(--form-field-height, 42px);
+  min-width: var(--form-field-height, 42px);
+  padding: 0;
+}
+
 .search-field__button:hover:not(:disabled) {
   background: var(--policia-claro);
 }
@@ -121,11 +127,17 @@
     grid-template-columns: 1fr auto;
   }
 
-  .search-field__button {
+  .search-field__button:not(.search-field__button--icon-only) {
     grid-column: 1 / -1;
     min-height: 40px;
     border-left: 0;
     border-top: 1px solid var(--form-border-color, #cbd5e1);
+  }
+
+  .search-field__button--icon-only {
+    grid-column: auto;
+    border-top: 0;
+    border-left: 1px solid var(--form-border-color, #cbd5e1);
   }
 }
 
