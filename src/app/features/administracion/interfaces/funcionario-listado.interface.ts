@@ -1,14 +1,13 @@
-export type FuncionarioEstado = 'Success' | 'Pending' | 'Inactive';
+export type FuncionarioEstado = 'Activo' | 'Pendiente' | 'Inactivo';
 
 export interface FuncionarioListado {
   id: number;
   especialidad: string;
   identificacion: string;
-  name: string;
-  email: string;
-  position: string;
-  company: string;
-  country: string;
+  nombres: string;
   correo: string;
+  cargo: string;
+  dependencia: string;
+  ubicacion: string;
   estado: FuncionarioEstado;
 }

@@ -1,125 +1,182 @@
-<ng-container *ngIf="hasConfiguredTable; else projectedTable">
+@if (hasConfiguredTable()) {
   <section class="ui-panel ui-table-panel">
-    <div class="ui-panel__head" *ngIf="title">
-      <div class="ui-panel__title" [id]="titleId">
-        <i [class]="titleIcon"></i>
-        {{ title }}
-      </div>
+    @if (title()) {
+      <div class="ui-panel__head">
+        <div class="ui-panel__title" [id]="titleId">
+          <i [class]="titleIcon()"></i>
+          {{ title() }}
+        </div>
 
-      <div class="ui-panel__actions" *ngIf="showRecordBadge">
-        <span class="ui-badge info">Registros: {{ totalRecords }}</span>
+        @if (showRecordBadge()) {
+          <div class="ui-panel__actions">
+            <span class="ui-badge info">Registros: {{ totalRecords() }}</span>
+          </div>
+        }
       </div>
-    </div>
+    }
 
     <div class="ui-panel__body">
-      <form class="ui-table-filters" *ngIf="filters.length > 0" [formGroup]="filterForm">
-        <div class="ui-table-filter" *ngFor="let filter of filters">
-          <app-ui-input
-            [inputId]="filterControlId(filter)"
-            [type]="filter.type ?? 'text'"
-            [label]="filter.label"
-            [placeholder]="filter.placeholder ?? 'Filtrar...'"
-            [formControlName]="filter.key"
-          ></app-ui-input>
-        </div>
-      </form>
+      @if (filters().length > 0) {
+        <form class="ui-table-filters" [formGroup]="filterForm">
+          @for (filter of filters(); track trackFilter($index, filter)) {
+            <div class="ui-table-filter">
+              <app-ui-input
+                [inputId]="filterControlId(filter)"
+                [type]="filter.type ?? 'text'"
+                [label]="filter.label"
+                [placeholder]="filter.placeholder ?? 'Filtrar...'"
+                [formControlName]="filter.key"
+              ></app-ui-input>
+            </div>
+          }
+        </form>
+      }
 
       <div class="ui-table-wrap">
-        <table class="ui-table" [attr.aria-labelledby]="labelledBy || titleId">
+        <table class="ui-table" [attr.aria-labelledby]="labelledBy() || titleId">
           <thead>
             <tr>
-              <th
-                *ngFor="let column of columns"
-                [class]="getHeaderClass(column)"
-                [style.width]="column.width"
-                (click)="toggleSort(column)"
-              >
-                <span>{{ column.label }}</span>
-                <i *ngIf="column.sortable" [class]="getSortIcon(column)"></i>
-              </th>
+              @for (column of columns(); track trackColumn($index, column)) {
+                <th
+                  [class]="getHeaderClass(column)"
+                  [style.width]="column.width"
+                  (click)="toggleSort(column)"
+                >
+                  <span>{{ column.label }}</span>
 
-              <th *ngIf="actions.length > 0" class="align-center">Acciones</th>
+                  @if (column.sortable) {
+                    <i [class]="getSortIcon(column)"></i>
+                  }
+                </th>
+              }
+
+              @if (actions().length > 0) {
+                <th class="align-center">Acciones</th>
+              }
             </tr>
           </thead>
 
           <tbody>
-            <tr *ngFor="let row of rows; trackBy: trackByIndex">
-              <td *ngFor="let column of columns" [class]="getCellClass(column)">
-                <ng-container *ngIf="getBadge(row, column) as badge; else textCell">
-                  <span [class]="getBadgeClass(badge)">
-                    {{ badge.text }}
-                    <i *ngIf="badge.icon" [class]="badge.icon"></i>
-                  </span>
-                </ng-container>
+            @for (row of rows(); track trackRow($index, row)) {
+              <tr>
+                @for (column of columns(); track trackColumn($index, column)) {
+                  <td [class]="getCellClass(column)">
+                    @if (getBadge(row, column); as badge) {
+                      <span [class]="getBadgeClass(badge)">
+                        {{ badge.text }}
 
-                <ng-template #textCell>{{ getCellValue(row, column) }}</ng-template>
-              </td>
+                        @if (badge.icon) {
+                          <i [class]="badge.icon"></i>
+                        }
+                      </span>
+                    } @else {
+                      {{ getCellValue(row, column) }}
+                    }
+                  </td>
+                }
 
-              <td *ngIf="actions.length > 0">
-                <div class="ui-table-actions">
-                  <ng-container *ngFor="let action of actions">
-                    <button
-                      *ngIf="isActionVisible(action, row)"
-                      [class]="getActionClass(action)"
-                      type="button"
-                      [title]="action.title ?? action.label"
-                      [disabled]="isActionDisabled(action, row)"
-                      (click)="emitAction(action, row)"
-                    >
-                      <i [class]="action.icon"></i>
-                      <span>{{ action.label }}</span>
-                    </button>
-                  </ng-container>
-                </div>
-              </td>
-            </tr>
+                @if (actions().length > 0) {
+                  <td>
+                    <div class="ui-table-actions">
+                      @for (action of actions(); track trackAction($index, action)) {
+                        @if (isActionVisible(action, row)) {
+                          <button
+                            [class]="getActionClass(action)"
+                            type="button"
+                            [title]="action.title ?? action.label"
+                            [disabled]="isActionDisabled(action, row)"
+                            (click)="emitAction(action, row)"
+                          >
+                            <i [class]="action.icon"></i>
+                            <span>{{ action.label }}</span>
+                          </button>
+                        }
+                      }
+                    </div>
+                  </td>
+                }
+              </tr>
+            }
           </tbody>
         </table>
       </div>
 
-      <div class="ui-table-empty" *ngIf="rows.length === 0">
-        <i class="fa-solid fa-table"></i>
-        <span>{{ emptyMessage }}</span>
-      </div>
-
-      <div class="ui-table-pagination" *ngIf="showPagination && totalRecords > 0">
-        <span class="ui-table-pagination__summary">
-          Showing {{ startItem }} to {{ endItem }} of {{ totalRecords }} results
-        </span>
-
-        <div class="ui-table-pagination__actions">
-          <button class="ui-table-page-btn" type="button" [disabled]="page <= 1" (click)="goToPage(page - 1)">
-            Previous
-          </button>
-
-          <button
-            class="ui-table-page-btn"
-            type="button"
-            *ngFor="let pageNumber of visiblePages"
-            [class.active]="pageNumber === page"
-            (click)="goToPage(pageNumber)"
-          >
-            {{ pageNumber }}
-          </button>
-
-          <button
-            class="ui-table-page-btn"
-            type="button"
-            [disabled]="page >= totalPages"
-            (click)="goToPage(page + 1)"
-          >
-            Next
-          </button>
+      @if (rows().length === 0) {
+        <div class="ui-table-empty">
+          <i class="fa-solid fa-table"></i>
+          <span>{{ emptyMessage() }}</span>
         </div>
-      </div>
+      }
+
+      @if (showPagination() && totalRecords() > 0) {
+        <nav class="ui-table-pagination" aria-label="Paginación de tabla">
+          <label class="ui-table-page-size">
+            <span>Registros por página:</span>
+
+            <span class="ui-table-page-size__select">
+              <select [value]="normalizedPageSize()" (change)="changePageSize($event)">
+                @for (size of pageSizeOptionsList(); track size) {
+                  <option [value]="size">{{ size }}</option>
+                }
+              </select>
+
+              <i class="fa-solid fa-caret-down" aria-hidden="true"></i>
+            </span>
+          </label>
+
+          <span class="ui-table-pagination__range">
+            {{ startItem() }} - {{ endItem() }} de {{ totalRecords() }}
+          </span>
+
+          <div class="ui-table-pagination__actions">
+            <button
+              class="ui-table-page-icon"
+              type="button"
+              aria-label="Primera página"
+              [disabled]="isFirstPage()"
+              (click)="goToPage(1)"
+            >
+              <i class="fa-solid fa-backward-step"></i>
+            </button>
+
+            <button
+              class="ui-table-page-icon"
+              type="button"
+              aria-label="Página anterior"
+              [disabled]="isFirstPage()"
+              (click)="goToPage(page() - 1)"
+            >
+              <i class="fa-solid fa-chevron-left"></i>
+            </button>
+
+            <button
+              class="ui-table-page-icon"
+              type="button"
+              aria-label="Página siguiente"
+              [disabled]="isLastPage()"
+              (click)="goToPage(page() + 1)"
+            >
+              <i class="fa-solid fa-chevron-right"></i>
+            </button>
+
+            <button
+              class="ui-table-page-icon"
+              type="button"
+              aria-label="Última página"
+              [disabled]="isLastPage()"
+              (click)="goToPage(totalPages())"
+            >
+              <i class="fa-solid fa-forward-step"></i>
+            </button>
+          </div>
+        </nav>
+      }
     </div>
   </section>
-</ng-container>
-
-<ng-template #projectedTable>
+} @else {
   <div class="ui-table-wrap">
-    <table class="ui-table" [attr.aria-labelledby]="labelledBy">
+    <table class="ui-table" [attr.aria-labelledby]="labelledBy()">
       <ng-content></ng-content>
     </table>
   </div>
-</ng-template>
+}
