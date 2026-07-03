@@ -1,0 +1,116 @@
+:host {
+  display: block;
+}
+
+.access-section {
+  position: relative;
+  border: 1px solid rgba(var(--policia-oscuro-rgb), 0.12);
+  border-radius: 12px;
+  background: var(--ui-surface);
+  padding: 22px 14px 14px;
+}
+
+.access-section h3 {
+  position: absolute;
+  top: -12px;
+  left: 14px;
+  margin: 0;
+  padding: 0 8px;
+  background: var(--ui-surface);
+  color: var(--policia-oscuro);
+  font-size: calc(13px * var(--font-size-scale));
+  font-weight: 900;
+  line-height: 1.2;
+}
+
+.roles-block {
+  display: grid;
+  gap: 14px;
+}
+
+.roles-block__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(var(--policia-oscuro-rgb), 0.1);
+}
+
+.roles-block__head h4 {
+  margin: 0;
+  color: var(--policia-oscuro);
+  font-size: calc(14px * var(--font-size-scale));
+  font-weight: 900;
+}
+
+.role-add-form {
+  display: grid;
+  gap: 14px;
+  border: 1px solid rgba(var(--policia-oscuro-rgb), 0.12);
+  border-radius: 12px;
+  padding: 14px;
+  background: rgba(var(--policia-oscuro-rgb), 0.02);
+}
+
+.form-actions {
+  padding-top: 12px;
+  border-top: 1px solid rgba(var(--policia-oscuro-rgb), 0.1);
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.roles-table-wrap {
+  border-radius: 12px;
+}
+
+.roles-table td {
+  vertical-align: middle;
+}
+
+.roles-table td:nth-child(4) {
+  max-width: 280px;
+  white-space: normal;
+}
+
+.table-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.news-state {
+  text-align: center;
+  padding: 26px 12px;
+  border: 1px dashed rgba(var(--policia-oscuro-rgb), 0.2);
+  border-radius: 12px;
+  color: rgba(var(--policia-neutral-oscuro-rgb), 0.95);
+  font-weight: 800;
+  background: rgba(var(--policia-oscuro-rgb), 0.02);
+}
+
+@media (max-width: 760px) {
+  .roles-block__head,
+  .form-actions,
+  .table-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
+
+:host-context(html.dark-mode) {
+  .access-section,
+  .access-section h3 {
+    background: var(--ui-surface);
+  }
+
+  .access-section h3,
+  .roles-block__head h4,
+  .roles-table td,
+  .roles-table th {
+    color: var(--ui-text);
+  }
+}

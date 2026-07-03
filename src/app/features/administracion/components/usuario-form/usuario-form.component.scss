@@ -13,6 +13,10 @@
   min-width: 0;
 }
 
+.right-column {
+  padding-right: 12px;
+}
+
 .profile-card {
   border: 1px solid rgba(var(--policia-oscuro-rgb), 0.12);
   border-radius: 18px;
@@ -203,12 +207,19 @@
   padding: 16px;
 }
 
-.consulta-form {
-  margin-bottom: 18px;
+.consulta-cargo-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 16px;
 }
 
-.user-data-form,
-.role-add-form {
+.consulta-form,
+.cargo-field {
+  min-width: 0;
+}
+
+.user-data-form {
   display: grid;
   gap: 16px;
 }
@@ -243,103 +254,11 @@
 .form-actions {
   margin-top: 2px;
   padding-top: 14px;
+  padding-right: 4px;
   border-top: 1px solid rgba(var(--policia-oscuro-rgb), 0.12);
   display: flex;
   justify-content: flex-end;
   gap: 10px;
-  flex-wrap: wrap;
-}
-
-.roles-section {
-  display: grid;
-  gap: 16px;
-  margin-top: 0;
-}
-
-.roles-toolbar {
-  display: flex;
-  justify-content: flex-end;
-}
-
-.roles-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 12px;
-}
-
-.roles-head h3 {
-  margin: 0;
-  color: var(--policia-oscuro);
-  font-size: calc(15px * var(--font-size-scale));
-  font-weight: 900;
-}
-
-.roles-list {
-  display: grid;
-  gap: 10px;
-}
-
-.role-add-form {
-  margin-bottom: 12px;
-  border: 1px solid rgba(var(--policia-oscuro-rgb), 0.12);
-  border-radius: 12px;
-  padding: 12px;
-  background: rgba(var(--policia-oscuro-rgb), 0.02);
-}
-
-.role-item {
-  border: 1px solid rgba(var(--policia-oscuro-rgb), 0.12);
-  border-radius: 14px;
-  background: rgba(var(--policia-oscuro-rgb), 0.02);
-  padding: 12px;
-  display: grid;
-  gap: 12px;
-}
-
-.role-grid {
-  display: grid;
-  grid-template-columns: 1fr 190px 150px;
-  gap: 10px;
-}
-
-.role-grid--labels {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
-.role-label {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 0;
-}
-
-.role-label__title {
-  font-size: calc(10px * var(--font-size-scale));
-  text-transform: uppercase;
-  letter-spacing: 0.6px;
-  color: rgba(var(--policia-neutral-oscuro-rgb), 0.9);
-  font-weight: 800;
-}
-
-.role-label strong {
-  font-size: calc(13px * var(--font-size-scale));
-  color: var(--policia-oscuro);
-  font-weight: 800;
-  word-break: break-word;
-}
-
-.role-label--full {
-  grid-column: 1 / -1;
-}
-
-.item-actions {
-  padding-top: 10px;
-  border-top: 1px solid rgba(var(--policia-oscuro-rgb), 0.1);
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
   flex-wrap: wrap;
 }
 
@@ -379,15 +298,13 @@
   font-weight: 700;
 }
 
-@media (max-width: 1200px) {
-  .role-grid {
-    grid-template-columns: 1fr 1fr;
-  }
-}
-
 @media (max-width: 980px) {
   .admin-grid {
     grid-template-columns: 1fr;
+  }
+
+  .right-column {
+    padding-right: 0;
   }
 
   .empty-search {
@@ -400,13 +317,11 @@
     grid-template-columns: 1fr;
   }
 
-  .role-grid,
-  .role-item {
+  .consulta-cargo-grid {
     grid-template-columns: 1fr;
   }
 
-  .form-actions,
-  .item-actions {
+  .form-actions {
     flex-direction: column;
     align-items: stretch;
   }
@@ -415,8 +330,6 @@
 :host-context(html.dark-mode) {
   .profile-name,
   .form-section h3,
-  .roles-head h3,
-  .role-label strong,
   .empty-state h3 {
     color: var(--ui-text);
   }

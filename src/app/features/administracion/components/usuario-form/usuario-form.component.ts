@@ -12,9 +12,8 @@ import { AbstractControl, FormBuilder, ReactiveFormsModule, Validators } from '@
 import { UiButtonComponent } from '../../../../shared/components/ui-button/ui-button.component';
 import { UiInputComponent } from '../../../../shared/components/ui-input/ui-input.component';
 import { UiSearchInputComponent } from '../../../../shared/components/ui-search-input/ui-search-input.component';
-import { UiSelectComponent } from '../../../../shared/components/ui-select/ui-select.component';
-import { UiSelectOption } from '../../../../shared/interfaces/ui-select-option.interface';
 import { getFormErrorMessage } from '../../../../shared/utils/form-error.util';
+import { UsuarioRolesPanelComponent } from '../usuario-roles-panel/usuario-roles-panel.component';
 
 import {
   NewRoleForm,
@@ -33,7 +32,7 @@ import { DtoRolCatalogo } from '../../services/usuario-admin.service';
     UiButtonComponent,
     UiInputComponent,
     UiSearchInputComponent,
-    UiSelectComponent,
+    UsuarioRolesPanelComponent,
   ],
   templateUrl: './usuario-form.component.html',
   styleUrls: ['./usuario-form.component.scss'],
@@ -183,13 +182,6 @@ export class UsuarioFormComponent implements OnChanges {
       justificacion: '',
       fechaFin: '',
     });
-  }
-
-  get rolOptions(): UiSelectOption<number>[] {
-    return this.rolesCatalogo.map((role) => ({
-      label: role.nombre || `Rol ${role.id}`,
-      value: role.id,
-    }));
   }
 
   /** Valida y emite los datos base del usuario conservando la estructura actual. */

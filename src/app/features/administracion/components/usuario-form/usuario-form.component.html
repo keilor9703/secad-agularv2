@@ -51,7 +51,7 @@
       </div>
 
       <div class="summary-row">
-        <span>Último ingreso</span>
+        <span>Ultimo ingreso</span>
         <strong>{{ usuarioForm.controls.ultimoIngreso.value }}</strong>
       </div>
     </article>
@@ -81,21 +81,33 @@
     </div>
 
     <article class="tab-card" *ngIf="activeTab === 'datos'">
-      <form [formGroup]="consultaForm" class="consulta-form" (ngSubmit)="onConsultar()">
-        <app-ui-search-input
-          formControlName="identificacion"
-          label="Buscar usuario"
-          placeholder="Identificación del funcionario"
-          [buttonText]="loading ? 'Consultando usuario' : 'Buscar usuario'"
-          [iconOnly]="true"
-          [required]="true"
-          [maxlength]="20"
-          [disabled]="loading"
-          [clearable]="false"
-          [error]="getFieldError('consulta', 'identificacion')"
-          (search)="onConsultar($event)"
-        ></app-ui-search-input>
-      </form>
+      <div class="consulta-cargo-grid">
+        <form class="consulta-form" [formGroup]="consultaForm" (ngSubmit)="onConsultar()">
+          <app-ui-search-input
+            formControlName="identificacion"
+            label="Buscar usuario"
+            placeholder="Identificacion del funcionario"
+            [buttonText]="loading ? 'Consultando usuario' : 'Buscar usuario'"
+            [iconOnly]="true"
+            [required]="true"
+            [maxlength]="20"
+            [disabled]="loading"
+            [clearable]="false"
+            [error]="getFieldError('consulta', 'identificacion')"
+            (search)="onConsultar($event)"
+          ></app-ui-search-input>
+        </form>
+
+        <div class="cargo-field" [formGroup]="usuarioForm">
+          <app-ui-input
+            formControlName="cargo"
+            label="Cargo"
+            [readonly]="true"
+            [maxlength]="150"
+            [error]="getFieldError('usuario', 'cargo')"
+          ></app-ui-input>
+        </div>
+      </div>
 
       <form class="user-data-form" [formGroup]="usuarioForm" (ngSubmit)="onGuardarDatos()">
         <article class="form-section form-section--plain user-data-section">
@@ -149,7 +161,7 @@
             <div class="ui-col-6">
               <app-ui-input
                 formControlName="telefono"
-                label="Teléfono"
+                label="Telefono"
                 icon="fa-solid fa-phone"
                 [readonly]="true"
                 [maxlength]="30"
@@ -160,7 +172,7 @@
             <div class="ui-col-6">
               <app-ui-input
                 formControlName="situacionLaboral"
-                label="Situación laboral"
+                label="Situacion laboral"
                 [readonly]="true"
                 [maxlength]="100"
                 [error]="getFieldError('usuario', 'situacionLaboral')"
@@ -213,140 +225,21 @@
     </article>
 
     <article class="tab-card" *ngIf="activeTab === 'roles'">
-      <article class="form-section roles-section">
-        <h3>Control de acceso</h3>
-
-        <div class="roles-toolbar">
-          <app-ui-button variant="secondary" icon="fa-solid fa-plus" (buttonClick)="agregarRol()">
-            Agregar rol
-          </app-ui-button>
-        </div>
-
-        <form
-          class="role-add-form"
-          *ngIf="showAddRoleForm"
-          [formGroup]="rolForm"
-          (ngSubmit)="onGuardarRol()"
-        >
-          <div class="ui-grid">
-            <div class="ui-col-6">
-              <app-ui-select
-                formControlName="rolId"
-                label="Rol"
-                placeholder="Seleccione un rol"
-                [options]="rolOptions"
-                [disabled]="editingRole !== null"
-                [required]="true"
-                [error]="getFieldError('rol', 'rolId')"
-              ></app-ui-select>
-            </div>
-
-            <div class="ui-col-6">
-              <app-ui-input
-                formControlName="fechaFin"
-                label="Fecha fin"
-                type="date"
-                icon="fa-solid fa-calendar-days"
-                [required]="true"
-                [error]="getFieldError('rol', 'fechaFin')"
-              ></app-ui-input>
-            </div>
-
-            <div class="ui-col-12">
-              <app-ui-input
-                formControlName="justificacion"
-                label="Justificación"
-                placeholder="Motivo de la asignación"
-                [maxlength]="500"
-                [rows]="3"
-                [multiline]="true"
-                [required]="true"
-                [error]="getFieldError('rol', 'justificacion')"
-              ></app-ui-input>
-            </div>
-          </div>
-
-          <div class="form-actions">
-            <app-ui-button
-              type="submit"
-              variant="primary"
-              icon="fa-solid fa-floppy-disk"
-              [disabled]="savingRole || rolForm.invalid"
-              [loading]="savingRole"
-            >
-              {{
-                savingRole ? 'Guardando...' : editingRole ? 'Actualizar cambios' : 'Guardar rol'
-              }}
-            </app-ui-button>
-
-            <app-ui-button
-              type="button"
-              variant="secondary"
-              icon="fa-solid fa-ban"
-              (buttonClick)="cancelarNuevoRol()"
-            >
-              Cancelar
-            </app-ui-button>
-          </div>
-        </form>
-
-        <div class="roles-list" *ngIf="rolesVigentes.length > 0; else noRoles">
-          <div class="role-item" *ngFor="let rol of rolesVigentes">
-            <div class="role-grid role-grid--labels">
-              <div class="role-label">
-                <span class="role-label__title">Rol</span>
-                <strong>{{ rol.nombre }}</strong>
-              </div>
-
-              <div class="role-label">
-                <span class="role-label__title">Estado</span>
-                <span
-                  class="ui-badge"
-                  [class.success]="rol.estado === 'Vigente'"
-                  [class.warning]="rol.estado === 'Vencido'"
-                >
-                  {{ rol.estado }}
-                </span>
-              </div>
-
-              <div class="role-label">
-                <span class="role-label__title">Fecha expiración</span>
-                <strong>{{ rol.fechaExpiracion || 'Sin fecha' }}</strong>
-              </div>
-
-              <div class="role-label role-label--full">
-                <span class="role-label__title">Justificación</span>
-                <strong>{{ rol.justificacion || 'Sin justificación' }}</strong>
-              </div>
-            </div>
-
-            <div class="item-actions">
-              <app-ui-button
-                variant="secondary"
-                icon="fa-solid fa-pen-to-square"
-                (buttonClick)="prepararEdicionRol(rol)"
-              >
-                Editar
-              </app-ui-button>
-
-              <app-ui-button
-                *ngIf="rol.id === superAdministradorRolId"
-                variant="danger"
-                icon="fa-solid fa-trash"
-                [disabled]="deletingRoleId === rol.id"
-                [loading]="deletingRoleId === rol.id"
-                (buttonClick)="eliminarRol.emit(rol)"
-              >
-                {{ deletingRoleId === rol.id ? 'Retirando...' : 'Retirar rol' }}
-              </app-ui-button>
-            </div>
-          </div>
-        </div>
-
-        <ng-template #noRoles>
-          <div class="news-state">El usuario no tiene roles asignados actualmente.</div>
-        </ng-template>
-      </article>
+      <app-usuario-roles-panel
+        [roles]="rolesVigentes"
+        [rolesCatalogo]="rolesCatalogo"
+        [rolForm]="rolForm"
+        [showAddRoleForm]="showAddRoleForm"
+        [editingRole]="editingRole"
+        [savingRole]="savingRole"
+        [deletingRoleId]="deletingRoleId"
+        [superAdministradorRolId]="superAdministradorRolId"
+        (agregarRol)="agregarRol()"
+        (guardarRol)="onGuardarRol()"
+        (cancelarRol)="cancelarNuevoRol()"
+        (editarRol)="prepararEdicionRol($event)"
+        (eliminarRol)="eliminarRol.emit($event)"
+      ></app-usuario-roles-panel>
     </article>
   </section>
 </div>
@@ -355,13 +248,13 @@
   <div class="empty-state">
     <i class="fa-solid fa-user-plus"></i>
     <h3>Consulta un usuario para iniciar</h3>
-    <p>Ingresa la identificación y consulta para administrar datos y permisos.</p>
+    <p>Ingresa la identificacion y consulta para administrar datos y permisos.</p>
 
     <form class="empty-search" [formGroup]="consultaForm" (ngSubmit)="onConsultar()">
       <app-ui-search-input
         formControlName="identificacion"
         label="Buscar usuario"
-        placeholder="Identificación"
+        placeholder="Identificacion"
         [buttonText]="loading ? 'Consultando usuario' : 'Buscar usuario'"
         [iconOnly]="true"
         [required]="true"
