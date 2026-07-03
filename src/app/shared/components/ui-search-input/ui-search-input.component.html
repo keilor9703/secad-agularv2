@@ -4,7 +4,9 @@
   [class.search-field--invalid]="error"
   [class.search-field--disabled]="isDisabled"
 >
-  <span class="search-field__label" *ngIf="label">{{ label }}</span>
+  <span class="search-field__label" *ngIf="label">
+    {{ label }} <strong *ngIf="required">*</strong>
+  </span>
 
   <div class="search-field__shell">
     <input
@@ -13,6 +15,10 @@
       type="text"
       [placeholder]="placeholder"
       [disabled]="isDisabled"
+      [attr.maxlength]="maxlength"
+      [attr.aria-required]="required"
+      [attr.aria-describedby]="describedBy"
+      [attr.aria-invalid]="!!error"
       [value]="value"
       (input)="handleInput($event)"
       (focus)="handleFocus()"
@@ -42,6 +48,8 @@
     </button>
   </div>
 
-  <small class="search-field__error" *ngIf="error">{{ error }}</small>
-  <small class="search-field__hint" *ngIf="hint && !error">{{ hint }}</small>
+  <small class="search-field__error" *ngIf="error" [id]="inputId + '-error'">{{ error }}</small>
+  <small class="search-field__hint" *ngIf="hint && !error" [id]="inputId + '-hint'">
+    {{ hint }}
+  </small>
 </div>

@@ -122,6 +122,11 @@
   transform: translateX(20px);
 }
 
+.switch:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
 .access-summary {
   margin-top: 12px;
   border-radius: 18px;
@@ -198,22 +203,46 @@
   padding: 16px;
 }
 
-.ui-control[readonly] {
-  background: rgba(var(--policia-oscuro-rgb), 0.05);
-  border-color: rgba(var(--policia-oscuro-rgb), 0.14);
-  color: rgba(var(--policia-oscuro-rgb), 0.85);
+.consulta-form {
+  margin-bottom: 18px;
 }
 
-.tab-actions {
-  margin-top: 10px;
+.user-data-form,
+.role-add-form {
+  display: grid;
+  gap: 16px;
+}
+
+.form-section {
+  position: relative;
+  border: 1px solid rgba(var(--policia-oscuro-rgb), 0.12);
+  border-radius: 12px;
+  background: var(--ui-surface);
+  padding: 22px 14px 14px;
+  margin-top: 8px;
+}
+
+.form-section h3 {
+  position: absolute;
+  top: -12px;
+  left: 14px;
+  margin: 0;
+  padding: 0 8px;
+  background: var(--ui-surface);
+  color: var(--policia-oscuro);
+  font-size: calc(13px * var(--font-size-scale));
+  font-weight: 900;
+  line-height: 1.2;
+}
+
+.form-actions {
+  margin-top: 2px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(var(--policia-oscuro-rgb), 0.12);
   display: flex;
   justify-content: flex-end;
-  gap: 8px;
-}
-
-.tab-actions--separated {
-  justify-content: space-between;
-  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
 .roles-head {
@@ -242,11 +271,6 @@
   border-radius: 12px;
   padding: 12px;
   background: rgba(var(--policia-oscuro-rgb), 0.02);
-}
-
-.role-add-form textarea.ui-control {
-  resize: vertical;
-  min-height: 86px;
 }
 
 .role-item {
@@ -296,6 +320,13 @@
   grid-column: 1 / -1;
 }
 
+.item-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 .empty-state {
   text-align: center;
   padding: 40px 16px;
@@ -321,15 +352,7 @@
 
 .empty-search {
   margin: 16px auto 0;
-  display: flex;
-  gap: 8px;
   max-width: 560px;
-}
-
-.search-btn i,
-.empty-search .ui-btn i {
-  color: #fff !important;
-  font-size: calc(23px * var(--font-size-scale)) !important;
 }
 
 .field-error {
@@ -352,7 +375,7 @@
   }
 
   .empty-search {
-    flex-direction: column;
+    max-width: 100%;
   }
 }
 
@@ -366,7 +389,8 @@
     grid-template-columns: 1fr;
   }
 
-  .tab-actions--separated {
+  .form-actions,
+  .item-actions {
     flex-direction: column;
     align-items: stretch;
   }
@@ -374,9 +398,15 @@
 
 :host-context(html.dark-mode) {
   .profile-name,
+  .form-section h3,
   .roles-head h3,
   .role-label strong,
   .empty-state h3 {
     color: var(--ui-text);
+  }
+
+  .form-section,
+  .form-section h3 {
+    background: var(--ui-surface);
   }
 }

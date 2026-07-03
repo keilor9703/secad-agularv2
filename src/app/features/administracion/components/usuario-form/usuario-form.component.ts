@@ -11,8 +11,10 @@ import {
 import { AbstractControl, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { UiButtonComponent } from '../../../../shared/components/ui-button/ui-button.component';
 import { UiInputComponent } from '../../../../shared/components/ui-input/ui-input.component';
+import { UiSearchInputComponent } from '../../../../shared/components/ui-search-input/ui-search-input.component';
 import { UiSelectComponent } from '../../../../shared/components/ui-select/ui-select.component';
 import { UiSelectOption } from '../../../../shared/interfaces/ui-select-option.interface';
+import { getFormErrorMessage } from '../../../../shared/utils/form-error.util';
 
 import {
   NewRoleForm,
@@ -30,6 +32,7 @@ import { DtoRolCatalogo } from '../../services/usuario-admin.service';
     ReactiveFormsModule,
     UiButtonComponent,
     UiInputComponent,
+    UiSearchInputComponent,
     UiSelectComponent,
   ],
   templateUrl: './usuario-form.component.html',
@@ -56,7 +59,7 @@ export class UsuarioFormComponent implements OnChanges {
   editingRole: UserRole | null = null;
 
   consultaForm = this.fb.group({
-    identificacion: ['', [Validators.required, Validators.maxLength(20)]],
+    identificacion: ['', [Validators.required, Validators.minLength(5), Validators.maxLength(20)]],
   });
 
   usuarioForm = this.fb.group({
@@ -86,6 +89,7 @@ export class UsuarioFormComponent implements OnChanges {
     justificacion: ['', [Validators.required, Validators.maxLength(500)]],
   });
 
+  /** Sincroniza el formulario cuando llega un usuario consultado o cambia la seleccion. */
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['user']) {
       this.cargarUsuario(this.user);
@@ -100,25 +104,36 @@ export class UsuarioFormComponent implements OnChanges {
     return this.user?.roles.filter((rol) => rol.estado === 'Vigente') ?? [];
   }
 
+  /** Cambia la pestana activa sin perder los datos cargados. */
   setTab(tab: TabKey): void {
     this.activeTab = tab;
   }
 
+  /** Alterna el estado activo/inactivo que se enviara al guardar. */
   toggleEstadoUsuario(): void {
     const currentValue = this.usuarioForm.controls.activo.value ?? false;
     this.usuarioForm.controls.activo.setValue(!currentValue);
   }
 
-  onConsultar(): void {
+  /** Valida y emite la identificacion digitada en el buscador principal. */
+  onConsultar(documentoRecibido?: string): void {
+    const documento = (
+      documentoRecibido ??
+      this.consultaForm.controls.identificacion.getRawValue() ??
+      ''
+    ).trim();
+
+    this.consultaForm.controls.identificacion.setValue(documento);
+
     if (this.consultaForm.invalid) {
       this.consultaForm.markAllAsTouched();
       return;
     }
 
-    const documento = (this.consultaForm.controls.identificacion.getRawValue() ?? '').trim();
     this.consultar.emit(documento);
   }
 
+  /** Limpia el formulario actual y deja la pantalla lista para una nueva consulta. */
   onNuevoUsuario(): void {
     this.consultaForm.reset({ identificacion: '' });
     this.usuarioForm.reset({ activo: true, ultimoIngreso: 'Sin dato' });
@@ -127,6 +142,7 @@ export class UsuarioFormComponent implements OnChanges {
     this.nuevoUsuario.emit();
   }
 
+  /** Prepara valores por defecto para crear una nueva asignacion de rol. */
   agregarRol(): void {
     if (!this.user) {
       return;
@@ -145,6 +161,7 @@ export class UsuarioFormComponent implements OnChanges {
     this.showAddRoleForm = true;
   }
 
+  /** Carga un rol vigente en el formulario para actualizar su informacion. */
   prepararEdicionRol(rol: UserRole): void {
     this.editingRole = rol;
     this.rolForm.reset({
@@ -156,6 +173,7 @@ export class UsuarioFormComponent implements OnChanges {
     this.showAddRoleForm = true;
   }
 
+  /** Restablece el formulario de roles sin alterar los datos del usuario. */
   cancelarNuevoRol(): void {
     this.showAddRoleForm = false;
     this.editingRole = null;
@@ -174,6 +192,7 @@ export class UsuarioFormComponent implements OnChanges {
     }));
   }
 
+  /** Valida y emite los datos base del usuario conservando la estructura actual. */
   onGuardarDatos(): void {
     if (this.usuarioForm.invalid || !this.user) {
       this.usuarioForm.markAllAsTouched();
@@ -207,6 +226,7 @@ export class UsuarioFormComponent implements OnChanges {
     });
   }
 
+  /** Valida y emite la asignacion o actualizacion del rol seleccionado. */
   onGuardarRol(): void {
     if (this.rolForm.invalid) {
       this.rolForm.markAllAsTouched();
@@ -227,26 +247,10 @@ export class UsuarioFormComponent implements OnChanges {
     return !!field && field.invalid && field.touched;
   }
 
-  getFieldError(formName: 'consulta' | 'usuario' | 'rol', fieldName: string): string | null {
+  getFieldError(formName: 'consulta' | 'usuario' | 'rol', fieldName: string): string {
     const field = this.getFormControl(formName, fieldName);
 
-    if (!field || !field.errors || !field.touched) {
-      return null;
-    }
-
-    if (field.hasError('required')) {
-      return 'Este campo es obligatorio.';
-    }
-
-    if (field.hasError('email')) {
-      return 'Ingrese un correo válido.';
-    }
-
-    if (field.hasError('maxlength')) {
-      return 'El texto supera la longitud permitida.';
-    }
-
-    return 'Campo inválido.';
+    return getFormErrorMessage(field);
   }
 
   private getFormControl(
@@ -264,6 +268,7 @@ export class UsuarioFormComponent implements OnChanges {
     return this.rolForm.get(fieldName);
   }
 
+  /** Carga en el formulario los datos devueltos por la consulta empresarial. */
   private cargarUsuario(user: UserProfile | null): void {
     if (!user) {
       this.usuarioForm.reset({ activo: true, ultimoIngreso: 'Sin dato' });
@@ -293,6 +298,7 @@ export class UsuarioFormComponent implements OnChanges {
     });
   }
 
+  /** Normaliza fechas de API a formato yyyy-MM-dd para los inputs date. */
   private normalizeDateString(raw: string): string {
     const value = String(raw ?? '').trim();
 

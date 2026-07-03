@@ -16,7 +16,7 @@
         />
 
         <h3 class="profile-name">{{ usuarioForm.controls.nombreCompleto.value }}</h3>
-        <p class="profile-role">{{ usuarioForm.controls.cargo.value }}</p>
+        <p class="profile-role">{{ usuarioForm.controls.cargo.value || 'Sin cargo registrado' }}</p>
 
         <div class="state-box">
           <div>
@@ -30,6 +30,8 @@
             class="switch"
             type="button"
             [class.active]="usuarioForm.controls.activo.value"
+            [disabled]="loading"
+            aria-label="Cambiar estado del usuario"
             (click)="toggleEstadoUsuario()"
           >
             <span></span>
@@ -78,118 +80,219 @@
 
     <article class="tab-card" *ngIf="activeTab === 'datos'">
       <form [formGroup]="consultaForm" class="consulta-form" (ngSubmit)="onConsultar()">
-        <div class="ui-grid">
-          <div class="ui-col-6">
-            <app-ui-input
-              formControlName="identificacion"
-              label="Identificación"
-              placeholder="Ej: 10203040"
-              [maxlength]="20"
-              [error]="getFieldError('consulta', 'identificacion') || ''"
-              (enterPressed)="onConsultar()"
-            ></app-ui-input>
-          </div>
-
-          <div class="ui-col-6 consulta-actions">
-            <app-ui-button
-              type="submit"
-              variant="secondary"
-              icon="fa-solid fa-magnifying-glass"
-              [disabled]="loading || consultaForm.invalid"
-              [loading]="loading"
-            >
-              {{ loading ? 'Consultando...' : 'Consultar' }}
-            </app-ui-button>
-          </div>
-        </div>
+        <app-ui-search-input
+          formControlName="identificacion"
+          label="Buscar usuario"
+          placeholder="Identificación del funcionario"
+          [buttonText]="loading ? 'Consultando...' : 'Buscar'"
+          [required]="true"
+          [maxlength]="20"
+          [disabled]="loading"
+          [error]="getFieldError('consulta', 'identificacion')"
+          (search)="onConsultar($event)"
+        ></app-ui-search-input>
       </form>
 
-      <form [formGroup]="usuarioForm" (ngSubmit)="onGuardarDatos()">
-        <div class="ui-grid">
-          <div class="ui-col-6">
-            <app-ui-input
-              formControlName="usuarioEmpresarial"
-              label="Usuario empresarial"
-              [readonly]="true"
-              [error]="getFieldError('usuario', 'usuarioEmpresarial') || ''"
-            ></app-ui-input>
-          </div>
+      <form class="user-data-form" [formGroup]="usuarioForm" (ngSubmit)="onGuardarDatos()">
+        <article class="form-section">
+          <h3>Información institucional</h3>
 
-          <div class="ui-col-6">
-            <app-ui-input
-              formControlName="grado"
-              label="Grado"
-              [readonly]="true"
-              [error]="getFieldError('usuario', 'grado') || ''"
-            ></app-ui-input>
-          </div>
+          <div class="ui-grid">
+            <div class="ui-col-6">
+              <app-ui-input
+                formControlName="identificacion"
+                label="Identificación"
+                icon="fa-solid fa-id-card"
+                [readonly]="true"
+                [required]="true"
+                [maxlength]="20"
+                [error]="getFieldError('usuario', 'identificacion')"
+              ></app-ui-input>
+            </div>
 
-          <div class="ui-col-6">
-            <app-ui-input
-              formControlName="nombreCompleto"
-              label="Nombre completo"
-              [readonly]="true"
-              [error]="getFieldError('usuario', 'nombreCompleto') || ''"
-            ></app-ui-input>
-          </div>
+            <div class="ui-col-6">
+              <app-ui-input
+                formControlName="usuarioEmpresarial"
+                label="Usuario empresarial"
+                icon="fa-solid fa-user-tie"
+                [readonly]="true"
+                [required]="true"
+                [maxlength]="100"
+                [error]="getFieldError('usuario', 'usuarioEmpresarial')"
+              ></app-ui-input>
+            </div>
 
-          <div class="ui-col-6">
-            <app-ui-input
-              formControlName="email"
-              label="Correo institucional"
-              type="email"
-              [readonly]="true"
-              [error]="getFieldError('usuario', 'email') || ''"
-            ></app-ui-input>
-          </div>
+            <div class="ui-col-6">
+              <app-ui-input
+                formControlName="grado"
+                label="Grado"
+                [readonly]="true"
+                [maxlength]="100"
+                [error]="getFieldError('usuario', 'grado')"
+              ></app-ui-input>
+            </div>
 
-          <div class="ui-col-6">
-            <app-ui-input
-              formControlName="telefono"
-              label="Teléfono"
-              [readonly]="true"
-              [error]="getFieldError('usuario', 'telefono') || ''"
-            ></app-ui-input>
+            <div class="ui-col-6">
+              <app-ui-input
+                formControlName="gradAlfabetico"
+                label="Grado alfabético"
+                [readonly]="true"
+                [maxlength]="100"
+                [error]="getFieldError('usuario', 'gradAlfabetico')"
+              ></app-ui-input>
+            </div>
           </div>
+        </article>
 
-          <div class="ui-col-6">
-            <app-ui-input
-              formControlName="situacionLaboral"
-              label="Situación laboral"
-              [readonly]="true"
-              [error]="getFieldError('usuario', 'situacionLaboral') || ''"
-            ></app-ui-input>
+        <article class="form-section">
+          <h3>Datos personales</h3>
+
+          <div class="ui-grid">
+            <div class="ui-col-6">
+              <app-ui-input
+                formControlName="nombres"
+                label="Nombres"
+                [readonly]="true"
+                [required]="true"
+                [maxlength]="100"
+                [error]="getFieldError('usuario', 'nombres')"
+              ></app-ui-input>
+            </div>
+
+            <div class="ui-col-6">
+              <app-ui-input
+                formControlName="apellidos"
+                label="Apellidos"
+                [readonly]="true"
+                [required]="true"
+                [maxlength]="100"
+                [error]="getFieldError('usuario', 'apellidos')"
+              ></app-ui-input>
+            </div>
+
+            <div class="ui-col-6">
+              <app-ui-input
+                formControlName="nombreCompleto"
+                label="Nombre completo"
+                [readonly]="true"
+                [required]="true"
+                [maxlength]="200"
+                [error]="getFieldError('usuario', 'nombreCompleto')"
+              ></app-ui-input>
+            </div>
+
+            <div class="ui-col-6">
+              <app-ui-input
+                formControlName="email"
+                label="Correo institucional"
+                type="email"
+                icon="fa-solid fa-envelope"
+                [readonly]="true"
+                [required]="true"
+                [maxlength]="150"
+                [error]="getFieldError('usuario', 'email')"
+              ></app-ui-input>
+            </div>
           </div>
+        </article>
 
-          <div class="ui-col-6">
-            <app-ui-input
-              formControlName="unidadFisica"
-              label="Unidad"
-              [readonly]="true"
-              [error]="getFieldError('usuario', 'unidadFisica') || ''"
-            ></app-ui-input>
+        <article class="form-section">
+          <h3>Ubicación y cargo</h3>
+
+          <div class="ui-grid">
+            <div class="ui-col-6">
+              <app-ui-input
+                formControlName="telefono"
+                label="Teléfono"
+                icon="fa-solid fa-phone"
+                [readonly]="true"
+                [maxlength]="30"
+                [error]="getFieldError('usuario', 'telefono')"
+              ></app-ui-input>
+            </div>
+
+            <div class="ui-col-6">
+              <app-ui-input
+                formControlName="situacionLaboral"
+                label="Situación laboral"
+                [readonly]="true"
+                [maxlength]="100"
+                [error]="getFieldError('usuario', 'situacionLaboral')"
+              ></app-ui-input>
+            </div>
+
+            <div class="ui-col-6">
+              <app-ui-input
+                formControlName="unidadFisica"
+                label="Unidad"
+                [readonly]="true"
+                [maxlength]="200"
+                [error]="getFieldError('usuario', 'unidadFisica')"
+              ></app-ui-input>
+            </div>
+
+            <div class="ui-col-6">
+              <app-ui-input
+                formControlName="unidad"
+                label="Grupo donde labora"
+                [readonly]="true"
+                [maxlength]="200"
+                [error]="getFieldError('usuario', 'unidad')"
+              ></app-ui-input>
+            </div>
+
+            <div class="ui-col-12">
+              <app-ui-input
+                formControlName="cargo"
+                label="Cargo"
+                [readonly]="true"
+                [maxlength]="150"
+                [error]="getFieldError('usuario', 'cargo')"
+              ></app-ui-input>
+            </div>
           </div>
+        </article>
 
-          <div class="ui-col-6">
-            <app-ui-input
-              formControlName="unidad"
-              label="Grupo donde labora"
-              [readonly]="true"
-              [error]="getFieldError('usuario', 'unidad') || ''"
-            ></app-ui-input>
+        <article class="form-section">
+          <h3>Datos internos</h3>
+
+          <div class="ui-grid">
+            <div class="ui-col-4">
+              <app-ui-input
+                formControlName="funcionarioCodigo"
+                label="Código funcionario"
+                [readonly]="true"
+                [required]="true"
+                [maxlength]="30"
+                [error]="getFieldError('usuario', 'funcionarioCodigo')"
+              ></app-ui-input>
+            </div>
+
+            <div class="ui-col-4">
+              <app-ui-input
+                formControlName="undeLaborandoCodigo"
+                label="Código unidad"
+                [readonly]="true"
+                [required]="true"
+                [maxlength]="30"
+                [error]="getFieldError('usuario', 'undeLaborandoCodigo')"
+              ></app-ui-input>
+            </div>
+
+            <div class="ui-col-4">
+              <app-ui-input
+                formControlName="codigoCargo"
+                label="Código cargo"
+                [readonly]="true"
+                [required]="true"
+                [maxlength]="30"
+                [error]="getFieldError('usuario', 'codigoCargo')"
+              ></app-ui-input>
+            </div>
           </div>
+        </article>
 
-          <div class="ui-col-6">
-            <app-ui-input
-              formControlName="cargo"
-              label="Cargo"
-              [readonly]="true"
-              [error]="getFieldError('usuario', 'cargo') || ''"
-            ></app-ui-input>
-          </div>
-        </div>
-
-        <div class="tab-actions tab-actions--separated">
+        <div class="form-actions">
           <app-ui-button
             type="submit"
             variant="primary"
@@ -201,11 +304,12 @@
           </app-ui-button>
 
           <app-ui-button
+            type="button"
             variant="secondary"
-            icon="fa-solid fa-user-plus"
+            icon="fa-solid fa-eraser"
             (buttonClick)="onNuevoUsuario()"
           >
-            Nuevo usuario
+            Limpiar
           </app-ui-button>
         </div>
       </form>
@@ -234,7 +338,8 @@
               placeholder="Seleccione un rol"
               [options]="rolOptions"
               [disabled]="editingRole !== null"
-              [error]="getFieldError('rol', 'rolId') || ''"
+              [required]="true"
+              [error]="getFieldError('rol', 'rolId')"
             ></app-ui-select>
           </div>
 
@@ -243,7 +348,9 @@
               formControlName="fechaFin"
               label="Fecha fin"
               type="date"
-              [error]="getFieldError('rol', 'fechaFin') || ''"
+              icon="fa-solid fa-calendar-days"
+              [required]="true"
+              [error]="getFieldError('rol', 'fechaFin')"
             ></app-ui-input>
           </div>
 
@@ -255,20 +362,13 @@
               [maxlength]="500"
               [rows]="3"
               [multiline]="true"
-              [error]="getFieldError('rol', 'justificacion') || ''"
+              [required]="true"
+              [error]="getFieldError('rol', 'justificacion')"
             ></app-ui-input>
           </div>
         </div>
 
-        <div class="tab-actions">
-          <app-ui-button
-            variant="secondary"
-            icon="fa-solid fa-ban"
-            (buttonClick)="cancelarNuevoRol()"
-          >
-            Cancelar
-          </app-ui-button>
-
+        <div class="form-actions">
           <app-ui-button
             type="submit"
             variant="primary"
@@ -277,6 +377,15 @@
             [loading]="savingRole"
           >
             {{ savingRole ? 'Guardando...' : editingRole ? 'Actualizar cambios' : 'Guardar rol' }}
+          </app-ui-button>
+
+          <app-ui-button
+            type="button"
+            variant="secondary"
+            icon="fa-solid fa-ban"
+            (buttonClick)="cancelarNuevoRol()"
+          >
+            Cancelar
           </app-ui-button>
         </div>
       </form>
@@ -311,7 +420,7 @@
             </div>
           </div>
 
-          <div class="tab-actions">
+          <div class="item-actions">
             <app-ui-button
               variant="secondary"
               icon="fa-solid fa-pen-to-square"
@@ -348,24 +457,17 @@
     <p>Ingresa la identificación y consulta para administrar datos y permisos.</p>
 
     <form class="empty-search" [formGroup]="consultaForm" (ngSubmit)="onConsultar()">
-      <app-ui-input
+      <app-ui-search-input
         formControlName="identificacion"
-        label="Identificación"
+        label="Buscar usuario"
         placeholder="Identificación"
+        [buttonText]="loading ? 'Consultando...' : 'Buscar'"
+        [required]="true"
         [maxlength]="20"
-        [error]="getFieldError('consulta', 'identificacion') || ''"
-        (enterPressed)="onConsultar()"
-      ></app-ui-input>
-
-      <app-ui-button
-        type="submit"
-        variant="secondary"
-        icon="fa-solid fa-magnifying-glass"
-        [disabled]="loading || consultaForm.invalid"
-        [loading]="loading"
-      >
-        {{ loading ? 'Consultando...' : 'Consultar' }}
-      </app-ui-button>
+        [disabled]="loading"
+        [error]="getFieldError('consulta', 'identificacion')"
+        (search)="onConsultar($event)"
+      ></app-ui-search-input>
     </form>
   </div>
 </ng-template>

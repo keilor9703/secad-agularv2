@@ -5,6 +5,7 @@ import {
   EventEmitter,
   forwardRef,
   Input,
+  numberAttribute,
   Output,
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
@@ -33,6 +34,8 @@ export class UiSearchInputComponent implements ControlValueAccessor {
   @Input() error = '';
   @Input() hint = '';
   @Input() inputId = `ui-search-input-${nextUiSearchInputId++}`;
+  @Input({ transform: numberAttribute }) maxlength: number | null = null;
+  @Input({ transform: booleanAttribute }) required = false;
   @Input({ transform: booleanAttribute }) disabled = false;
   @Input({ transform: booleanAttribute }) clearable = true;
 
@@ -95,5 +98,11 @@ export class UiSearchInputComponent implements ControlValueAccessor {
 
   get isDisabled(): boolean {
     return this.disabled || this.controlDisabled;
+  }
+
+  get describedBy(): string | null {
+    if (this.error) return `${this.inputId}-error`;
+    if (this.hint) return `${this.inputId}-hint`;
+    return null;
   }
 }
