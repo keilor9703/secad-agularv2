@@ -1,0 +1,94 @@
+.formularios-page {
+  padding: 10px;
+  min-height: calc(100vh - 210px);
+}
+
+.demo-form {
+  display: grid;
+  gap: 18px;
+}
+
+.form-section {
+  position: relative;
+  border: 1px solid rgba(21, 27, 59, 0.14);
+  border-radius: 12px;
+  background: var(--ui-surface);
+  padding: 22px 14px 14px;
+  margin-top: 8px;
+}
+
+.form-section h3 {
+  position: absolute;
+  top: -12px;
+  left: 14px;
+  margin: 0;
+  padding: 0 8px;
+  background: var(--ui-surface);
+  color: var(--policia-oscuro);
+  font-size: calc(13px * var(--font-size-scale));
+  font-weight: 900;
+  line-height: 1.2;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.col-12 {
+  grid-column: span 12;
+}
+
+.col-6 {
+  grid-column: span 6;
+}
+
+.col-4 {
+  grid-column: span 4;
+}
+
+.col-3 {
+  grid-column: span 3;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.json-preview {
+  margin: 0;
+  padding: 14px;
+  border-radius: 10px;
+  background: #0f172a;
+  color: #e2e8f0;
+  overflow: auto;
+  font-size: calc(13px * var(--font-size-scale));
+}
+
+@media (max-width: 768px) {
+  .col-6,
+  .col-4,
+  .col-3 {
+    grid-column: span 12;
+  }
+
+  .form-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+:host-context(html.dark-mode) {
+  .form-section {
+    border-color: var(--ui-border);
+  }
+
+  .form-section h3 {
+    background: var(--ui-surface);
+    color: var(--ui-text);
+  }
+}

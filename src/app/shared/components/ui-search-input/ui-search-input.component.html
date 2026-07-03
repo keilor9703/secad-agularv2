@@ -1,0 +1,47 @@
+<div
+  class="search-field"
+  [class.search-field--focused]="focused"
+  [class.search-field--invalid]="error"
+  [class.search-field--disabled]="isDisabled"
+>
+  <span class="search-field__label" *ngIf="label">{{ label }}</span>
+
+  <div class="search-field__shell">
+    <input
+      class="search-field__input"
+      [id]="inputId"
+      type="text"
+      [placeholder]="placeholder"
+      [disabled]="isDisabled"
+      [value]="value"
+      (input)="handleInput($event)"
+      (focus)="handleFocus()"
+      (blur)="handleBlur()"
+      (keydown.enter)="emitSearch()"
+    />
+
+    <button
+      class="search-field__clear"
+      type="button"
+      *ngIf="clearable && value"
+      [disabled]="isDisabled"
+      (click)="clear()"
+      title="Limpiar"
+    >
+      ×
+    </button>
+
+    <button
+      class="search-field__button"
+      type="button"
+      [disabled]="isDisabled"
+      (click)="emitSearch()"
+    >
+      <i [class]="icon" *ngIf="icon"></i>
+      <span>{{ buttonText }}</span>
+    </button>
+  </div>
+
+  <small class="search-field__error" *ngIf="error">{{ error }}</small>
+  <small class="search-field__hint" *ngIf="hint && !error">{{ hint }}</small>
+</div>

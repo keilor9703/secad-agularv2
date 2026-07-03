@@ -6,7 +6,7 @@ import {
   forwardRef,
   Input,
   numberAttribute,
-  Output
+  Output,
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
@@ -22,9 +22,9 @@ let nextUiInputId = 0;
     {
       provide: NG_VALUE_ACCESSOR,
       useExisting: forwardRef(() => UiInputComponent),
-      multi: true
-    }
-  ]
+      multi: true,
+    },
+  ],
 })
 export class UiInputComponent implements ControlValueAccessor {
   @Input() label = '';
@@ -33,23 +33,26 @@ export class UiInputComponent implements ControlValueAccessor {
   @Input() autocomplete = 'off';
   @Input() hint = '';
   @Input() error = '';
+  @Input() icon = '';
   @Input() inputId = `ui-input-${nextUiInputId++}`;
   @Input({ transform: numberAttribute }) maxlength: number | null = null;
   @Input({ transform: numberAttribute }) rows = 4;
   @Input({ transform: booleanAttribute }) multiline = false;
   @Input({ transform: booleanAttribute }) readonly = false;
   @Input({ transform: booleanAttribute }) disabled = false;
+  @Input({ transform: booleanAttribute }) required = false;
 
   @Output() enterPressed = new EventEmitter<void>();
 
   value = '';
+  focused = false;
   controlDisabled = false;
 
   private onChange: (value: string) => void = () => undefined;
   private onTouched: () => void = () => undefined;
 
-  writeValue(value: string | null | undefined): void {
-    this.value = value ?? '';
+  writeValue(value: string | number | null | undefined): void {
+    this.value = value === null || value === undefined ? '' : String(value);
   }
 
   registerOnChange(fn: (value: string) => void): void {
@@ -70,7 +73,12 @@ export class UiInputComponent implements ControlValueAccessor {
     this.onChange(this.value);
   }
 
-  markAsTouched(): void {
+  handleFocus(): void {
+    this.focused = true;
+  }
+
+  handleBlur(): void {
+    this.focused = false;
     this.onTouched();
   }
 
@@ -82,15 +90,13 @@ export class UiInputComponent implements ControlValueAccessor {
     return this.disabled || this.controlDisabled;
   }
 
+  get shouldFloat(): boolean {
+    return this.focused || !!this.value || ['date', 'time', 'datetime-local'].includes(this.type);
+  }
+
   get describedBy(): string | null {
-    if (this.error) {
-      return `${this.inputId}-error`;
-    }
-
-    if (this.hint) {
-      return `${this.inputId}-hint`;
-    }
-
+    if (this.error) return `${this.inputId}-error`;
+    if (this.hint) return `${this.inputId}-hint`;
     return null;
   }
 }

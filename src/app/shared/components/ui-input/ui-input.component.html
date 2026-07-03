@@ -1,29 +1,21 @@
-<label class="ui-field ui-input" [class.ui-field--invalid]="error">
-  <span class="ui-label" *ngIf="label" [attr.for]="inputId">{{ label }}</span>
+<label
+  class="form-field"
+  [class.form-field--focused]="focused"
+  [class.form-field--filled]="shouldFloat"
+  [class.form-field--invalid]="error"
+  [class.form-field--disabled]="isDisabled"
+>
+  <span class="form-field__label" *ngIf="label">
+    {{ label }} <strong *ngIf="required">*</strong>
+  </span>
 
-  <textarea
-    *ngIf="multiline; else singleLineInput"
-    class="ui-control"
-    [id]="inputId"
-    [rows]="rows"
-    [placeholder]="placeholder"
-    [readonly]="readonly"
-    [disabled]="isDisabled"
-    [attr.maxlength]="maxlength"
-    [attr.aria-describedby]="describedBy"
-    [attr.aria-invalid]="!!error"
-    [value]="value"
-    (input)="handleInput($event)"
-    (blur)="markAsTouched()"
-  ></textarea>
-
-  <ng-template #singleLineInput>
-    <input
-      class="ui-control"
+  <span class="form-field__control">
+    <textarea
+      *ngIf="multiline; else singleInput"
+      class="form-field__native"
       [id]="inputId"
-      [type]="type"
+      [rows]="rows"
       [placeholder]="placeholder"
-      [autocomplete]="autocomplete"
       [readonly]="readonly"
       [disabled]="isDisabled"
       [attr.maxlength]="maxlength"
@@ -31,11 +23,33 @@
       [attr.aria-invalid]="!!error"
       [value]="value"
       (input)="handleInput($event)"
-      (blur)="markAsTouched()"
-      (keydown.enter)="handleEnter()"
-    />
-  </ng-template>
+      (focus)="handleFocus()"
+      (blur)="handleBlur()"
+    ></textarea>
 
-  <small class="ui-field__error" *ngIf="error" [id]="inputId + '-error'">{{ error }}</small>
-  <small class="ui-field__hint" *ngIf="hint && !error" [id]="inputId + '-hint'">{{ hint }}</small>
+    <ng-template #singleInput>
+      <input
+        class="form-field__native"
+        [id]="inputId"
+        [type]="type"
+        [placeholder]="placeholder"
+        [autocomplete]="autocomplete"
+        [readonly]="readonly"
+        [disabled]="isDisabled"
+        [attr.maxlength]="maxlength"
+        [attr.aria-describedby]="describedBy"
+        [attr.aria-invalid]="!!error"
+        [value]="value"
+        (input)="handleInput($event)"
+        (focus)="handleFocus()"
+        (blur)="handleBlur()"
+        (keydown.enter)="handleEnter()"
+      />
+    </ng-template>
+
+    <i class="form-field__icon" [class]="icon" *ngIf="icon"></i>
+  </span>
+
+  <small class="form-field__error" *ngIf="error" [id]="inputId + '-error'">{{ error }}</small>
+  <small class="form-field__hint" *ngIf="hint && !error" [id]="inputId + '-hint'">{{ hint }}</small>
 </label>

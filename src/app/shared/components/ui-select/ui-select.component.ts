@@ -1,5 +1,12 @@
 import { CommonModule } from '@angular/common';
-import { booleanAttribute, Component, forwardRef, Input } from '@angular/core';
+import {
+  booleanAttribute,
+  Component,
+  ElementRef,
+  forwardRef,
+  HostListener,
+  Input,
+} from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
 import { UiSelectOption } from '../../interfaces/ui-select-option.interface';
@@ -16,24 +23,42 @@ let nextUiSelectId = 0;
     {
       provide: NG_VALUE_ACCESSOR,
       useExisting: forwardRef(() => UiSelectComponent),
-      multi: true
-    }
-  ]
+      multi: true,
+    },
+  ],
 })
-export class UiSelectComponent<T = string | number | boolean | null> implements ControlValueAccessor {
+export class UiSelectComponent<
+  T = string | number | boolean | null,
+> implements ControlValueAccessor {
   @Input() label = '';
-  @Input() placeholder = '';
+  @Input() placeholder = 'Seleccione';
+  @Input() searchPlaceholder = 'Buscar...';
   @Input() hint = '';
   @Input() error = '';
   @Input() inputId = `ui-select-${nextUiSelectId++}`;
   @Input() options: UiSelectOption<T>[] = [];
   @Input({ transform: booleanAttribute }) disabled = false;
+  @Input({ transform: booleanAttribute }) required = false;
+  @Input({ transform: booleanAttribute }) clearable = true;
+  @Input({ transform: booleanAttribute }) searchable = true;
 
   value: T | null = null;
+  opened = false;
+  touched = false;
+  searchTerm = '';
   controlDisabled = false;
 
   private onChange: (value: T | null) => void = () => undefined;
   private onTouched: () => void = () => undefined;
+
+  constructor(private readonly elementRef: ElementRef<HTMLElement>) {}
+
+  @HostListener('document:click', ['$event'])
+  closeOnOutsideClick(event: MouseEvent): void {
+    if (!this.elementRef.nativeElement.contains(event.target as Node)) {
+      this.close();
+    }
+  }
 
   writeValue(value: T | null | undefined): void {
     this.value = value ?? null;
@@ -51,40 +76,93 @@ export class UiSelectComponent<T = string | number | boolean | null> implements 
     this.controlDisabled = isDisabled;
   }
 
-  handleChange(event: Event): void {
-    const target = event.target as HTMLSelectElement;
-    const selectedIndex = target.value === '' ? -1 : Number(target.value);
-    this.value = selectedIndex >= 0 ? this.options[selectedIndex]?.value ?? null : null;
+  toggle(): void {
+    if (this.isDisabled) {
+      return;
+    }
+
+    this.opened = !this.opened;
+
+    if (this.opened) {
+      this.searchTerm = '';
+    }
+  }
+
+  close(): void {
+    if (!this.opened) {
+      return;
+    }
+
+    this.opened = false;
+    this.markAsTouched();
+  }
+
+  selectOption(option: UiSelectOption<T>): void {
+    if (option.disabled) {
+      return;
+    }
+
+    this.value = option.value;
     this.onChange(this.value);
-    this.onTouched();
+    this.close();
+  }
+
+  clear(event: MouseEvent): void {
+    event.stopPropagation();
+    this.value = null;
+    this.onChange(null);
+    this.markAsTouched();
+  }
+
+  onSearch(event: Event): void {
+    const target = event.target as HTMLInputElement;
+    this.searchTerm = target.value;
+  }
+
+  handleKeydown(event: KeyboardEvent): void {
+    if (event.key === 'Escape') {
+      this.close();
+      return;
+    }
+
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      this.toggle();
+    }
   }
 
   markAsTouched(): void {
+    if (this.touched) {
+      return;
+    }
+
+    this.touched = true;
     this.onTouched();
+  }
+
+  isSelected(option: UiSelectOption<T>): boolean {
+    return Object.is(option.value, this.value);
   }
 
   trackOption(index: number): number {
     return index;
   }
 
-  get selectedIndex(): string {
-    const index = this.options.findIndex((option) => Object.is(option.value, this.value));
-    return index >= 0 ? String(index) : '';
+  get selectedLabel(): string {
+    return this.options.find((option) => Object.is(option.value, this.value))?.label ?? '';
+  }
+
+  get filteredOptions(): UiSelectOption<T>[] {
+    const term = this.searchTerm.trim().toLowerCase();
+
+    if (!term) {
+      return this.options;
+    }
+
+    return this.options.filter((option) => option.label.toLowerCase().includes(term));
   }
 
   get isDisabled(): boolean {
     return this.disabled || this.controlDisabled;
-  }
-
-  get describedBy(): string | null {
-    if (this.error) {
-      return `${this.inputId}-error`;
-    }
-
-    if (this.hint) {
-      return `${this.inputId}-hint`;
-    }
-
-    return null;
   }
 }

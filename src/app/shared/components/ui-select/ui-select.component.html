@@ -1,26 +1,60 @@
-<label class="ui-field ui-select" [class.ui-field--invalid]="error">
-  <span class="ui-label" *ngIf="label" [attr.for]="inputId">{{ label }}</span>
+<div
+  class="form-select"
+  [class.form-select--open]="opened"
+  [class.form-select--filled]="value !== null"
+  [class.form-select--invalid]="error"
+  [class.form-select--disabled]="isDisabled"
+>
+  <span class="form-select__label" *ngIf="label">
+    {{ label }} <strong *ngIf="required">*</strong>
+  </span>
 
-  <select
-    class="ui-control"
+  <button
+    class="form-select__control"
+    type="button"
     [id]="inputId"
-    [value]="selectedIndex"
     [disabled]="isDisabled"
-    [attr.aria-describedby]="describedBy"
+    [attr.aria-expanded]="opened"
     [attr.aria-invalid]="!!error"
-    (change)="handleChange($event)"
-    (blur)="markAsTouched()"
+    (click)="toggle()"
+    (keydown)="handleKeydown($event)"
   >
-    <option value="" *ngIf="placeholder">{{ placeholder }}</option>
-    <option
-      *ngFor="let option of options; let index = index; trackBy: trackOption"
-      [value]="index"
-      [disabled]="option.disabled"
-    >
-      {{ option.label }}
-    </option>
-  </select>
+    <span class="form-select__value" [class.is-placeholder]="!selectedLabel">
+      {{ selectedLabel || placeholder }}
+    </span>
 
-  <small class="ui-field__error" *ngIf="error" [id]="inputId + '-error'">{{ error }}</small>
-  <small class="ui-field__hint" *ngIf="hint && !error" [id]="inputId + '-hint'">{{ hint }}</small>
-</label>
+    <span class="form-select__clear" *ngIf="clearable && value !== null" (click)="clear($event)">
+      ×
+    </span>
+
+    <span class="form-select__arrow"></span>
+  </button>
+
+  <div class="form-select__panel" *ngIf="opened">
+    <input
+      *ngIf="searchable"
+      class="form-select__search"
+      type="text"
+      [placeholder]="searchPlaceholder"
+      [value]="searchTerm"
+      (input)="onSearch($event)"
+    />
+
+    <button
+      class="form-select__option"
+      type="button"
+      *ngFor="let option of filteredOptions; trackBy: trackOption"
+      [disabled]="option.disabled"
+      [class.is-selected]="isSelected(option)"
+      (click)="selectOption(option)"
+    >
+      <i class="fa-solid fa-check" *ngIf="isSelected(option)"></i>
+      <span>{{ option.label }}</span>
+    </button>
+
+    <div class="form-select__empty" *ngIf="filteredOptions.length === 0">Sin resultados.</div>
+  </div>
+
+  <small class="form-select__error" *ngIf="error">{{ error }}</small>
+  <small class="form-select__hint" *ngIf="hint && !error">{{ hint }}</small>
+</div>
