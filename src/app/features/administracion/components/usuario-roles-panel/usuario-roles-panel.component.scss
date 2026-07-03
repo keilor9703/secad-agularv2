@@ -53,6 +53,11 @@
   background: rgba(var(--policia-oscuro-rgb), 0.02);
 }
 
+.role-add-form .ui-grid {
+  column-gap: 16px;
+  row-gap: 18px;
+}
+
 .form-actions {
   padding-top: 12px;
   border-top: 1px solid rgba(var(--policia-oscuro-rgb), 0.1);
