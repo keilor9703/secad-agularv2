@@ -1,7 +1,10 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 
+import { ToastService } from '../../../../core/services/toast.service';
 import { UiTableComponent } from '../../../../shared/components/ui-table/ui-table.component';
 import {
+  UiTableAction,
+  UiTableActionEvent,
   UiTableBadge,
   UiTableColumn,
   UiTableFilter,
@@ -18,10 +21,11 @@ import { FuncionariosDemoTableService } from '../../services/funcionarios-demo-t
   standalone: true,
   imports: [UiTableComponent],
   templateUrl: './funcionarios-table-demo.component.html',
-  styleUrls: ['./funcionarios-table-demo.component.scss'],
+  styleUrl: './funcionarios-table-demo.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FuncionariosTableDemoComponent {
+  private readonly toast = inject(ToastService);
   private readonly funcionariosDemoTableService = inject(FuncionariosDemoTableService);
   private readonly funcionarios = signal(this.funcionariosDemoTableService.getFuncionarios());
 
@@ -51,6 +55,34 @@ export class FuncionariosTableDemoComponent {
     { key: 'especialidad', label: 'Especialidad', placeholder: 'Filtrar especialidad...' },
     { key: 'identificacion', label: 'Identificación', placeholder: 'Filtrar identificación...' },
     { key: 'nombres', label: 'Nombres / Apellidos', placeholder: 'Filtrar nombres...' },
+  ];
+
+  readonly actions: UiTableAction<FuncionarioListado>[] = [
+    {
+      id: 'view',
+      label: 'Ver detalle',
+      icon: 'fa-solid fa-eye',
+      variant: 'info',
+    },
+    {
+      id: 'edit',
+      label: 'Editar funcionario',
+      icon: 'fa-solid fa-pen-to-square',
+      variant: 'secondary',
+    },
+    {
+      id: 'change-status',
+      label: 'Cambiar estado',
+      icon: 'fa-solid fa-toggle-on',
+      variant: 'warning',
+      disabled: (row) => row.estado === 'Inactivo',
+    },
+    {
+      id: 'delete',
+      label: 'Eliminar',
+      icon: 'fa-solid fa-trash-can',
+      variant: 'danger',
+    },
   ];
 
   readonly filteredFuncionarios = computed(() => {
@@ -113,6 +145,18 @@ export class FuncionariosTableDemoComponent {
   onPageSizeChange(pageSize: number): void {
     this.pageSize.set(pageSize);
     this.currentPage.set(1);
+  }
+
+  onActionClick(event: UiTableActionEvent<FuncionarioListado>): void {
+    const action = this.actions.find((item) => item.id === event.actionId);
+    const message = `${action?.label ?? 'Acción'}: ${event.row.nombres}`;
+
+    if (event.actionId === 'delete') {
+      this.toast.warning('Acción de tabla', message);
+      return;
+    }
+
+    this.toast.info('Acción de tabla', message);
   }
 
   private getEstadoBadge(estado: FuncionarioEstado): UiTableBadge {

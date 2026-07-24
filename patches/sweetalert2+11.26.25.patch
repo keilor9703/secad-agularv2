@@ -1,0 +1,107 @@
+diff --git a/node_modules/sweetalert2/dist/sweetalert2.esm.js b/node_modules/sweetalert2/dist/sweetalert2.esm.js
+index a0c3093..b54b497 100644
+--- a/node_modules/sweetalert2/dist/sweetalert2.esm.js
++++ b/node_modules/sweetalert2/dist/sweetalert2.esm.js
+@@ -360,27 +360,77 @@ const isLoading = () => {
+  * @param {HTMLElement} elem
+  * @param {string} html
+  */
++const trustedTypesSafeTags = new Set(['br', 'button', 'div', 'h2', 'img', 'input', 'label', 'li', 'option', 'output', 'select', 'span', 'textarea', 'ul']);
++const trustedTypesVoidTags = new Set(['br', 'img', 'input']);
++const trustedTypesSafeAttribute = /^(?:aria-[\w-]+|class|id|role|tabindex|type)$/i;
++const decodeHtmlEntities = value => value.replace(/&(?:#(\d+)|#x([\da-f]+)|([a-z]+));/gi, (entity, decimal, hexadecimal, named) => {
++  if (decimal) {
++    return String.fromCodePoint(Number(decimal));
++  }
++  if (hexadecimal) {
++    return String.fromCodePoint(Number.parseInt(hexadecimal, 16));
++  }
++  return {
++    amp: '&',
++    apos: "'",
++    gt: '>',
++    lt: '<',
++    nbsp: '\u00a0',
++    quot: '"',
++    times: '\u00d7'
++  }[named.toLowerCase()] || entity;
++});
+ const setInnerHtml = (elem, html) => {
+   elem.textContent = '';
+-  if (html) {
+-    const parser = new DOMParser();
+-    const parsed = parser.parseFromString(html, `text/html`);
+-    const head = parsed.querySelector('head');
+-    if (head) {
+-      Array.from(head.childNodes).forEach(child => {
+-        elem.appendChild(child);
+-      });
++  if (!html) {
++    return;
++  }
++  const stack = [elem];
++  const tokens = String(html).match(/<!--[\s\S]*?-->|<\/?[a-z][^>]*>|[^<]+|</gi) || [];
++  for (const token of tokens) {
++    if (token.startsWith('<!--')) {
++      continue;
+     }
+-    const body = parsed.querySelector('body');
+-    if (body) {
+-      Array.from(body.childNodes).forEach(child => {
+-        if (child instanceof HTMLVideoElement || child instanceof HTMLAudioElement) {
+-          elem.appendChild(child.cloneNode(true)); // https://github.com/sweetalert2/sweetalert2/issues/2507
+-        } else {
+-          elem.appendChild(child);
++    if (token.startsWith('</')) {
++      const closingTag = token.slice(2, -1).trim().toLowerCase();
++      for (let index = stack.length - 1; index > 0; index -= 1) {
++        if (stack[index].localName === closingTag) {
++          stack.length = index;
++          break;
+         }
+-      });
++      }
++      continue;
++    }
++    if (token.startsWith('<') && token !== '<') {
++      const openingTag = token.match(/^<([a-z][\w-]*)([^>]*)>$/i);
++      if (!openingTag) {
++        stack[stack.length - 1].appendChild(document.createTextNode(token));
++        continue;
++      }
++      const tagName = openingTag[1].toLowerCase();
++      if (!trustedTypesSafeTags.has(tagName)) {
++        continue;
++      }
++      const node = document.createElement(tagName);
++      const attributes = openingTag[2];
++      const attributePattern = /([^\s=/>]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+)))?/g;
++      let attribute;
++      while ((attribute = attributePattern.exec(attributes))) {
++        const attributeName = attribute[1];
++        if (!trustedTypesSafeAttribute.test(attributeName)) {
++          continue;
++        }
++        const attributeValue = attribute[2] ?? attribute[3] ?? attribute[4] ?? '';
++        node.setAttribute(attributeName, decodeHtmlEntities(attributeValue));
++      }
++      stack[stack.length - 1].appendChild(node);
++      const selfClosing = /\/\s*>$/.test(token);
++      if (!selfClosing && !trustedTypesVoidTags.has(tagName)) {
++        stack.push(node);
++      }
++      continue;
+     }
++    stack[stack.length - 1].appendChild(document.createTextNode(decodeHtmlEntities(token)));
+   }
+ };
+
+@@ -2395,7 +2445,7 @@ function removePopupAndResetState(instance, container, returnFocus, didClose) {
+   if (isSafariOrIOS) {
+     container.setAttribute('style', 'display:none !important');
+     container.removeAttribute('class');
+-    container.innerHTML = '';
++    container.textContent = '';
+   } else {
+     container.remove();
+   }

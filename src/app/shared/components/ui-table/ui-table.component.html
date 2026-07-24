@@ -51,7 +51,7 @@
               }
 
               @if (actions().length > 0) {
-                <th class="align-center">Acciones</th>
+                <th class="align-center ui-table-actions-header" scope="col">Acciones</th>
               }
             </tr>
           </thead>
@@ -76,23 +76,13 @@
                 }
 
                 @if (actions().length > 0) {
-                  <td>
-                    <div class="ui-table-actions">
-                      @for (action of actions(); track trackAction($index, action)) {
-                        @if (isActionVisible(action, row)) {
-                          <button
-                            [class]="getActionClass(action)"
-                            type="button"
-                            [title]="action.title ?? action.label"
-                            [disabled]="isActionDisabled(action, row)"
-                            (click)="emitAction(action, row)"
-                          >
-                            <i [class]="action.icon"></i>
-                            <span>{{ action.label }}</span>
-                          </button>
-                        }
-                      }
-                    </div>
+                  <td class="ui-table-actions-cell">
+                    <app-ui-table-actions
+                      [actions]="actions()"
+                      [row]="row"
+                      [ariaLabel]="actionMenuLabel()"
+                      (actionClick)="emitAction($event)"
+                    ></app-ui-table-actions>
                   </td>
                 }
               </tr>

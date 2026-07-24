@@ -1,0 +1,62 @@
+<div
+  class="ui-date-time"
+  [class.is-disabled]="isDisabled()"
+  [class.is-focused]="focused()"
+  [class.is-open]="opened()"
+  [class.has-error]="hasError()"
+>
+  <label
+    class="ui-date-time__label"
+    [id]="resolvedControlId() + '-label'"
+    [for]="resolvedControlId()"
+  >
+    {{ label() }}
+    @if (required()) {
+      <span class="ui-date-time__required" aria-hidden="true">*</span>
+    }
+  </label>
+
+  <div
+    class="ui-date-time__control"
+    role="group"
+    [attr.aria-labelledby]="resolvedControlId() + '-label'"
+    [attr.aria-disabled]="isDisabled()"
+    (click)="handleControlClick($event)"
+    (keydown)="handleControlKeydown($event)"
+  >
+    <input
+      #pickerInput
+      class="ui-date-time__input"
+      [type]="useNativeFallback() ? nativeInputType() : 'text'"
+      autocomplete="off"
+      [id]="resolvedControlId()"
+      [placeholder]="resolvedPlaceholder()"
+      [readOnly]="!useNativeFallback() && !allowManualInput()"
+      [disabled]="isDisabled()"
+      [required]="required()"
+      [attr.min]="nativeMin()"
+      [attr.max]="nativeMax()"
+      [attr.step]="nativeStep()"
+      [attr.aria-invalid]="hasError()"
+      [attr.aria-describedby]="describedBy()"
+      (focus)="handleFocus()"
+      (blur)="handleBlur()"
+      (change)="handleNativeChange($event)"
+    />
+
+    <span class="ui-date-time__trigger" aria-hidden="true">
+      <i [class]="resolvedIcon()" aria-hidden="true"></i>
+    </span>
+  </div>
+
+  @if (hasError()) {
+    <p class="ui-date-time__message is-error" [id]="resolvedControlId() + '-error'">
+      <i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i>
+      {{ error() }}
+    </p>
+  } @else if (hint()) {
+    <p class="ui-date-time__message" [id]="resolvedControlId() + '-hint'">
+      {{ hint() }}
+    </p>
+  }
+</div>

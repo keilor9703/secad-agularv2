@@ -1,202 +1,331 @@
-<section class="formularios-page" *ngIf="visible">
-  <div class="ui-panel">
-    <div class="ui-panel__head">
-      <div class="ui-panel__title">
-        <i class="fa-solid fa-clipboard-list"></i>
-        Guía visual de formularios
-      </div>
-
-      <div class="ui-panel__actions ui-window-controls">
-        <button
-          class="ui-icon-btn ui-win-btn is-min"
-          type="button"
-          title="Minimizar"
-          (click)="toggleMinimize()"
-        >
-          <i class="fa-solid fa-minus"></i>
-        </button>
-
-        <button
-          class="ui-icon-btn ui-win-btn is-close"
-          type="button"
-          title="Cerrar"
-          (click)="closePanel()"
-        >
-          <i class="fa-solid fa-xmark"></i>
-        </button>
-      </div>
-    </div>
-
-    <div class="ui-panel__body" *ngIf="!minimized">
-      <form class="demo-form" [formGroup]="formularioDemo" (ngSubmit)="guardar()">
-        <article class="form-section">
-          <h3>Inputs básicos</h3>
-
-          <div class="form-grid">
-            <div class="col-6">
-              <app-ui-input
-                formControlName="nombres"
-                label="Nombres"
-                placeholder="Ingrese nombres"
-                [required]="true"
-                [maxlength]="80"
-                [error]="error('nombres')"
-              ></app-ui-input>
-            </div>
-
-            <div class="col-6">
-              <app-ui-input
-                formControlName="telefono"
-                label="Teléfono"
-                placeholder="Ingrese teléfono"
-                icon="fa-solid fa-phone"
-                hint="Ejemplo: 3001234567"
-                [required]="true"
-                [error]="error('telefono')"
-              ></app-ui-input>
-            </div>
-
-            <div class="col-6">
-              <app-ui-input
-                formControlName="correo"
-                label="Correo electrónico"
-                placeholder="correo@dominio.com"
-                type="email"
-                icon="fa-solid fa-envelope"
-                [required]="true"
-                [error]="error('correo')"
-              ></app-ui-input>
-            </div>
-          </div>
-        </article>
-
-        <article class="form-section">
-          <h3>Buscadores y selects</h3>
-
-          <div class="form-grid">
-            <div class="col-12">
-              <app-ui-search-input
-                formControlName="criterioBusqueda"
-                label="Buscar usuario"
-                placeholder="Buscar por nombre, identificación o correo"
-                buttonText="Buscar"
-                (search)="buscar($event)"
-              ></app-ui-search-input>
-            </div>
-
-            <div class="col-6">
-              <app-ui-select
-                formControlName="unidad"
-                label="Unidad"
-                placeholder="Seleccione una unidad"
-                searchPlaceholder="Buscar unidad..."
-                [required]="true"
-                [options]="unidadOptions"
-                [error]="error('unidad')"
-              ></app-ui-select>
-            </div>
-
-            <div class="col-6">
-              <app-ui-select
-                formControlName="ciudad"
-                label="Ciudad"
-                placeholder="Seleccione una ciudad"
-                searchPlaceholder="Buscar ciudad..."
-                [required]="true"
-                [options]="ciudadOptions"
-                [error]="error('ciudad')"
-              ></app-ui-select>
-            </div>
-          </div>
-        </article>
-
-        <article class="form-section">
-          <h3>Fecha, hora y texto largo</h3>
-
-          <div class="form-grid">
-            <div class="col-4">
-              <app-ui-input
-                formControlName="fechaNacimiento"
-                label="Fecha de nacimiento"
-                type="date"
-                icon="fa-solid fa-calendar-days"
-                [required]="true"
-                [error]="error('fechaNacimiento')"
-              ></app-ui-input>
-            </div>
-
-            <div class="col-4">
-              <app-ui-input
-                formControlName="horaInicio"
-                label="Hora inicio"
-                type="time"
-                icon="fa-solid fa-clock"
-                [required]="true"
-                [error]="error('horaInicio')"
-              ></app-ui-input>
-            </div>
-
-            <div class="col-4">
-              <app-ui-input
-                formControlName="fechaHoraCita"
-                label="Fecha y hora de cita"
-                type="datetime-local"
-                icon="fa-solid fa-calendar-check"
-                [required]="true"
-                [error]="error('fechaHoraCita')"
-              ></app-ui-input>
-            </div>
-
-            <div class="col-12">
-              <app-ui-input
-                formControlName="observacion"
-                label="Observación"
-                placeholder="Ingrese observación"
-                [rows]="4"
-                [maxlength]="500"
-                [multiline]="true"
-                hint="Máximo 500 caracteres."
-                [error]="error('observacion')"
-              ></app-ui-input>
-            </div>
-          </div>
-        </article>
-
-        <div class="form-actions">
-          <app-ui-button type="submit" variant="primary" icon="fa-solid fa-floppy-disk"
-            >Guardar</app-ui-button
-          >
-          <app-ui-button
-            type="button"
-            variant="secondary"
-            icon="fa-solid fa-eraser"
-            (buttonClick)="limpiar()"
-            >Limpiar</app-ui-button
-          >
-          <app-ui-button
-            type="button"
-            variant="outline"
-            icon="fa-solid fa-ban"
-            (buttonClick)="cancelar()"
-            >Cancelar</app-ui-button
-          >
+@if (visible()) {
+  <section class="formularios-page">
+    <div class="ui-panel">
+      <div class="ui-panel__head">
+        <div class="ui-panel__title">
+          <i class="fa-solid fa-clipboard-list"></i>
+          Guía visual de formularios
         </div>
-      </form>
+
+        <div class="ui-panel__actions ui-window-controls">
+          <button
+            class="ui-icon-btn ui-win-btn is-min"
+            type="button"
+            title="Minimizar"
+            (click)="toggleMinimize()"
+          >
+            <i class="fa-solid fa-minus"></i>
+          </button>
+
+          <button
+            class="ui-icon-btn ui-win-btn is-close"
+            type="button"
+            title="Cerrar"
+            (click)="closePanel()"
+          >
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+      </div>
+
+      @if (!minimized()) {
+        <div class="ui-panel__body">
+          <form class="demo-form" [formGroup]="formularioDemo" (ngSubmit)="guardar()">
+            <article class="form-section">
+              <h3>Inputs básicos</h3>
+
+              <div class="form-grid">
+                <div class="col-6">
+                  <app-ui-input
+                    formControlName="nombres"
+                    label="Nombres"
+                    placeholder="Ingrese nombres"
+                    [required]="true"
+                    [maxlength]="80"
+                    [error]="error('nombres')"
+                  />
+                </div>
+
+                <div class="col-6">
+                  <app-ui-input
+                    formControlName="telefono"
+                    label="Teléfono"
+                    placeholder="Ingrese teléfono"
+                    icon="fa-solid fa-phone"
+                    hint="Ejemplo: 3001234567"
+                    [required]="true"
+                    [error]="error('telefono')"
+                  />
+                </div>
+
+                <div class="col-6">
+                  <app-ui-input
+                    formControlName="correo"
+                    label="Correo electrónico"
+                    placeholder="correo@dominio.com"
+                    type="email"
+                    icon="fa-solid fa-envelope"
+                    [required]="true"
+                    [error]="error('correo')"
+                  />
+                </div>
+              </div>
+            </article>
+
+            <article class="form-section">
+              <h3>Buscadores y selects</h3>
+
+              <div class="form-grid">
+                <div class="col-12">
+                  <app-ui-search-input
+                    formControlName="criterioBusqueda"
+                    label="Buscar usuario"
+                    placeholder="Buscar por nombre, identificación o correo"
+                    buttonText="Buscar"
+                    (search)="buscar($event)"
+                  />
+                </div>
+
+                <div class="col-6">
+                  <app-ui-select
+                    formControlName="unidad"
+                    label="Unidad"
+                    placeholder="Seleccione una unidad"
+                    searchPlaceholder="Buscar unidad..."
+                    [required]="true"
+                    [options]="unidadOptions"
+                    [error]="error('unidad')"
+                  />
+                </div>
+
+                <div class="col-6">
+                  <app-ui-select
+                    formControlName="ciudad"
+                    label="Ciudad"
+                    placeholder="Seleccione una ciudad"
+                    searchPlaceholder="Buscar ciudad..."
+                    [required]="true"
+                    [options]="ciudadOptions"
+                    [error]="error('ciudad')"
+                  />
+                </div>
+              </div>
+            </article>
+
+            <article class="form-section">
+              <h3>Fecha, hora y texto largo</h3>
+
+              <div class="form-grid">
+                <div class="col-4">
+                  <app-ui-date-time-picker
+                    formControlName="fechaNacimiento"
+                    label="Fecha de nacimiento"
+                    mode="date"
+                    hint="Formato visible: dd/mm/aaaa"
+                    [maxDate]="today"
+                    [required]="true"
+                    [error]="error('fechaNacimiento')"
+                  />
+                </div>
+
+                <div class="col-4">
+                  <app-ui-date-time-picker
+                    formControlName="horaInicio"
+                    label="Hora inicio"
+                    mode="time"
+                    hint="Formato de 24 horas"
+                    [minuteStep]="5"
+                    [required]="true"
+                    [error]="error('horaInicio')"
+                  />
+                </div>
+
+                <div class="col-4">
+                  <app-ui-date-time-picker
+                    formControlName="fechaHoraCita"
+                    label="Fecha y hora de cita"
+                    mode="datetime"
+                    hint="Seleccione fecha y hora en un solo control"
+                    [minuteStep]="5"
+                    [required]="true"
+                    [error]="error('fechaHoraCita')"
+                  />
+                </div>
+
+                <div class="col-12">
+                  <app-ui-input
+                    formControlName="observacion"
+                    label="Observación"
+                    placeholder="Ingrese observación"
+                    [rows]="4"
+                    [maxlength]="500"
+                    [multiline]="true"
+                    hint="Máximo 500 caracteres."
+                    [error]="error('observacion')"
+                  />
+                </div>
+              </div>
+            </article>
+
+            <div class="form-actions">
+              <app-ui-button type="submit" variant="primary" icon="fa-solid fa-floppy-disk">
+                Guardar
+              </app-ui-button>
+
+              <app-ui-button
+                type="button"
+                variant="secondary"
+                icon="fa-solid fa-eraser"
+                (buttonClick)="limpiar()"
+              >
+                Limpiar
+              </app-ui-button>
+
+              <app-ui-button
+                type="button"
+                variant="outline"
+                icon="fa-solid fa-ban"
+                (buttonClick)="cancelar()"
+              >
+                Cancelar
+              </app-ui-button>
+
+              <app-ui-button
+                type="button"
+                variant="info"
+                icon="fa-solid fa-up-right-from-square"
+                (buttonClick)="abrirModal()"
+              >
+                Abrir modal
+              </app-ui-button>
+            </div>
+          </form>
+
+          <app-ui-modal
+            [open]="modalOpen()"
+            title="Programar actividad institucional"
+            subtitle="Complete la información básica para registrar una nueva actividad."
+            icon="fa-solid fa-calendar-plus"
+            size="lg"
+            (closeRequested)="cerrarModal()"
+          >
+            <form
+              modal-body
+              class="modal-demo__form"
+              [formGroup]="modalActividadForm"
+              (ngSubmit)="guardarModal()"
+            >
+              <div class="modal-demo__notice">
+                <span class="modal-demo__notice-icon" aria-hidden="true">
+                  <i class="fa-solid fa-circle-info"></i>
+                </span>
+                <div>
+                  <strong>Información de la actividad</strong>
+                  <p>Los campos marcados con asterisco son obligatorios.</p>
+                </div>
+              </div>
+
+              <div class="modal-demo__grid">
+                <div class="modal-demo__field modal-demo__field--full">
+                  <app-ui-input
+                    formControlName="actividad"
+                    label="Nombre de la actividad"
+                    placeholder="Ingrese un nombre descriptivo"
+                    icon="fa-solid fa-clipboard-check"
+                    [required]="true"
+                    [maxlength]="100"
+                    [error]="modalError('actividad')"
+                  />
+                </div>
+
+                <div class="modal-demo__field">
+                  <app-ui-select
+                    formControlName="unidadResponsable"
+                    label="Unidad responsable"
+                    placeholder="Seleccione una unidad"
+                    searchPlaceholder="Buscar unidad..."
+                    [required]="true"
+                    [options]="unidadOptions"
+                    [error]="modalError('unidadResponsable')"
+                  />
+                </div>
+
+                <div class="modal-demo__field">
+                  <app-ui-date-time-picker
+                    formControlName="fechaProgramada"
+                    label="Fecha y hora programada"
+                    mode="datetime"
+                    hint="Seleccione la fecha y hora de inicio"
+                    [minDate]="today"
+                    [minuteStep]="5"
+                    [required]="true"
+                    [error]="modalError('fechaProgramada')"
+                  />
+                </div>
+
+                <div class="modal-demo__field modal-demo__field--full">
+                  <app-ui-input
+                    formControlName="observaciones"
+                    label="Observaciones"
+                    placeholder="Agregue información complementaria"
+                    [rows]="4"
+                    [maxlength]="300"
+                    [multiline]="true"
+                    hint="Máximo 300 caracteres."
+                    [error]="modalError('observaciones')"
+                  />
+                </div>
+              </div>
+            </form>
+
+            <div modal-actions class="modal-demo__actions">
+              <app-ui-button
+                type="button"
+                variant="outline"
+                icon="fa-solid fa-xmark"
+                (buttonClick)="cerrarModal()"
+              >
+                Cancelar
+              </app-ui-button>
+
+              <app-ui-button
+                type="button"
+                variant="secondary"
+                icon="fa-solid fa-eraser"
+                (buttonClick)="limpiarModal()"
+              >
+                Limpiar
+              </app-ui-button>
+
+              <app-ui-button
+                type="button"
+                variant="primary"
+                icon="fa-solid fa-floppy-disk"
+                (buttonClick)="guardarModal()"
+              >
+                Guardar actividad
+              </app-ui-button>
+            </div>
+          </app-ui-modal>
+        </div>
+      }
     </div>
-  </div>
 
-  <app-funcionarios-table-demo></app-funcionarios-table-demo>
+    <app-funcionarios-table-demo />
 
-  <div class="ui-panel">
-    <div class="ui-panel__head">
-      <div class="ui-panel__title">
-        <i class="fa-solid fa-code"></i>
-        JSON del formulario
+    <div class="ui-panel">
+      <div class="ui-panel__head">
+        <div class="ui-panel__title">
+          <i class="fa-solid fa-code"></i>
+          JSON del formulario
+        </div>
+      </div>
+
+      <div class="ui-panel__body">
+        <pre class="json-preview">{{
+          submittedJson() || (formularioDemo.getRawValue() | json)
+        }}</pre>
       </div>
     </div>
-
-    <div class="ui-panel__body">
-      <pre class="json-preview">{{ submittedJson || (formularioDemo.getRawValue() | json) }}</pre>
-    </div>
-  </div>
-</section>
+  </section>
+}

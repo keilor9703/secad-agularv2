@@ -1,5 +1,12 @@
 export type UiTableAlign = 'left' | 'center' | 'right';
-export type UiTableActionVariant = 'primary' | 'secondary' | 'info' | 'outline' | 'ghost' | 'warning' | 'danger';
+export type UiTableActionVariant =
+  | 'primary'
+  | 'secondary'
+  | 'info'
+  | 'outline'
+  | 'ghost'
+  | 'warning'
+  | 'danger';
 export type UiTableBadgeVariant = 'success' | 'warning' | 'info' | 'neutral' | 'danger' | 'primary';
 export type UiTableSortDirection = 'asc' | 'desc';
 
@@ -30,6 +37,7 @@ export interface UiTableAction<T> {
   id: string;
   label: string;
   icon: string;
+  description?: string;
   variant?: UiTableActionVariant;
   title?: string;
   visible?: (row: T) => boolean;

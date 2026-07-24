@@ -1,0 +1,190 @@
+:host {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ui-table-action-trigger-wrap {
+  display: inline-flex;
+  padding: 2px 6px;
+}
+
+.ui-table-action-trigger {
+  display: inline-grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid #c6cdd5;
+  border-radius: 0;
+  background: #ffffff;
+  color: #163b63;
+  cursor: pointer;
+  font: inherit;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease,
+    color 120ms ease;
+}
+
+.ui-table-action-trigger:hover,
+.ui-table-action-trigger[aria-expanded='true'] {
+  border-color: #8d9aa8;
+  background: #eef1f4;
+  color: #002a66;
+}
+
+.ui-table-action-trigger:focus-visible {
+  border-color: var(--policia-cielo);
+  box-shadow: inset 0 0 0 1px var(--policia-cielo);
+  outline: none;
+}
+
+.ui-table-action-trigger i {
+  font-size: calc(13px * var(--font-size-scale));
+  line-height: 1;
+}
+
+.ui-table-action-empty {
+  color: var(--ui-muted);
+  font-weight: 600;
+}
+
+.ui-table-action-menu {
+  width: min(230px, calc(100vw - 16px));
+  overflow: hidden;
+  border: 1px solid #c6cdd5;
+  border-radius: 0;
+  background: #ffffff;
+  box-shadow: 0 5px 12px rgba(15, 23, 42, 0.16);
+  color: #163b63;
+  animation: ui-table-action-menu-in 100ms ease-out;
+}
+
+.ui-table-action-menu__list {
+  display: grid;
+  padding: 4px 0;
+}
+
+.ui-table-action-menu__item {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 38px;
+  padding: 6px 11px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #163b63;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  transition:
+    background-color 100ms ease,
+    color 100ms ease;
+}
+
+.ui-table-action-menu__item:hover:not(:disabled),
+.ui-table-action-menu__item:focus-visible {
+  background: #e2e2e2;
+  color: #0d3854;
+  outline: none;
+}
+
+.ui-table-action-menu__item:focus-visible {
+  box-shadow: inset 3px 0 0 var(--policia-cielo);
+}
+
+.ui-table-action-menu__item:disabled {
+  cursor: not-allowed;
+  opacity: 0.42;
+}
+
+.ui-table-action-menu__icon {
+  display: inline-grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 0;
+  background: transparent;
+  color: #163b63;
+}
+
+.ui-table-action-menu__icon i {
+  font-size: calc(13px * var(--font-size-scale));
+  line-height: 1;
+}
+
+.ui-table-action-menu__label {
+  overflow: hidden;
+  color: currentColor;
+  font-size: calc(12px * var(--font-size-scale));
+  font-weight: 600;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ui-table-action-menu__item--danger {
+  color: #a61b12;
+}
+
+.ui-table-action-menu__item--danger .ui-table-action-menu__icon {
+  color: #a61b12;
+}
+
+.ui-table-action-menu__item--danger:hover:not(:disabled),
+.ui-table-action-menu__item--danger:focus-visible {
+  background: #f5dddd;
+  color: #8e160e;
+}
+
+.ui-table-action-menu__item--warning .ui-table-action-menu__icon {
+  color: #8a4b08;
+}
+
+.ui-table-action-menu__item--primary .ui-table-action-menu__icon,
+.ui-table-action-menu__item--info .ui-table-action-menu__icon {
+  color: #163b63;
+}
+
+@keyframes ui-table-action-menu-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-table-action-trigger,
+  .ui-table-action-menu,
+  .ui-table-action-menu__item {
+    animation: none;
+    transition: none;
+  }
+}
+
+html.dark-mode .ui-table-action-trigger,
+html.dark-mode .ui-table-action-menu {
+  border-color: rgba(255, 255, 255, 0.28);
+  background: var(--ui-surface);
+  color: var(--ui-text);
+}
+
+html.dark-mode .ui-table-action-menu__item,
+html.dark-mode .ui-table-action-menu__icon {
+  color: var(--ui-text);
+}
+
+html.dark-mode .ui-table-action-menu__item:hover:not(:disabled),
+html.dark-mode .ui-table-action-menu__item:focus-visible,
+html.dark-mode .ui-table-action-trigger:hover,
+html.dark-mode .ui-table-action-trigger[aria-expanded='true'] {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+}

@@ -20,13 +20,14 @@ import {
   UiTableSortEvent,
 } from '../../interfaces/ui-table.interface';
 import { UiInputComponent } from '../ui-input/ui-input.component';
+import { UiTableActionsComponent } from '../ui-table-actions/ui-table-actions.component';
 
 @Component({
   selector: 'app-ui-table',
   standalone: true,
-  imports: [ReactiveFormsModule, UiInputComponent],
+  imports: [ReactiveFormsModule, UiInputComponent, UiTableActionsComponent],
   templateUrl: './ui-table.component.html',
-  styleUrls: ['./ui-table.component.scss'],
+  styleUrl: './ui-table.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class UiTableComponent<T extends object = Record<string, unknown>> {
@@ -42,6 +43,7 @@ export class UiTableComponent<T extends object = Record<string, unknown>> {
   readonly page = input(1);
   readonly pageSize = input(10);
   readonly pageSizeOptions = input<number[]>([5, 10, 20, 50]);
+  readonly actionMenuLabel = input('Acciones disponibles para el registro');
   readonly showRecordBadge = input(true);
   readonly showPagination = input(true);
 
@@ -106,8 +108,8 @@ export class UiTableComponent<T extends object = Record<string, unknown>> {
     this.sortChange.emit({ key: column.key, direction: nextDirection });
   }
 
-  emitAction(action: UiTableAction<T>, row: T): void {
-    this.actionClick.emit({ actionId: action.id, row });
+  emitAction(event: UiTableActionEvent<T>): void {
+    this.actionClick.emit(event);
   }
 
   goToPage(nextPage: number): void {
@@ -156,18 +158,6 @@ export class UiTableComponent<T extends object = Record<string, unknown>> {
     return `ui-badge ${badge.variant ?? 'neutral'}`;
   }
 
-  getActionClass(action: UiTableAction<T>): string {
-    return `ui-btn sm ${action.variant ?? 'secondary'}`;
-  }
-
-  isActionVisible(action: UiTableAction<T>, row: T): boolean {
-    return action.visible ? action.visible(row) : true;
-  }
-
-  isActionDisabled(action: UiTableAction<T>, row: T): boolean {
-    return action.disabled ? action.disabled(row) : false;
-  }
-
   filterControlId(filter: UiTableFilter): string {
     return `${this.titleId}-${filter.key}`;
   }
@@ -182,10 +172,6 @@ export class UiTableComponent<T extends object = Record<string, unknown>> {
 
   trackRow(index: number, row: T): unknown {
     return (row as { id?: unknown }).id ?? index;
-  }
-
-  trackAction(_: number, action: UiTableAction<T>): string {
-    return action.id;
   }
 
   private syncFilterControls(filters: UiTableFilter[]): void {

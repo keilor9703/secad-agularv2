@@ -1,6 +1,6 @@
 .formularios-page {
-  padding: 10px;
   min-height: calc(100vh - 210px);
+  padding: 10px;
 }
 
 .demo-form {
@@ -15,11 +15,11 @@ app-funcionarios-table-demo {
 
 .form-section {
   position: relative;
+  margin-top: 8px;
+  padding: 22px 14px 14px;
   border: 1px solid rgba(21, 27, 59, 0.14);
   border-radius: 12px;
   background: var(--ui-surface);
-  padding: 22px 14px 14px;
-  margin-top: 8px;
 }
 
 .form-section h3 {
@@ -59,19 +59,81 @@ app-funcionarios-table-demo {
 
 .form-actions {
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
   gap: 10px;
-  flex-wrap: wrap;
 }
 
 .json-preview {
+  overflow: auto;
   margin: 0;
   padding: 14px;
   border-radius: 10px;
   background: #0f172a;
   color: #e2e8f0;
-  overflow: auto;
   font-size: calc(13px * var(--font-size-scale));
+}
+
+.modal-demo__form {
+  display: grid;
+  gap: 22px;
+}
+
+.modal-demo__notice {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  align-items: center;
+  gap: 11px;
+  padding: 12px 14px;
+  border: 1px solid rgba(31, 78, 121, 0.13);
+  border-radius: 10px;
+  background: rgba(31, 78, 121, 0.055);
+  color: var(--ui-text);
+}
+
+.modal-demo__notice-icon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+  background: rgba(31, 78, 121, 0.1);
+  color: var(--form-focus-color, #1f4e79);
+}
+
+.modal-demo__notice strong {
+  display: block;
+  font-size: calc(12px * var(--font-size-scale));
+  font-weight: 850;
+}
+
+.modal-demo__notice p {
+  margin: 2px 0 0;
+  color: var(--form-hint-color, #64748b);
+  font-size: calc(11px * var(--font-size-scale));
+  line-height: 1.4;
+}
+
+.modal-demo__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px 14px;
+}
+
+.modal-demo__field {
+  min-width: 0;
+}
+
+.modal-demo__field--full {
+  grid-column: 1 / -1;
+}
+
+.modal-demo__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 9px;
+  width: 100%;
 }
 
 @media (max-width: 768px) {
@@ -85,6 +147,19 @@ app-funcionarios-table-demo {
     flex-direction: column;
     align-items: stretch;
   }
+
+  .modal-demo__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .modal-demo__field--full {
+    grid-column: auto;
+  }
+
+  .modal-demo__actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
 }
 
 :host-context(html.dark-mode) {
@@ -95,5 +170,15 @@ app-funcionarios-table-demo {
   .form-section h3 {
     background: var(--ui-surface);
     color: var(--ui-text);
+  }
+
+  .modal-demo__notice {
+    border-color: rgba(8, 166, 203, 0.18);
+    background: rgba(8, 166, 203, 0.07);
+  }
+
+  .modal-demo__notice-icon {
+    background: rgba(8, 166, 203, 0.12);
+    color: var(--policia-cielo);
   }
 }

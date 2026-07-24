@@ -1,15 +1,16 @@
-﻿import { CommonModule } from '@angular/common';
-import { Component, inject } from '@angular/core';
+import { JsonPipe } from '@angular/common';
+import { Component, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-
 import { ToastService } from '../../../../core/services/toast.service';
-import { FuncionariosTableDemoComponent } from '../../components/funcionarios-table-demo/funcionarios-table-demo.component';
 import { UiButtonComponent } from '../../../../shared/components/ui-button/ui-button.component';
+import { UiDateTimePickerComponent } from '../../../../shared/components/ui-date-time-picker/ui-date-time-picker.component';
 import { UiInputComponent } from '../../../../shared/components/ui-input/ui-input.component';
+import { UiModalComponent } from '../../../../shared/components/ui-modal/ui-modal.component';
 import { UiSearchInputComponent } from '../../../../shared/components/ui-search-input/ui-search-input.component';
 import { UiSelectComponent } from '../../../../shared/components/ui-select/ui-select.component';
 import { UiSelectOption } from '../../../../shared/interfaces/ui-select-option.interface';
 import { getFormErrorMessage } from '../../../../shared/utils/form-error.util';
+import { FuncionariosTableDemoComponent } from '../../components/funcionarios-table-demo/funcionarios-table-demo.component';
 
 interface FormulariosDemoForm {
   nombres: FormControl<string>;
@@ -24,27 +25,38 @@ interface FormulariosDemoForm {
   criterioBusqueda: FormControl<string>;
 }
 
+interface ModalActividadForm {
+  actividad: FormControl<string>;
+  unidadResponsable: FormControl<number | null>;
+  fechaProgramada: FormControl<string>;
+  observaciones: FormControl<string>;
+}
+
 @Component({
   selector: 'app-formularios',
   standalone: true,
   imports: [
-    CommonModule,
+    JsonPipe,
     ReactiveFormsModule,
     UiButtonComponent,
+    UiDateTimePickerComponent,
     UiInputComponent,
+    UiModalComponent,
     UiSearchInputComponent,
     UiSelectComponent,
     FuncionariosTableDemoComponent,
   ],
   templateUrl: './formularios-page.component.html',
-  styleUrls: ['./formularios-page.component.scss'],
+  styleUrl: './formularios-page.component.scss',
 })
 export class FormulariosPageComponent {
   private readonly toast = inject(ToastService);
 
-  visible = true;
-  minimized = false;
-  submittedJson = '';
+  readonly visible = signal(true);
+  readonly minimized = signal(false);
+  readonly modalOpen = signal(false);
+  readonly submittedJson = signal('');
+  readonly today = new Date();
 
   readonly unidadOptions: UiSelectOption<number>[] = [
     { label: 'Dirección Administrativa', value: 1 },
@@ -92,14 +104,39 @@ export class FormulariosPageComponent {
     criterioBusqueda: new FormControl('', { nonNullable: true }),
   });
 
+  readonly modalActividadForm = new FormGroup<ModalActividadForm>({
+    actividad: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.maxLength(100)],
+    }),
+    unidadResponsable: new FormControl<number | null>(null, [Validators.required]),
+    fechaProgramada: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required],
+    }),
+    observaciones: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.maxLength(300)],
+    }),
+  });
+
+  /**
+   * Alterna el estado minimizado del panel de demostración.
+   */
   toggleMinimize(): void {
-    this.minimized = !this.minimized;
+    this.minimized.update((value) => !value);
   }
 
+  /**
+   * Oculta el panel principal de formularios.
+   */
   closePanel(): void {
-    this.visible = false;
+    this.visible.set(false);
   }
 
+  /**
+   * Valida y serializa el formulario de demostración.
+   */
   guardar(): void {
     if (this.formularioDemo.invalid) {
       this.formularioDemo.markAllAsTouched();
@@ -108,11 +145,15 @@ export class FormulariosPageComponent {
     }
 
     const value = this.formularioDemo.getRawValue();
-    this.submittedJson = JSON.stringify(value, null, 2);
+
+    this.submittedJson.set(JSON.stringify(value, null, 2));
     console.log(value);
     this.toast.success('Formulario', 'Formulario válido.');
   }
 
+  /**
+   * Restablece todos los controles y limpia el JSON generado.
+   */
   limpiar(): void {
     this.formularioDemo.reset({
       nombres: '',
@@ -127,18 +168,78 @@ export class FormulariosPageComponent {
       criterioBusqueda: '',
     });
 
-    this.submittedJson = '';
+    this.submittedJson.set('');
   }
 
+  /**
+   * Notifica la cancelación de la acción actual.
+   */
   cancelar(): void {
     this.toast.info('Formulario', 'Acción cancelada.');
   }
 
+  /**
+   * Ejecuta la búsqueda simulada del componente compartido.
+   */
   buscar(valor: string): void {
-    this.toast.info('Buscar', valor ? `Buscando: ${valor}` : 'Digite un criterio de búsqueda.');
+    const message = valor ? `Buscando: ${valor}` : 'Digite un criterio de búsqueda.';
+    this.toast.info('Buscar', message);
   }
 
+  /**
+   * Abre la demostración manteniendo el estado en la página consumidora.
+   */
+  abrirModal(): void {
+    this.modalOpen.set(true);
+  }
+
+  /**
+   * Atiende cualquier solicitud de cierre emitida por el modal.
+   */
+  cerrarModal(): void {
+    this.modalOpen.set(false);
+  }
+
+  /**
+   * Restablece únicamente el formulario contenido en el modal.
+   */
+  limpiarModal(): void {
+    this.modalActividadForm.reset({
+      actividad: '',
+      unidadResponsable: null,
+      fechaProgramada: '',
+      observaciones: '',
+    });
+  }
+
+  /**
+   * Valida la demostración, expone el resultado y cierra el modal.
+   */
+  guardarModal(): void {
+    if (this.modalActividadForm.invalid) {
+      this.modalActividadForm.markAllAsTouched();
+      this.toast.warning('Actividad', 'Revisa los campos obligatorios del modal.');
+      return;
+    }
+
+    const value = this.modalActividadForm.getRawValue();
+
+    this.submittedJson.set(JSON.stringify(value, null, 2));
+    this.toast.success('Actividad', 'La actividad fue programada correctamente.');
+    this.modalOpen.set(false);
+  }
+
+  /**
+   * Obtiene el mensaje de validación visible de un control.
+   */
   error(controlName: keyof FormulariosDemoForm): string {
     return getFormErrorMessage(this.formularioDemo.controls[controlName]);
+  }
+
+  /**
+   * Obtiene los mensajes de validación del formulario proyectado en el modal.
+   */
+  modalError(controlName: keyof ModalActividadForm): string {
+    return getFormErrorMessage(this.modalActividadForm.controls[controlName]);
   }
 }

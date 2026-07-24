@@ -1,5 +1,10 @@
 :host {
   display: block;
+  --_form-inset-shadow: var(
+    --form-control-inset-shadow,
+    inset 0 1px 2px rgba(15, 23, 42, 0.05),
+    inset 0 0 0 1px rgba(148, 163, 184, 0.025)
+  );
 }
 
 .form-select {
@@ -34,6 +39,7 @@
   cursor: pointer;
   font-family: inherit;
   font-size: calc(13px * var(--font-size-scale));
+  box-shadow: var(--_form-inset-shadow);
   transition:
     border-color 0.15s ease,
     box-shadow 0.15s ease;
@@ -74,11 +80,19 @@
 
 .form-select--open .form-select__control {
   border-color: var(--form-focus-color, #1f4e79);
-  box-shadow: 0 0 0 3px rgba(31, 78, 121, 0.12);
+  box-shadow:
+    var(--_form-inset-shadow),
+    0 0 0 3px rgba(31, 78, 121, 0.12);
 }
 
 .form-select--invalid .form-select__control {
   border-color: var(--form-error-color, #b42318);
+}
+
+.form-select--invalid.form-select--open .form-select__control {
+  box-shadow:
+    var(--_form-inset-shadow),
+    0 0 0 3px rgba(180, 35, 24, 0.12);
 }
 
 .form-select__panel {
@@ -106,6 +120,17 @@
   outline: 0;
   font-family: inherit;
   font-size: calc(13px * var(--font-size-scale));
+  box-shadow: var(--_form-inset-shadow);
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.form-select__search:focus {
+  border-color: var(--form-focus-color, #1f4e79);
+  box-shadow:
+    var(--_form-inset-shadow),
+    0 0 0 2px rgba(31, 78, 121, 0.1);
 }
 
 .form-select__option {
@@ -158,6 +183,12 @@
 }
 
 :host-context(html.dark-mode) {
+  --_form-inset-shadow: var(
+    --form-control-inset-shadow-dark,
+    inset 0 1px 2px rgba(0, 0, 0, 0.16),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.02)
+  );
+
   .form-select__label,
   .form-select__control,
   .form-select__panel {

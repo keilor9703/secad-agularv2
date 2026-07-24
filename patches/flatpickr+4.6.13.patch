@@ -1,0 +1,130 @@
+diff --git a/node_modules/flatpickr/dist/esm/index.js b/node_modules/flatpickr/dist/esm/index.js
+index 6e4d05f..63676be 100644
+--- a/node_modules/flatpickr/dist/esm/index.js
++++ b/node_modules/flatpickr/dist/esm/index.js
+@@ -452,7 +452,7 @@ function FlatpickrInstance(element, instanceConfig) {
+             self.config.showMonths === 1 &&
+             className !== "prevMonthDay" &&
+             i % 7 === 6) {
+-            self.weekNumbers.insertAdjacentHTML("beforeend", "<span class='flatpickr-day'>" + self.config.getWeek(date) + "</span>");
++            self.weekNumbers.appendChild(createElement("span", "flatpickr-day", String(self.config.getWeek(date))));
+         }
+         triggerEvent("onDayCreate", dayElement);
+         return dayElement;
+@@ -578,7 +578,7 @@ function FlatpickrInstance(element, instanceConfig) {
+                 month > self.config.maxDate.getMonth());
+         };
+         self.monthsDropdownContainer.tabIndex = -1;
+-        self.monthsDropdownContainer.innerHTML = "";
++        clearNode(self.monthsDropdownContainer);
+         for (var i = 0; i < 12; i++) {
+             if (!shouldBuildMonth(i))
+                 continue;
+@@ -650,14 +650,25 @@ function FlatpickrInstance(element, instanceConfig) {
+         }
+         self.monthNav.appendChild(self.nextMonthNav);
+     }
++    function buildMonthArrow(pathData) {
++        var svgNamespace = "http://www.w3.org/2000/svg";
++        var svg = window.document.createElementNS(svgNamespace, "svg");
++        var path = window.document.createElementNS(svgNamespace, "path");
++        svg.setAttribute("version", "1.1");
++        svg.setAttribute("viewBox", "0 0 17 17");
++        svg.setAttribute("aria-hidden", "true");
++        path.setAttribute("d", pathData);
++        svg.appendChild(path);
++        return svg;
++    }
+     function buildMonthNav() {
+         self.monthNav = createElement("div", "flatpickr-months");
+         self.yearElements = [];
+         self.monthElements = [];
+         self.prevMonthNav = createElement("span", "flatpickr-prev-month");
+-        self.prevMonthNav.innerHTML = self.config.prevArrow;
++        self.prevMonthNav.appendChild(buildMonthArrow("M5.207 8.471l7.146 7.147-0.707 0.707-7.853-7.854 7.854-7.853 0.707 0.707-7.147 7.146z"));
+         self.nextMonthNav = createElement("span", "flatpickr-next-month");
+-        self.nextMonthNav.innerHTML = self.config.nextArrow;
++        self.nextMonthNav.appendChild(buildMonthArrow("M13.207 8.472l-7.854 7.854-0.707-0.707 7.146-7.146-7.146-7.148 0.707-0.707 7.854 7.854z"));
+         buildMonths();
+         Object.defineProperty(self, "_hidePrevMonthArrow", {
+             get: function () { return self.__hidePrevMonthArrow; },
+@@ -765,7 +776,13 @@ function FlatpickrInstance(element, instanceConfig) {
+             weekdays = __spreadArrays(weekdays.splice(firstDayOfWeek, weekdays.length), weekdays.splice(0, firstDayOfWeek));
+         }
+         for (var i = self.config.showMonths; i--;) {
+-            self.weekdayContainer.children[i].innerHTML = "\n      <span class='flatpickr-weekday'>\n        " + weekdays.join("</span><span class='flatpickr-weekday'>") + "\n      </span>\n      ";
++            var weekdayContainer = self.weekdayContainer.children[i];
++            var weekdayFragment = window.document.createDocumentFragment();
++            clearNode(weekdayContainer);
++            for (var weekdayIndex = 0; weekdayIndex < weekdays.length; weekdayIndex++) {
++                weekdayFragment.appendChild(createElement("span", "flatpickr-weekday", weekdays[weekdayIndex]));
++            }
++            weekdayContainer.appendChild(weekdayFragment);
+         }
+     }
+     function buildWeeks() {
+diff --git a/node_modules/flatpickr/dist/flatpickr.js b/node_modules/flatpickr/dist/flatpickr.js
+index 6f3c4fb..bf69841 100644
+--- a/node_modules/flatpickr/dist/flatpickr.js
++++ b/node_modules/flatpickr/dist/flatpickr.js
+@@ -1080,7 +1080,7 @@
+                 self.config.showMonths === 1 &&
+                 className !== "prevMonthDay" &&
+                 i % 7 === 6) {
+-                self.weekNumbers.insertAdjacentHTML("beforeend", "<span class='flatpickr-day'>" + self.config.getWeek(date) + "</span>");
++                self.weekNumbers.appendChild(createElement("span", "flatpickr-day", String(self.config.getWeek(date))));
+             }
+             triggerEvent("onDayCreate", dayElement);
+             return dayElement;
+@@ -1211,7 +1211,7 @@
+                     month > self.config.maxDate.getMonth());
+             };
+             self.monthsDropdownContainer.tabIndex = -1;
+-            self.monthsDropdownContainer.innerHTML = "";
++            clearNode(self.monthsDropdownContainer);
+             for (var i = 0; i < 12; i++) {
+                 if (!shouldBuildMonth(i))
+                     continue;
+@@ -1283,14 +1283,25 @@
+             }
+             self.monthNav.appendChild(self.nextMonthNav);
+         }
++        function buildMonthArrow(pathData) {
++            var svgNamespace = "http://www.w3.org/2000/svg";
++            var svg = window.document.createElementNS(svgNamespace, "svg");
++            var path = window.document.createElementNS(svgNamespace, "path");
++            svg.setAttribute("version", "1.1");
++            svg.setAttribute("viewBox", "0 0 17 17");
++            svg.setAttribute("aria-hidden", "true");
++            path.setAttribute("d", pathData);
++            svg.appendChild(path);
++            return svg;
++        }
+         function buildMonthNav() {
+             self.monthNav = createElement("div", "flatpickr-months");
+             self.yearElements = [];
+             self.monthElements = [];
+             self.prevMonthNav = createElement("span", "flatpickr-prev-month");
+-            self.prevMonthNav.innerHTML = self.config.prevArrow;
++            self.prevMonthNav.appendChild(buildMonthArrow("M5.207 8.471l7.146 7.147-0.707 0.707-7.853-7.854 7.854-7.853 0.707 0.707-7.147 7.146z"));
+             self.nextMonthNav = createElement("span", "flatpickr-next-month");
+-            self.nextMonthNav.innerHTML = self.config.nextArrow;
++            self.nextMonthNav.appendChild(buildMonthArrow("M13.207 8.472l-7.854 7.854-0.707-0.707 7.146-7.146-7.146-7.148 0.707-0.707 7.854 7.854z"));
+             buildMonths();
+             Object.defineProperty(self, "_hidePrevMonthArrow", {
+                 get: function () { return self.__hidePrevMonthArrow; },
+@@ -1399,7 +1410,13 @@
+                 weekdays = __spreadArrays(weekdays.splice(firstDayOfWeek, weekdays.length), weekdays.splice(0, firstDayOfWeek));
+             }
+             for (var i = self.config.showMonths; i--;) {
+-                self.weekdayContainer.children[i].innerHTML = "\n      <span class='flatpickr-weekday'>\n        " + weekdays.join("</span><span class='flatpickr-weekday'>") + "\n      </span>\n      ";
++                var weekdayContainer = self.weekdayContainer.children[i];
++                var weekdayFragment = window.document.createDocumentFragment();
++                clearNode(weekdayContainer);
++                for (var weekdayIndex = 0; weekdayIndex < weekdays.length; weekdayIndex++) {
++                    weekdayFragment.appendChild(createElement("span", "flatpickr-weekday", weekdays[weekdayIndex]));
++                }
++                weekdayContainer.appendChild(weekdayFragment);
+             }
+         }
+         /* istanbul ignore next */

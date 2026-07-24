@@ -1,5 +1,10 @@
 :host {
   display: block;
+  --_form-inset-shadow: var(
+    --form-control-inset-shadow,
+    inset 0 1px 2px rgba(15, 23, 42, 0.05),
+    inset 0 0 0 1px rgba(148, 163, 184, 0.025)
+  );
 }
 
 .search-field {
@@ -28,6 +33,7 @@
   border-radius: var(--form-border-radius, 7px);
   overflow: hidden;
   background: var(--form-bg, #fff);
+  box-shadow: var(--_form-inset-shadow);
   transition:
     border-color 0.15s ease,
     box-shadow 0.15s ease;
@@ -87,7 +93,9 @@
 
 .search-field--focused .search-field__shell {
   border-color: var(--form-focus-color, #1f4e79);
-  box-shadow: 0 0 0 3px rgba(31, 78, 121, 0.12);
+  box-shadow:
+    var(--_form-inset-shadow),
+    0 0 0 3px rgba(31, 78, 121, 0.12);
 }
 
 .search-field--invalid .search-field__shell {
@@ -95,7 +103,9 @@
 }
 
 .search-field--invalid.search-field--focused .search-field__shell {
-  box-shadow: 0 0 0 3px rgba(180, 35, 24, 0.12);
+  box-shadow:
+    var(--_form-inset-shadow),
+    0 0 0 3px rgba(180, 35, 24, 0.12);
 }
 
 .search-field--disabled {
@@ -142,6 +152,12 @@
 }
 
 :host-context(html.dark-mode) {
+  --_form-inset-shadow: var(
+    --form-control-inset-shadow-dark,
+    inset 0 1px 2px rgba(0, 0, 0, 0.16),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.02)
+  );
+
   .search-field__label,
   .search-field__shell {
     background: #1e2840;

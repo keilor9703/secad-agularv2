@@ -1,5 +1,10 @@
 :host {
   display: block;
+  --_form-inset-shadow: var(
+    --form-control-inset-shadow,
+    inset 0 1px 2px rgba(15, 23, 42, 0.05),
+    inset 0 0 0 1px rgba(148, 163, 184, 0.025)
+  );
 }
 
 .form-field {
@@ -16,6 +21,7 @@
   border: 1px solid var(--form-border-color, #cbd5e1);
   border-radius: var(--form-border-radius, 7px);
   background: var(--form-bg, #fff);
+  box-shadow: var(--_form-inset-shadow);
   transition:
     border-color 0.15s ease,
     box-shadow 0.15s ease,
@@ -66,7 +72,9 @@ textarea.form-field__native {
 
 .form-field--focused .form-field__control {
   border-color: var(--form-focus-color, #1f4e79);
-  box-shadow: 0 0 0 3px rgba(31, 78, 121, 0.12);
+  box-shadow:
+    var(--_form-inset-shadow),
+    0 0 0 3px rgba(31, 78, 121, 0.12);
 }
 
 .form-field--invalid .form-field__control {
@@ -74,7 +82,9 @@ textarea.form-field__native {
 }
 
 .form-field--invalid.form-field--focused .form-field__control {
-  box-shadow: 0 0 0 3px rgba(180, 35, 24, 0.12);
+  box-shadow:
+    var(--_form-inset-shadow),
+    0 0 0 3px rgba(180, 35, 24, 0.12);
 }
 
 .form-field--disabled .form-field__control {
@@ -100,6 +110,12 @@ textarea.form-field__native {
 }
 
 :host-context(html.dark-mode) {
+  --_form-inset-shadow: var(
+    --form-control-inset-shadow-dark,
+    inset 0 1px 2px rgba(0, 0, 0, 0.16),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.02)
+  );
+
   .form-field__control,
   .form-field__label {
     background: #1e2840;
