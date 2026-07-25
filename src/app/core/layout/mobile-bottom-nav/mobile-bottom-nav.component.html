@@ -1,0 +1,28 @@
+<nav class="mobile-nav" aria-label="Navegación principal móvil">
+  @for (item of items; track item.id) {
+    @if (item.route && !item.disabled) {
+      <a
+        class="mobile-nav__item"
+        [routerLink]="item.route"
+        [class.mobile-nav__item--active]="isActive(item)"
+        [attr.aria-current]="isActive(item) ? 'page' : null"
+        [attr.aria-label]="'Ir a ' + item.label"
+      >
+        <i class="mobile-nav__icon" [class]="item.icon" aria-hidden="true"></i>
+        <span class="mobile-nav__label">{{ item.label }}</span>
+      </a>
+    } @else {
+      <!-- Destino reservado: se muestra deshabilitado hasta su futura implementación. -->
+      <button
+        class="mobile-nav__item mobile-nav__item--disabled"
+        type="button"
+        disabled
+        aria-label="Funcionalidad disponible próximamente"
+        title="Disponible próximamente"
+      >
+        <i class="mobile-nav__icon" [class]="item.icon" aria-hidden="true"></i>
+        <span class="mobile-nav__label">{{ item.label }}</span>
+      </button>
+    }
+  }
+</nav>

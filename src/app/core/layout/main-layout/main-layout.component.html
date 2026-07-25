@@ -1,10 +1,13 @@
-<div class="app-shell" [class.menu-open]="isMenuOpen()">
+<div
+  class="app-shell"
+  [class.menu-open]="isMenuOpen()"
+  [class.mobile-navigation-active]="isMobile()"
+>
   <app-sidebar class="app-sidebar"></app-sidebar>
 
-  <div class="app-backdrop"
-       *ngIf="isMenuOpen()"
-       (click)="closeMenu()"
-       aria-hidden="true"></div>
+  @if (isMenuOpen()) {
+    <div class="app-backdrop" (click)="closeMenu()" aria-hidden="true"></div>
+  }
 
   <div class="shell">
     <app-topbar></app-topbar>
@@ -18,9 +21,14 @@
     </main>
   </div>
 
-  <app-footer class="app-footer-fixed"></app-footer>
+  @if (isMobile()) {
+    <!-- Navegación compacta exclusiva para teléfonos y tabletas pequeñas. -->
+    <app-mobile-bottom-nav></app-mobile-bottom-nav>
+  } @else {
+    <!-- El footer completo se conserva únicamente para escritorio. -->
+    <app-footer class="app-footer-fixed"></app-footer>
+  }
 </div>
 
-<!-- Menú de Accesibilidad Flotante -->
+<!-- Menú de accesibilidad flotante. -->
 <app-accessibility-menu [socialGroups]="socialGroups"></app-accessibility-menu>
-

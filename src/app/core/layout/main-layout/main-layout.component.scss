@@ -19,6 +19,7 @@ html.dark-mode {
 /* --- SHELL DEL SISTEMA --- */
 .app-shell {
   height: 100vh;
+  height: 100dvh;
   overflow: hidden;
   background: var(--app-shell-bg);
   display: flex;
@@ -26,12 +27,12 @@ html.dark-mode {
   transition: background-color 0.3s ease;
 }
 
-.app-sidebar{
-  position: fixed;    
+.app-sidebar {
+  position: fixed;
   top: 0;
   left: 0;
-  width: auto;       
-  z-index: 1200;    
+  width: auto;
+  z-index: 1200;
 }
 
 .app-sidebar.expanded {
@@ -41,7 +42,8 @@ html.dark-mode {
 .shell {
   flex: 1;
   height: 100vh;
-  margin-left: 0; 
+  height: 100dvh;
+  margin-left: 0;
   display: flex;
   flex-direction: column;
   transition: none;
@@ -65,6 +67,14 @@ html.dark-mode {
   padding-bottom: var(--footer-height, 56px);
 }
 
+/*
+ * Reserva el alto de la navegación inferior más el área segura del dispositivo.
+ * Evita que el último control del formulario quede oculto detrás de la barra.
+ */
+.app-shell.mobile-navigation-active {
+  --footer-height: calc(78px + env(safe-area-inset-bottom));
+}
+
 .content {
   margin: 10px;
   width: calc(100% - 20px);
@@ -75,7 +85,10 @@ html.dark-mode {
   backdrop-filter: blur(8px);
   position: relative;
   padding: 10px;
-  transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+  transition:
+    background-color 0.3s ease,
+    border-color 0.3s ease,
+    box-shadow 0.3s ease;
 }
 
 .app-footer-fixed {
@@ -95,7 +108,7 @@ html.dark-mode {
   z-index: 1150;
 }
 
-.app-shell.menu-open .main{
+.app-shell.menu-open .main {
   overflow: hidden !important;
 }
 
