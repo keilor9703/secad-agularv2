@@ -4,6 +4,11 @@
 }
 
 .demo-form {
+  display: block;
+}
+
+/* Contenido separado del footer para mantener el espaciado interno del formulario. */
+.demo-form__content {
   display: grid;
   gap: 18px;
 }
@@ -62,6 +67,7 @@ app-funcionarios-table-demo {
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: 10px;
+  width: 100%;
 }
 
 .json-preview {
@@ -137,6 +143,10 @@ app-funcionarios-table-demo {
 }
 
 @media (max-width: 768px) {
+  .ui-panel__foot {
+    padding: 12px 16px;
+  }
+
   .col-6,
   .col-4,
   .col-3 {

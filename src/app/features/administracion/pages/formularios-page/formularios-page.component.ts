@@ -13,6 +13,7 @@ import { UiSelectOption } from '../../../../shared/interfaces/ui-select-option.i
 import { getFormErrorMessage } from '../../../../shared/utils/form-error.util';
 import { FuncionariosTableDemoComponent } from '../../components/funcionarios-table-demo/funcionarios-table-demo.component';
 import { NotificacionesDemoComponent } from '../../components/notificaciones-demo/notificaciones-demo.component';
+import { TabsDemoComponent } from '../../components/tabs-demo/tabs-demo.component';
 
 interface FormulariosDemoForm {
   nombres: FormControl<string>;
@@ -51,6 +52,7 @@ interface ModalActividadForm {
     UiTimePickerComponent,
     FuncionariosTableDemoComponent,
     NotificacionesDemoComponent,
+    TabsDemoComponent,
   ],
   templateUrl: './formularios-page.component.html',
   styleUrl: './formularios-page.component.scss',

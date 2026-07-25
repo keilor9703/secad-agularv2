@@ -56,11 +56,25 @@
 //   text-transform: none;
 // }
 
-.ui-table-panel .ui-table thead th {
-  background: #e0effd;
+/*
+ * Encabezado institucional reforzado contra estilos de Bootstrap.
+ */
+.ui-table-panel .ui-table > thead {
+  --bs-table-bg: #e0effd !important;
+  --bs-table-color: #163b63 !important;
+  --bs-table-accent-bg: transparent !important;
+  --bs-table-striped-bg: transparent !important;
+  --bs-table-hover-bg: transparent !important;
+  --bs-table-active-bg: transparent !important;
+}
+
+.ui-table-panel .ui-table > thead > tr > th {
+  background: #f8f8ff !important;
+  background-color: #e0effd !important;
+  box-shadow: none !important;
   border-bottom: 1px solid rgba(22, 59, 99, 0.18);
   border-right: 1px solid rgba(22, 59, 99, 0.12);
-  color: #163b63;
+  color: #163b63 !important;
   font-size: calc(12px * var(--font-size-scale));
   font-weight: 800;
   letter-spacing: 0;

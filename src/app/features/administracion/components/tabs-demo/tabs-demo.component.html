@@ -1,0 +1,348 @@
+<section class="ui-panel tabs-demo">
+  <div class="ui-panel__head">
+    <div class="ui-panel__title">
+      <i class="fa-solid fa-table-columns" aria-hidden="true"></i>
+      Guía visual de tabs
+    </div>
+
+    <div class="ui-panel__actions">
+      <span class="ui-badge info">5 variantes</span>
+    </div>
+  </div>
+
+  <div class="ui-panel__body tabs-demo__body">
+    <!-- Variante 1: navegación compacta tipo píldora, equivalente a la primera referencia. -->
+    <article class="tabs-demo__example">
+      <header class="tabs-demo__example-head">
+        <span class="tabs-demo__number">01</span>
+        <div>
+          <h3>Tabs tipo píldora</h3>
+          <p>Sin iconos · con contenido · distribuidos en todo el ancho.</p>
+        </div>
+      </header>
+
+      <!-- Acento lateral activo: muestra la línea institucional en el panel. -->
+      <app-ui-tabs
+        variant="pills"
+        size="sm"
+        activeTabId="resumen"
+        ariaLabel="Ejemplo de tabs tipo píldora"
+        [stretch]="true"
+        [showPanelAccent]="true"
+      >
+        <app-ui-tab id="resumen" label="Resumen">
+          <div class="tabs-demo__content-card">
+            <strong>Resumen del registro</strong>
+            <p>Presenta la información principal sin abandonar el contexto actual.</p>
+          </div>
+        </app-ui-tab>
+
+        <app-ui-tab id="validacion" label="Validación">
+          <div class="tabs-demo__content-card">
+            <strong>Validaciones pendientes</strong>
+            <p>Dos campos requieren revisión antes de continuar con el proceso.</p>
+          </div>
+        </app-ui-tab>
+
+        <app-ui-tab id="historial" label="Historial">
+          <div class="tabs-demo__content-card">
+            <strong>Historial de cambios</strong>
+            <p>La última actualización fue registrada por el usuario administrador.</p>
+          </div>
+        </app-ui-tab>
+      </app-ui-tabs>
+    </article>
+
+    <!-- Variante 2: tabs contenidos con un formulario repartido por responsabilidades. -->
+    <article class="tabs-demo__example">
+      <header class="tabs-demo__example-head">
+        <span class="tabs-demo__number">02</span>
+        <div>
+          <h3>Tabs contenidos con formulario</h3>
+          <p>Sin iconos · con contenido de formulario · ancho completo.</p>
+        </div>
+      </header>
+
+      <form [formGroup]="profileForm" (ngSubmit)="saveProfile()">
+        <!-- En formularios también se controla desde el componente, no desde CSS externo. -->
+        <app-ui-tabs
+          variant="contained"
+          size="md"
+          activeTabId="datos-personales"
+          ariaLabel="Formulario distribuido en tabs"
+          [stretch]="true"
+          [showPanelAccent]="true"
+        >
+          <app-ui-tab id="datos-personales" label="Datos personales">
+            <div class="tabs-demo__form-grid">
+              <app-ui-input
+                formControlName="nombres"
+                label="Nombres completos"
+                placeholder="Ingrese nombres y apellidos"
+                icon="fa-solid fa-user"
+                [required]="true"
+                [maxlength]="80"
+                [error]="error('nombres')"
+              />
+
+              <app-ui-input
+                formControlName="identificacion"
+                label="Identificación"
+                placeholder="Ingrese la identificación"
+                icon="fa-solid fa-id-card"
+                [required]="true"
+                [error]="error('identificacion')"
+              />
+            </div>
+          </app-ui-tab>
+
+          <app-ui-tab id="contacto" label="Contacto">
+            <div class="tabs-demo__form-grid">
+              <app-ui-input
+                formControlName="correo"
+                label="Correo electrónico"
+                placeholder="usuario@dominio.com"
+                type="email"
+                icon="fa-solid fa-envelope"
+                [required]="true"
+                [error]="error('correo')"
+              />
+
+              <app-ui-time-picker
+                formControlName="horaContacto"
+                label="Hora preferida de contacto"
+                hourFormat="12"
+                [minuteStep]="30"
+                [required]="true"
+                [error]="error('horaContacto')"
+              />
+            </div>
+          </app-ui-tab>
+
+          <app-ui-tab id="asignacion" label="Asignación">
+            <div class="tabs-demo__form-grid">
+              <app-ui-select
+                formControlName="rol"
+                label="Rol asignado"
+                placeholder="Seleccione un rol"
+                [options]="roleOptions"
+                [required]="true"
+                [error]="error('rol')"
+              />
+
+              <app-ui-input
+                formControlName="observaciones"
+                label="Observaciones"
+                placeholder="Información complementaria"
+                [multiline]="true"
+                [rows]="3"
+                [maxlength]="250"
+                [error]="error('observaciones')"
+              />
+            </div>
+
+            <div class="tabs-demo__actions">
+              <app-ui-button
+                type="button"
+                variant="secondary"
+                icon="fa-solid fa-eraser"
+                (buttonClick)="resetProfile()"
+              >
+                Limpiar
+              </app-ui-button>
+
+              <app-ui-button type="submit" variant="primary" icon="fa-solid fa-floppy-disk">
+                Guardar perfil
+              </app-ui-button>
+            </div>
+
+            @if (savedProfile()) {
+              <pre class="tabs-demo__json">{{ savedProfile() }}</pre>
+            }
+          </app-ui-tab>
+        </app-ui-tabs>
+      </form>
+    </article>
+
+    <!-- Variante 3: tabs con iconos para reforzar la identificación de cada módulo. -->
+    <article class="tabs-demo__example">
+      <header class="tabs-demo__example-head">
+        <span class="tabs-demo__number">03</span>
+        <div>
+          <h3>Tabs con iconos</h3>
+          <p>Con iconos · con contenido informativo · ancho completo.</p>
+        </div>
+      </header>
+
+      <!-- Acento lateral desactivado: panel limpio para comparar ambas presentaciones. -->
+      <app-ui-tabs
+        variant="underline"
+        size="md"
+        activeTabId="operativo"
+        ariaLabel="Ejemplo de tabs con iconos"
+        [stretch]="true"
+        [showPanelAccent]="false"
+      >
+        <app-ui-tab id="operativo" label="Operativo" icon="fa-regular fa-circle-play">
+          <div class="tabs-demo__module-card">
+            <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
+            <div>
+              <strong>Seguimiento operativo</strong>
+              <p>Consulta actividades, responsables y novedades del servicio.</p>
+            </div>
+          </div>
+        </app-ui-tab>
+
+        <app-ui-tab id="bienestar" label="Bienestar" icon="fa-regular fa-face-smile">
+          <div class="tabs-demo__module-card">
+            <i class="fa-solid fa-people-group" aria-hidden="true"></i>
+            <div>
+              <strong>Programas de bienestar</strong>
+              <p>Administra jornadas, convocatorias y beneficios institucionales.</p>
+            </div>
+          </div>
+        </app-ui-tab>
+
+        <app-ui-tab id="reconocimientos" label="Reconocimientos" icon="fa-regular fa-heart">
+          <div class="tabs-demo__module-card">
+            <i class="fa-solid fa-award" aria-hidden="true"></i>
+            <div>
+              <strong>Reconocimientos</strong>
+              <p>Registra estímulos y consulta el historial de cada funcionario.</p>
+            </div>
+          </div>
+        </app-ui-tab>
+      </app-ui-tabs>
+    </article>
+
+    <!-- Variante 4: catálogo de los cinco tamaños soportados por el componente. -->
+    <article class="tabs-demo__example">
+      <header class="tabs-demo__example-head">
+        <span class="tabs-demo__number">04</span>
+        <div>
+          <h3>Tamaños disponibles</h3>
+          <p>Sin iconos · sin panel de contenido · cinco escalas reutilizables.</p>
+        </div>
+      </header>
+
+      <div class="tabs-demo__sizes">
+        <div class="tabs-demo__size-row">
+          <span>Extra pequeño · xs</span>
+          <app-ui-tabs
+            variant="contained"
+            size="xs"
+            activeTabId="second"
+            [showPanel]="false"
+            [stretch]="true"
+          >
+            <app-ui-tab id="first" label="Primero" />
+            <app-ui-tab id="second" label="Segundo" />
+            <app-ui-tab id="third" label="Tercero" />
+          </app-ui-tabs>
+        </div>
+
+        <div class="tabs-demo__size-row">
+          <span>Pequeño · sm</span>
+          <app-ui-tabs
+            variant="contained"
+            size="sm"
+            activeTabId="second"
+            [showPanel]="false"
+            [stretch]="true"
+          >
+            <app-ui-tab id="first" label="Primero" />
+            <app-ui-tab id="second" label="Segundo" />
+            <app-ui-tab id="third" label="Tercero" />
+          </app-ui-tabs>
+        </div>
+
+        <div class="tabs-demo__size-row">
+          <span>Mediano · md</span>
+          <app-ui-tabs
+            variant="contained"
+            size="md"
+            activeTabId="second"
+            [showPanel]="false"
+            [stretch]="true"
+          >
+            <app-ui-tab id="first" label="Primero" />
+            <app-ui-tab id="second" label="Segundo" />
+            <app-ui-tab id="third" label="Tercero" />
+          </app-ui-tabs>
+        </div>
+
+        <div class="tabs-demo__size-row">
+          <span>Grande · lg</span>
+          <app-ui-tabs
+            variant="contained"
+            size="lg"
+            activeTabId="second"
+            [showPanel]="false"
+            [stretch]="true"
+          >
+            <app-ui-tab id="first" label="Primero" />
+            <app-ui-tab id="second" label="Segundo" />
+            <app-ui-tab id="third" label="Tercero" />
+          </app-ui-tabs>
+        </div>
+
+        <div class="tabs-demo__size-row">
+          <span>Extra grande · xl</span>
+          <app-ui-tabs
+            variant="contained"
+            size="xl"
+            activeTabId="second"
+            [showPanel]="false"
+            [stretch]="true"
+          >
+            <app-ui-tab id="first" label="Primero" />
+            <app-ui-tab id="second" label="Segundo" />
+            <app-ui-tab id="third" label="Tercero" />
+          </app-ui-tabs>
+        </div>
+      </div>
+    </article>
+
+    <!-- Variante 5: tabs distribuidos a todo el ancho con indicador inferior. -->
+    <article class="tabs-demo__example">
+      <header class="tabs-demo__example-head">
+        <span class="tabs-demo__number">05</span>
+        <div>
+          <h3>Tabs distribuidos con subrayado</h3>
+          <p>Sin iconos · con contenido · indicador institucional azul cielo.</p>
+        </div>
+      </header>
+
+      <!-- Otro ejemplo sin acento lateral. -->
+      <app-ui-tabs
+        variant="underline"
+        size="lg"
+        activeTabId="pendientes"
+        ariaLabel="Ejemplo de tabs distribuidos"
+        [stretch]="true"
+        [showPanelAccent]="false"
+      >
+        <app-ui-tab id="pendientes" label="Pendientes">
+          <div class="tabs-demo__content-card">
+            <strong>12 solicitudes pendientes</strong>
+            <p>Elementos recibidos que todavía no han iniciado su validación.</p>
+          </div>
+        </app-ui-tab>
+
+        <app-ui-tab id="proceso" label="En proceso">
+          <div class="tabs-demo__content-card">
+            <strong>7 solicitudes en proceso</strong>
+            <p>Trámites que cuentan con responsable y fecha estimada de atención.</p>
+          </div>
+        </app-ui-tab>
+
+        <app-ui-tab id="finalizados" label="Finalizados">
+          <div class="tabs-demo__content-card">
+            <strong>48 solicitudes finalizadas</strong>
+            <p>Histórico de trámites completados durante el periodo seleccionado.</p>
+          </div>
+        </app-ui-tab>
+      </app-ui-tabs>
+    </article>
+  </div>
+</section>

@@ -29,8 +29,9 @@
       </div>
 
       @if (!minimized()) {
-        <div class="ui-panel__body">
-          <form class="demo-form" [formGroup]="formularioDemo" (ngSubmit)="guardar()">
+        <!-- El formulario envuelve cuerpo y footer para conservar el submit nativo. -->
+        <form class="demo-form" [formGroup]="formularioDemo" (ngSubmit)="guardar()">
+          <div class="ui-panel__body demo-form__content">
             <article class="form-section">
               <h3>Inputs básicos</h3>
 
@@ -198,10 +199,18 @@
                 </div>
               </div>
             </article>
+          </div>
 
+          <!-- Footer reutilizable del panel, equivalente al footer del modal. -->
+          <footer class="ui-panel__foot">
             <div class="form-actions">
-              <app-ui-button type="submit" variant="primary" icon="fa-solid fa-floppy-disk">
-                Guardar
+              <app-ui-button
+                type="button"
+                variant="outline"
+                icon="fa-solid fa-ban"
+                (buttonClick)="cancelar()"
+              >
+                Cancelar
               </app-ui-button>
 
               <app-ui-button
@@ -215,138 +224,130 @@
 
               <app-ui-button
                 type="button"
-                variant="outline"
-                icon="fa-solid fa-ban"
-                (buttonClick)="cancelar()"
-              >
-                Cancelar
-              </app-ui-button>
-
-              <app-ui-button
-                type="button"
                 variant="info"
                 icon="fa-solid fa-up-right-from-square"
                 (buttonClick)="abrirModal()"
               >
                 Abrir modal
               </app-ui-button>
+
+              <app-ui-button type="submit" variant="primary" icon="fa-solid fa-floppy-disk">
+                Guardar
+              </app-ui-button>
+            </div>
+          </footer>
+        </form>
+
+        <app-ui-modal
+          [open]="modalOpen()"
+          title="Programar actividad institucional"
+          subtitle="Complete la información básica para registrar una nueva actividad."
+          icon="fa-solid fa-calendar-plus"
+          size="lg"
+          (closeRequested)="cerrarModal()"
+        >
+          <form
+            modal-body
+            class="modal-demo__form"
+            [formGroup]="modalActividadForm"
+            (ngSubmit)="guardarModal()"
+          >
+            <div class="modal-demo__notice">
+              <span class="modal-demo__notice-icon" aria-hidden="true">
+                <i class="fa-solid fa-circle-info"></i>
+              </span>
+              <div>
+                <strong>Información de la actividad</strong>
+                <p>Los campos marcados con asterisco son obligatorios.</p>
+              </div>
+            </div>
+
+            <div class="modal-demo__grid">
+              <div class="modal-demo__field modal-demo__field--full">
+                <app-ui-input
+                  formControlName="actividad"
+                  label="Nombre de la actividad"
+                  placeholder="Ingrese un nombre descriptivo"
+                  icon="fa-solid fa-clipboard-check"
+                  [required]="true"
+                  [maxlength]="100"
+                  [error]="modalError('actividad')"
+                />
+              </div>
+
+              <div class="modal-demo__field">
+                <app-ui-select
+                  formControlName="unidadResponsable"
+                  label="Unidad responsable"
+                  placeholder="Seleccione una unidad"
+                  searchPlaceholder="Buscar unidad..."
+                  [required]="true"
+                  [options]="unidadOptions"
+                  [error]="modalError('unidadResponsable')"
+                />
+              </div>
+
+              <div class="modal-demo__field">
+                <app-ui-date-time-picker
+                  formControlName="fechaProgramada"
+                  label="Fecha y hora programada"
+                  mode="datetime"
+                  hint="Seleccione la fecha y hora de inicio"
+                  [minDate]="today"
+                  [minuteStep]="5"
+                  [required]="true"
+                  [error]="modalError('fechaProgramada')"
+                />
+              </div>
+
+              <div class="modal-demo__field modal-demo__field--full">
+                <app-ui-input
+                  formControlName="observaciones"
+                  label="Observaciones"
+                  placeholder="Agregue información complementaria"
+                  [rows]="4"
+                  [maxlength]="300"
+                  [multiline]="true"
+                  hint="Máximo 300 caracteres."
+                  [error]="modalError('observaciones')"
+                />
+              </div>
             </div>
           </form>
 
-          <app-ui-modal
-            [open]="modalOpen()"
-            title="Programar actividad institucional"
-            subtitle="Complete la información básica para registrar una nueva actividad."
-            icon="fa-solid fa-calendar-plus"
-            size="lg"
-            (closeRequested)="cerrarModal()"
-          >
-            <form
-              modal-body
-              class="modal-demo__form"
-              [formGroup]="modalActividadForm"
-              (ngSubmit)="guardarModal()"
+          <div modal-actions class="modal-demo__actions">
+            <app-ui-button
+              type="button"
+              variant="outline"
+              icon="fa-solid fa-xmark"
+              (buttonClick)="cerrarModal()"
             >
-              <div class="modal-demo__notice">
-                <span class="modal-demo__notice-icon" aria-hidden="true">
-                  <i class="fa-solid fa-circle-info"></i>
-                </span>
-                <div>
-                  <strong>Información de la actividad</strong>
-                  <p>Los campos marcados con asterisco son obligatorios.</p>
-                </div>
-              </div>
+              Cancelar
+            </app-ui-button>
 
-              <div class="modal-demo__grid">
-                <div class="modal-demo__field modal-demo__field--full">
-                  <app-ui-input
-                    formControlName="actividad"
-                    label="Nombre de la actividad"
-                    placeholder="Ingrese un nombre descriptivo"
-                    icon="fa-solid fa-clipboard-check"
-                    [required]="true"
-                    [maxlength]="100"
-                    [error]="modalError('actividad')"
-                  />
-                </div>
+            <app-ui-button
+              type="button"
+              variant="secondary"
+              icon="fa-solid fa-eraser"
+              (buttonClick)="limpiarModal()"
+            >
+              Limpiar
+            </app-ui-button>
 
-                <div class="modal-demo__field">
-                  <app-ui-select
-                    formControlName="unidadResponsable"
-                    label="Unidad responsable"
-                    placeholder="Seleccione una unidad"
-                    searchPlaceholder="Buscar unidad..."
-                    [required]="true"
-                    [options]="unidadOptions"
-                    [error]="modalError('unidadResponsable')"
-                  />
-                </div>
-
-                <div class="modal-demo__field">
-                  <app-ui-date-time-picker
-                    formControlName="fechaProgramada"
-                    label="Fecha y hora programada"
-                    mode="datetime"
-                    hint="Seleccione la fecha y hora de inicio"
-                    [minDate]="today"
-                    [minuteStep]="5"
-                    [required]="true"
-                    [error]="modalError('fechaProgramada')"
-                  />
-                </div>
-
-                <div class="modal-demo__field modal-demo__field--full">
-                  <app-ui-input
-                    formControlName="observaciones"
-                    label="Observaciones"
-                    placeholder="Agregue información complementaria"
-                    [rows]="4"
-                    [maxlength]="300"
-                    [multiline]="true"
-                    hint="Máximo 300 caracteres."
-                    [error]="modalError('observaciones')"
-                  />
-                </div>
-              </div>
-            </form>
-
-            <div modal-actions class="modal-demo__actions">
-              <app-ui-button
-                type="button"
-                variant="outline"
-                icon="fa-solid fa-xmark"
-                (buttonClick)="cerrarModal()"
-              >
-                Cancelar
-              </app-ui-button>
-
-              <app-ui-button
-                type="button"
-                variant="secondary"
-                icon="fa-solid fa-eraser"
-                (buttonClick)="limpiarModal()"
-              >
-                Limpiar
-              </app-ui-button>
-
-              <app-ui-button
-                type="button"
-                variant="primary"
-                icon="fa-solid fa-floppy-disk"
-                (buttonClick)="guardarModal()"
-              >
-                Guardar actividad
-              </app-ui-button>
-            </div>
-          </app-ui-modal>
-        </div>
+            <app-ui-button
+              type="button"
+              variant="primary"
+              icon="fa-solid fa-floppy-disk"
+              (buttonClick)="guardarModal()"
+            >
+              Guardar actividad
+            </app-ui-button>
+          </div>
+        </app-ui-modal>
       }
     </div>
 
-    <app-funcionarios-table-demo />
-
-    <app-notificaciones-demo />
-
+    <!-- El JSON se ubica inmediatamente después de la guía principal del formulario. -->
     <div class="ui-panel">
       <div class="ui-panel__head">
         <div class="ui-panel__title">
@@ -361,5 +362,12 @@
         }}</pre>
       </div>
     </div>
+
+    <!-- Sección demostrativa independiente de los componentes compartidos ui-tabs y ui-tab. -->
+    <app-tabs-demo />
+
+    <app-funcionarios-table-demo />
+
+    <app-notificaciones-demo />
   </section>
 }

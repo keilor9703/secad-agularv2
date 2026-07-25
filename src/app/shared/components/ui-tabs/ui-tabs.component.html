@@ -1,0 +1,32 @@
+<section [class]="classes()">
+  <div class="ui-tabs__list" role="tablist" [attr.aria-label]="ariaLabel()">
+    @for (tab of tabs(); track tab.id()) {
+      <button
+        #tabButton
+        class="ui-tabs__tab"
+        type="button"
+        role="tab"
+        [class.is-active]="isActive(tab)"
+        [class.has-icon]="tab.icon().trim()"
+        [id]="tabButtonId(tab)"
+        [disabled]="tab.disabled()"
+        [attr.aria-selected]="isActive(tab)"
+        [attr.aria-controls]="showPanel() ? tabPanelId(tab) : null"
+        [tabIndex]="isActive(tab) ? 0 : -1"
+        (click)="selectTab(tab)"
+        (keydown)="handleTabKeydown($event, tab)"
+      >
+        @if (tab.icon().trim()) {
+          <i [class]="tab.icon()" aria-hidden="true"></i>
+        }
+
+        <span>{{ tab.label() }}</span>
+      </button>
+    }
+  </div>
+
+  <!-- Los paneles se proyectan directamente para conservar formularios y estado interno. -->
+  <div class="ui-tabs__panel" [hidden]="!showPanel()">
+    <ng-content />
+  </div>
+</section>

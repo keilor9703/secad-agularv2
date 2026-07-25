@@ -30,6 +30,7 @@
   min-height: var(--form-field-height, 42px);
   border: 1px solid var(--form-border-color, #cbd5e1);
   border-radius: var(--form-border-radius, 7px);
+  outline: 0;
   background: var(--form-bg, #fff);
   color: var(--ui-text, #0f172a);
   padding: 0 38px 0 12px;
@@ -83,6 +84,14 @@
   box-shadow:
     var(--_form-inset-shadow),
     0 0 0 3px rgba(31, 78, 121, 0.12);
+}
+
+/* Reemplaza el contorno negro nativo por un foco institucional exterior. */
+.form-select__control:focus-visible {
+  border-color: var(--form-focus-color, #1f4e79);
+  box-shadow:
+    var(--_form-inset-shadow),
+    0 0 0 3px rgba(31, 78, 121, 0.14);
 }
 
 .form-select--invalid .form-select__control {

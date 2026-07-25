@@ -1,189 +1,282 @@
-<div class="accessibility-menu">
-  <!-- Mensaje de error voz a texto -->
-  <div *ngIf="speechError" class="speech-error-msg" role="alert" aria-live="assertive">
-    {{ speechError }}
-  </div>
-  <!-- Botón Modo Oscuro -->
-  <button 
-    class="accessibility-btn dark-mode-btn"
-    [class.active]="isDarkMode"
-    (click)="toggleDarkMode()"
-    title="Modo oscuro"
-    aria-label="Activar o desactivar modo oscuro">
-    <span class="icon" [attr.aria-hidden]="true">
-      <svg *ngIf="!isDarkMode" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <!-- Icono Sol -->
-        <circle cx="12" cy="12" r="5"></circle>
-        <line x1="12" y1="1" x2="12" y2="3"></line>
-        <line x1="12" y1="21" x2="12" y2="23"></line>
-        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
-        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-        <line x1="1" y1="12" x2="3" y2="12"></line>
-        <line x1="21" y1="12" x2="23" y2="12"></line>
-        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
-        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
-      </svg>
-      <svg *ngIf="isDarkMode" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <!-- Icono Luna -->
-        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
-      </svg>
-    </span>
-    <span class="tooltip">{{ isDarkMode ? 'Modo claro' : 'Modo oscuro' }}</span>
-  </button>
+<div
+  class="accessibility-speed-dial"
+  [class.is-open]="dialOpen()"
+  [class.has-subpanel]="hasSubpanel()"
+  [class.is-dragging]="dragging()"
+  [class.is-positioned]="position()"
+  [class.opens-left]="horizontalDirection() === 'left'"
+  [class.opens-right]="horizontalDirection() === 'right'"
+  [class.opens-up]="verticalDirection() === 'up'"
+  [class.opens-down]="verticalDirection() === 'down'"
+  [style.left.px]="position()?.x ?? null"
+  [style.top.px]="position()?.y ?? null"
+>
+  @if (speechError()) {
+    <div class="speech-error-msg" role="alert" aria-live="assertive">
+      <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
+      <span>{{ speechError() }}</span>
+    </div>
+  }
 
-  <!-- Botón Aumentar Letra -->
-  <button 
-    class="accessibility-btn font-size-btn"
-    [class.disabled]="isFontSizeLarge"
-    (click)="increaseFontSize()"
-    [disabled]="isFontSizeLarge"
-    title="Aumentar tamaño de letra"
-    aria-label="Aumentar tamaño de letra">
-    <span class="icon" [attr.aria-hidden]="true">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <!-- Icono A+ -->
-        <text x="6" y="16" font-size="16" font-weight="bold"></text>
-        <text x="14" y="16" font-size="14" font-weight="bold"></text>
-      </svg>
-      <span style="position: absolute; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: bold;">A+</span>
-    </span>
-    <span class="tooltip">Aumentar letra ({{ currentFontLevel }})</span>
-  </button>
-
-  <!-- Botón Restablecer Letra -->
-  <button
-    class="accessibility-btn font-size-btn"
-    [class.disabled]="isFontSizeDefault"
-    (click)="resetFontSize()"
-    [disabled]="isFontSizeDefault"
-    title="Restablecer tamaño de letra"
-    aria-label="Restablecer tamaño de letra al valor predeterminado">
-    <span class="icon" [attr.aria-hidden]="true">
-      <span style="position: absolute; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: bold;">A↺</span>
-    </span>
-    <span class="tooltip">Restablecer letra</span>
-  </button>
-
-  <!-- Botón Disminuir Letra -->
-  <button 
-    class="accessibility-btn font-size-btn"
-    [class.disabled]="isFontSizeSmall"
-    (click)="decreaseFontSize()"
-    [disabled]="isFontSizeSmall"
-    title="Disminuir tamaño de letra"
-    aria-label="Disminuir tamaño de letra">
-    <span class="icon" [attr.aria-hidden]="true">
-      <span style="position: absolute; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: bold;">A−</span>
-    </span>
-    <span class="tooltip">Disminuir letra ({{ currentFontLevel }})</span>
-  </button>
-
-  <!-- Botón Voz a Texto -->
-  <button 
-    class="accessibility-btn speech-to-text-btn"
-    [class.active]="isListening"
-    [class.disabled]="!speechToTextAvailable"
-    (click)="toggleSpeechToText()"
-    [disabled]="!speechToTextAvailable"
-    title="Voz a texto"
-    aria-label="Convertir voz a texto">
-    <span class="icon" [attr.aria-hidden]="true">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <!-- Icono Micrófono -->
-        <path d="M12 1a3 3 0 0 0-3 3v12a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
-        <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-        <line x1="12" y1="19" x2="12" y2="23"></line>
-        <line x1="8" y1="23" x2="16" y2="23"></line>
-      </svg>
-    </span>
-    <span class="tooltip">{{ isListening ? 'Escuchando...' : 'Voz a texto' }}</span>
-  </button>
-
-  <!-- Botón Texto a Voz -->
-  <button 
-    class="accessibility-btn text-to-speech-btn "
-    [class.active]="isHoverMode"
-    [class.speaking]="isSpeaking"
-    [class.disabled]="!textToSpeechAvailable"
-    (click)="toggleTextToSpeech()"
-    [disabled]="!textToSpeechAvailable"
-    title="Texto a voz (pase el cursor sobre cualquier elemento)"
-    aria-label="Activar o desactivar texto a voz al pasar el cursor">
-    <span class="icon" [attr.aria-hidden]="true">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <!-- Icono Altavoz -->
-        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-        <path d="M15.54 8.46a6.5 6.5 0 0 1 0 9.07"></path>
-        <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
-      </svg>
-    </span>
-    <span class="tooltip">{{ isSpeaking ? 'Leyendo...' : isHoverMode ? 'Pase el cursor...' : 'Texto a voz' }}</span>
-  </button>
-
-  <button
-    class="accessibility-btn social-toggle-btn"
-    [class.active]="socialExpanded"
-    (click)="toggleSocial()"
-    title="Redes sociales"
-    aria-label="Mostrar redes sociales">
-    <span class="icon" [attr.aria-hidden]="true">
-      <svg viewBox="0 0 24 24" fill="none">
-        <rect x="7" y="2.5" width="10" height="19" rx="2.2" stroke="currentColor" stroke-width="1.8"></rect>
-        <rect x="10.5" y="18.2" width="3" height="1.2" rx="0.6" fill="currentColor"></rect>
-        <path d="M4.8 9.2c0-1.8 1.5-3.3 3.3-3.3h1.3c1.8 0 3.3 1.5 3.3 3.3s-1.5 3.3-3.3 3.3H8.2L6.4 14v-1.5c-1-.5-1.6-1.7-1.6-2.8z" fill="currentColor"></path>
-        <path d="M11.2 8.4c0-2 1.6-3.6 3.6-3.6h1.4c2 0 3.6 1.6 3.6 3.6s-1.6 3.6-3.6 3.6h-1l-1.9 1.6v-1.6c-1.2-.4-2.1-1.8-2.1-3.6z" fill="currentColor"></path>
-        <path d="M15.7 7.9v1.1M15.1 8.45h1.1" stroke="#fff" stroke-width="1.1" stroke-linecap="round"></path>
-      </svg>
-    </span>
-    <span class="tooltip">Redes sociales</span>
-  </button>
-
+  <!--
+    Acciones principales del flower speed dial.
+    Las posiciones se invierten automáticamente cuando el FAB cambia de cuadrante.
+  -->
   <div
-    class="social-list"
-    [class.social-list--expanded]="socialExpanded"
-    [attr.aria-hidden]="!socialExpanded">
+    id="accessibility-fab-actions"
+    class="fab-actions"
+    role="group"
+    aria-label="Acciones de accesibilidad"
+    [attr.aria-hidden]="!actionsInteractive()"
+  >
     <button
+      class="fab-action dark-mode-btn"
       type="button"
-      class="accessibility-btn social-network-btn"
-      *ngFor="let group of socialGroups"
-      [style.--social-color]="group.color"
-      [attr.aria-label]="'Abrir ' + group.networkName"
-      [title]="group.networkName"
-      (click)="openSocialGroup(group)">
-      <span class="icon" [attr.aria-hidden]="true">
-        <i [class]="'fa-brands ' + group.icon"></i>
+      [class.active]="isDarkMode()"
+      [style.--fab-x]="actionX(4) + 'px'"
+      [style.--fab-y]="actionY(4) + 'px'"
+      [style.--fab-delay]="actionDelay(4)"
+      [attr.tabindex]="actionsInteractive() ? 0 : -1"
+      [attr.aria-pressed]="isDarkMode()"
+      [attr.aria-label]="isDarkMode() ? 'Activar modo claro' : 'Activar modo oscuro'"
+      (click)="toggleDarkMode()"
+    >
+      <i [class]="isDarkMode() ? 'fa-solid fa-sun' : 'fa-solid fa-moon'" aria-hidden="true"></i>
+      <span class="fab-tooltip">{{ isDarkMode() ? 'Modo claro' : 'Modo oscuro' }}</span>
+    </button>
+
+    <button
+      class="fab-action font-size-btn"
+      type="button"
+      [style.--fab-x]="actionX(3) + 'px'"
+      [style.--fab-y]="actionY(3) + 'px'"
+      [style.--fab-delay]="actionDelay(3)"
+      [attr.tabindex]="actionsInteractive() ? 0 : -1"
+      aria-label="Configurar tamaño de letra"
+      aria-haspopup="dialog"
+      (click)="openFontPanel()"
+    >
+      <span aria-hidden="true">Aa</span>
+      <span class="fab-tooltip">Tamaño de letra · {{ fontSizeLabel() }}</span>
+    </button>
+
+    <button
+      class="fab-action speech-to-text-btn"
+      type="button"
+      [class.active]="isListening()"
+      [style.--fab-x]="actionX(2) + 'px'"
+      [style.--fab-y]="actionY(2) + 'px'"
+      [style.--fab-delay]="actionDelay(2)"
+      [attr.tabindex]="actionsInteractive() ? 0 : -1"
+      [disabled]="!speechToTextAvailable"
+      [attr.aria-pressed]="isListening()"
+      [attr.aria-label]="isListening() ? 'Detener voz a texto' : 'Activar voz a texto'"
+      (click)="toggleSpeechToText()"
+    >
+      <i class="fa-solid fa-microphone" aria-hidden="true"></i>
+      <span class="fab-tooltip">
+        {{ isListening() ? 'Escuchando…' : 'Voz a texto' }}
       </span>
-      <span class="tooltip">{{ group.networkName }}</span>
+    </button>
+
+    <button
+      class="fab-action text-to-speech-btn"
+      type="button"
+      [class.active]="isHoverMode()"
+      [class.speaking]="isSpeaking()"
+      [style.--fab-x]="actionX(1) + 'px'"
+      [style.--fab-y]="actionY(1) + 'px'"
+      [style.--fab-delay]="actionDelay(1)"
+      [attr.tabindex]="actionsInteractive() ? 0 : -1"
+      [disabled]="!textToSpeechAvailable"
+      [attr.aria-pressed]="isHoverMode()"
+      [attr.aria-label]="isHoverMode() ? 'Desactivar texto a voz' : 'Activar texto a voz'"
+      (click)="toggleTextToSpeech()"
+    >
+      <i class="fa-solid fa-volume-high" aria-hidden="true"></i>
+      <span class="fab-tooltip">
+        {{ isSpeaking() ? 'Leyendo…' : isHoverMode() ? 'Texto a voz activo' : 'Texto a voz' }}
+      </span>
+    </button>
+
+    <button
+      class="fab-action social-toggle-btn"
+      type="button"
+      [style.--fab-x]="actionX(0) + 'px'"
+      [style.--fab-y]="actionY(0) + 'px'"
+      [style.--fab-delay]="actionDelay(0)"
+      [attr.tabindex]="actionsInteractive() ? 0 : -1"
+      [disabled]="socialGroups().length === 0"
+      aria-label="Abrir redes sociales"
+      aria-haspopup="dialog"
+      (click)="openSocialPanel()"
+    >
+      <i class="fa-solid fa-share-nodes" aria-hidden="true"></i>
+      <span class="fab-tooltip">Redes sociales</span>
     </button>
   </div>
+
+  @if (fontPanelOpen()) {
+    <section class="fab-subpanel font-panel" role="dialog" aria-label="Tamaño de letra">
+      <header class="fab-subpanel__head">
+        <button
+          class="fab-subpanel__back"
+          type="button"
+          aria-label="Volver a las acciones"
+          (click)="returnToActions()"
+        >
+          <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
+        </button>
+        <div>
+          <strong>Tamaño de letra</strong>
+          <span>{{ fontSizeLabel() }} · nivel {{ currentFontLevel() }}</span>
+        </div>
+      </header>
+
+      <div class="font-panel__actions">
+        <button
+          type="button"
+          [disabled]="isFontSizeSmall()"
+          title="Disminuir tamaño"
+          aria-label="Disminuir tamaño de letra"
+          (click)="decreaseFontSize()"
+        >
+          A−
+        </button>
+        <button
+          type="button"
+          [disabled]="isFontSizeDefault()"
+          title="Restablecer tamaño"
+          aria-label="Restablecer tamaño de letra"
+          (click)="resetFontSize()"
+        >
+          A↺
+        </button>
+        <button
+          type="button"
+          [disabled]="isFontSizeLarge()"
+          title="Aumentar tamaño"
+          aria-label="Aumentar tamaño de letra"
+          (click)="increaseFontSize()"
+        >
+          A+
+        </button>
+      </div>
+    </section>
+  }
+
+  @if (socialPanelOpen()) {
+    <section class="fab-subpanel social-panel" role="dialog" aria-label="Redes sociales">
+      <header class="fab-subpanel__head">
+        <button
+          class="fab-subpanel__back"
+          type="button"
+          aria-label="Volver a las acciones"
+          (click)="returnToActions()"
+        >
+          <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
+        </button>
+        <div>
+          <strong>Redes sociales</strong>
+          <span>Seleccione una red institucional</span>
+        </div>
+      </header>
+
+      <div class="social-panel__list">
+        @for (group of socialGroups(); track group.networkName) {
+          <button
+            type="button"
+            [style.--social-color]="group.color"
+            [attr.aria-label]="'Abrir ' + group.networkName"
+            (click)="openSocialGroup(group)"
+          >
+            <span class="social-panel__icon" aria-hidden="true">
+              <i [class]="'fa-brands ' + group.icon"></i>
+            </span>
+            <span>{{ group.networkName }}</span>
+            <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
+          </button>
+        }
+      </div>
+    </section>
+  }
+
+  <!--
+    El botón principal funciona también como asa de arrastre.
+    Doble clic restablece la posición inferior derecha.
+  -->
+  <button
+    #fabMain
+    class="fab-main"
+    type="button"
+    aria-controls="accessibility-fab-actions"
+    [attr.aria-expanded]="dialOpen()"
+    [attr.aria-label]="
+      dialOpen() ? 'Cerrar acciones de accesibilidad' : 'Abrir acciones de accesibilidad'
+    "
+    title="Accesibilidad · arrastre para mover"
+    (pointerdown)="onFabPointerDown($event)"
+    (dblclick)="resetPosition($event)"
+    (click)="toggleDial()"
+  >
+    <i
+      [class]="dialOpen() ? 'fa-solid fa-xmark' : 'fa-solid fa-universal-access'"
+      aria-hidden="true"
+    ></i>
+    <span class="fab-main__tooltip">
+      {{ dialOpen() ? 'Cerrar' : 'Accesibilidad · arrastre para mover' }}
+    </span>
+  </button>
 </div>
 
-<div class="social-backdrop" *ngIf="panelOpen" (click)="closeSocialPanel()"></div>
+@if (drawerOpen()) {
+  <div class="social-backdrop" aria-hidden="true" (click)="closeSocialDrawer()"></div>
 
-<aside class="social-drawer" [class.is-open]="panelOpen" role="dialog" aria-modal="true" *ngIf="panelOpen">
-  <header class="social-drawer__head">
-    <div class="social-drawer__title">
-      <i class="fa-solid fa-share-nodes"></i>
-      {{ selectedGroup?.networkName || 'Red social' }}
+  <aside
+    class="social-drawer"
+    role="dialog"
+    aria-modal="true"
+    cdkTrapFocus
+    [cdkTrapFocusAutoCapture]="true"
+    [attr.aria-label]="selectedGroup()?.networkName ?? 'Red social'"
+  >
+    <header class="social-drawer__head">
+      <div class="social-drawer__title">
+        <i class="fa-solid fa-share-nodes" aria-hidden="true"></i>
+        {{ selectedGroup()?.networkName ?? 'Red social' }}
+      </div>
+
+      <button
+        class="social-drawer__close"
+        type="button"
+        aria-label="Cerrar panel"
+        (click)="closeSocialDrawer()"
+      >
+        <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+      </button>
+    </header>
+
+    <div class="social-drawer__body">
+      @for (account of selectedGroup()?.accounts ?? []; track account.id) {
+        <article class="social-account">
+          <div class="social-account__avatar">
+            <span>{{ (account.accountName || 'C').charAt(0).toUpperCase() }}</span>
+          </div>
+
+          <div class="social-account__meta">
+            <div class="social-account__name-row">
+              <strong>{{ account.accountName }}</strong>
+              @if ((account.notifications ?? 0) > 0) {
+                <span class="social-account__badge">{{ account.notifications }}</span>
+              }
+            </div>
+            <div class="social-account__handle">{{ getHandle(account) }}</div>
+            <a [href]="account.url" target="_blank" rel="noopener noreferrer">Abrir perfil</a>
+          </div>
+        </article>
+      } @empty {
+        <p class="social-drawer__empty">No hay cuentas configuradas para esta red.</p>
+      }
     </div>
-    <button class="social-drawer__close" type="button" aria-label="Cerrar panel" (click)="closeSocialPanel()">
-      <i class="fa-solid fa-xmark"></i>
-    </button>
-  </header>
-
-  <div class="social-drawer__body">
-    <article class="social-account" *ngFor="let account of selectedGroup?.accounts ?? []">
-      <div class="social-account__avatar">
-        <span>{{ (account.accountName || 'C').charAt(0).toUpperCase() }}</span>
-      </div>
-      <div class="social-account__meta">
-        <div class="social-account__name-row">
-          <strong>{{ account.accountName }}</strong>
-          <span class="social-account__badge" *ngIf="(account.notifications ?? 0) > 0">{{ account.notifications }}</span>
-        </div>
-        <div class="social-account__handle">{{ getHandle(account) }}</div>
-        <a [href]="account.url" target="_blank" rel="noopener noreferrer">Abrir perfil</a>
-      </div>
-    </article>
-  </div>
-</aside>
+  </aside>
+}

@@ -821,6 +821,17 @@ body.no-scroll {
   padding: 16px;
 }
 
+/* Footer reutilizable para acciones de panel, equivalente al footer del modal. */
+.ui-panel__foot {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-height: 68px;
+  padding: 13px 20px;
+  border-top: 1px solid var(--ui-border, rgba(15, 23, 42, 0.11));
+  background: color-mix(in srgb, var(--ui-surface, #ffffff) 94%, #e2e8f0);
+}
+
 /* --- ICON BUTTONS --- */
 .ui-icon-btn,
 .ui-mini-btn,
@@ -1341,7 +1352,7 @@ section.home-view {
   padding: 14px;
 }
 
-.ui-tabs__panel {
+.ui-tabs__panels > .ui-tabs__panel {
   display: none;
 }
 
