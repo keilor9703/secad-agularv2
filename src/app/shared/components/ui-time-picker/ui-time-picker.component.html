@@ -1,0 +1,117 @@
+<div
+  class="ui-time-picker"
+  [class.is-open]="opened()"
+  [class.has-value]="hasValue()"
+  [class.has-error]="hasError()"
+  [class.is-disabled]="isDisabled()"
+>
+  <label class="ui-time-picker__label" [for]="resolvedControlId()">
+    {{ label() }}
+    @if (required()) {
+      <span aria-hidden="true">*</span>
+    }
+  </label>
+
+  <div class="ui-time-picker__control">
+    <button
+      #trigger
+      cdkOverlayOrigin
+      #origin="cdkOverlayOrigin"
+      class="ui-time-picker__trigger"
+      type="button"
+      role="combobox"
+      aria-haspopup="listbox"
+      [id]="resolvedControlId()"
+      [disabled]="isDisabled()"
+      [attr.aria-expanded]="opened()"
+      [attr.aria-controls]="opened() ? resolvedControlId() + '-listbox' : null"
+      [attr.aria-invalid]="hasError()"
+      [attr.aria-describedby]="describedBy()"
+      (click)="toggle()"
+      (keydown)="handleTriggerKeydown($event)"
+    >
+      @if (icon().trim()) {
+        <span class="ui-time-picker__leading-icon" aria-hidden="true">
+          <i [class]="icon()"></i>
+        </span>
+      }
+
+      <span class="ui-time-picker__value" [class.is-placeholder]="!hasValue()">
+        {{ selectedLabel() || resolvedPlaceholder() }}
+      </span>
+
+      <i
+        class="fa-solid fa-chevron-down ui-time-picker__chevron"
+        aria-hidden="true"
+      ></i>
+    </button>
+
+    @if (clearable() && hasValue() && !isDisabled()) {
+      <button
+        class="ui-time-picker__clear"
+        type="button"
+        [attr.aria-label]="'Limpiar ' + label()"
+        (click)="clear($event)"
+      >
+        <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+      </button>
+    }
+  </div>
+
+  @if (hasError()) {
+    <p class="ui-time-picker__message is-error" [id]="resolvedControlId() + '-error'">
+      <i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i>
+      {{ error() }}
+    </p>
+  } @else if (hint()) {
+    <p class="ui-time-picker__message" [id]="resolvedControlId() + '-hint'">
+      {{ hint() }}
+    </p>
+  }
+
+  <ng-template
+    cdkConnectedOverlay
+    [cdkConnectedOverlayOrigin]="origin"
+    [cdkConnectedOverlayOpen]="opened()"
+    [cdkConnectedOverlayPositions]="positions"
+    [cdkConnectedOverlayWidth]="panelWidth()"
+    [cdkConnectedOverlayPush]="true"
+    [cdkConnectedOverlayViewportMargin]="8"
+    [cdkConnectedOverlayHasBackdrop]="true"
+    cdkConnectedOverlayBackdropClass="cdk-overlay-transparent-backdrop"
+    (attach)="onOverlayAttached()"
+    (backdropClick)="close()"
+    (detach)="close()"
+  >
+    <div
+      class="ui-time-picker__panel"
+      role="listbox"
+      [id]="resolvedControlId() + '-listbox'"
+      [attr.aria-label]="label()"
+    >
+      @for (option of options(); track option.value; let index = $index) {
+        <button
+          #optionButton
+          class="ui-time-picker__option"
+          type="button"
+          role="option"
+          [id]="optionId(index)"
+          [class.is-selected]="isSelected(option)"
+          [attr.aria-selected]="isSelected(option)"
+          [tabIndex]="activeIndex() === index ? 0 : -1"
+          (click)="selectOption(option)"
+          (focus)="onOptionFocus(index)"
+          (keydown)="handleOptionKeydown($event, index)"
+        >
+          <span>{{ option.label }}</span>
+
+          @if (isSelected(option)) {
+            <i class="fa-solid fa-check" aria-hidden="true"></i>
+          }
+        </button>
+      } @empty {
+        <p class="ui-time-picker__empty">No hay horas disponibles para el rango configurado.</p>
+      }
+    </div>
+  </ng-template>
+</div>

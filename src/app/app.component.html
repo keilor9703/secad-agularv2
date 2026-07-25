@@ -4,52 +4,39 @@
 <app-modal-visor></app-modal-visor>
 
 <!-- UI TOAST -->
-<div class="ui-toast-wrap" *ngIf="toast.open">
-  <div class="ui-toast" [ngClass]="toast.type">
-    <div class="ui-toast__icon">
-      <i
-        class="fa-solid"
-        [ngClass]="{
-          'fa-circle-check': toast.type === 'success',
-          'fa-triangle-exclamation': toast.type === 'warning',
-          'fa-circle-xmark': toast.type === 'error',
-          'fa-circle-info': toast.type === 'info'
-        }"
-      ></i>
-    </div>
+@if (toast().open) {
+  <div class="ui-toast-wrap" role="status" aria-live="polite">
+    <div [class]="'ui-toast ' + toast().type">
+      <div class="ui-toast__icon" aria-hidden="true">
+        @switch (toast().type) {
+          @case ('success') {
+            <i class="fa-solid fa-circle-check"></i>
+          }
+          @case ('warning') {
+            <i class="fa-solid fa-triangle-exclamation"></i>
+          }
+          @case ('error') {
+            <i class="fa-solid fa-circle-xmark"></i>
+          }
+          @case ('info') {
+            <i class="fa-solid fa-circle-info"></i>
+          }
+        }
+      </div>
 
-    <div class="ui-toast__content">
-      <div class="ui-toast__title">{{ toast.title }}</div>
-      <div class="ui-toast__text">{{ toast.message }}</div>
-    </div>
+      <div class="ui-toast__content">
+        <div class="ui-toast__title">{{ toast().title }}</div>
+        <div class="ui-toast__text">{{ toast().message }}</div>
+      </div>
 
-    <button class="ui-icon-btn ui-toast__close" type="button" (click)="hideToast()">
-      <i class="fa-solid fa-xmark"></i>
-    </button>
-  </div>
-</div>
-
-
-<!-- ALERT MODAL (tipo SweetAlert / screenshot) -->
-<div class="ui-alert" *ngIf="alert.open" (click)="closeAlert()">
-  <div class="ui-alert__dialog" (click)="$event.stopPropagation()" role="dialog" aria-modal="true">
-    <div class="ui-alert__icon" [ngClass]="alert.type">
-      <i class="fa-solid"
-         [ngClass]="{
-           'fa-circle-check': alert.type === 'success',
-           'fa-triangle-exclamation': alert.type === 'warning',
-           'fa-circle-xmark': alert.type === 'error',
-           'fa-circle-info': alert.type === 'info'
-         }"></i>
-    </div>
-
-    <h3 class="ui-alert__title">{{ alert.title }}</h3>
-    <p class="ui-alert__text">{{ alert.message }}</p>
-
-    <div class="ui-alert__foot" [ngClass]="alert.type">
-      <button class="ui-btn primary ui-btn--fx" type="button" (click)="closeAlert()">
-        {{ alert.okText }}
+      <button
+        class="ui-icon-btn ui-toast__close"
+        type="button"
+        aria-label="Cerrar notificación"
+        (click)="hideToast()"
+      >
+        <i class="fa-solid fa-xmark" aria-hidden="true"></i>
       </button>
     </div>
   </div>
-</div>
+}

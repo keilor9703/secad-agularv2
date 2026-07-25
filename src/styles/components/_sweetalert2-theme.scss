@@ -1,0 +1,158 @@
+/*
+ * Tema global para SweetAlert2.
+ * Se mantiene fuera de los componentes porque SweetAlert2 agrega su contenedor
+ * directamente al <body>.
+ */
+.swal2-container.app-alert-layer {
+  z-index: var(--ui-z-alert, 13000);
+  padding: 18px;
+  font-family: 'Montserrat', sans-serif;
+}
+
+.swal2-container .app-alert {
+  width: min(460px, calc(100vw - 32px));
+  padding: 0 0 18px;
+  overflow: hidden;
+  border: 1px solid rgba(15, 23, 42, 0.14);
+  border-radius: 14px;
+  background: var(--ui-surface, #ffffff);
+  box-shadow:
+    0 32px 80px rgba(2, 6, 23, 0.3),
+    0 8px 24px rgba(2, 6, 23, 0.14);
+  color: var(--ui-text, #0f172a);
+}
+
+.swal2-container .app-alert__icon {
+  margin: 26px auto 4px;
+  transform: scale(0.82);
+}
+
+.swal2-container .app-alert__title {
+  margin: 0;
+  padding: 12px 24px 0;
+  color: var(--policia-oscuro, #151b3b);
+  font-size: calc(20px * var(--font-size-scale, 1));
+  font-weight: 850;
+  line-height: 1.3;
+}
+
+.swal2-container .app-alert__message {
+  margin: 0;
+  padding: 10px 28px 2px;
+  color: #53565a;
+  font-size: calc(13px * var(--font-size-scale, 1));
+  line-height: 1.55;
+}
+
+.swal2-container .app-alert__actions {
+  gap: 10px;
+  margin: 22px 20px 0;
+}
+
+.swal2-container .app-alert__button {
+  min-width: 116px;
+  min-height: 40px;
+  margin: 0;
+  padding: 9px 18px;
+  border: 1px solid transparent !important;
+  border-radius: 8px;
+  outline: 0;
+  font-family: inherit;
+  font-size: calc(12px * var(--font-size-scale, 1));
+  font-weight: 800;
+  line-height: 1.2;
+  cursor: pointer;
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease,
+    box-shadow 150ms ease,
+    transform 150ms ease;
+}
+
+.swal2-container .app-alert__button:hover {
+  transform: translateY(-1px);
+}
+
+.swal2-container .app-alert__button:focus-visible {
+  box-shadow: var(--ui-focus-ring, 0 0 0 4px rgba(8, 166, 203, 0.18));
+}
+
+.swal2-container .app-alert__button--primary {
+  border-color: var(--policia-medio, #002a66) !important;
+  background: var(--policia-medio, #002a66) !important;
+  color: #ffffff !important;
+}
+
+.swal2-container .app-alert__button--primary:hover {
+  background: #003b86 !important;
+}
+
+.swal2-container .app-alert__button--danger {
+  border-color: #b42318 !important;
+  background: #b42318 !important;
+  color: #ffffff !important;
+}
+
+.swal2-container .app-alert__button--danger:hover {
+  background: #921d15 !important;
+}
+
+.swal2-container .app-alert__button--secondary {
+  border-color: #cbd5e1 !important;
+  background: #ffffff !important;
+  color: var(--policia-oscuro, #151b3b) !important;
+}
+
+.swal2-container .app-alert__button--secondary:hover {
+  border-color: #94a3b8 !important;
+  background: #f8fafc !important;
+}
+
+html.dark-mode {
+  .swal2-container .app-alert {
+    border-color: rgba(255, 255, 255, 0.1);
+    background: var(--ui-surface, #1e2840);
+    color: var(--ui-text, #e4e7eb);
+    box-shadow:
+      0 34px 90px rgba(0, 0, 0, 0.58),
+      0 8px 24px rgba(0, 0, 0, 0.28);
+  }
+
+  .swal2-container .app-alert__title {
+    color: var(--ui-text, #e4e7eb);
+  }
+
+  .swal2-container .app-alert__message {
+    color: var(--ui-muted, #9ca3af);
+  }
+
+  .swal2-container .app-alert__button--secondary {
+    border-color: rgba(255, 255, 255, 0.16) !important;
+    background: #252f45 !important;
+    color: var(--ui-text, #e4e7eb) !important;
+  }
+
+  .swal2-container .app-alert__button--secondary:hover {
+    border-color: rgba(8, 166, 203, 0.6) !important;
+    background: #2a3450 !important;
+  }
+}
+
+@media (max-width: 520px) {
+  .swal2-container .app-alert__actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    width: calc(100% - 32px);
+    margin-inline: 16px;
+  }
+
+  .swal2-container .app-alert__button {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .swal2-container .app-alert__button {
+    transition: none;
+  }
+}

@@ -33,9 +33,18 @@
       }
 
       <div class="ui-table-wrap">
-        <table class="ui-table" [attr.aria-labelledby]="labelledBy() || titleId">
+        <table
+          class="ui-table"
+          [class.ui-table--sticky-header]="stickyHeader()"
+          [class.ui-table--sticky-actions]="stickyActions()"
+          [attr.aria-labelledby]="labelledBy() || titleId"
+        >
           <thead>
             <tr>
+              @if (actions().length > 0) {
+                <th class="align-center ui-table-actions-header" scope="col">Acciones</th>
+              }
+
               @for (column of columns(); track trackColumn($index, column)) {
                 <th
                   [class]="getHeaderClass(column)"
@@ -49,16 +58,23 @@
                   }
                 </th>
               }
-
-              @if (actions().length > 0) {
-                <th class="align-center ui-table-actions-header" scope="col">Acciones</th>
-              }
             </tr>
           </thead>
 
           <tbody>
             @for (row of rows(); track trackRow($index, row)) {
               <tr>
+                @if (actions().length > 0) {
+                  <td class="ui-table-actions-cell">
+                    <app-ui-table-actions
+                      [actions]="actions()"
+                      [row]="row"
+                      [ariaLabel]="actionMenuLabel()"
+                      (actionClick)="emitAction($event)"
+                    ></app-ui-table-actions>
+                  </td>
+                }
+
                 @for (column of columns(); track trackColumn($index, column)) {
                   <td [class]="getCellClass(column)">
                     @if (getBadge(row, column); as badge) {
@@ -72,17 +88,6 @@
                     } @else {
                       {{ getCellValue(row, column) }}
                     }
-                  </td>
-                }
-
-                @if (actions().length > 0) {
-                  <td class="ui-table-actions-cell">
-                    <app-ui-table-actions
-                      [actions]="actions()"
-                      [row]="row"
-                      [ariaLabel]="actionMenuLabel()"
-                      (actionClick)="emitAction($event)"
-                    ></app-ui-table-actions>
                   </td>
                 }
               </tr>
@@ -165,7 +170,11 @@
   </section>
 } @else {
   <div class="ui-table-wrap">
-    <table class="ui-table" [attr.aria-labelledby]="labelledBy()">
+    <table
+      class="ui-table"
+      [class.ui-table--sticky-header]="stickyHeader()"
+      [attr.aria-labelledby]="labelledBy()"
+    >
       <ng-content></ng-content>
     </table>
   </div>

@@ -8,9 +8,11 @@ import { UiInputComponent } from '../../../../shared/components/ui-input/ui-inpu
 import { UiModalComponent } from '../../../../shared/components/ui-modal/ui-modal.component';
 import { UiSearchInputComponent } from '../../../../shared/components/ui-search-input/ui-search-input.component';
 import { UiSelectComponent } from '../../../../shared/components/ui-select/ui-select.component';
+import { UiTimePickerComponent } from '../../../../shared/components/ui-time-picker/ui-time-picker.component';
 import { UiSelectOption } from '../../../../shared/interfaces/ui-select-option.interface';
 import { getFormErrorMessage } from '../../../../shared/utils/form-error.util';
 import { FuncionariosTableDemoComponent } from '../../components/funcionarios-table-demo/funcionarios-table-demo.component';
+import { NotificacionesDemoComponent } from '../../components/notificaciones-demo/notificaciones-demo.component';
 
 interface FormulariosDemoForm {
   nombres: FormControl<string>;
@@ -21,6 +23,8 @@ interface FormulariosDemoForm {
   fechaNacimiento: FormControl<string>;
   horaInicio: FormControl<string>;
   fechaHoraCita: FormControl<string>;
+  horaAmPm: FormControl<string>;
+  hora24Horas: FormControl<string>;
   observacion: FormControl<string>;
   criterioBusqueda: FormControl<string>;
 }
@@ -44,7 +48,9 @@ interface ModalActividadForm {
     UiModalComponent,
     UiSearchInputComponent,
     UiSelectComponent,
+    UiTimePickerComponent,
     FuncionariosTableDemoComponent,
+    NotificacionesDemoComponent,
   ],
   templateUrl: './formularios-page.component.html',
   styleUrl: './formularios-page.component.scss',
@@ -94,6 +100,14 @@ export class FormulariosPageComponent {
       validators: [Validators.required],
     }),
     fechaHoraCita: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required],
+    }),
+    horaAmPm: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required],
+    }),
+    hora24Horas: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required],
     }),
@@ -164,6 +178,8 @@ export class FormulariosPageComponent {
       fechaNacimiento: '',
       horaInicio: '',
       fechaHoraCita: '',
+      horaAmPm: '',
+      hora24Horas: '',
       observacion: '',
       criterioBusqueda: '',
     });

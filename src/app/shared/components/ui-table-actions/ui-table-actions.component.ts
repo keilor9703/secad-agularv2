@@ -41,19 +41,39 @@ export class UiTableActionsComponent<
 
   readonly menuId = `ui-table-actions-menu-${nextMenuId++}`;
   readonly positions: ConnectedPosition[] = [
-    {
-      originX: 'end',
-      originY: 'bottom',
-      overlayX: 'end',
-      overlayY: 'top',
-      offsetY: 0,
-    },
+    // Principal: al lado derecho del botón.
     {
       originX: 'end',
       originY: 'top',
+      overlayX: 'start',
+      overlayY: 'top',
+      offsetX: 4,
+    },
+
+    // Alternativa cuando falta espacio vertical.
+    {
+      originX: 'end',
+      originY: 'bottom',
+      overlayX: 'start',
+      overlayY: 'bottom',
+      offsetX: 4,
+    },
+
+    // Respaldo: al lado izquierdo si no cabe a la derecha.
+    {
+      originX: 'start',
+      originY: 'top',
+      overlayX: 'end',
+      overlayY: 'top',
+      offsetX: -4,
+    },
+
+    {
+      originX: 'start',
+      originY: 'bottom',
       overlayX: 'end',
       overlayY: 'bottom',
-      offsetY: 0,
+      offsetX: -4,
     },
   ];
 

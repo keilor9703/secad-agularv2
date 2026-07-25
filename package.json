@@ -32,9 +32,11 @@
     "@angular/platform-browser": "^20.2.0",
     "@angular/router": "^20.2.0",
     "@fortawesome/fontawesome-free": "^7.1.0",
+    "@sweetalert2/ngx-sweetalert2": "14.1.4",
     "flatpickr": "^4.6.13",
     "ngx-editor": "^19.0.0-beta.1",
     "rxjs": "~7.8.0",
+    "sweetalert2": "11.26.25",
     "tslib": "^2.3.0",
     "zone.js": "~0.15.0"
   },

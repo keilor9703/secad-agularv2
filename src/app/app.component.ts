@@ -1,83 +1,73 @@
-﻿import { CommonModule } from '@angular/common';
-import { Component, HostListener, OnDestroy } from '@angular/core';
+﻿import { Component, DestroyRef, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterOutlet } from '@angular/router';
-import { Subscription } from 'rxjs';
 
-import { ToastService, ToastType } from './core/services/toast.service';
-import { AlertService, AlertType } from './core/services/alert.service';
 import { BrandingService } from './core/services/branding.service';
+import { ToastService, type ToastType } from './core/services/toast.service';
 import { ModalVisorComponent } from './shared/components/modal-visor/modal-visor.component';
+
+interface AppToastState {
+  readonly open: boolean;
+  readonly type: ToastType;
+  readonly title: string;
+  readonly message: string;
+}
 
 @Component({
   selector: 'app-root',
-  templateUrl: './app.component.html',
-  styleUrls: ['./app.component.scss'],
   standalone: true,
-  imports: [RouterOutlet, CommonModule, ModalVisorComponent]
+  templateUrl: './app.component.html',
+  styleUrl: './app.component.scss',
+  imports: [RouterOutlet, ModalVisorComponent],
 })
-export class AppComponent implements OnDestroy {
-
-  // ===== TOAST =====
-  toast = {
+export class AppComponent {
+  readonly toast = signal<AppToastState>({
     open: false,
-    type: 'success' as ToastType,
-    title: '',
-    message: ''
-  };
-
-  private toastTimer?: ReturnType<typeof setTimeout>;
-  private toastSub: Subscription;
-
-  // ===== ALERT MODAL =====
-  alert = {
-    open: false,
-    type: 'info' as AlertType,
+    type: 'success',
     title: '',
     message: '',
-    okText: 'OK'
-  };
+  });
 
-  private alertSub: Subscription;
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly toastService = inject(ToastService);
+  private readonly brandingService = inject(BrandingService);
+  private toastTimer?: ReturnType<typeof setTimeout>;
 
-  constructor(
-    private toastService: ToastService,
-    private alertService: AlertService,
-    private brandingService: BrandingService
-  ) {
-    // Escucha TOAST global
-    this.toastSub = this.toastService.toast$.subscribe(t => {
-      this.toast = {
+  constructor() {
+    this.listenForToasts();
+    this.loadBranding();
+    this.destroyRef.onDestroy(() => clearTimeout(this.toastTimer));
+  }
+
+  hideToast(): void {
+    this.toast.update((toast) => ({ ...toast, open: false }));
+  }
+
+  private listenForToasts(): void {
+    this.toastService.toast$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((toast) => {
+      this.toast.set({
         open: true,
-        type: t.type,
-        title: t.title,
-        message: t.message
-      };
+        type: toast.type,
+        title: toast.title,
+        message: toast.message,
+      });
 
       clearTimeout(this.toastTimer);
-      this.toastTimer = setTimeout(() => this.hideToast(), t.duration ?? 3500);
+      this.toastTimer = setTimeout(() => this.hideToast(), toast.duration ?? 3500);
     });
+  }
 
-    // Escucha ALERT MODAL global
-    this.alertSub = this.alertService.alert$.subscribe(a => {
-      this.alert = {
-        open: true,
-        type: a.type,
-        title: a.title,
-        message: a.message,
-        okText: a.okText ?? 'OK'
-      };
-
-      // Bloquear scroll del fondo mientras esté la alerta
-      document.body.classList.add('ui-modal-open');
-    });
-
-    this.brandingService.getPublicConfig().subscribe({
-      next: (cfg) => {
-        this.applyFavicon(cfg?.faviconUrl ?? null);
-        this.applyDocumentTitle(cfg?.sistema ?? cfg?.systemName ?? null);
-      },
-      error: () => {}
-    });
+  private loadBranding(): void {
+    this.brandingService
+      .getPublicConfig()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (config) => {
+          this.applyFavicon(config?.faviconUrl ?? null);
+          this.applyDocumentTitle(config?.sistema ?? config?.systemName ?? null);
+        },
+        error: () => undefined,
+      });
   }
 
   private applyDocumentTitle(sigla: string | null): void {
@@ -86,7 +76,10 @@ export class AppComponent implements OnDestroy {
   }
 
   private applyFavicon(faviconUrl: string | null): void {
-    if (!faviconUrl) return;
+    if (!faviconUrl) {
+      return;
+    }
+
     const link = document.querySelector<HTMLLinkElement>('link[rel="icon"]');
     if (link) {
       link.href = faviconUrl;
@@ -98,30 +91,4 @@ export class AppComponent implements OnDestroy {
     newLink.href = faviconUrl;
     document.head.appendChild(newLink);
   }
-
-  // ===== TOAST API =====
-  hideToast(): void {
-    this.toast.open = false;
-  }
-
-  // ===== ALERT API =====
-  closeAlert(): void {
-    this.alert.open = false;
-    document.body.classList.remove('ui-modal-open');
-  }
-
-  // Cerrar con ESC (prioridad: alerta)
-  @HostListener('document:keydown.escape')
-  onEsc(): void {
-    if (this.alert.open) this.closeAlert();
-  }
-
-  ngOnDestroy(): void {
-    this.toastSub.unsubscribe();
-    this.alertSub.unsubscribe();
-
-    clearTimeout(this.toastTimer);
-    document.body.classList.remove('ui-modal-open');
-  }
 }
-

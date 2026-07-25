@@ -46,6 +46,8 @@ export class UiTableComponent<T extends object = Record<string, unknown>> {
   readonly actionMenuLabel = input('Acciones disponibles para el registro');
   readonly showRecordBadge = input(true);
   readonly showPagination = input(true);
+  readonly stickyHeader = input(true);
+  readonly stickyActions = input(true);
 
   readonly filterChange = output<Record<string, string>>();
   readonly sortChange = output<UiTableSortEvent<T>>();

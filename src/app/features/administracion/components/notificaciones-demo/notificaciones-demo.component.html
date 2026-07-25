@@ -1,0 +1,244 @@
+<section class="ui-panel feedback-panel" aria-labelledby="feedback-demo-title">
+  <header class="ui-panel__head feedback-panel__head">
+    <div class="ui-panel__title" id="feedback-demo-title">
+      <i class="fa-solid fa-bell" aria-hidden="true"></i>
+      Alertas y notificaciones
+    </div>
+
+    <span class="feedback-panel__tag">
+      <i class="fa-solid fa-globe" aria-hidden="true"></i>
+      Servicios globales
+    </span>
+  </header>
+
+  <div class="ui-panel__body feedback-panel__body">
+    <div class="feedback-intro">
+      <span class="feedback-intro__icon" aria-hidden="true">
+        <i class="fa-solid fa-wand-magic-sparkles"></i>
+      </span>
+
+      <div>
+        <h3>Seleccione el canal según la importancia de la interacción</h3>
+        <p>
+          Use toast para respuestas breves y no bloqueantes. Use SweetAlert2 cuando el usuario deba
+          reconocer o confirmar una decisión.
+        </p>
+      </div>
+    </div>
+
+    <div class="feedback-principles" aria-label="Buenas prácticas">
+      <div class="feedback-principle">
+        <i class="fa-solid fa-bolt" aria-hidden="true"></i>
+        <span><strong>Toast:</strong> resultado inmediato sin detener la tarea.</span>
+      </div>
+
+      <div class="feedback-principle">
+        <i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i>
+        <span><strong>Alerta:</strong> información que debe ser reconocida.</span>
+      </div>
+
+      <div class="feedback-principle">
+        <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
+        <span><strong>Confirmación:</strong> antes de cambios sensibles o permanentes.</span>
+      </div>
+    </div>
+
+    <div class="feedback-grid">
+      <article class="feedback-card feedback-card--toast">
+        <div class="feedback-card__head">
+          <span class="feedback-card__icon" aria-hidden="true">
+            <i class="fa-solid fa-message"></i>
+          </span>
+
+          <div>
+            <div class="feedback-card__eyebrow">No bloqueante</div>
+            <h3>ToastService</h3>
+          </div>
+        </div>
+
+        <p class="feedback-card__description">
+          Ideal para confirmar guardados, informar procesos o comunicar errores recuperables.
+        </p>
+
+        <div class="feedback-actions">
+          @for (example of toastExamples; track example.type) {
+            <app-ui-button
+              type="button"
+              size="sm"
+              [variant]="example.variant"
+              [icon]="example.icon"
+              [block]="true"
+              [ariaLabel]="'Mostrar toast de ' + example.label.toLowerCase()"
+              (buttonClick)="showToast(example)"
+            >
+              {{ example.label }}
+            </app-ui-button>
+          }
+        </div>
+
+        <code class="feedback-card__api">toast.success(título, mensaje)</code>
+      </article>
+
+      <article class="feedback-card feedback-card--alert">
+        <div class="feedback-card__head">
+          <span class="feedback-card__icon" aria-hidden="true">
+            <i class="fa-solid fa-window-restore"></i>
+          </span>
+
+          <div>
+            <div class="feedback-card__eyebrow">Requiere atención</div>
+            <h3>AlertService</h3>
+          </div>
+        </div>
+
+        <p class="feedback-card__description">
+          Úselo cuando el mensaje necesite reconocimiento antes de continuar.
+        </p>
+
+        <div class="feedback-actions">
+          @for (example of alertExamples; track example.type) {
+            <app-ui-button
+              type="button"
+              size="sm"
+              [variant]="example.variant"
+              [icon]="example.icon"
+              [block]="true"
+              [ariaLabel]="'Mostrar alerta de ' + example.label.toLowerCase()"
+              (buttonClick)="showAlert(example)"
+            >
+              {{ example.label }}
+            </app-ui-button>
+          }
+        </div>
+
+        <code class="feedback-card__api">await alert.success(título, mensaje)</code>
+      </article>
+
+      <article class="feedback-card feedback-card--confirm">
+        <div class="feedback-card__content">
+          <div class="feedback-card__head">
+            <span class="feedback-card__icon" aria-hidden="true">
+              <i class="fa-solid fa-user-check"></i>
+            </span>
+
+            <div>
+              <div class="feedback-card__eyebrow">Decisiones controladas</div>
+              <h3>Confirmaciones y capas</h3>
+            </div>
+          </div>
+
+          <p class="feedback-card__description">
+            Espere el resultado con <code>await</code>, abandone temprano al cancelar y bloquee
+            ejecuciones duplicadas durante operaciones asíncronas.
+          </p>
+
+          <div class="feedback-confirm-actions">
+            <app-ui-button
+              type="button"
+              variant="info"
+              size="sm"
+              icon="fa-solid fa-circle-question"
+              (buttonClick)="requestConfirmation()"
+            >
+              Confirmación estándar
+            </app-ui-button>
+
+            <app-ui-button
+              type="button"
+              variant="danger"
+              size="sm"
+              icon="fa-solid fa-trash-can"
+              [loading]="deleteInProgress()"
+              (buttonClick)="requestDelete()"
+            >
+              Confirmar eliminación
+            </app-ui-button>
+
+            <app-ui-button
+              type="button"
+              variant="outline"
+              size="sm"
+              icon="fa-solid fa-layer-group"
+              (buttonClick)="openLayerModal()"
+            >
+              Probar sobre modal
+            </app-ui-button>
+          </div>
+        </div>
+
+        <pre class="feedback-code"><code>const confirmado = await alert.confirmDelete(...);
+if (!confirmado) return;
+await eliminarRegistro();</code></pre>
+      </article>
+    </div>
+
+    @if (lastInteraction(); as interaction) {
+      <div
+        class="feedback-result"
+        [class]="'feedback-result feedback-result--' + interaction.tone"
+        aria-live="polite"
+      >
+        <span class="feedback-result__icon" aria-hidden="true">
+          <i [class]="interaction.icon"></i>
+        </span>
+
+        <div>
+          <strong>{{ interaction.title }}</strong>
+          <p>{{ interaction.detail }}</p>
+        </div>
+      </div>
+    }
+  </div>
+</section>
+
+<app-ui-modal
+  [open]="layerModalOpen()"
+  title="Prueba de capas globales"
+  subtitle="Ejecute las notificaciones sin cerrar esta ventana."
+  icon="fa-solid fa-layer-group"
+  size="sm"
+  (closeRequested)="closeLayerModal()"
+>
+  <div modal-body class="layer-demo">
+    <div class="layer-demo__notice">
+      <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+      <p>
+        El toast y SweetAlert2 deben mostrarse por encima del modal, conservar el foco y permitir
+        continuar al cerrarlos.
+      </p>
+    </div>
+
+    <div class="layer-demo__actions">
+      <app-ui-button
+        type="button"
+        variant="primary"
+        icon="fa-solid fa-message"
+        [block]="true"
+        (buttonClick)="showToastOverModal()"
+      >
+        Mostrar toast
+      </app-ui-button>
+
+      <app-ui-button
+        type="button"
+        variant="info"
+        icon="fa-solid fa-window-restore"
+        [block]="true"
+        (buttonClick)="showAlertOverModal()"
+      >
+        Mostrar alerta
+      </app-ui-button>
+    </div>
+  </div>
+
+  <div modal-actions class="layer-demo__footer">
+    <app-ui-button
+      type="button"
+      variant="outline"
+      icon="fa-solid fa-xmark"
+      (buttonClick)="closeLayerModal()"
+    >
+      Cerrar
+    </app-ui-button>
+  </div>
+</app-ui-modal>

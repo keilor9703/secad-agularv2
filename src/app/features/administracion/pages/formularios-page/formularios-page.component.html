@@ -167,6 +167,38 @@
               </div>
             </article>
 
+            <article class="form-section">
+              <h3>Time picker: AM/PM y 24 horas</h3>
+
+              <div class="form-grid">
+                <div class="col-6">
+                  <app-ui-time-picker
+                    formControlName="horaAmPm"
+                    label="Hora en formato AM/PM"
+                    hourFormat="12"
+                    placeholder="Seleccione una hora"
+                    hint="Presentación de 12 horas; el formulario conserva el valor HH:mm."
+                    [minuteStep]="30"
+                    [required]="true"
+                    [error]="error('horaAmPm')"
+                  />
+                </div>
+
+                <div class="col-6">
+                  <app-ui-time-picker
+                    formControlName="hora24Horas"
+                    label="Hora en formato 24 horas"
+                    hourFormat="24"
+                    placeholder="Seleccione una hora"
+                    hint="Presentación de 24 horas; intervalos configurables."
+                    [minuteStep]="30"
+                    [required]="true"
+                    [error]="error('hora24Horas')"
+                  />
+                </div>
+              </div>
+            </article>
+
             <div class="form-actions">
               <app-ui-button type="submit" variant="primary" icon="fa-solid fa-floppy-disk">
                 Guardar
@@ -312,6 +344,8 @@
     </div>
 
     <app-funcionarios-table-demo />
+
+    <app-notificaciones-demo />
 
     <div class="ui-panel">
       <div class="ui-panel__head">

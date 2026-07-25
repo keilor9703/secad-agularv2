@@ -2,6 +2,7 @@
    VARIABLES Y CONFIGURACIÓN BASE
    ========================================== */
 @use './styles/components/flatpickr-theme';
+@use './styles/components/sweetalert2-theme';
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&display=swap');
 
 :root {
@@ -61,6 +62,9 @@
   --form-hint-color: #64748b;
   --form-bg: #ffffff;
   --form-disabled-bg: #f1f5f9;
+  --ui-z-modal: 11000;
+  --ui-z-toast: 12000;
+  --ui-z-alert: 13000;
 
   /* ===========================================
      SISTEMA DE ACCESIBILIDAD - ESCALA DE FUENTES
@@ -1647,7 +1651,7 @@ body.ui-modal-open .content {
   position: fixed;
   right: 16px;
   bottom: 16px;
-  z-index: 10000;
+  z-index: var(--ui-z-toast, 12000);
   display: grid;
   gap: 10px;
 }
@@ -1725,7 +1729,7 @@ body.ui-modal-open .content {
   display: grid;
   place-items: center;
   padding: 18px;
-  z-index: 10050;
+  z-index: var(--ui-z-alert, 13000);
   background: rgba(2, 6, 23, 0.55);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
