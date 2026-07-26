@@ -2,26 +2,67 @@
   <section class="view-container">
     <!-- Banner  Slider -->
     <div class="slider-wrapper">
-      <div class="main-slider">
-        <div class="slide-item" *ngFor="let banner of banners; let i = index" [class.active]="i === currentBannerIndex">
-          <div class="slide-bg" [style.background-image]="'url(' + getBannerImageUrl(banner) + ')'"></div>
-          <div class="slide-overlay"></div>
-          <div class="slide-content">
-            <span class="badge">Informacion</span>
-            <h2>{{ getBannerTitle(banner) }}</h2>
-            <p>{{ getBannerSubtitle(banner) }}</p>
-            <button class="btn-slider" type="button" *ngIf="banner.urlDestino" (click)="openBannerLink(banner)">
-              Ver mas
-            </button>
-          </div>
+      <div
+        class="main-slider"
+        [style.aspect-ratio]="getActiveBannerAspectRatio()"
+        (mouseenter)="onBannerMouseEnter()"
+        (mouseleave)="onBannerMouseLeave()"
+        (focusin)="onBannerFocusIn($event)"
+        (focusout)="onBannerFocusOut($event)"
+      >
+        <div
+          class="slide-item"
+          *ngFor="let banner of banners; let i = index"
+          [class.active]="i === currentBannerIndex"
+        >
+          <img
+            class="slide-image"
+            [src]="getBannerImageUrl(banner)"
+            [alt]="banner.titulo || 'Banner institucional'"
+            [attr.fetchpriority]="i === 0 ? 'high' : null"
+            decoding="async"
+            draggable="false"
+            (load)="onBannerImageLoad(i, $event)"
+          />
         </div>
 
+        @if (banners.length > 1) {
+          <!-- Navegación lateral accesible para escritorio, teclado y dispositivos táctiles. -->
+          <button
+            class="slider-arrow slider-arrow--previous"
+            type="button"
+            aria-label="Mostrar banner anterior"
+            (click)="showPreviousBanner()"
+          >
+            <i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
+          </button>
+
+          <button
+            class="slider-arrow slider-arrow--next"
+            type="button"
+            aria-label="Mostrar banner siguiente"
+            (click)="showNextBanner()"
+          >
+            <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
+          </button>
+        }
+
         <div class="slider-controls">
-          <button type="button" *ngFor="let _ of banners; let i = index" [class.active]="i === currentBannerIndex"
-            (click)="goToBanner(i)" [attr.aria-label]="'Cambiar a banner ' + (i + 1)"></button>
+          <button
+            type="button"
+            *ngFor="let _ of banners; let i = index"
+            [class.active]="i === currentBannerIndex"
+            (click)="goToBanner(i)"
+            [attr.aria-label]="'Cambiar a banner ' + (i + 1)"
+          ></button>
         </div>
       </div>
     </div>
+
+    @if (isMobile()) {
+      <!-- Reproductor móvil: debajo del banner y separado de la navegación inferior. -->
+      <app-radio-player class="home-mobile-radio" variant="mobile"></app-radio-player>
+    }
 
     <!-- Stats Grid -->
     <div class="stats-grid">
@@ -54,12 +95,15 @@
       <div class="multimedia-section">
         <!-- Video de la Unidad (16:9 aspect ratio) -->
         <div class="card-view rounded-xl shadow-subtle video-inst-card">
-          <h3 class="title-cards">
-            <i class="fa-solid fa-play-circle"></i> Video de la Unidad
-          </h3>
+          <h3 class="title-cards"><i class="fa-solid fa-play-circle"></i> Video de la Unidad</h3>
           <hr />
           <div class="video-institutional-wrapper">
-            <video class="video-iframe" controls preload="metadata" *ngIf="videoUnidadUrl; else noVideoUnidadTpl">
+            <video
+              class="video-iframe"
+              controls
+              preload="metadata"
+              *ngIf="videoUnidadUrl; else noVideoUnidadTpl"
+            >
               <source [src]="videoUnidadUrl" type="video/mp4" />
               Tu navegador no soporta reproduccion de video.
             </video>
@@ -76,15 +120,25 @@
         <div class="multimedia-row">
           <!-- Video Institucional -->
           <div class="card-view rounded-xl shadow-subtle video-unidad-col">
-            <h3 class="title-cards">
-              <i class="fa-solid fa-video"></i> Video Institucional
-            </h3>
+            <h3 class="title-cards"><i class="fa-solid fa-video"></i> Video Institucional</h3>
             <hr />
             <div class="video-box">
-              <iframe *ngIf="videoInstitucionalUrl; else noVideoInstTpl" [src]="videoInstitucionalUrl | safeUrl"
-                class="video-frame" frameborder="0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowfullscreen sandbox="allow-scripts allow-same-origin allow-popups allow-forms">
+              <iframe
+                *ngIf="videoInstitucionalUrl; else noVideoInstTpl"
+                [src]="videoInstitucionalUrl | safeUrl"
+                class="video-frame"
+                frameborder="0"
+                allow="
+                  accelerometer;
+                  autoplay;
+                  clipboard-write;
+                  encrypted-media;
+                  gyroscope;
+                  picture-in-picture;
+                "
+                allowfullscreen
+                sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
+              >
               </iframe>
               <ng-template #noVideoInstTpl>
                 <div class="video-placeholder small">
@@ -97,13 +151,17 @@
 
           <!-- Hub de Redes Sociales -->
           <div class="card-view rounded-xl shadow-subtle social-col">
-            <h3 class="title-cards">
-              <i class="fa-solid fa-share-nodes"></i> Redes Sociales
-            </h3>
+            <h3 class="title-cards"><i class="fa-solid fa-share-nodes"></i> Redes Sociales</h3>
             <hr />
             <div class="social-hub">
-              <a *ngFor="let social of socialLinks" [href]="social.url" target="_blank" rel="noopener noreferrer"
-                class="social-btn" [style.--social-color]="social.color">
+              <a
+                *ngFor="let social of socialLinks"
+                [href]="social.url"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="social-btn"
+                [style.--social-color]="social.color"
+              >
                 <i [class]="'fa-brands ' + social.icon"></i>
                 <span>{{ social.name }}</span>
               </a>
@@ -126,7 +184,10 @@
           <hr />
           <div class="news-list">
             <article class="news-card" *ngFor="let item of news" (click)="openNews(item)">
-              <div class="news-card__img" [style.background-image]="'url(' + item.image + ')'"></div>
+              <div
+                class="news-card__img"
+                [style.background-image]="'url(' + item.image + ')'"
+              ></div>
               <div class="news-card__content">
                 <div class="news-meta">
                   <span class="news-date">
@@ -137,9 +198,15 @@
                 <h4 class="news-title">{{ item.title }}</h4>
                 <p class="news-lead">{{ item.lead }}</p>
                 <div class="news-footer">
-                  <button class="news-like" type="button" (click)="likeNoticia(item, $event)"
-                    [disabled]="hasLiked(item.id)" title="Me gusta">
-                    <i class="fa-solid fa-heart" [class.liked]="hasLiked(item.id)"></i> {{ item.megusta }}
+                  <button
+                    class="news-like"
+                    type="button"
+                    (click)="likeNoticia(item, $event)"
+                    [disabled]="hasLiked(item.id)"
+                    title="Me gusta"
+                  >
+                    <i class="fa-solid fa-heart" [class.liked]="hasLiked(item.id)"></i>
+                    {{ item.megusta }}
                   </button>
                   <span class="news-link">Leer más <i class="fa-solid fa-arrow-right"></i></span>
                 </div>
@@ -154,7 +221,7 @@
     <div class="card-view mt-4 rounded-xl shadow-subtle">
       <h3 class="title-cards"><i class="fa-solid fa-clock-rotate-left"></i> Actividad Reciente</h3>
       <hr />
-      <p style="color: #666; margin: 10px;">No hay movimientos recientes en tu cuenta.</p>
+      <p style="color: #666; margin: 10px">No hay movimientos recientes en tu cuenta.</p>
     </div>
 
     <!-- Spotlight: Personajes del Mes y Línea de Mando -->
@@ -176,7 +243,11 @@
                 </span>
               </div>
               <div class="spotlight-person">
-                <img class="spotlight-avatar" src="imagenes/of-personaje-mes.jpeg" alt="Foto personaje" />
+                <img
+                  class="spotlight-avatar"
+                  src="imagenes/of-personaje-mes.jpeg"
+                  alt="Foto personaje"
+                />
                 <div class="spotlight-person__info">
                   <div class="spotlight-name">My. Yesid Alexander Ahumada Torres</div>
                   <div class="spotlight-role">Coordinador de Turnos</div>
@@ -187,12 +258,14 @@
             <article class="spotlight-card">
               <div class="spotlight-card__top">
                 <span class="spotlight-tag">Mando Ejecutivo</span>
-                <span class="spotlight-mini">
-                  <i class="fa-solid fa-users"></i> Grupo: GUTIC
-                </span>
+                <span class="spotlight-mini"> <i class="fa-solid fa-users"></i> Grupo: GUTIC </span>
               </div>
               <div class="spotlight-person">
-                <img class="spotlight-avatar" src="imagenes/me-peronaje-mes.png" alt="Foto personaje" />
+                <img
+                  class="spotlight-avatar"
+                  src="imagenes/me-peronaje-mes.png"
+                  alt="Foto personaje"
+                />
                 <div class="spotlight-person__info">
                   <div class="spotlight-name">Ij. Fabio Elias Munoz Saldana</div>
                   <div class="spotlight-role">Analista de Calidad</div>
@@ -208,7 +281,11 @@
                 </span>
               </div>
               <div class="spotlight-person">
-                <img class="spotlight-avatar" src="imagenes/pt-personaje-mes.png" alt="Foto personaje" />
+                <img
+                  class="spotlight-avatar"
+                  src="imagenes/pt-personaje-mes.png"
+                  alt="Foto personaje"
+                />
                 <div class="spotlight-person__info">
                   <div class="spotlight-name">Pt. Luis Rojas</div>
                   <div class="spotlight-role">Soporte Operativo</div>
@@ -246,9 +323,17 @@
         <div class="card-body">
           <div class="cmd-row" *ngIf="lineaMando.length > 0; else emptyLineaMandoTpl">
             <article class="cmd-item" *ngFor="let item of lineaMando">
-              <button class="cmd-photo-btn" type="button" (click)="openLineaMandoLightbox(item)"
-                [attr.aria-label]="'Ampliar foto de ' + getLineaMandoNombre(item)">
-                <img class="cmd-photo-lg" [src]="getLineaMandoFotoUrl(item)" [alt]="getLineaMandoNombre(item)" />
+              <button
+                class="cmd-photo-btn"
+                type="button"
+                (click)="openLineaMandoLightbox(item)"
+                [attr.aria-label]="'Ampliar foto de ' + getLineaMandoNombre(item)"
+              >
+                <img
+                  class="cmd-photo-lg"
+                  [src]="getLineaMandoFotoUrl(item)"
+                  [alt]="getLineaMandoNombre(item)"
+                />
               </button>
               <div class="cmd-grade">{{ item.grado || 'Sin grado' }}</div>
               <div class="cmd-name">{{ getLineaMandoNombre(item) || 'Sin nombre' }}</div>
@@ -266,8 +351,12 @@
 
 <!-- News Modal -->
 <div class="ui-modal" *ngIf="newsModalOpen" (click)="closeNews()">
-  <div class="ui-modal__dialog ui-modal__dialog--news" (click)="$event.stopPropagation()" role="dialog"
-    aria-modal="true">
+  <div
+    class="ui-modal__dialog ui-modal__dialog--news"
+    (click)="$event.stopPropagation()"
+    role="dialog"
+    aria-modal="true"
+  >
     <div class="ui-modal__head">
       <div class="ui-modal__title">
         <i class="fa-solid fa-newspaper"></i>
@@ -297,20 +386,33 @@
 
 <!-- Linea Mando Lightbox -->
 <div class="ui-modal" *ngIf="lineaMandoLightboxOpen" (click)="closeLineaMandoLightbox()">
-  <div class="ui-modal__dialog ui-modal__dialog--lightbox" (click)="$event.stopPropagation()" role="dialog"
-    aria-modal="true">
+  <div
+    class="ui-modal__dialog ui-modal__dialog--lightbox"
+    (click)="$event.stopPropagation()"
+    role="dialog"
+    aria-modal="true"
+  >
     <div class="ui-modal__head">
       <div class="ui-modal__title">
         <i class="fa-solid fa-image"></i>
         Linea de mando
       </div>
-      <button class="ui-icon-btn" type="button" (click)="closeLineaMandoLightbox()" aria-label="Cerrar imagen">
+      <button
+        class="ui-icon-btn"
+        type="button"
+        (click)="closeLineaMandoLightbox()"
+        aria-label="Cerrar imagen"
+      >
         <i class="fa-solid fa-xmark"></i>
       </button>
     </div>
     <div class="ui-modal__body" *ngIf="lineaMandoLightboxItem as current">
       <div class="cmd-lightbox">
-        <img class="cmd-lightbox__img" [src]="getLineaMandoFotoUrl(current)" [alt]="getLineaMandoNombre(current)" />
+        <img
+          class="cmd-lightbox__img"
+          [src]="getLineaMandoFotoUrl(current)"
+          [alt]="getLineaMandoNombre(current)"
+        />
         <div class="cmd-lightbox__meta">
           <div class="cmd-lightbox__grade">{{ current.grado || 'Sin grado' }}</div>
           <div class="cmd-lightbox__name">{{ getLineaMandoNombre(current) || 'Sin nombre' }}</div>

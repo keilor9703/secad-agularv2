@@ -1,30 +1,51 @@
-import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
+import { BreakpointObserver } from '@angular/cdk/layout';
 import { CommonModule } from '@angular/common';
+import { Component, HostListener, inject, OnDestroy, OnInit } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
-import { DtoSliders, SliderService } from '../../../../core/services/slider.service';
-import { HomeService, HomeStats } from '../../services/home.service';
-import { VideoUnidadService } from '../../../../core/services/video-unidad.service';
-import { VideoInstitucionalService } from '../../../../core/services/video-institucional.service';
+import { map } from 'rxjs';
+import { environment } from '../../../../../environments/environment';
+import { RadioPlayerComponent } from '../../../../core/layout/footer/radio-player/radio-player.component';
 import { DtoLineaMando, LineaMandoService } from '../../../../core/services/linea-mando.service';
 import { NoticiaService } from '../../../../core/services/noticia.service';
+import { DtoSliders, SliderService } from '../../../../core/services/slider.service';
+import { VideoInstitucionalService } from '../../../../core/services/video-institucional.service';
+import { VideoUnidadService } from '../../../../core/services/video-unidad.service';
 import { SafeUrlPipe } from '../../../../shared/pipes/safe-url.pipe';
-import { environment } from '../../../../../environments/environment';
 import { NewsItem, NewsTag, SocialLink } from '../../interfaces/home-page.interface';
-
+import { HomeService, HomeStats } from '../../services/home.service';
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, SafeUrlPipe, RouterLink],
+  imports: [CommonModule, SafeUrlPipe, RouterLink, RadioPlayerComponent],
   templateUrl: './home-page.component.html',
   styleUrls: ['./home-page.component.scss'],
 })
 export class HomePageComponent implements OnInit, OnDestroy {
+  private static readonly DEFAULT_BANNER_ASPECT_RATIO = 3.78;
+  private static readonly MIN_BANNER_ASPECT_RATIO = 1.5;
+  private static readonly MAX_BANNER_ASPECT_RATIO = 5;
+
+  private readonly breakpointObserver = inject(BreakpointObserver);
+  private readonly bannerAspectRatios = new Map<number, number>();
+  private isBannerHovered = false;
+  private isBannerFocusWithin = false;
+
+  /**
+   * Evita crear dos reproductores simultáneos: en escritorio existe en el
+   * footer y en móvil se crea debajo del banner de Inicio.
+   */
+  readonly isMobile = toSignal(
+    this.breakpointObserver.observe('(max-width: 768px)').pipe(map(({ matches }) => matches)),
+    { initialValue: this.breakpointObserver.isMatched('(max-width: 768px)') },
+  );
+
   banners: DtoSliders[] = [];
   stats: HomeStats = {
     usuariosActivos: 0,
     reportesGenerados: 0,
-    alertasSistema: 0
+    alertasSistema: 0,
   };
   currentBannerIndex = 0;
   private bannerTimer: ReturnType<typeof setInterval> | null = null;
@@ -35,10 +56,30 @@ export class HomePageComponent implements OnInit, OnDestroy {
   lineaMandoLightboxItem: DtoLineaMando | null = null;
 
   socialLinks: SocialLink[] = [
-    { name: 'Facebook', icon: 'fa-facebook-f', url: 'https://www.facebook.com/PoliciaColombia', color: '#1877F2' },
-    { name: 'X', icon: 'fa-x-twitter', url: 'https://twitter.com/PoliciaColombia', color: '#000000' },
-    { name: 'Instagram', icon: 'fa-instagram', url: 'https://www.instagram.com/policiacolombia', color: '#E4405F' },
-    { name: 'YouTube', icon: 'fa-youtube', url: 'https://www.youtube.com/@PoliciaNacionalCol', color: '#FF0000' }
+    {
+      name: 'Facebook',
+      icon: 'fa-facebook-f',
+      url: 'https://www.facebook.com/PoliciaColombia',
+      color: '#1877F2',
+    },
+    {
+      name: 'X',
+      icon: 'fa-x-twitter',
+      url: 'https://twitter.com/PoliciaColombia',
+      color: '#000000',
+    },
+    {
+      name: 'Instagram',
+      icon: 'fa-instagram',
+      url: 'https://www.instagram.com/policiacolombia',
+      color: '#E4405F',
+    },
+    {
+      name: 'YouTube',
+      icon: 'fa-youtube',
+      url: 'https://www.youtube.com/@PoliciaNacionalCol',
+      color: '#FF0000',
+    },
   ];
 
   constructor(
@@ -47,7 +88,7 @@ export class HomePageComponent implements OnInit, OnDestroy {
     private videoUnidadService: VideoUnidadService,
     private videoInstitucionalService: VideoInstitucionalService,
     private lineaMandoService: LineaMandoService,
-    private noticiaService: NoticiaService
+    private noticiaService: NoticiaService,
   ) {}
 
   ngOnInit(): void {
@@ -63,51 +104,62 @@ export class HomePageComponent implements OnInit, OnDestroy {
     this.noticiaService.getActivas().subscribe({
       next: (noticias) => {
         // Ordenar por fecha descendente y limitar a 5 noticias más recientes
-        const sorted = noticias.sort((a, b) => 
-          new Date(b.fechaCreacion).getTime() - new Date(a.fechaCreacion).getTime()
-        ).slice(0, 5);
-        
-        this.news = sorted.map(n => ({
+        const sorted = noticias
+          .sort((a, b) => new Date(b.fechaCreacion).getTime() - new Date(a.fechaCreacion).getTime())
+          .slice(0, 5);
+
+        this.news = sorted.map((n) => ({
           id: n.idNoticia,
-          date: new Date(n.fechaCreacion).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' }),
+          date: new Date(n.fechaCreacion).toLocaleDateString('es-CO', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric',
+          }),
           tag: this.mapSeccionToTag(n.seccion),
           title: n.titulo,
           lead: n.subtitulo || '',
           content: n.contenido || '',
           image: this.getNoticiaImageUrl(n.imagenNoticia),
-          megusta: n.megusta || 0
+          megusta: n.megusta || 0,
         }));
       },
       error: (err) => {
         console.error('Error cargando noticias:', err);
         this.news = [];
-      }
+      },
     });
   }
 
   private getNoticiaImageUrl(imagenNoticia: string | null | undefined): string {
     const raw = (imagenNoticia ?? '').trim();
     if (!raw) return '';
-    if (raw.startsWith('http://') || raw.startsWith('https://') || raw.startsWith('data:')) return raw;
-    
+    if (raw.startsWith('http://') || raw.startsWith('https://') || raw.startsWith('data:'))
+      return raw;
+
     // Si la imagen viene como /api/... o simplemente el nombre, apuntamos al servidor externo
     if (raw.startsWith('/api/')) {
       return `${this.sliderService.imageBaseUrl}${raw}`;
     }
 
     const fileName = raw.split('/').filter(Boolean).pop() ?? '';
-    // Como no sabemos la ruta exacta de las imágenes en el nuevo API, 
+    // Como no sabemos la ruta exacta de las imágenes en el nuevo API,
     // asumimos que el API de Slider/Image o similar podría servirlas o que vienen con ruta completa.
     // Si viene solo el nombre, intentamos el endpoint que parece ser el estándar en este server.
-    return fileName ? `${this.sliderService.imageBaseUrl}/api/NoticiaUpload/Imagen/${encodeURIComponent(fileName)}` : '';
+    return fileName
+      ? `${this.sliderService.imageBaseUrl}/api/NoticiaUpload/Imagen/${encodeURIComponent(fileName)}`
+      : '';
   }
 
   private mapSeccionToTag(seccion: string): NewsTag {
     switch (seccion.toLowerCase()) {
-      case 'comunicado': return 'Comunicado';
-      case 'servicio': return 'Servicio';
-      case 'importante': return 'Importante';
-      default: return 'Comunicado';
+      case 'comunicado':
+        return 'Comunicado';
+      case 'servicio':
+        return 'Servicio';
+      case 'importante':
+        return 'Importante';
+      default:
+        return 'Comunicado';
     }
   }
 
@@ -132,7 +184,7 @@ export class HomePageComponent implements OnInit, OnDestroy {
         this.banners = this.getFallbackBanners();
         this.currentBannerIndex = 0;
         this.startBannerRotation();
-      }
+      },
     });
   }
 
@@ -175,16 +227,16 @@ export class HomePageComponent implements OnInit, OnDestroy {
         this.stats = {
           usuariosActivos: Number(data?.usuariosActivos ?? 0),
           reportesGenerados: Number(data?.reportesGenerados ?? 0),
-          alertasSistema: Number(data?.alertasSistema ?? 0)
+          alertasSistema: Number(data?.alertasSistema ?? 0),
         };
       },
       error: () => {
         this.stats = {
           usuariosActivos: 0,
           reportesGenerados: 0,
-          alertasSistema: 0
+          alertasSistema: 0,
         };
-      }
+      },
     });
   }
 
@@ -195,18 +247,19 @@ export class HomePageComponent implements OnInit, OnDestroy {
       },
       error: () => {
         this.videoUnidadUrl = '';
-      }
+      },
     });
   }
 
   private loadVideoInstitucional(): void {
     this.videoInstitucionalService.getCurrent().subscribe({
       next: (data) => {
-        this.videoInstitucionalUrl = data?.hasVideo && data.data?.embedUrl ? data.data.embedUrl : '';
+        this.videoInstitucionalUrl =
+          data?.hasVideo && data.data?.embedUrl ? data.data.embedUrl : '';
       },
       error: () => {
         this.videoInstitucionalUrl = '';
-      }
+      },
     });
   }
 
@@ -219,7 +272,7 @@ export class HomePageComponent implements OnInit, OnDestroy {
       },
       error: () => {
         this.lineaMando = [];
-      }
+      },
     });
   }
 
@@ -279,44 +332,70 @@ export class HomePageComponent implements OnInit, OnDestroy {
     if (index < 0 || index >= this.banners.length) {
       return;
     }
+
     this.currentBannerIndex = index;
+    this.startBannerRotation();
   }
 
-  openBannerLink(item: DtoSliders): void {
-    const url = (item.urlDestino ?? '').trim();
-    if (!url) {
+  showPreviousBanner(): void {
+    this.moveBanner(-1);
+  }
+
+  showNextBanner(): void {
+    this.moveBanner(1);
+  }
+
+  getActiveBannerAspectRatio(): string {
+    const ratio =
+      this.bannerAspectRatios.get(this.currentBannerIndex) ??
+      HomePageComponent.DEFAULT_BANNER_ASPECT_RATIO;
+
+    return `${ratio} / 1`;
+  }
+
+  onBannerImageLoad(index: number, event: Event): void {
+    const image = event.target as HTMLImageElement;
+    if (image.naturalWidth <= 0 || image.naturalHeight <= 0) {
       return;
     }
 
-    if (url.startsWith('http://') || url.startsWith('https://')) {
-      window.open(url, '_blank', 'noopener,noreferrer');
+    const naturalRatio = image.naturalWidth / image.naturalHeight;
+    const safeRatio = Math.min(
+      HomePageComponent.MAX_BANNER_ASPECT_RATIO,
+      Math.max(HomePageComponent.MIN_BANNER_ASPECT_RATIO, naturalRatio),
+    );
+
+    this.bannerAspectRatios.set(index, Number(safeRatio.toFixed(4)));
+  }
+
+  onBannerMouseEnter(): void {
+    this.isBannerHovered = true;
+    this.syncBannerRotation();
+  }
+
+  onBannerMouseLeave(): void {
+    this.isBannerHovered = false;
+    this.syncBannerRotation();
+  }
+
+  onBannerFocusIn(event: FocusEvent): void {
+    const target = event.target as HTMLElement;
+
+    // El clic con mouse ya está cubierto por hover; solo pausamos el foco de teclado.
+    this.isBannerFocusWithin = target.matches(':focus-visible');
+    this.syncBannerRotation();
+  }
+
+  onBannerFocusOut(event: FocusEvent): void {
+    const slider = event.currentTarget as HTMLElement;
+    const nextTarget = event.relatedTarget as Node | null;
+
+    if (nextTarget && slider.contains(nextTarget)) {
       return;
     }
 
-    window.location.href = url.startsWith('/') ? url : `/${url}`;
-  }
-
-  getBannerSubtitle(item: DtoSliders): string {
-    const subtitle = (item.subtitulo ?? '').trim();
-    if (!subtitle) {
-      return 'Comunicado institucional';
-    }
-
-    // Si por mapeo del backend llega una URL en subtitulo, no la mostramos en pantalla.
-    const destino = (item.urlDestino ?? '').trim();
-    if (this.looksLikeUrl(subtitle) || (destino && subtitle.toLowerCase() === destino.toLowerCase())) {
-      return 'Comunicado institucional';
-    }
-
-    return subtitle;
-  }
-
-  getBannerTitle(item: DtoSliders): string {
-    const title = (item.titulo ?? '').trim();
-    if (!title || this.looksLikeUrl(title)) {
-      return 'SISGE';
-    }
-    return title;
+    this.isBannerFocusWithin = false;
+    this.syncBannerRotation();
   }
 
   getBannerImageUrl(item: DtoSliders): string {
@@ -379,28 +458,34 @@ export class HomePageComponent implements OnInit, OnDestroy {
     }
   }
 
-  private looksLikeUrl(value: string): boolean {
-    const v = value.trim().toLowerCase();
-    return v.startsWith('http://')
-      || v.startsWith('https://')
-      || v.startsWith('www.')
-      || v.startsWith('/')
-      || v.startsWith('/api/')
-      || v.startsWith('/uploads/')
-      || v.startsWith('api/')
-      || v.startsWith('uploads/')
-      || /^[^/]+\.(jpg|jpeg|png|webp|gif)$/i.test(value.trim());
-  }
-
   private startBannerRotation(): void {
     this.stopBannerRotation();
-    if (this.banners.length <= 1) {
+    if (this.banners.length <= 1 || this.isBannerHovered || this.isBannerFocusWithin) {
       return;
     }
 
     this.bannerTimer = setInterval(() => {
       this.currentBannerIndex = (this.currentBannerIndex + 1) % this.banners.length;
     }, 7000);
+  }
+
+  private moveBanner(offset: -1 | 1): void {
+    const total = this.banners.length;
+    if (total <= 1) {
+      return;
+    }
+
+    this.currentBannerIndex = (this.currentBannerIndex + offset + total) % total;
+    this.startBannerRotation();
+  }
+
+  private syncBannerRotation(): void {
+    if (this.isBannerHovered || this.isBannerFocusWithin) {
+      this.stopBannerRotation();
+      return;
+    }
+
+    this.startBannerRotation();
   }
 
   private stopBannerRotation(): void {
@@ -412,9 +497,33 @@ export class HomePageComponent implements OnInit, OnDestroy {
 
   private getFallbackBanners(): DtoSliders[] {
     return [
-      { idSlider: 1, titulo: 'SISGE', subtitulo: 'Banner informativo', urlImagen: 'banner/banner1.jpg', urlDestino: '', orden: 1, vigente: 1 },
-      { idSlider: 2, titulo: 'SISGE', subtitulo: 'Banner informativo', urlImagen: 'banner/banner2.jpg', urlDestino: '', orden: 2, vigente: 1 },
-      { idSlider: 3, titulo: 'SISGE', subtitulo: 'Banner informativo', urlImagen: 'banner/banner3.jpg', urlDestino: '', orden: 3, vigente: 1 }
+      {
+        idSlider: 1,
+        titulo: 'SISGE',
+        subtitulo: 'Banner informativo',
+        urlImagen: 'banner/banner1.jpg',
+        urlDestino: '',
+        orden: 1,
+        vigente: 1,
+      },
+      {
+        idSlider: 2,
+        titulo: 'SISGE',
+        subtitulo: 'Banner informativo',
+        urlImagen: 'banner/banner2.jpg',
+        urlDestino: '',
+        orden: 2,
+        vigente: 1,
+      },
+      {
+        idSlider: 3,
+        titulo: 'SISGE',
+        subtitulo: 'Banner informativo',
+        urlImagen: 'banner/banner3.jpg',
+        urlDestino: '',
+        orden: 3,
+        vigente: 1,
+      },
     ];
   }
 
@@ -437,12 +546,12 @@ export class HomePageComponent implements OnInit, OnDestroy {
 
   likeNoticia(item: NewsItem, event: Event): void {
     event.stopPropagation();
-    
+
     const likedNews = this.getLikedNews();
     if (likedNews.includes(item.id)) {
       return;
     }
-    
+
     this.noticiaService.darLike(item.id).subscribe({
       next: () => {
         item.megusta = (item.megusta || 0) + 1;
@@ -450,7 +559,7 @@ export class HomePageComponent implements OnInit, OnDestroy {
       },
       error: (err) => {
         console.error('Error dando like:', err);
-      }
+      },
     });
   }
 
@@ -484,4 +593,3 @@ export class HomePageComponent implements OnInit, OnDestroy {
     }
   }
 }
-

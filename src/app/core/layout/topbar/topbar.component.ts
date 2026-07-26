@@ -1,29 +1,33 @@
-import { Component, HostListener, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, RouterModule } from '@angular/router';
-import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
-import { SidebarService } from '../../services/sidebar.service';
-import { AuthService } from '../../auth/auth.service';
+import { Component, HostListener, inject, OnInit } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { Router, RouterModule } from '@angular/router';
 import { environment } from '../../../../environments/environment';
+import { AuthService } from '../../auth/auth.service';
+import { HeaderNotification, MiPerfilDto } from '../../interfaces/topbar.interface';
 import { BrandingService } from '../../services/branding.service';
 import { DtoEvento, EventoService } from '../../services/evento.service';
-import { HeaderNotification, MiPerfilDto } from '../../interfaces/topbar.interface';
+import { SidebarService } from '../../services/sidebar.service';
 
 @Component({
   selector: 'app-topbar',
   standalone: true,
   imports: [CommonModule, RouterModule, FormsModule],
   templateUrl: './topbar.component.html',
-  styleUrls: ['./topbar.component.scss']
+  styleUrls: ['./topbar.component.scss'],
 })
 export class TopbarComponent implements OnInit {
+  private readonly sidebarService = inject(SidebarService);
+
+  readonly sidebarOpen = this.sidebarService.isOpen;
+
   isUserDropdownOpen = false;
   userPhotoUrl: string | null = null;
   profileModalOpen = false;
   profileLoading = false;
   perfil: MiPerfilDto | null = null;
-  
+
   // Próximos eventos
   proximosEventos: DtoEvento[] = [];
   isCalendarDropdownOpen = false;
@@ -31,12 +35,11 @@ export class TopbarComponent implements OnInit {
   isEventoModalOpen = false;
 
   constructor(
-    private sidebarService: SidebarService,
     private authService: AuthService,
     private http: HttpClient,
     private router: Router,
     private brandingService: BrandingService,
-    private eventoService: EventoService
+    private eventoService: EventoService,
   ) {}
 
   ngOnInit(): void {
@@ -46,7 +49,7 @@ export class TopbarComponent implements OnInit {
     this.loadEventosCount();
   }
 
-  toggleMenu() {
+  toggleMobileMenu(): void {
     this.sidebarService.toggleSidebar();
   }
 
@@ -87,7 +90,7 @@ export class TopbarComponent implements OnInit {
   }
 
   notifications: HeaderNotification[] = [
-    { id: 4, icon: 'fa-calendar-check', color: 'primary', count: 0, tooltip: 'Eventos' }
+    { id: 4, icon: 'fa-calendar-check', color: 'primary', count: 0, tooltip: 'Eventos' },
   ];
 
   searchQuery: string = '';
@@ -102,7 +105,7 @@ export class TopbarComponent implements OnInit {
       },
       error: () => {
         this.userRole = 'OFTIC';
-      }
+      },
     });
   }
 
@@ -114,7 +117,7 @@ export class TopbarComponent implements OnInit {
         const limit = new Date(todayZero);
         limit.setDate(todayZero.getDate() + 5);
 
-        const filtered = (items ?? []).filter(e => {
+        const filtered = (items ?? []).filter((e) => {
           // Validar vigencia
           const v = e.vigente;
           if (v == null || String(v) !== '1') return false;
@@ -124,22 +127,27 @@ export class TopbarComponent implements OnInit {
           const parts = startStr.split('-');
           if (parts.length !== 3) return false;
 
-          const startDate = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
-          
-          return startDate.getTime() >= todayZero.getTime() && startDate.getTime() <= limit.getTime();
+          const startDate = new Date(
+            parseInt(parts[0], 10),
+            parseInt(parts[1], 10) - 1,
+            parseInt(parts[2], 10),
+          );
+
+          return (
+            startDate.getTime() >= todayZero.getTime() && startDate.getTime() <= limit.getTime()
+          );
         });
 
         this.proximosEventos = filtered;
-        const calendarNotif = this.notifications.find(n => n.id === 4);
+        const calendarNotif = this.notifications.find((n) => n.id === 4);
         if (calendarNotif) {
           calendarNotif.count = filtered.length;
         }
-      }
+      },
     });
   }
 
-  onSearch(): void {
-  }
+  onSearch(): void {}
 
   onNotificationClick(notification: HeaderNotification): void {
     if (notification.id === 4) {
@@ -162,9 +170,10 @@ export class TopbarComponent implements OnInit {
   getEventoImageUrl(raw: string | null | undefined): string {
     const value = (raw ?? '').trim();
     if (!value) return '';
-    if (value.startsWith('http://') || value.startsWith('https://') || value.startsWith('data:')) return value;
+    if (value.startsWith('http://') || value.startsWith('https://') || value.startsWith('data:'))
+      return value;
     if (value.startsWith('/')) return value;
-    
+
     // Usar el host externo para imágenes de eventos
     return `${environment.eventoMediaBaseUrl}/api/Evento/Image/${value}`;
   }
@@ -172,7 +181,9 @@ export class TopbarComponent implements OnInit {
   getEventoFechaRango(evento: DtoEvento): string {
     const fmt = (dStr: string) => {
       const d = new Date(dStr);
-      return isNaN(d.getTime()) ? '' : d.toLocaleDateString('es-CO', { day: '2-digit', month: '2-digit', year: 'numeric' });
+      return isNaN(d.getTime())
+        ? ''
+        : d.toLocaleDateString('es-CO', { day: '2-digit', month: '2-digit', year: 'numeric' });
     };
     const fi = fmt(evento.fechaInicio);
     const ff = fmt(evento.fechaFin);
@@ -190,16 +201,14 @@ export class TopbarComponent implements OnInit {
   }
 
   private loadMyPhoto(): void {
-    this.http
-      .get(`${environment.apiBaseUrl}/Usuario/MiFoto`, { responseType: 'text' })
-      .subscribe({
-        next: (raw) => {
-          this.userPhotoUrl = this.normalizePhoto(raw);
-        },
-        error: () => {
-          this.userPhotoUrl = null;
-        }
-      });
+    this.http.get(`${environment.apiBaseUrl}/Usuario/MiFoto`, { responseType: 'text' }).subscribe({
+      next: (raw) => {
+        this.userPhotoUrl = this.normalizePhoto(raw);
+      },
+      error: () => {
+        this.userPhotoUrl = null;
+      },
+    });
   }
 
   private normalizePhoto(raw: string | null): string | null {
@@ -249,7 +258,7 @@ export class TopbarComponent implements OnInit {
       error: () => {
         this.perfil = null;
         this.profileLoading = false;
-      }
+      },
     });
   }
 

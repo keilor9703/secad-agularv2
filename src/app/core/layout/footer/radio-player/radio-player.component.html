@@ -1,0 +1,108 @@
+<section
+  class="radio-player"
+  [class.radio-player--mobile]="variant() === 'mobile'"
+  aria-label="Reproductor de emisora institucional"
+>
+  <div class="radio-player__identity">
+    <img
+      class="radio-player__logo"
+      [src]="player.currentStationLogo()"
+      [alt]="'Logo de ' + player.currentStationLabel()"
+      (error)="onLogoError($event)"
+    />
+    <span class="radio-player__copy">
+      <!-- Visible solamente en la tarjeta móvil. -->
+      <span class="radio-player__eyebrow">Emisora institucional</span>
+      <span class="radio-player__label">{{ player.currentStationLabel() }}</span>
+    </span>
+  </div>
+
+  <button
+    class="radio-control radio-control--play"
+    [class.is-playing]="player.isPlaying()"
+    type="button"
+    [disabled]="!player.hasStations()"
+    [attr.aria-label]="player.isPlaying() ? 'Pausar emisora' : 'Reproducir emisora'"
+    [attr.title]="player.isPlaying() ? 'Pausar emisora' : 'Reproducir emisora'"
+    (click)="player.togglePlayback()"
+  >
+    <i
+      class="fa-solid"
+      [class.fa-pause]="player.isPlaying()"
+      [class.fa-play]="!player.isPlaying()"
+      aria-hidden="true"
+    ></i>
+  </button>
+
+  <label class="radio-station">
+    <span class="sr-only">Emisora</span>
+    <select
+      class="radio-station__select"
+      [value]="player.selectedStationId()"
+      [disabled]="!player.hasStations()"
+      (change)="onStationChange($event)"
+    >
+      @if (!player.hasStations()) {
+        <option value="">Sin emisoras</option>
+      }
+
+      @for (station of player.stations(); track station.id) {
+        <option [value]="station.id">{{ station.name }}</option>
+      }
+    </select>
+  </label>
+
+  <div class="radio-equalizer" [class.is-active]="player.isPlaying()" aria-hidden="true">
+    @for (bar of equalizerBars; track bar.id; let index = $index) {
+      <span
+        class="radio-equalizer__bar"
+        [style.--bar-index]="index"
+        [style.--bar-level]="bar.level"
+      ></span>
+    }
+  </div>
+
+  <button
+    class="radio-status"
+    [class.is-online]="player.status().state === 'online'"
+    [class.is-offline]="player.status().state === 'offline'"
+    [class.is-checking]="player.status().state === 'checking'"
+    type="button"
+    [attr.data-tooltip]="player.status().tooltip"
+    [attr.aria-label]="player.status().label + '. ' + player.status().tooltip"
+    (click)="onStatusClick()"
+  >
+    <span class="radio-status__dot" aria-hidden="true"></span>
+    <span>{{ player.status().label }}</span>
+  </button>
+
+  <div class="radio-volume">
+    <button
+      class="radio-volume__button"
+      type="button"
+      [attr.aria-label]="player.isMuted() ? 'Activar sonido' : 'Silenciar emisora'"
+      [attr.title]="player.isMuted() ? 'Activar sonido' : 'Silenciar emisora'"
+      (click)="player.toggleMuted()"
+    >
+      @if (player.isMuted() || player.volumePercent() === 0) {
+        <i class="fa-solid fa-volume-xmark" aria-hidden="true"></i>
+      } @else if (player.volumePercent() < 50) {
+        <i class="fa-solid fa-volume-low" aria-hidden="true"></i>
+      } @else {
+        <i class="fa-solid fa-volume-high" aria-hidden="true"></i>
+      }
+    </button>
+
+    <input
+      class="radio-volume__range"
+      type="range"
+      min="0"
+      max="100"
+      step="5"
+      [value]="player.volumePercent()"
+      [style.--volume]="player.volumePercent() + '%'"
+      aria-label="Volumen de la emisora"
+      (input)="onVolumeInput($event)"
+    />
+  </div>
+</section>

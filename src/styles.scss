@@ -53,7 +53,7 @@
   --btn-ring: 0 0 0 4px rgba(8, 166, 203, 0.18);
 
   --form-field-height: 42px;
-  --form-border-radius: 7px;
+  --form-border-radius: 4px;
   --form-gap: 14px;
   --form-label-color: #334155;
   --form-border-color: #cbd5e1;
@@ -222,7 +222,7 @@ html.dark-mode {
   /* Botones genéricos */
   button:not([class*='btn-primary']):not([class*='btn-success']):not([class*='btn-danger']):not(
       [class*='btn-warning']
-    ) {
+    ):not([class*='sidebar-action']) {
     background: #252f45;
     color: var(--ui-text);
     border-color: var(--ui-border);

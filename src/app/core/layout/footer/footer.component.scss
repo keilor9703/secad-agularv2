@@ -1,4 +1,4 @@
-/* 
+/*
   Footer institucional - Estilos internos únicamente
   Responsable de: apariencia, tipografía, colores
   NO responsable de: posicionamiento sticky, relación con sidebar
@@ -9,27 +9,27 @@
   height: var(--footer-height, 56px);
   box-sizing: border-box;
   position: relative;
-  background: var(--policia-gradiente-principal);
+  background: var(--policia-gradiente-principal) 0 100% / 100vw var(--footer-height, 56px) no-repeat
+    fixed;
   box-shadow: var(--ui-shadow);
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
-  justify-content: space-between;
-  padding: 0 30px;
-  gap: 16px;
+  padding: 0 24px;
+  column-gap: 20px;
   z-index: 900;
 
   &::before {
     content: '';
     position: absolute;
     inset: 0;
-    background-image:
-      repeating-linear-gradient(
-        45deg,
-        transparent,
-        transparent 10px,
-        rgba(255, 255, 255, 0.02) 10px,
-        rgba(255, 255, 255, 0.02) 20px
-      );
+    background-image: repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 10px,
+      rgba(255, 255, 255, 0.02) 10px,
+      rgba(255, 255, 255, 0.02) 20px
+    );
     pointer-events: none;
   }
 
@@ -42,106 +42,15 @@
     right: 0;
     height: 3px;
     background: var(--policia-acento);
-    opacity: 0.9;
   }
 }
 
-.footer-left {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 4px;
+app-radio-player {
   position: relative;
   z-index: 1;
-  min-width: 320px;
-}
-
-.radio-bar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.radio-logo {
-  width: 60px;
-  // height: 22px;
-  object-fit: contain;
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.35));
-}
-
-.radio-label {
-  color: #fff;
-  font-size: calc(0.78rem * var(--font-size-scale));
-  font-weight: 800;
-  letter-spacing: 0.2px;
-  max-width: 220px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.radio-play {
-  width: 30px;
-  height: 30px;
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.1);
-  color: #fff;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: background var(--transition-speed) ease, transform var(--transition-speed) ease;
-}
-
-.radio-play:hover {
-  transform: translateY(-1px);
-  background: rgba(255, 255, 255, 0.2);
-}
-
-.radio-play.is-playing {
-  background: var(--policia-acento);
-  color: var(--policia-oscuro);
-  border-color: var(--policia-acento);
-  animation: soundPulse 1.5s infinite;
-}
-
-@keyframes soundPulse {
-  0% {
-    box-shadow: 0 0 0 0 rgba(205, 255, 0, 0.55);
-    transform: scale(1);
-  }
-  50% {
-    box-shadow: 0 0 0 10px rgba(205, 255, 0, 0);
-    transform: scale(1.03);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(205, 255, 0, 0);
-    transform: scale(1);
-  }
-}
-
-.radio-select {
-  min-width: 130px;
-  height: 30px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 10px;
-  background: rgba(0, 0, 0, 0.2);
-  color: #fff;
-  font-size: calc(0.75rem * var(--font-size-scale));
-  font-weight: 700;
-  padding: 0 10px;
-  outline: none;
-}
-
-.radio-select option {
-  color: #111827;
-}
-
-.radio-error {
-  color: #fde68a;
-  font-size: calc(0.68rem * var(--font-size-scale));
-  font-weight: 700;
+  width: 100%;
+  min-width: 0;
+  justify-self: stretch;
 }
 
 .footer-center {
@@ -149,10 +58,9 @@
   align-items: center;
   justify-content: center;
   gap: 12px;
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
+  justify-self: center;
   z-index: 1;
+  white-space: nowrap;
 }
 
 .footer-dot {
@@ -193,8 +101,9 @@
   gap: 10px;
   position: relative;
   z-index: 1;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   justify-content: flex-end;
+  justify-self: end;
 }
 
 .footer-link {
@@ -220,31 +129,7 @@
 @media (max-width: 768px) {
   .modern-footer {
     padding: 0 15px;
-    gap: 10px;
-  }
-
-  .footer-center {
-    position: static;
-    transform: none;
-    flex: 1;
-    justify-content: center;
-  }
-
-  .footer-left {
-    min-width: 0;
-  }
-
-  .radio-label {
-    max-width: 100px;
-  }
-
-  .radio-logo {
-    width: 20px;
-    height: 20px;
-  }
-
-  .radio-select {
-    min-width: 100px;
+    column-gap: 10px;
   }
 
   .footer-right {
@@ -290,7 +175,9 @@
   border: 1px solid var(--ui-border);
   padding: 2px 6px;
   border-radius: var(--ui-radius-sm);
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
+    monospace;
   font-size: calc(12px * var(--font-size-scale));
 }
 
@@ -313,7 +200,7 @@
     height: 4px;
     opacity: 1;
   }
-  
+
   .footer-link:hover {
     background: rgba(255, 255, 255, 0.2);
   }
@@ -324,7 +211,7 @@
   .footer-link {
     transition: none;
   }
-  
+
   .modern-footer::before {
     animation: none;
   }

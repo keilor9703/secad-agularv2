@@ -1,22 +1,13 @@
-import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-
-export interface DtoRadioEmisora {
-  idEmisora: number;
-  nombre: string;
-  streamUrl: string;
-  logoUrl?: string | null;
-  orden: number;
-  activo: number;
-}
+import { DtoRadioEmisora } from '../models/radio.model';
 
 @Injectable({ providedIn: 'root' })
 export class RadioService {
+  private readonly http = inject(HttpClient);
   private readonly baseUrl = environment.radioApiUrl;
-
-  constructor(private http: HttpClient) {}
 
   getPublicas(): Observable<DtoRadioEmisora[]> {
     return this.http.get<DtoRadioEmisora[]>(this.baseUrl);

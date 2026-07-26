@@ -1,19 +1,30 @@
-<nav class="breadcrumb-nav" *ngIf="items.length > 0" aria-label="Ruta de navegacion">
+<nav class="breadcrumb-bar" aria-label="Ruta de navegación">
+  @if (!sidebarOpen()) {
+    <!-- La identidad se traslada al breadcrumb cuando el menú queda compacto. -->
+    <a class="breadcrumb-brand" routerLink="/home" aria-label="Ir al inicio">
+      <img
+        class="breadcrumb-brand__logo"
+        [src]="identity().logoUrl"
+        [alt]="'Logo de ' + identity().systemName"
+      />
+      <span class="breadcrumb-brand__name">{{ identity().systemName }}</span>
+    </a>
+    <span class="breadcrumb-brand-divider" aria-hidden="true"></span>
+  }
+
   <ol class="breadcrumb-list">
-    <li class="breadcrumb-item" *ngFor="let item of items; let last = last">
-      <ng-container *ngIf="!last && item.route">
-        <a [routerLink]="item.route" class="breadcrumb-link">{{ item.label }}</a>
-        <i class="fa-solid fa-chevron-right breadcrumb-separator" aria-hidden="true"></i>
-      </ng-container>
-
-      <ng-container *ngIf="last">
-        <span class="breadcrumb-current" aria-current="page">{{ item.label }}</span>
-      </ng-container>
-
-      <ng-container *ngIf="!last && !item.route">
-        <span class="breadcrumb-link">{{ item.label }}</span>
-        <i class="fa-solid fa-chevron-right breadcrumb-separator" aria-hidden="true"></i>
-      </ng-container>
-    </li>
+    @for (item of items(); track item.label; let last = $last) {
+      <li class="breadcrumb-item">
+        @if (!last && item.route) {
+          <a [routerLink]="item.route" class="breadcrumb-link">{{ item.label }}</a>
+          <i class="fa-solid fa-chevron-right breadcrumb-separator" aria-hidden="true"></i>
+        } @else if (last) {
+          <span class="breadcrumb-current" aria-current="page">{{ item.label }}</span>
+        } @else {
+          <span class="breadcrumb-link">{{ item.label }}</span>
+          <i class="fa-solid fa-chevron-right breadcrumb-separator" aria-hidden="true"></i>
+        }
+      </li>
+    }
   </ol>
 </nav>

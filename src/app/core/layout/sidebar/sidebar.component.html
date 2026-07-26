@@ -1,67 +1,186 @@
-<aside class="sidebar" [class.open]="isOpen()" (click)="$event.stopPropagation()">
-  <div class="sidebar-content">
-    <div class="sidebar-header">
-      <a routerLink="/home" class="header-brand-link" (click)="closeSidebar()">
-        <div class="logo-icon">
-          <img [src]="logoUrl" [alt]="systemName" class="header-logo-img">
-        </div>
-        <span class="logo-name">{{ systemName }}</span>
+<aside
+  class="sidebar"
+  [class.sidebar--open]="isOpen()"
+  [attr.aria-label]="isOpen() ? 'Menú principal expandido' : 'Menú principal compacto'"
+>
+  <!-- En modo compacto solo se muestra el disparador del menú. -->
+  <header class="sidebar__header">
+    @if (isOpen()) {
+      <!-- El PNG ocupa el lugar principal del encabezado, sin marcos ni cápsulas. -->
+      <a class="sidebar__brand" routerLink="/home" (click)="onNavigate()">
+        <img
+          class="sidebar__logo"
+          [src]="identity().logoUrl"
+          [alt]="'Logo de ' + identity().systemName"
+        />
+        <span class="sidebar__brand-copy">
+          <strong>{{ identity().systemName }}</strong>
+          <small>{{ identity().shortName }}</small>
+        </span>
       </a>
- 
-      <button class="btn-close" type="button" (click)="closeSidebar()" aria-label="Cerrar menú">✕</button>
-    </div>
 
-    <nav class="sidebar-scroll">
-      <div class="sidebar-nav">
-        @for (item of menuItems; track item.id) {
-          <div class="menu-item" [class.expanded]="isExpandedItem(item)">
-            @if (item.isExternal) {
-              <a
-                class="menu-link"
-                [href]="item.route"
-                target="_blank"
-                rel="noopener noreferrer">
-                <i class="icon" [class]="item.icon"></i>
-                <span class="label">{{ item.label }}</span>
-              </a>
-            } @else {
-              <a
-                class="menu-link"
-                [routerLink]="item.route && !item.submenu ? [item.route] : null"
-                (click)="onItemTap(item, $event)"
-                routerLinkActive="active">
+      <button
+        class="sidebar__collapse"
+        type="button"
+        (click)="toggleSidebar()"
+        aria-controls="primary-navigation"
+        aria-label="Contraer menú principal"
+        title="Contraer menú"
+      >
+        <i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
+      </button>
+    } @else {
+      <button
+        class="sidebar__toggle"
+        type="button"
+        (click)="toggleSidebar()"
+        aria-controls="primary-navigation"
+        aria-label="Expandir menú principal"
+        title="Expandir menú"
+      >
+        <i class="fa-solid fa-bars" aria-hidden="true"></i>
+      </button>
+    }
+  </header>
 
-                <i class="icon" [class]="item.icon"></i>
-                <span class="label">{{ item.label }}</span>
+  <nav id="primary-navigation" class="sidebar__scroll" aria-label="Secciones del sistema">
+    <ul class="sidebar__list">
+      @for (item of menuItems(); track item.id) {
+        <li
+          class="menu-item"
+          [class.menu-item--expanded]="isExpandedItem(item)"
+          [class.menu-item--active]="isMenuItemActive(item)"
+        >
+          @if (item.submenu?.length) {
+            <!-- Los grupos se despliegan como acordeón dentro del menú, nunca como flyout. -->
+            <button
+              class="menu-link"
+              type="button"
+              (click)="toggleGroup(item)"
+              [class.menu-link--active]="isMenuItemActive(item)"
+              [attr.aria-expanded]="isExpandedItem(item)"
+              [attr.aria-controls]="'submenu-' + item.id"
+              [title]="!isOpen() ? item.label : null"
+            >
+              <span class="menu-link__icon">
+                <i [class]="item.icon" aria-hidden="true"></i>
+              </span>
+              <span class="menu-link__label">{{ item.label }}</span>
+              <i class="menu-link__arrow fa-solid fa-chevron-down" aria-hidden="true"></i>
+            </button>
 
-                @if (item.submenu) {
-                  <button type="button" class="arrow-btn" (click)="toggleItem(item, $event)">
-                    <i class="arrow fa-solid fa-chevron-down"></i>
-                  </button>
-                }
-              </a>
-            }
-
-           @if (item.submenu) {
-            <div class="submenu"
-                 [class.open]="isOpen() && isExpandedItem(item)"
-                 [ngStyle]="(isOpen() && isExpandedItem(item)) ? getSubmenuStyle() : null">
-              @for (subItem of item.submenu; track subItem.id) {
-                @if (subItem.isExternal) {
-                  <a [href]="subItem.route" target="_blank" rel="noopener noreferrer" class="submenu-item">
-                    {{ subItem.label }}
-                  </a>
-                } @else {
-                  <a [routerLink]="[subItem.route]" class="submenu-item" (click)="onNavigate()">
-                    {{ subItem.label }}
-                  </a>
-                }
-              }
+            <div
+              class="submenu"
+              [class.submenu--open]="isOpen() && isExpandedItem(item)"
+              [attr.aria-hidden]="!(isOpen() && isExpandedItem(item))"
+              [attr.inert]="isOpen() && isExpandedItem(item) ? null : ''"
+            >
+              <div class="submenu__clip">
+                <ul [id]="'submenu-' + item.id" class="submenu__list">
+                  @for (subItem of item.submenu; track subItem.id) {
+                    <li>
+                      @if (subItem.isExternal) {
+                        <a
+                          class="submenu__link"
+                          [href]="subItem.route"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          (click)="onNavigate()"
+                        >
+                          <span class="submenu__marker" aria-hidden="true"></span>
+                          <span>{{ subItem.label }}</span>
+                          <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i>
+                        </a>
+                      } @else {
+                        <a
+                          class="submenu__link"
+                          [class.submenu__link--active]="isSubmenuItemActive(subItem)"
+                          [routerLink]="subItem.route"
+                          [attr.aria-current]="isSubmenuItemActive(subItem) ? 'page' : null"
+                          (click)="onNavigate()"
+                        >
+                          <span class="submenu__marker" aria-hidden="true"></span>
+                          <span>{{ subItem.label }}</span>
+                        </a>
+                      }
+                    </li>
+                  }
+                </ul>
+              </div>
             </div>
+          } @else if (item.isExternal) {
+            <a
+              class="menu-link"
+              [href]="item.route"
+              target="_blank"
+              rel="noopener noreferrer"
+              (click)="onNavigate()"
+              [title]="!isOpen() ? item.label : null"
+            >
+              <span class="menu-link__icon">
+                <i [class]="item.icon" aria-hidden="true"></i>
+              </span>
+              <span class="menu-link__label">{{ item.label }}</span>
+              <i
+                class="menu-link__external fa-solid fa-arrow-up-right-from-square"
+                aria-hidden="true"
+              ></i>
+            </a>
+          } @else {
+            <a
+              class="menu-link"
+              [class.menu-link--active]="isMenuItemActive(item)"
+              [routerLink]="item.route"
+              [attr.aria-current]="isMenuItemActive(item) ? 'page' : null"
+              (click)="onNavigate()"
+              [title]="!isOpen() ? item.label : null"
+            >
+              <span class="menu-link__icon">
+                <i [class]="item.icon" aria-hidden="true"></i>
+              </span>
+              <span class="menu-link__label">{{ item.label }}</span>
+            </a>
           }
-          </div>
+        </li>
+      } @empty {
+        @if (isOpen()) {
+          <li class="sidebar__empty">
+            <i class="fa-solid fa-circle-notch fa-spin" aria-hidden="true"></i>
+            <span>Cargando navegación…</span>
+          </li>
         }
-      </div>
-    </nav>
-  </div>
+      }
+    </ul>
+  </nav>
+
+  <!-- Sección independiente: separador y tarjeta no dependen de pseudo-elementos. -->
+  <footer class="sidebar__user" aria-label="Configuración y sesión">
+    <span class="sidebar__user-separator" aria-hidden="true"></span>
+
+    <div class="sidebar__actions">
+      <a
+        class="sidebar-action"
+        [class.sidebar-action--active]="isSettingsActive()"
+        routerLink="/administracion/configuracion-sistema"
+        [attr.aria-current]="isSettingsActive() ? 'page' : null"
+        aria-label="Configuración"
+        title="Configuración"
+        (click)="onNavigate()"
+      >
+        <i class="sidebar-action__icon fa-solid fa-gear" aria-hidden="true"></i>
+        <span class="sidebar-action__label">Ajustes</span>
+      </a>
+
+      <button
+        class="sidebar-action sidebar-action--logout"
+        type="button"
+        aria-label="Cerrar sesión"
+        title="Cerrar sesión"
+        (click)="logout()"
+      >
+        <i class="sidebar-action__icon fa-solid fa-arrow-right-from-bracket" aria-hidden="true"></i>
+        <span class="sidebar-action__label">Cerrar sesión</span>
+      </button>
+    </div>
+  </footer>
 </aside>

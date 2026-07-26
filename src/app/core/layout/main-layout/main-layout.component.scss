@@ -1,19 +1,13 @@
-:root {
-  --collapsed-width: 78px;
-  --expanded-width: 260px;
-  --sidebar-collapsed-total: calc(var(--collapsed-width) + 5px);
-  --sidebar-expanded-total: calc(var(--expanded-width) + 5px);
+:host {
+  --sidebar-rail-width: 72px;
+  --sidebar-expanded-width: 304px;
   --app-shell-bg: #f3f6fb;
-  --content-bg: rgba(255, 255, 255, 0.8);
-  --content-border: var(--policia-neutral-claro);
-  --content-shadow: 0 10px 30px rgba(21, 27, 59, 0.08);
+
+  display: block;
 }
 
-html.dark-mode {
+:host-context(html.dark-mode) {
   --app-shell-bg: #0f1927;
-  --content-bg: rgba(30, 40, 64, 0.8);
-  --content-border: rgba(200, 200, 200, 0.1);
-  --content-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
 }
 
 /* --- SHELL DEL SISTEMA --- */
@@ -31,31 +25,31 @@ html.dark-mode {
   position: fixed;
   top: 0;
   left: 0;
-  width: auto;
+  width: var(--sidebar-rail-width);
   z-index: 1200;
+  transition: width 260ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .app-sidebar.expanded {
-  width: var(--expanded-width);
+  width: var(--sidebar-expanded-width);
 }
 
 .shell {
   flex: 1;
   height: 100vh;
   height: 100dvh;
-  margin-left: 0;
+  width: calc(100% - var(--sidebar-rail-width));
+  margin-left: var(--sidebar-rail-width);
   display: flex;
   flex-direction: column;
-  transition: none;
+  transition:
+    width 260ms cubic-bezier(0.22, 1, 0.36, 1),
+    margin-left 260ms cubic-bezier(0.22, 1, 0.36, 1);
   position: relative;
   overflow-x: hidden;
   overflow-y: hidden;
   padding-top: var(--header-height, 70px);
   padding-bottom: 0;
-}
-
-.shell.shell-expanded {
-  margin-left: var(--sidebar-expanded-total);
 }
 
 .main {
@@ -76,27 +70,22 @@ html.dark-mode {
 }
 
 .content {
-  margin: 10px;
-  width: calc(100% - 20px);
-  background: var(--content-bg);
-  border: 1px solid var(--content-border);
-  border-radius: 12px;
-  box-shadow: var(--content-shadow);
-  backdrop-filter: blur(8px);
+  width: 100%;
+  min-width: 0;
+  margin-top: 12px;
   position: relative;
-  padding: 10px;
-  transition:
-    background-color 0.3s ease,
-    border-color 0.3s ease,
-    box-shadow 0.3s ease;
+  padding: 0;
 }
 
 .app-footer-fixed {
   position: fixed;
   bottom: 0;
-  left: 0;
-  width: 100%;
+  left: var(--sidebar-rail-width);
+  width: calc(100% - var(--sidebar-rail-width));
   z-index: 100;
+  transition:
+    left 260ms cubic-bezier(0.22, 1, 0.36, 1),
+    width 260ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .app-backdrop {
@@ -114,4 +103,16 @@ html.dark-mode {
 
 .app-shell.menu-open ~ app-accessibility-menu {
   pointer-events: none;
+}
+
+@media (max-width: 768px) {
+  :host {
+    --sidebar-rail-width: 0px;
+    --sidebar-expanded-width: min(310px, calc(100vw - 24px));
+  }
+
+  .content {
+    width: 100%;
+    margin-top: 8px;
+  }
 }
