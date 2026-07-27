@@ -1,30 +1,29 @@
 <nav class="breadcrumb-bar" aria-label="Ruta de navegación">
-  @if (!sidebarOpen()) {
-    <!-- La identidad se traslada al breadcrumb cuando el menú queda compacto. -->
-    <a class="breadcrumb-brand" routerLink="/home" aria-label="Ir al inicio">
-      <img
-        class="breadcrumb-brand__logo"
-        [src]="identity().logoUrl"
-        [alt]="'Logo de ' + identity().systemName"
-      />
-      <span class="breadcrumb-brand__name">{{ identity().systemName }}</span>
-    </a>
-    <span class="breadcrumb-brand-divider" aria-hidden="true"></span>
-  }
-
-  <ol class="breadcrumb-list">
-    @for (item of items(); track item.label; let last = $last) {
-      <li class="breadcrumb-item">
-        @if (!last && item.route) {
-          <a [routerLink]="item.route" class="breadcrumb-link">{{ item.label }}</a>
-          <i class="fa-solid fa-chevron-right breadcrumb-separator" aria-hidden="true"></i>
-        } @else if (last) {
-          <span class="breadcrumb-current" aria-current="page">{{ item.label }}</span>
-        } @else {
-          <span class="breadcrumb-link">{{ item.label }}</span>
-          <i class="fa-solid fa-chevron-right breadcrumb-separator" aria-hidden="true"></i>
-        }
-      </li>
+  <div class="breadcrumb-shell">
+    @if (!sidebarOpen()) {
+      <a class="breadcrumb-brand" routerLink="/home" aria-label="Ir al inicio">
+        <span class="breadcrumb-brand__mark" aria-hidden="true">
+          <img class="breadcrumb-brand__logo" [src]="identity().logoUrl" alt="" />
+        </span>
+        <span class="breadcrumb-brand__name">{{ identity().systemName }}</span>
+      </a>
+      <span class="breadcrumb-brand-divider" aria-hidden="true"></span>
     }
-  </ol>
+
+    <ol class="breadcrumb-list">
+      @for (item of items(); track item.label; let last = $last) {
+        <li class="breadcrumb-item">
+          @if (!last && item.route) {
+            <a [routerLink]="item.route" class="breadcrumb-link">{{ item.label }}</a>
+            <i class="fa-solid fa-chevron-right breadcrumb-separator" aria-hidden="true"></i>
+          } @else if (last) {
+            <span class="breadcrumb-current" aria-current="page">{{ item.label }}</span>
+          } @else {
+            <span class="breadcrumb-link">{{ item.label }}</span>
+            <i class="fa-solid fa-chevron-right breadcrumb-separator" aria-hidden="true"></i>
+          }
+        </li>
+      }
+    </ol>
+  </div>
 </nav>

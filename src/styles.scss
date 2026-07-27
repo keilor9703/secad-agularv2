@@ -888,7 +888,7 @@ body.no-scroll {
 }
 
 section.home-view {
-  padding: 40px;
+  padding: 10px;
 }
 
 // .ui-field {
@@ -2023,7 +2023,7 @@ body.ui-modal-open .content {
   min-height: 100vh;
   transition: all var(--transition-speed) ease;
   margin: auto;
-  padding: 0 30px 0 30px;
+  padding: 10px 30px 0;
 }
 
 /* Utilitarios globales compartidos */
@@ -2076,22 +2076,22 @@ body.ui-modal-open .content {
   }
 
   section.home-view {
-    padding: 20px;
+    padding: 8px;
   }
 
   .content-area {
-    padding: 0 16px;
+    padding: 8px 16px 0;
   }
 }
 
 /* Mobile — 480px */
 @media (max-width: 480px) {
   .content-area {
-    padding: 0 8px;
+    padding: 6px 8px 0;
   }
 
   section.home-view {
-    padding: 12px;
+    padding: 6px;
   }
 
   /* Ensure all admin pages have proper padding */

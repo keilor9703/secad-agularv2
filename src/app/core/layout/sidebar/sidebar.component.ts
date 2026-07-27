@@ -55,13 +55,7 @@ export class SidebarComponent {
      * permanece visible en el rail compacto.
      */
     effect(() => {
-      const activeGroup = this.menuItems().find((item) =>
-        item.submenu?.some((child) => this.routeMatches(child.route)),
-      );
-
-      if (activeGroup) {
-        this.expandedItemId.set(activeGroup.id);
-      }
+      this.expandedItemId.set(this.findActiveGroup()?.id ?? null);
     });
 
     this.navigationMenu
@@ -139,6 +133,12 @@ export class SidebarComponent {
     return (
       currentPath === candidatePath ||
       (candidatePath !== '/' && currentPath.startsWith(`${candidatePath}/`))
+    );
+  }
+
+  private findActiveGroup(): MenuItem | undefined {
+    return this.menuItems().find((item) =>
+      item.submenu?.some((child) => this.routeMatches(child.route)),
     );
   }
 }

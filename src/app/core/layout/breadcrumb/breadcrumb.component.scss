@@ -7,27 +7,44 @@
 }
 
 .breadcrumb-bar {
+  position: relative;
   display: flex;
-  min-height: 46px;
+  min-height: 44px;
   align-items: center;
-  gap: 10px;
-  padding: 3px 14px;
-  overflow: visible;
+  padding: 0 clamp(14px, 2.2vw, 24px);
+  overflow: hidden;
   border-bottom: 1px solid rgba(21, 27, 59, 0.08);
-  background: linear-gradient(90deg, rgb(128 157 184 / 27%), rgba(246, 249, 252, 0.95));
-  box-shadow: 0 4px 11px rgba(15, 42, 74, 0.065);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: rgba(248, 250, 252, 0.94);
+  box-shadow: 0 6px 14px rgba(15, 42, 74, 0.055);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+
+  &::after {
+    position: absolute;
+    inset: auto 0 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--policia-acento), rgba(8, 166, 203, 0.46), transparent);
+    content: '';
+    pointer-events: none;
+  }
+}
+
+.breadcrumb-shell {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-items: center;
+  gap: 12px;
 }
 
 .breadcrumb-brand {
   display: flex;
   min-width: 0;
-  max-width: min(280px, 42vw);
+  max-width: min(260px, 36vw);
   flex: 0 1 auto;
   align-items: center;
-  gap: 8px;
-  padding: 1px 4px 1px 0;
+  gap: 9px;
+  padding: 0;
   overflow: visible;
   color: var(--policia-medio, #002a66);
   text-decoration: none;
@@ -44,25 +61,39 @@
   }
 }
 
+.breadcrumb-brand__mark {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  place-items: center;
+  border: 1px solid rgba(8, 166, 203, 0.22);
+  border-radius: 9px;
+  background: linear-gradient(135deg, #00193a, #0e1f38);
+  box-shadow:
+    inset 0 1px rgba(255, 255, 255, 0.14),
+    0 5px 12px rgba(15, 42, 74, 0.16);
+}
+
 .breadcrumb-brand__logo {
-  width: 36px;
-  height: 36px;
-  flex: 0 0 36px;
+  width: 27px;
+  height: 27px;
+  flex: 0 0 27px;
   object-fit: contain;
-  filter: drop-shadow(0 3px 5px rgba(15, 42, 74, 0.22));
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.38));
   transition:
     filter 180ms ease,
     transform 180ms ease;
 }
 
 .breadcrumb-brand:hover .breadcrumb-brand__logo {
-  filter: drop-shadow(0 4px 7px rgba(15, 42, 74, 0.28));
+  filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.42));
   transform: scale(1.04);
 }
 
 .breadcrumb-brand__name {
   overflow: hidden;
-  font-size: calc(0.75rem * var(--font-size-scale, 1));
+  font-size: calc(0.76rem * var(--font-size-scale, 1));
   font-weight: 800;
   line-height: 1.15;
   text-overflow: ellipsis;
@@ -71,19 +102,21 @@
 
 .breadcrumb-brand-divider {
   width: 1px;
-  height: 24px;
+  height: 22px;
   flex: 0 0 1px;
-  background: linear-gradient(to bottom, transparent, rgba(0, 42, 102, 0.2), transparent);
+  background: linear-gradient(to bottom, transparent, rgba(0, 42, 102, 0.18), transparent);
 }
 
 .breadcrumb-list {
   display: flex;
   min-width: 0;
+  flex: 1 1 auto;
   align-items: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 4px;
   padding: 0;
   margin: 0;
+  overflow: hidden;
   list-style: none;
 }
 
@@ -95,11 +128,16 @@
 }
 
 .breadcrumb-link {
+  display: inline-flex;
+  min-height: 30px;
+  align-items: center;
   color: var(--policia-medio, #002a66);
   font-size: calc(0.78rem * var(--font-size-scale, 1));
-  font-weight: 580;
+  font-weight: 650;
   text-decoration: none;
-  transition: color 180ms ease;
+  transition:
+    color 180ms ease,
+    text-decoration-color 180ms ease;
 
   &:hover {
     color: var(--policia-oscuro, #151b3b);
@@ -109,56 +147,78 @@
 }
 
 .breadcrumb-current {
+  display: inline-flex;
+  min-height: 30px;
+  align-items: center;
   overflow: hidden;
-  max-width: min(380px, 45vw);
-  color: rgba(21, 27, 59, 0.72);
+  max-width: min(420px, 48vw);
+  color: rgba(21, 27, 59, 0.78);
   font-size: calc(0.78rem * var(--font-size-scale, 1));
-  font-weight: 720;
+  font-weight: 800;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .breadcrumb-separator {
-  margin: 0 2px;
-  color: rgba(21, 27, 59, 0.35);
-  font-size: calc(0.58rem * var(--font-size-scale, 1));
+  margin: 0 3px;
+  color: rgba(21, 27, 59, 0.3);
+  font-size: calc(0.54rem * var(--font-size-scale, 1));
 }
 
 :host-context(html.dark-mode) {
   .breadcrumb-bar {
     border-bottom-color: rgba(255, 255, 255, 0.08);
-    background: linear-gradient(90deg, rgba(18, 29, 45, 0.98), rgba(23, 36, 54, 0.96));
+    background: rgba(18, 29, 45, 0.96);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.22);
   }
 
   .breadcrumb-brand {
     color: #edf3fa;
   }
 
+  .breadcrumb-brand__mark {
+    border-color: rgba(200, 255, 0, 0.24);
+    background: linear-gradient(135deg, #00152f, #10243d);
+  }
+
   .breadcrumb-link,
   .breadcrumb-current {
     color: #d9e3ef;
+  }
+
+  .breadcrumb-separator {
+    color: rgba(217, 227, 239, 0.36);
   }
 }
 
 @media (max-width: 768px) {
   .breadcrumb-bar {
-    min-height: 40px;
-    gap: 6px;
-    padding: 2px 7px;
+    min-height: 42px;
+    padding-inline: 10px;
+  }
+
+  .breadcrumb-shell {
+    gap: 8px;
   }
 
   .breadcrumb-brand {
-    width: 30px;
-    max-width: 30px;
-    flex: 0 0 30px;
-    gap: 0;
+    width: 34px;
+    max-width: 34px;
+    flex: 0 0 34px;
     padding: 0;
   }
 
+  .breadcrumb-brand__mark {
+    width: 32px;
+    height: 32px;
+    flex-basis: 32px;
+    border-radius: 8px;
+  }
+
   .breadcrumb-brand__logo {
-    width: 30px;
-    height: 30px;
-    flex-basis: 30px;
+    width: 25px;
+    height: 25px;
+    flex-basis: 25px;
   }
 
   .breadcrumb-brand__name {
@@ -166,11 +226,10 @@
   }
 
   .breadcrumb-brand-divider {
-    height: 21px;
+    height: 20px;
   }
 
   .breadcrumb-list {
-    flex-wrap: nowrap;
     overflow: hidden;
   }
 
@@ -182,7 +241,8 @@
   .breadcrumb-link,
   .breadcrumb-current {
     overflow: hidden;
-    font-size: calc(0.68rem * var(--font-size-scale, 1));
+    min-height: 32px;
+    font-size: calc(0.72rem * var(--font-size-scale, 1));
     line-height: 1.15;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -190,21 +250,30 @@
 
   .breadcrumb-separator {
     flex: 0 0 auto;
+    margin-inline: 1px;
     font-size: calc(0.48rem * var(--font-size-scale, 1));
   }
 
   .breadcrumb-current {
-    max-width: min(108px, 31vw);
+    max-width: min(210px, 48vw);
   }
 }
 
 @media (max-width: 410px) {
   .breadcrumb-brand {
-    max-width: 30px;
+    max-width: 32px;
   }
 
   .breadcrumb-brand-divider {
     display: none;
+  }
+
+  .breadcrumb-list {
+    gap: 2px;
+  }
+
+  .breadcrumb-current {
+    max-width: 50vw;
   }
 }
 
