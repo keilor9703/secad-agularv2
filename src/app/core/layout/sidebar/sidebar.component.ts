@@ -113,10 +113,6 @@ export class SidebarComponent {
     return this.routeMatches(item.route);
   }
 
-  isSettingsActive(): boolean {
-    return this.routeMatches('/administracion/configuracion-sistema');
-  }
-
   onNavigate(): void {
     this.sidebarService.closeSidebar();
   }

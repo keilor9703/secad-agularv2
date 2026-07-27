@@ -153,24 +153,8 @@
     </ul>
   </nav>
 
-  <!-- Sección independiente: separador y tarjeta no dependen de pseudo-elementos. -->
-  <footer class="sidebar__user" aria-label="Configuración y sesión">
-    <span class="sidebar__user-separator" aria-hidden="true"></span>
-
+  <footer class="sidebar__user" aria-label="Sesión">
     <div class="sidebar__actions">
-      <a
-        class="sidebar-action"
-        [class.sidebar-action--active]="isSettingsActive()"
-        routerLink="/administracion/configuracion-sistema"
-        [attr.aria-current]="isSettingsActive() ? 'page' : null"
-        aria-label="Configuración"
-        title="Configuración"
-        (click)="onNavigate()"
-      >
-        <i class="sidebar-action__icon fa-solid fa-gear" aria-hidden="true"></i>
-        <span class="sidebar-action__label">Ajustes</span>
-      </a>
-
       <button
         class="sidebar-action sidebar-action--logout"
         type="button"
@@ -179,7 +163,6 @@
         (click)="logout()"
       >
         <i class="sidebar-action__icon fa-solid fa-arrow-right-from-bracket" aria-hidden="true"></i>
-        <span class="sidebar-action__label">Cerrar sesión</span>
       </button>
     </div>
   </footer>

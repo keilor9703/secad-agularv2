@@ -520,172 +520,77 @@
 .sidebar__user {
   position: relative;
   z-index: 2;
-  width: 60px;
-  margin: 0 auto 7px;
-}
-
-/*
- * Línea independiente: se extiende lateralmente desde la zona central
- * del botón izquierdo hasta la zona central del botón derecho.
- */
-.sidebar__user-separator {
-  display: block;
-  width: 40px;
-  height: 2px;
-  margin: 0 auto 8px;
-  background: var(--policia-acento);
+  display: grid;
+  width: 100%;
+  min-height: var(--footer-height, 56px);
+  flex: 0 0 var(--footer-height, 56px);
+  place-items: center;
+  padding-bottom: env(safe-area-inset-bottom);
   pointer-events: none;
 }
 
-/*
- * Cápsula central: sus laterales coinciden con el centro horizontal
- * de cada botón. Los controles se superponen y forman sus extremos.
- */
 .sidebar__actions {
-  position: relative;
-  width: 37px;
-  height: 38px;
-  margin: 0 auto;
-  border: 1px solid rgba(217, 226, 236, 0.2588235294);
-  border-radius: 8px;
-  background: rgb(255 255 255 / 0%);
-  box-shadow:
-    0 5px 12px rgba(15, 42, 74, 0.08),
-    inset 0 1px rgba(255, 255, 255, 0.95);
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  place-items: center;
+  pointer-events: auto;
 }
 
 .sidebar-action {
-  position: absolute;
-  top: 50%;
-  left: 0;
   display: grid;
-  width: 25px;
-  height: 25px;
+  width: 42px;
+  height: 42px;
   place-items: center;
-  border: 1px solid #ffffff;
-  border-radius: 50%;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
   appearance: none;
-  background: #ffffff;
-  color: var(--_sidebar-primary);
+  background: transparent;
+  color: var(--policia-acento, #c8ff00);
   text-decoration: none;
-  translate: -50% -50%;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  animation: sidebar-action-shimmer 3.6s ease infinite;
-  transition: 180ms ease;
+  transition:
+    color 160ms ease,
+    text-shadow 160ms ease,
+    transform 160ms ease;
 
   &:hover,
   &:focus-visible {
-    box-shadow: 0 4px 9px rgba(15, 42, 74, 0.11);
-    transform: translateY(-1px);
+    color: var(--policia-acento, #c8ff00);
+    text-shadow: 0 0 10px rgba(200, 255, 0, 0.42);
+    transform: translateY(-1px) scale(1.06);
   }
 
   &:focus-visible {
-    outline: 2px solid rgba(8, 166, 203, 0.3);
-    outline-offset: 2px;
+    outline: 2px solid rgba(200, 255, 0, 0.68);
+    outline-offset: 4px;
   }
-}
-
-.sidebar-action--active {
-  background: #d8edf5;
-  box-shadow:
-    0 3px 8px rgba(15, 42, 74, 0.1),
-    0 0 0 3px rgba(8, 166, 203, 0.09);
-}
-
-.sidebar-action--logout {
-  right: 0;
-  left: auto;
-  width: 27px;
-  height: 27px;
-  border-color: #c8ff00;
-  border-radius: 8px;
-  background: #c8ff00;
-  color: #000000;
-  translate: 50% -50%;
-  animation-delay: -2.4s;
 }
 
 .sidebar-action__icon {
   flex: 0 0 auto;
-  font-size: calc(0.8rem * var(--font-size-scale, 1));
-}
-
-.sidebar-action__label {
-  display: none;
-  min-width: 0;
-  overflow: hidden;
-  font-size: calc(0.72rem * var(--font-size-scale, 1));
-  font-weight: 720;
-  line-height: 1.15;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  font-size: calc(1.05rem * var(--font-size-scale, 1));
+  line-height: 1;
 }
 
 .sidebar--open {
   .sidebar__user {
-    width: calc(100% - 20px);
-    margin: 2px 10px 3px;
-  }
-
-  .sidebar__user-separator {
-    width: calc(100% - 32px);
+    width: 100%;
   }
 
   .sidebar__actions {
-    display: grid;
-    width: 100%;
-    height: 44px;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px;
-    margin: 0;
-    padding: 4px;
-    border: 0;
-    background: transparent;
-    box-shadow: none;
+    justify-content: center;
   }
 
   .sidebar-action {
-    display: flex;
-    position: relative;
-    top: auto;
-    right: auto;
-    left: auto;
-    width: 100%;
-    height: 34px;
-    align-items: center;
-    justify-content: center;
-    gap: 7px;
-    padding: 6px 8px;
-    overflow: hidden;
-    border-radius: 10px;
-    background: linear-gradient(110deg, #eaf6fa, #cae8f2, #eaf6fa);
-    background-size: 280%;
-    translate: none;
-
-    &:hover,
-    &:focus-visible {
-      animation: sidebar-action-shimmer 780ms cubic-bezier(0.22, 1, 0.36, 1);
-    }
-  }
-
-  .sidebar-action--active {
-    box-shadow: inset 3px 0 var(--_sidebar-primary);
-  }
-
-  .sidebar-action--logout {
-    border-color: #8dbb00;
-    background: #c8ff00;
-    color: #173b21;
-    box-shadow: inset 3px 0 #6e9900;
+    width: 46px;
+    height: 46px;
   }
 
   .sidebar-action__icon {
-    font-size: calc(0.86rem * var(--font-size-scale, 1));
-  }
-
-  .sidebar-action__label {
-    display: block;
+    font-size: calc(1.12rem * var(--font-size-scale, 1));
   }
 }
 
@@ -738,32 +643,8 @@
     color: #c1ccda;
   }
 
-  .sidebar:not(.sidebar--open) .sidebar__actions {
-    border-color: rgba(255, 255, 255, 0.13);
-    background: #182538;
-    box-shadow:
-      0 6px 14px rgba(0, 0, 0, 0.2),
-      inset 0 1px rgba(255, 255, 255, 0.06);
-  }
-
   .sidebar-action {
-    border-color: rgba(255, 255, 255, 0.1);
-    background: #1e2d42;
-    color: #dce8f5;
-  }
-
-  .sidebar-action--active {
-    border-color: rgba(8, 166, 203, 0.44);
-    background: #24354c;
-    box-shadow:
-      0 3px 8px rgba(0, 0, 0, 0.2),
-      0 0 0 3px rgba(8, 166, 203, 0.1);
-    color: #e8f3fb;
-  }
-
-  .sidebar-action--logout {
-    background: #c8ff00;
-    color: #173b21;
+    color: var(--policia-acento, #c8ff00);
   }
 }
 
@@ -862,17 +743,3 @@
   }
 }
 
-@keyframes sidebar-action-shimmer {
-  0%,
-  100% {
-    background-position: 100% 0;
-    filter: brightness(1);
-    scale: 1;
-  }
-
-  50% {
-    background-position: -100% 0;
-    filter: brightness(1.1);
-    scale: 1.04;
-  }
-}
