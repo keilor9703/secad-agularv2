@@ -27,6 +27,7 @@ export class AuthService {
   private readonly userKey = 'sisge_usuario';
   private readonly authKey = 'sisge_auth';
   private readonly userIdKey = 'sisge_user_id';
+  private readonly identificationKey = 'sisge_identificacion';
   private readonly loginUrl = `${environment.apiBaseUrl}/Cuenta/Token`;
   private readonly maxJwtLength = 8192;
   private readonly maxJwtPayloadB64Length = 4096;
@@ -44,13 +45,22 @@ export class AuthService {
       timeout(30000),
       tap((resp) => {
         if (this.isLoginSuccessful(resp)) {
+          let identificacion = this.parsePositiveNumber(resp.identificacion);
+
           if (resp.token) {
             localStorage.setItem(this.tokenKey, resp.token);
             const userId = this.extractUserIdFromToken(resp.token);
             if (userId !== null) {
               localStorage.setItem(this.userIdKey, String(userId));
             }
+
+            identificacion ??= this.extractIdentificationFromToken(resp.token);
           }
+
+          if (identificacion !== null) {
+            localStorage.setItem(this.identificationKey, String(identificacion));
+          }
+
           localStorage.setItem(this.authKey, '1');
           localStorage.setItem(this.userKey, resp.usuario ?? usuario);
           sessionStorage.removeItem('modales_vistos');
@@ -64,6 +74,7 @@ export class AuthService {
     localStorage.removeItem(this.userKey);
     localStorage.removeItem(this.authKey);
     localStorage.removeItem(this.userIdKey);
+    localStorage.removeItem(this.identificationKey);
   }
 
   getToken(): string | null {
@@ -81,6 +92,28 @@ export class AuthService {
     }
     const value = Number(raw);
     return Number.isFinite(value) ? value : null;
+  }
+
+  getIdentificacion(): number | null {
+    const raw = localStorage.getItem(this.identificationKey);
+    if (raw) {
+      const value = Number(raw);
+      if (Number.isFinite(value) && value > 0) {
+        return value;
+      }
+    }
+
+    const token = this.getToken();
+    if (!token) {
+      return null;
+    }
+
+    const identificacion = this.extractIdentificationFromToken(token);
+    if (identificacion !== null) {
+      localStorage.setItem(this.identificationKey, String(identificacion));
+    }
+
+    return identificacion;
   }
 
   isAuthenticated(): boolean {
@@ -148,6 +181,33 @@ export class AuthService {
     } catch {
       return null;
     }
+  }
+
+  private extractIdentificationFromToken(token: string): number | null {
+    try {
+      const parsed = this.decodeJwtPayload(token);
+      if (!parsed) {
+        return null;
+      }
+
+      const rawId =
+        parsed['Identificacion'] ??
+        parsed['identificacion'] ??
+        parsed['Documento'] ??
+        parsed['documento'] ??
+        parsed['Cedula'] ??
+        parsed['cedula'] ??
+        parsed['NumeroDocumento'] ??
+        parsed['numeroDocumento'];
+      return this.parsePositiveNumber(rawId);
+    } catch {
+      return null;
+    }
+  }
+
+  private parsePositiveNumber(value: unknown): number | null {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
   }
 
   private isTokenExpired(token: string): boolean {

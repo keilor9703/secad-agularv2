@@ -12,6 +12,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { map } from 'rxjs';
 import { environment } from '../../../../../environments/environment';
+import { AuthService } from '../../../../core/auth/auth.service';
 import { BannerItem } from '../../../../core/interfaces/banner.interface';
 import { RadioPlayerComponent } from '../../../../core/layout/footer/radio-player/radio-player.component';
 import { BannerService } from '../../../../core/services/banner.service';
@@ -89,6 +90,7 @@ export class HomePageComponent implements OnInit, OnDestroy {
 
   constructor(
     private bannerService: BannerService,
+    private authService: AuthService,
     private cdr: ChangeDetectorRef,
     private homeService: HomeService,
     private videoUnidadService: VideoUnidadService,
@@ -171,14 +173,14 @@ export class HomePageComponent implements OnInit, OnDestroy {
   }
 
   private loadBanners(): void {
-    this.bannerService.getPublicos().subscribe({
+    this.bannerService.getPublicos(this.authService.getIdentificacion()).subscribe({
       next: (items) => {
         const now = new Date();
         const ordered = (items ?? [])
           .filter((x) => this.isBannerVigenteNow(x, now))
           .slice()
           .sort((a, b) => a.orden - b.orden);
-        this.banners = ordered;
+        this.banners = ordered.length > 0 ? ordered : this.getFallbackBanners();
         this.setCurrentBanner(0, false);
         this.startBannerRotation();
       },
