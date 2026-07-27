@@ -8,8 +8,6 @@ export interface HeaderNotification {
 
 export interface MiPerfilDto {
   identificacion?: string;
-  nombreGrado?: string;
-  NombreGrado?: string;
   gradAlfabetico?: string;
   GradAlfabetico?: string;
   grado?: string;

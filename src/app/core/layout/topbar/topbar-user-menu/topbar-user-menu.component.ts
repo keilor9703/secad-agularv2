@@ -136,8 +136,6 @@ export class TopbarUserMenuComponent implements OnInit {
 
   private resolvePerfilGrado(): string {
     return (
-      this.perfil?.nombreGrado ??
-      this.perfil?.NombreGrado ??
       this.perfil?.gradAlfabetico ??
       this.perfil?.GradAlfabetico ??
       this.perfil?.grado ??
