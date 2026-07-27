@@ -1,126 +1,39 @@
-<div class="ui-panel users-table-card">
-  <div class="ui-panel__head">
-    <div class="ui-panel__title">
-      <i class="fa-solid fa-users"></i>
-      Usuarios existentes
-    </div>
+<section class="users-existing">
+  <form class="users-existing__filters" [formGroup]="searchForm">
+    <app-ui-search-input
+      formControlName="nombre"
+      label="Buscar por nombre"
+      placeholder="Escribe un nombre o usuario"
+      buttonText="Filtrar"
+      icon="fa-solid fa-magnifying-glass"
+      [clearable]="true"
+      [hint]="'La búsqueda se activa desde ' + minSearchChars + ' caracteres.'"
+      (search)="onSearchSubmit($event)"
+      (cleared)="onSearchClear()"
+    ></app-ui-search-input>
+  </form>
 
-    <div class="ui-panel__actions">
-      <span class="ui-badge info" *ngIf="totalUsuarios > 0">Registros: {{ totalUsuarios }}</span>
-    </div>
+  <div class="users-existing__loading" *ngIf="loading; else tableTpl">
+    <i class="fa-solid fa-circle-notch fa-spin" aria-hidden="true"></i>
+    <span>Consultando usuarios...</span>
   </div>
 
-  <div class="ui-panel__body">
-    <form class="ui-grid" [formGroup]="searchForm">
-      <div class="ui-field ui-col-6">
-        <label class="ui-label">Buscar por nombre</label>
-
-        <input
-          class="ui-control"
-          type="text"
-          formControlName="nombre"
-          (input)="onBuscarChange()"
-          placeholder="Escribe un nombre (mínimo 6 caracteres)..."
-        />
-
-        <small class="search-hint">
-          Al buscar, la tabla mostrará solo coincidencias desde el carácter {{ minSearchChars }}.
-        </small>
-      </div>
-    </form>
-
-    <div class="empty-state" *ngIf="loading">
-      <i class="fa-solid fa-circle-notch fa-spin"></i>
-      <p>Consultando usuarios...</p>
-    </div>
-
-    <div class="ui-table-wrap" *ngIf="!loading && usuarios.length > 0; else noUsersTable">
-      <table class="ui-table">
-        <thead>
-          <tr>
-            <th>Usuario empresarial</th>
-            <th>Grado y nombre</th>
-            <th>Rol</th>
-            <th>Fecha vencimiento rol</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          <tr *ngFor="let item of usuarios">
-            <td>{{ item.username || 'N/A' }}</td>
-            <td>{{ item.nombreCompleto || 'N/A' }}</td>
-            <td>{{ item.rol || 'Sin rol' }}</td>
-            <td>{{ item.fechaFinRol || 'Sin fecha' }}</td>
-
-            <td>
-              <div class="table-actions">
-                <button
-                  class="ui-btn secondary"
-                  type="button"
-                  title="Editar"
-                  (click)="editar.emit(item)"
-                >
-                  <i class="fa-solid fa-pen-to-square"></i>
-                </button>
-
-                <button
-                  class="ui-btn secondary danger"
-                  type="button"
-                  title="Eliminar"
-                  (click)="eliminar.emit(item)"
-                >
-                  <i class="fa-solid fa-user-xmark"></i>
-                </button>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-
-      <div class="table-pagination" *ngIf="totalUsuarios > 0">
-        <span class="pagination-summary">
-          Página {{ currentPage }} de {{ totalPaginas }} | Registros: {{ totalUsuarios }}
-        </span>
-
-        <div class="pagination-actions">
-          <button
-            class="ui-btn secondary"
-            type="button"
-            (click)="paginaAnterior.emit()"
-            [disabled]="!canGoPrev"
-          >
-            <i class="fa-solid fa-chevron-left"></i>
-            Anterior
-          </button>
-
-          <button
-            class="ui-btn secondary"
-            type="button"
-            (click)="paginaSiguiente.emit()"
-            [disabled]="!canGoNext"
-          >
-            Siguiente
-            <i class="fa-solid fa-chevron-right"></i>
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <ng-template #noUsersTable>
-      <div class="empty-state" *ngIf="!loading">
-        <i class="fa-solid fa-users"></i>
-
-        <p>
-          {{
-            isSearchMode
-              ? (searchForm.controls.nombre.value || '').trim().length < minSearchChars
-                ? 'Escribe mínimo ' + minSearchChars + ' caracteres para activar la búsqueda.'
-                : 'No hay resultados para la búsqueda.'
-              : 'No hay usuarios para mostrar.'
-          }}
-        </p>
-      </div>
-    </ng-template>
-  </div>
-</div>
+  <ng-template #tableTpl>
+    <app-ui-table
+      title="Usuarios existentes"
+      titleIcon="fa-solid fa-users"
+      actionMenuLabel="Acciones del usuario"
+      [columns]="columns"
+      [rows]="usuarios"
+      [actions]="actions"
+      [total]="totalUsuarios"
+      [page]="currentPage"
+      [pageSize]="pageSize"
+      [pageSizeOptions]="[pageSize]"
+      [emptyMessage]="tableEmptyMessage"
+      [stickyActions]="true"
+      (pageChange)="cambiarPagina.emit($event)"
+      (actionClick)="handleAction($event)"
+    ></app-ui-table>
+  </ng-template>
+</section>

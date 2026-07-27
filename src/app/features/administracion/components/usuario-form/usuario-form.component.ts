@@ -12,6 +12,8 @@ import { AbstractControl, FormBuilder, ReactiveFormsModule, Validators } from '@
 import { UiButtonComponent } from '../../../../shared/components/ui-button/ui-button.component';
 import { UiInputComponent } from '../../../../shared/components/ui-input/ui-input.component';
 import { UiSearchInputComponent } from '../../../../shared/components/ui-search-input/ui-search-input.component';
+import { UiTabComponent } from '../../../../shared/components/ui-tabs/ui-tab.component';
+import { UiTabsComponent } from '../../../../shared/components/ui-tabs/ui-tabs.component';
 import { getFormErrorMessage } from '../../../../shared/utils/form-error.util';
 import { UsuarioRolesPanelComponent } from '../usuario-roles-panel/usuario-roles-panel.component';
 
@@ -32,6 +34,8 @@ import { DtoRolCatalogo } from '../../services/usuario-admin.service';
     UiButtonComponent,
     UiInputComponent,
     UiSearchInputComponent,
+    UiTabComponent,
+    UiTabsComponent,
     UsuarioRolesPanelComponent,
   ],
   templateUrl: './usuario-form.component.html',
@@ -104,8 +108,10 @@ export class UsuarioFormComponent implements OnChanges {
   }
 
   /** Cambia la pestana activa sin perder los datos cargados. */
-  setTab(tab: TabKey): void {
-    this.activeTab = tab;
+  setTab(tab: string): void {
+    if (tab === 'datos' || tab === 'contacto' || tab === 'roles') {
+      this.activeTab = tab;
+    }
   }
 
   /** Alterna el estado activo/inactivo que se enviara al guardar. */

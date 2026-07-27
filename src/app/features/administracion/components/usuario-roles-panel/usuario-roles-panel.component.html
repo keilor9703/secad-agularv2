@@ -1,138 +1,98 @@
 <article class="access-section">
-  <h3>Control de acceso</h3>
-
-  <section class="roles-block">
-    <div class="access-section__toolbar">
-      <app-ui-button variant="secondary" icon="fa-solid fa-plus" (buttonClick)="agregarRol.emit()">
-        Agregar rol
-      </app-ui-button>
+  <header class="access-section__header">
+    <div>
+      <h3>Control de acceso</h3>
+      <p>Roles vigentes asociados al usuario consultado.</p>
     </div>
 
-    <form
-      class="role-add-form"
-      *ngIf="showAddRoleForm"
-      [formGroup]="rolForm"
-      (ngSubmit)="guardarRol.emit()"
-    >
-      <div class="ui-grid">
-        <div class="ui-col-6">
-          <app-ui-select
-            formControlName="rolId"
-            label="Rol"
-            placeholder="Seleccione un rol"
-            [options]="rolOptions"
-            [disabled]="editingRole !== null"
-            [required]="true"
-            [error]="getRoleError('rolId')"
-          ></app-ui-select>
-        </div>
+    <app-ui-button variant="secondary" icon="fa-solid fa-plus" (buttonClick)="agregarRol.emit()">
+      Agregar rol
+    </app-ui-button>
+  </header>
 
-        <div class="ui-col-6">
-          <app-ui-input
-            formControlName="fechaFin"
-            label="Fecha fin"
-            type="date"
-            icon="fa-solid fa-calendar-days"
-            [required]="true"
-            [error]="getRoleError('fechaFin')"
-          ></app-ui-input>
-        </div>
-
-        <div class="ui-col-12">
-          <app-ui-input
-            formControlName="justificacion"
-            label="Justificación"
-            placeholder="Motivo de la asignación"
-            [maxlength]="500"
-            [rows]="3"
-            [multiline]="true"
-            [required]="true"
-            [error]="getRoleError('justificacion')"
-          ></app-ui-input>
-        </div>
-      </div>
-
-      <div class="form-actions">
-        <app-ui-button
-          type="submit"
-          variant="primary"
-          icon="fa-solid fa-floppy-disk"
-          [disabled]="savingRole || rolForm.invalid"
-          [loading]="savingRole"
-        >
-          {{ savingRole ? 'Guardando...' : editingRole ? 'Actualizar cambios' : 'Guardar rol' }}
-        </app-ui-button>
-
-        <app-ui-button
-          type="button"
-          variant="secondary"
-          icon="fa-solid fa-ban"
-          (buttonClick)="cancelarRol.emit()"
-        >
-          Cancelar
-        </app-ui-button>
-      </div>
-    </form>
-
-    <div class="ui-table-wrap roles-table-wrap" *ngIf="roles.length > 0; else noRoles">
-      <table class="ui-table roles-table">
-        <thead>
-          <tr>
-            <th>Rol</th>
-            <th>Estado</th>
-            <th>Fecha expiración</th>
-            <th>Justificación</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          <tr *ngFor="let rol of roles">
-            <td>
-              <strong>{{ rol.nombre }}</strong>
-            </td>
-            <td>
-              <span
-                class="ui-badge"
-                [class.success]="rol.estado === 'Vigente'"
-                [class.warning]="rol.estado === 'Vencido'"
-              >
-                {{ rol.estado }}
-              </span>
-            </td>
-            <td>{{ rol.fechaExpiracion || 'Sin fecha' }}</td>
-            <td>{{ rol.justificacion || 'Sin justificación' }}</td>
-            <td>
-              <div class="table-actions">
-                <app-ui-button
-                  size="sm"
-                  variant="secondary"
-                  icon="fa-solid fa-pen-to-square"
-                  (buttonClick)="editarRol.emit(rol)"
-                >
-                  Editar
-                </app-ui-button>
-
-                <app-ui-button
-                  *ngIf="rol.id === superAdministradorRolId"
-                  size="sm"
-                  variant="danger"
-                  icon="fa-solid fa-trash"
-                  [disabled]="deletingRoleId === rol.id"
-                  [loading]="deletingRoleId === rol.id"
-                  (buttonClick)="eliminarRol.emit(rol)"
-                >
-                  {{ deletingRoleId === rol.id ? 'Retirando...' : 'Retirar rol' }}
-                </app-ui-button>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <ng-template #noRoles>
-      <div class="news-state">El usuario no tiene roles asignados actualmente.</div>
-    </ng-template>
-  </section>
+  <app-ui-table
+    title="Roles asignados"
+    titleIcon="fa-solid fa-shield-halved"
+    emptyMessage="El usuario no tiene roles asignados actualmente."
+    [columns]="roleColumns"
+    [rows]="roles"
+    [actions]="roleActions"
+    [total]="roles.length"
+    [showPagination]="false"
+    [stickyActions]="true"
+    actionMenuLabel="Acciones del rol asignado"
+    (actionClick)="handleRoleAction($event)"
+  ></app-ui-table>
 </article>
+
+<app-ui-modal
+  [open]="showAddRoleForm"
+  [title]="roleModalTitle"
+  [subtitle]="roleModalSubtitle"
+  icon="fa-solid fa-shield-halved"
+  size="lg"
+  (closeRequested)="cancelarRol.emit()"
+>
+  <div modal-body class="role-modal-body" [formGroup]="rolForm">
+    <div class="ui-grid role-modal-grid">
+      <div class="ui-col-6">
+        <app-ui-select
+          formControlName="rolId"
+          label="Rol"
+          placeholder="Seleccione un rol"
+          [options]="rolOptions"
+          [disabled]="editingRole !== null"
+          [required]="true"
+          [error]="getRoleError('rolId')"
+        ></app-ui-select>
+      </div>
+
+      <div class="ui-col-6">
+        <app-ui-input
+          formControlName="fechaFin"
+          label="Fecha fin"
+          type="date"
+          icon="fa-solid fa-calendar-days"
+          [required]="true"
+          [error]="getRoleError('fechaFin')"
+        ></app-ui-input>
+      </div>
+
+      <div class="ui-col-12">
+        <app-ui-input
+          formControlName="justificacion"
+          label="Justificación"
+          placeholder="Motivo de la asignación"
+          [maxlength]="500"
+          [rows]="3"
+          [multiline]="true"
+          [required]="true"
+          [error]="getRoleError('justificacion')"
+        ></app-ui-input>
+      </div>
+    </div>
+  </div>
+
+  <div modal-actions class="role-modal-actions">
+    <app-ui-button
+      type="button"
+      variant="secondary"
+      icon="fa-solid fa-ban"
+      [disabled]="savingRole"
+      (buttonClick)="cancelarRol.emit()"
+    >
+      Cancelar
+    </app-ui-button>
+
+    <app-ui-button
+      type="button"
+      variant="primary"
+      icon="fa-solid fa-floppy-disk"
+      [disabled]="savingRole || rolForm.invalid"
+      [loading]="savingRole"
+      (buttonClick)="guardarRol.emit()"
+    >
+      {{ savingRole ? 'Guardando...' : editingRole ? 'Actualizar cambios' : 'Guardar rol' }}
+    </app-ui-button>
+  </div>
+</app-ui-modal>

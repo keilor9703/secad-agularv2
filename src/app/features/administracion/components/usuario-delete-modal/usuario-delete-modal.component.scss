@@ -1,0 +1,29 @@
+:host {
+  display: contents;
+}
+
+.delete-modal-body {
+  display: grid;
+  gap: 14px;
+}
+
+.delete-modal-body p {
+  margin: 0;
+  color: rgba(var(--policia-neutral-oscuro-rgb), 0.95);
+  font-size: calc(13px * var(--font-size-scale));
+  line-height: 1.45;
+}
+
+.delete-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+@media (max-width: 560px) {
+  .delete-modal-actions {
+    flex-direction: column;
+  }
+}

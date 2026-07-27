@@ -3,111 +3,64 @@
 }
 
 .access-section {
-  position: relative;
-  border: 1px solid rgba(21, 27, 59, 0.14);
-  border-radius: 12px;
-  background: var(--ui-surface);
-  padding: 26px 14px 14px;
-  margin-top: 8px;
-}
-
-.access-section h3 {
-  position: absolute;
-  top: -12px;
-  left: 14px;
-  margin: 0;
-  padding: 0 8px;
-  background: var(--ui-surface);
-  color: var(--policia-oscuro);
-  font-size: calc(13px * var(--font-size-scale));
-  font-weight: 900;
-  line-height: 1.2;
-}
-
-.roles-block {
   display: grid;
   gap: 14px;
 }
 
-.access-section__toolbar {
+.access-section__header {
   display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 12px;
-  padding-bottom: 2px;
-}
-
-.role-add-form {
-  display: grid;
+  align-items: flex-start;
+  justify-content: space-between;
   gap: 14px;
-  border: 1px solid rgba(var(--policia-oscuro-rgb), 0.12);
-  border-radius: 12px;
-  padding: 14px;
-  background: rgba(var(--policia-oscuro-rgb), 0.02);
 }
 
-.role-add-form .ui-grid {
+.access-section__header h3 {
+  margin: 0;
+  color: var(--policia-oscuro);
+  font-size: calc(15px * var(--font-size-scale));
+  font-weight: 900;
+}
+
+.access-section__header p {
+  margin: 3px 0 0;
+  color: rgba(var(--policia-neutral-oscuro-rgb), 0.84);
+  font-size: calc(12px * var(--font-size-scale));
+  font-weight: 650;
+}
+
+.role-modal-body {
+  display: block;
+  min-width: 0;
+}
+
+.role-modal-grid {
+  align-items: start;
   column-gap: 16px;
   row-gap: 18px;
 }
 
-.form-actions {
-  padding-top: 12px;
-  border-top: 1px solid rgba(var(--policia-oscuro-rgb), 0.1);
+.role-modal-actions {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
   flex-wrap: wrap;
-}
-
-.roles-table-wrap {
-  border-radius: 12px;
-}
-
-.roles-table td {
-  vertical-align: middle;
-}
-
-.roles-table td:nth-child(4) {
-  max-width: 280px;
-  white-space: normal;
-}
-
-.table-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.news-state {
-  text-align: center;
-  padding: 26px 12px;
-  border: 1px dashed rgba(var(--policia-oscuro-rgb), 0.2);
-  border-radius: 12px;
-  color: rgba(var(--policia-neutral-oscuro-rgb), 0.95);
-  font-weight: 800;
-  background: rgba(var(--policia-oscuro-rgb), 0.02);
+  width: 100%;
 }
 
 @media (max-width: 760px) {
-  .access-section__toolbar,
-  .form-actions,
-  .table-actions {
+  .access-section__header,
+  .role-modal-actions {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .role-modal-grid {
+    grid-template-columns: 1fr;
   }
 }
 
 :host-context(html.dark-mode) {
-  .access-section,
-  .access-section h3 {
-    background: var(--ui-surface);
-  }
-
-  .access-section h3,
-  .roles-table td,
-  .roles-table th {
+  .access-section__header h3 {
     color: var(--ui-text);
   }
 }

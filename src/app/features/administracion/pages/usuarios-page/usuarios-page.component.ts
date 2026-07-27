@@ -1,10 +1,11 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 
 import { AuthService } from '../../../../core/auth/auth.service';
 import { ToastService } from '../../../../core/services/toast.service';
+import { AlertService } from '../../../../shared/services/alert.service';
+import { UsuarioDeleteModalComponent } from '../../components/usuario-delete-modal/usuario-delete-modal.component';
 import { UsuarioFormComponent } from '../../components/usuario-form/usuario-form.component';
 import { UsuariosTableComponent } from '../../components/usuarios-table/usuarios-table.component';
 import {
@@ -23,13 +24,13 @@ import {
 @Component({
   selector: 'app-usuarios',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, UsuarioFormComponent, UsuariosTableComponent],
+  imports: [CommonModule, UsuarioDeleteModalComponent, UsuarioFormComponent, UsuariosTableComponent],
   templateUrl: './usuarios-page.component.html',
   styleUrls: ['./usuarios-page.component.scss'],
 })
 export class UsuariosPageComponent implements OnInit, OnDestroy {
-  private readonly fb = inject(FormBuilder);
   private readonly toast = inject(ToastService);
+  private readonly alert = inject(AlertService);
   private readonly usuarioAdminService = inject(UsuarioAdminService);
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
@@ -56,10 +57,6 @@ export class UsuariosPageComponent implements OnInit, OnDestroy {
   user: UserProfile | null = null;
   usuariosListado: UsuarioListadoItem[] = [];
   rolesCatalogo: DtoRolCatalogo[] = [];
-
-  deleteConfirmForm = this.fb.group({
-    confirmacion: ['', [Validators.required]],
-  });
 
   ngOnInit(): void {
     this.canAssignSuperAdministrador = this.authService.isCurrentUserSuperAdmin();
@@ -292,13 +289,17 @@ export class UsuariosPageComponent implements OnInit, OnDestroy {
       });
   }
 
-  eliminarRol(rol: UserRole): void {
+  async eliminarRol(rol: UserRole): Promise<void> {
     if (!this.user) {
       this.toast.warning('Roles', 'Consulta un usuario primero.');
       return;
     }
 
-    const confirmar = confirm(`¿Deseas retirar el rol "${rol.nombre}" del usuario?`);
+    const confirmar = await this.alert.confirmDelete(
+      'Retirar rol',
+      `¿Deseas retirar el rol "${rol.nombre}" del usuario?`,
+      'Sí, retirar',
+    );
 
     if (!confirmar) {
       return;
@@ -409,6 +410,10 @@ export class UsuariosPageComponent implements OnInit, OnDestroy {
     }
   }
 
+  setPaginaListado(page: number): void {
+    this.currentPage = Math.min(Math.max(page, 1), this.totalPaginasListado);
+  }
+
   editarDesdeListado(item: UsuarioListadoItem): void {
     const identificacion = String(item?.identificacion ?? '').trim();
 
@@ -422,7 +427,6 @@ export class UsuariosPageComponent implements OnInit, OnDestroy {
 
   abrirModalEliminarUsuario(item: UsuarioListadoItem): void {
     this.deletingTarget = item;
-    this.deleteConfirmForm.reset({ confirmacion: '' });
     this.showDeleteUserModal = true;
   }
 
@@ -432,22 +436,11 @@ export class UsuariosPageComponent implements OnInit, OnDestroy {
     }
 
     this.showDeleteUserModal = false;
-    this.deleteConfirmForm.reset({ confirmacion: '' });
     this.deletingTarget = null;
   }
 
   confirmarEliminarUsuario(): void {
     if (!this.deletingTarget) {
-      return;
-    }
-
-    const confirmacion = (this.deleteConfirmForm.controls.confirmacion.getRawValue() ?? '')
-      .trim()
-      .toUpperCase();
-
-    if (confirmacion !== 'ELIMINAR') {
-      this.deleteConfirmForm.markAllAsTouched();
-      this.toast.warning('Usuarios', 'Debes escribir ELIMINAR para confirmar.');
       return;
     }
 

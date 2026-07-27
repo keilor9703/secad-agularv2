@@ -52,62 +52,23 @@
     [currentPage]="currentPage"
     [totalPaginas]="totalPaginasListado"
     [totalUsuarios]="totalUsuariosListado"
+    [pageSize]="pageSize"
     [canGoPrev]="canGoPrevListado()"
     [canGoNext]="canGoNextListado()"
     [searchTerm]="searchNombreListado"
     (buscar)="onSearchNombreListadoChange($event)"
+    (cambiarPagina)="setPaginaListado($event)"
     (paginaAnterior)="prevPaginaListado()"
     (paginaSiguiente)="nextPaginaListado()"
     (editar)="editarDesdeListado($event)"
     (eliminar)="abrirModalEliminarUsuario($event)"
   ></app-usuarios-table>
 
-  <div class="modal-backdrop" *ngIf="showDeleteUserModal">
-    <div class="modal-card">
-      <h3>Confirmar eliminación de usuario</h3>
-
-      <p>
-        Para eliminar el usuario <strong>{{ deletingTarget?.username }}</strong
-        >, escribe <strong>ELIMINAR</strong>.
-      </p>
-
-      <form [formGroup]="deleteConfirmForm" (ngSubmit)="confirmarEliminarUsuario()">
-        <input
-          class="ui-control"
-          type="text"
-          formControlName="confirmacion"
-          placeholder="Escribe ELIMINAR"
-        />
-
-        <small
-          class="field-error"
-          *ngIf="
-            deleteConfirmForm.controls.confirmacion.invalid &&
-            deleteConfirmForm.controls.confirmacion.touched
-          "
-        >
-          Este campo es obligatorio.
-        </small>
-
-        <div class="tab-actions">
-          <button
-            class="ui-btn secondary"
-            type="button"
-            (click)="cerrarModalEliminarUsuario()"
-            [disabled]="deletingUser"
-          >
-            Cancelar
-          </button>
-
-          <button
-            class="ui-btn primary"
-            type="submit"
-            [disabled]="deletingUser || deleteConfirmForm.invalid"
-          >
-            {{ deletingUser ? 'Eliminando...' : 'Confirmar eliminación' }}
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
+  <app-usuario-delete-modal
+    [open]="showDeleteUserModal"
+    [user]="deletingTarget"
+    [loading]="deletingUser"
+    (close)="cerrarModalEliminarUsuario()"
+    (confirm)="confirmarEliminarUsuario()"
+  ></app-usuario-delete-modal>
 </section>

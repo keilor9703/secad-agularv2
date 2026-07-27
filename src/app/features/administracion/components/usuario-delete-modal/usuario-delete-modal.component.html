@@ -1,0 +1,50 @@
+<app-ui-modal
+  [open]="open"
+  title="Confirmar eliminación"
+  subtitle="Esta acción retira el usuario del módulo de administración."
+  icon="fa-solid fa-user-xmark"
+  size="sm"
+  [closeOnBackdrop]="!loading"
+  [closeOnEscape]="!loading"
+  (closeRequested)="requestClose()"
+>
+  <div modal-body class="delete-modal-body" [formGroup]="form">
+    <p>
+      Para eliminar el usuario <strong>{{ user?.username || 'seleccionado' }}</strong
+      >, escribe <strong>ELIMINAR</strong>.
+    </p>
+
+    <app-ui-input
+      formControlName="confirmacion"
+      label="Confirmación"
+      placeholder="Escribe ELIMINAR"
+      autocomplete="off"
+      [required]="true"
+      [error]="confirmationError"
+      (enterPressed)="submit()"
+    ></app-ui-input>
+  </div>
+
+  <div modal-actions class="delete-modal-actions">
+    <app-ui-button
+      type="button"
+      variant="secondary"
+      icon="fa-solid fa-ban"
+      [disabled]="loading"
+      (buttonClick)="requestClose()"
+    >
+      Cancelar
+    </app-ui-button>
+
+    <app-ui-button
+      type="button"
+      variant="danger"
+      icon="fa-solid fa-trash"
+      [loading]="loading"
+      [disabled]="loading"
+      (buttonClick)="submit()"
+    >
+      {{ loading ? 'Eliminando...' : 'Confirmar eliminación' }}
+    </app-ui-button>
+  </div>
+</app-ui-modal>
