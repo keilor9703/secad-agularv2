@@ -9,8 +9,8 @@
 .profile-trigger {
   display: grid;
   min-width: 0;
-  max-width: min(330px, 34vw);
-  height: 48px;
+  max-width: min(470px, 46vw);
+  min-height: 50px;
   grid-template-columns: 38px minmax(0, 1fr) 14px;
   align-items: center;
   gap: 10px;
@@ -64,30 +64,57 @@
 .user-details {
   display: grid;
   min-width: 0;
-  gap: 3px;
+  gap: 2px;
   text-align: left;
 }
 
-.user-name,
-.user-role {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .user-name {
+  overflow: visible;
   color: #ffffff;
-  font-size: calc(0.82rem * var(--font-size-scale, 1));
+  font-size: calc(0.78rem * var(--font-size-scale, 1));
   font-weight: 800;
-  line-height: 1.05;
+  line-height: 1.12;
+  overflow-wrap: anywhere;
+  text-overflow: clip;
+  white-space: normal;
 }
 
 .user-role {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
   color: rgba(255, 255, 255, 0.78);
   font-size: calc(0.66rem * var(--font-size-scale, 1));
   font-weight: 700;
   line-height: 1.08;
   text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.user-role__text {
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: top;
+}
+
+.user-role__track {
+  display: inline-flex;
+  width: max-content;
+  min-width: 100%;
+  gap: 32px;
+  vertical-align: top;
+}
+
+.user-role--scroll .user-role__track {
+  animation: user-role-marquee 11s linear infinite;
+}
+
+.profile-trigger:hover .user-role--scroll .user-role__track,
+.profile-trigger:focus-visible .user-role--scroll .user-role__track {
+  animation-play-state: paused;
 }
 
 .profile-chevron {
@@ -298,6 +325,16 @@
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes user-role-marquee {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(calc(-50% - 16px));
   }
 }
 

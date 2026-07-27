@@ -15,7 +15,15 @@
 
     <span class="user-details">
       <span class="user-name">{{ userName }}</span>
-      <span class="user-role">{{ userRole }}</span>
+      <span class="user-role" [class.user-role--scroll]="shouldScrollUserRole">
+        <span class="user-role__track" *ngIf="shouldScrollUserRole; else fixedRoleTpl">
+          <span>{{ userRole }}</span>
+          <span aria-hidden="true">{{ userRole }}</span>
+        </span>
+        <ng-template #fixedRoleTpl>
+          <span class="user-role__text">{{ userRole }}</span>
+        </ng-template>
+      </span>
     </span>
 
     <i class="fa-solid fa-chevron-down profile-chevron" aria-hidden="true"></i>
@@ -58,7 +66,7 @@
       <dl class="profile-fields">
         <div>
           <dt>Grado</dt>
-          <dd>{{ perfil?.grado || 'Sin información' }}</dd>
+          <dd>{{ perfilGrado || 'Sin información' }}</dd>
         </div>
         <div>
           <dt>Funcionario</dt>

@@ -76,6 +76,14 @@ export class TopbarUserMenuComponent implements OnInit {
     void this.router.navigate(['/login']);
   }
 
+  get perfilGrado(): string {
+    return this.resolvePerfilGrado();
+  }
+
+  get shouldScrollUserRole(): boolean {
+    return this.userRole.length > 28;
+  }
+
   private loadBranding(): void {
     this.brandingService.getPublicConfig().subscribe({
       next: (cfg) => {
@@ -119,11 +127,20 @@ export class TopbarUserMenuComponent implements OnInit {
 
   private applyProfileSummary(): void {
     const name = (this.perfil?.nombreCompleto ?? '').trim();
-    const grade = (this.perfil?.grado ?? '').trim();
+    const grade = this.resolvePerfilGrado();
     const cargo = (this.perfil?.cargo ?? '').trim();
 
     this.userName = name ? [grade, name].filter(Boolean).join(' ') : this.authService.getUsuario();
     this.userRole = cargo || this.brandingRole;
+  }
+
+  private resolvePerfilGrado(): string {
+    return (
+      this.perfil?.gradAlfabetico ??
+      this.perfil?.GradAlfabetico ??
+      this.perfil?.grado ??
+      ''
+    ).trim();
   }
 
   private normalizePhoto(raw: string | null): string | null {
