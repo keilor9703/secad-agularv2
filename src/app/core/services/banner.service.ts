@@ -1,5 +1,5 @@
-import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { Injectable } from '@angular/core';
 import { map, Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { BannerItem } from '../interfaces/banner.interface';
@@ -11,9 +11,9 @@ export class BannerService {
   constructor(private http: HttpClient) {}
 
   getPublicos(): Observable<BannerItem[]> {
-    return this.http.get<BannerItem[]>(this.baseUrl).pipe(
-      map((items) => (items ?? []).map((item, index) => this.normalize(item, index))),
-    );
+    return this.http
+      .get<BannerItem[]>(this.baseUrl)
+      .pipe(map((items) => (items ?? []).map((item, index) => this.normalize(item, index))));
   }
 
   private normalize(item: BannerItem, index: number): BannerItem {
