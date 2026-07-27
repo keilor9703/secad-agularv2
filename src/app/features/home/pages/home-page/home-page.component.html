@@ -2,10 +2,7 @@
   <section class="view-container">
     <!-- Banner  Slider -->
     <div class="slider-wrapper">
-      <div
-        class="main-slider"
-        [style.aspect-ratio]="getActiveBannerAspectRatio()"
-      >
+      <div class="main-slider" [style.aspect-ratio]="getActiveBannerAspectRatio()">
         <div
           class="slide-item"
           *ngFor="let banner of banners; let i = index"
