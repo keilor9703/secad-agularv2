@@ -1,0 +1,25 @@
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-icon blue"><i class="fa-solid fa-users" aria-hidden="true"></i></div>
+    <div class="stat-info">
+      <h3>{{ stats.usuariosActivos | number }}</h3>
+      <p>Usuarios Activos</p>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon green"><i class="fa-solid fa-file-circle-check" aria-hidden="true"></i></div>
+    <div class="stat-info">
+      <h3>{{ stats.reportesGenerados | number }}</h3>
+      <p>Reportes del Mes</p>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon orange"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></div>
+    <div class="stat-info">
+      <h3>{{ stats.alertasSistema | number }}</h3>
+      <p>Roles por Vencer (7 dias)</p>
+    </div>
+  </div>
+</div>

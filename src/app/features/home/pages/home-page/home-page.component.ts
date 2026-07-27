@@ -21,13 +21,22 @@ import { NoticiaService } from '../../../../core/services/noticia.service';
 import { VideoInstitucionalService } from '../../../../core/services/video-institucional.service';
 import { VideoUnidadService } from '../../../../core/services/video-unidad.service';
 import { SafeUrlPipe } from '../../../../shared/pipes/safe-url.pipe';
+import { HomeBannerSliderComponent } from '../../components/home-banner-slider/home-banner-slider.component';
+import { HomeStatsComponent } from '../../components/home-stats/home-stats.component';
 import { NewsItem, NewsTag, SocialLink } from '../../interfaces/home-page.interface';
 import { HomeService, HomeStats } from '../../services/home.service';
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, SafeUrlPipe, RouterLink, RadioPlayerComponent],
+  imports: [
+    CommonModule,
+    SafeUrlPipe,
+    RouterLink,
+    RadioPlayerComponent,
+    HomeBannerSliderComponent,
+    HomeStatsComponent,
+  ],
   templateUrl: './home-page.component.html',
   styleUrls: ['./home-page.component.scss'],
 })

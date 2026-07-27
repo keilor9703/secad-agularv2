@@ -1,0 +1,49 @@
+<div class="slider-wrapper">
+  <div class="main-slider" [style.aspect-ratio]="activeAspectRatio">
+    <div
+      class="slide-item"
+      *ngFor="let banner of banners; let i = index"
+      [class.active]="i === currentBannerIndex"
+    >
+      <img
+        class="slide-image"
+        [src]="getBannerImageUrl(banner)"
+        [alt]="banner.titulo || 'Banner institucional'"
+        [attr.fetchpriority]="i === 0 ? 'high' : null"
+        decoding="async"
+        draggable="false"
+        (load)="onImageLoad(i, $event)"
+      />
+    </div>
+
+    <ng-container *ngIf="banners.length > 1">
+      <button
+        class="slider-arrow slider-arrow--previous"
+        type="button"
+        aria-label="Mostrar banner anterior"
+        (click)="previous.emit()"
+      >
+        <i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
+      </button>
+
+      <button
+        class="slider-arrow slider-arrow--next"
+        type="button"
+        aria-label="Mostrar banner siguiente"
+        (click)="next.emit()"
+      >
+        <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
+      </button>
+    </ng-container>
+
+    <div class="slider-controls">
+      <button
+        type="button"
+        *ngFor="let _ of banners; let i = index"
+        [class.active]="i === currentBannerIndex"
+        (click)="selectBanner.emit(i)"
+        [attr.aria-label]="'Cambiar a banner ' + (i + 1)"
+      ></button>
+    </div>
+  </div>
+</div>

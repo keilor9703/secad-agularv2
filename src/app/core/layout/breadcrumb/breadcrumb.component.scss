@@ -22,8 +22,8 @@
   &::after {
     position: absolute;
     inset: auto 0 0;
-    height: 2px;
-    background: linear-gradient(90deg, var(--policia-acento), rgba(8, 166, 203, 0.46), transparent);
+    height: 1px;
+    background: rgba(8, 166, 203, 0.58);
     content: '';
     pointer-events: none;
   }
@@ -63,31 +63,29 @@
 
 .breadcrumb-brand__mark {
   display: grid;
-  width: 34px;
-  height: 34px;
-  flex: 0 0 34px;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
   place-items: center;
-  border: 1px solid rgba(8, 166, 203, 0.22);
-  border-radius: 9px;
-  background: linear-gradient(135deg, #00193a, #0e1f38);
-  box-shadow:
-    inset 0 1px rgba(255, 255, 255, 0.14),
-    0 5px 12px rgba(15, 42, 74, 0.16);
 }
 
 .breadcrumb-brand__logo {
-  width: 27px;
-  height: 27px;
-  flex: 0 0 27px;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
   object-fit: contain;
-  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.38));
+  filter:
+    drop-shadow(0 1px 2px rgba(0, 25, 58, 0.38))
+    drop-shadow(0 0 1px rgba(0, 25, 58, 0.58));
   transition:
     filter 180ms ease,
     transform 180ms ease;
 }
 
 .breadcrumb-brand:hover .breadcrumb-brand__logo {
-  filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.42));
+  filter:
+    drop-shadow(0 2px 3px rgba(0, 25, 58, 0.42))
+    drop-shadow(0 0 1px rgba(0, 25, 58, 0.68));
   transform: scale(1.04);
 }
 
@@ -177,8 +175,7 @@
   }
 
   .breadcrumb-brand__mark {
-    border-color: rgba(200, 255, 0, 0.24);
-    background: linear-gradient(135deg, #00152f, #10243d);
+    background: transparent;
   }
 
   .breadcrumb-link,
@@ -212,13 +209,12 @@
     width: 32px;
     height: 32px;
     flex-basis: 32px;
-    border-radius: 8px;
   }
 
   .breadcrumb-brand__logo {
-    width: 25px;
-    height: 25px;
-    flex-basis: 25px;
+    width: 29px;
+    height: 29px;
+    flex-basis: 29px;
   }
 
   .breadcrumb-brand__name {

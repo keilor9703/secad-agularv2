@@ -1,86 +1,21 @@
 <main class="content-area">
   <section class="view-container">
-    <!-- Banner  Slider -->
-    <div class="slider-wrapper">
-      <div class="main-slider" [style.aspect-ratio]="getActiveBannerAspectRatio()">
-        <div
-          class="slide-item"
-          *ngFor="let banner of banners; let i = index"
-          [class.active]="i === currentBannerIndex"
-        >
-          <img
-            class="slide-image"
-            [src]="getBannerImageUrl(banner)"
-            [alt]="banner.titulo || 'Banner institucional'"
-            [attr.fetchpriority]="i === 0 ? 'high' : null"
-            decoding="async"
-            draggable="false"
-            (load)="onBannerImageLoad(i, $event)"
-          />
-        </div>
-
-        @if (banners.length > 1) {
-          <!-- NavegaciÃ³n lateral accesible para escritorio, teclado y dispositivos tÃ¡ctiles. -->
-          <button
-            class="slider-arrow slider-arrow--previous"
-            type="button"
-            aria-label="Mostrar banner anterior"
-            (click)="showPreviousBanner()"
-          >
-            <i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
-          </button>
-
-          <button
-            class="slider-arrow slider-arrow--next"
-            type="button"
-            aria-label="Mostrar banner siguiente"
-            (click)="showNextBanner()"
-          >
-            <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
-          </button>
-        }
-
-        <div class="slider-controls">
-          <button
-            type="button"
-            *ngFor="let _ of banners; let i = index"
-            [class.active]="i === currentBannerIndex"
-            (click)="goToBanner(i)"
-            [attr.aria-label]="'Cambiar a banner ' + (i + 1)"
-          ></button>
-        </div>
-      </div>
-    </div>
+    <app-home-banner-slider
+      [banners]="banners"
+      [currentBannerIndex]="currentBannerIndex"
+      [activeAspectRatio]="getActiveBannerAspectRatio()"
+      (previous)="showPreviousBanner()"
+      (next)="showNextBanner()"
+      (selectBanner)="goToBanner($event)"
+      (bannerImageLoad)="onBannerImageLoad($event.index, $event.event)"
+    ></app-home-banner-slider>
 
     @if (isMobile()) {
       <!-- Reproductor mÃ³vil: debajo del banner y separado de la navegaciÃ³n inferior. -->
       <app-radio-player class="home-mobile-radio" variant="mobile"></app-radio-player>
     }
 
-    <!-- Stats Grid -->
-    <div class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-icon blue"><i class="fa-solid fa-users"></i></div>
-        <div class="stat-info">
-          <h3>{{ stats.usuariosActivos | number }}</h3>
-          <p>Usuarios Activos</p>
-        </div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-icon green"><i class="fa-solid fa-file-circle-check"></i></div>
-        <div class="stat-info">
-          <h3>{{ stats.reportesGenerados | number }}</h3>
-          <p>Reportes del Mes</p>
-        </div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-icon orange"><i class="fa-solid fa-triangle-exclamation"></i></div>
-        <div class="stat-info">
-          <h3>{{ stats.alertasSistema | number }}</h3>
-          <p>Roles por Vencer (7 dias)</p>
-        </div>
-      </div>
-    </div>
+    <app-home-stats [stats]="stats"></app-home-stats>
 
     <!-- Nueva estructura: SecciÃ³n Multimedia (8 cols) + Noticias (4 cols) -->
     <div class="home-multimedia-grid">
