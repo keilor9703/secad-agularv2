@@ -1,6 +1,6 @@
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { CommonModule } from '@angular/common';
-import { Component, HostListener, inject, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, HostListener, inject, OnDestroy, OnInit } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { map } from 'rxjs';
@@ -30,8 +30,6 @@ export class HomePageComponent implements OnInit, OnDestroy {
 
   private readonly breakpointObserver = inject(BreakpointObserver);
   private readonly bannerAspectRatios = new Map<number, number>();
-  private isBannerHovered = false;
-  private isBannerFocusWithin = false;
 
   readonly isMobile = toSignal(
     this.breakpointObserver.observe('(max-width: 768px)').pipe(map(({ matches }) => matches)),
@@ -84,6 +82,7 @@ export class HomePageComponent implements OnInit, OnDestroy {
 
   constructor(
     private bannerService: BannerService,
+    private cdr: ChangeDetectorRef,
     private homeService: HomeService,
     private videoUnidadService: VideoUnidadService,
     private videoInstitucionalService: VideoInstitucionalService,
@@ -173,12 +172,12 @@ export class HomePageComponent implements OnInit, OnDestroy {
           .slice()
           .sort((a, b) => a.orden - b.orden);
         this.banners = ordered;
-        this.currentBannerIndex = 0;
+        this.setCurrentBanner(0, false);
         this.startBannerRotation();
       },
       error: () => {
         this.banners = this.getFallbackBanners();
-        this.currentBannerIndex = 0;
+        this.setCurrentBanner(0, false);
         this.startBannerRotation();
       },
     });
@@ -324,8 +323,7 @@ export class HomePageComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.currentBannerIndex = index;
-    this.startBannerRotation();
+    this.setCurrentBanner(index);
   }
 
   showPreviousBanner(): void {
@@ -357,35 +355,10 @@ export class HomePageComponent implements OnInit, OnDestroy {
     );
 
     this.bannerAspectRatios.set(index, Number(safeRatio.toFixed(4)));
+    this.cdr.markForCheck();
   }
 
-  onBannerMouseEnter(): void {
-    this.isBannerHovered = true;
-    this.syncBannerRotation();
-  }
 
-  onBannerMouseLeave(): void {
-    this.isBannerHovered = false;
-    this.syncBannerRotation();
-  }
-
-  onBannerFocusIn(event: FocusEvent): void {
-    const target = event.target as HTMLElement;
-    this.isBannerFocusWithin = target.matches(':focus-visible');
-    this.syncBannerRotation();
-  }
-
-  onBannerFocusOut(event: FocusEvent): void {
-    const slider = event.currentTarget as HTMLElement;
-    const nextTarget = event.relatedTarget as Node | null;
-
-    if (nextTarget && slider.contains(nextTarget)) {
-      return;
-    }
-
-    this.isBannerFocusWithin = false;
-    this.syncBannerRotation();
-  }
 
   getBannerImageUrl(item: BannerItem): string {
     const raw = (item.urlImagen ?? '').trim();
@@ -453,37 +426,41 @@ export class HomePageComponent implements OnInit, OnDestroy {
 
   private startBannerRotation(): void {
     this.stopBannerRotation();
-    if (this.banners.length <= 1 || this.isBannerHovered || this.isBannerFocusWithin) {
+    if (this.banners.length <= 1) {
       return;
     }
 
-    this.bannerTimer = setInterval(() => {
-      this.currentBannerIndex = (this.currentBannerIndex + 1) % this.banners.length;
-    }, 7000);
+    this.bannerTimer = window.setInterval(() => {
+      this.moveBanner(1, false);
+    }, 5000);
   }
 
-  private moveBanner(offset: -1 | 1): void {
+  private moveBanner(offset: -1 | 1, restart = true): void {
     const total = this.banners.length;
     if (total <= 1) {
       return;
     }
 
-    this.currentBannerIndex = (this.currentBannerIndex + offset + total) % total;
-    this.startBannerRotation();
+    const nextIndex = (this.currentBannerIndex + offset + total) % total;
+    this.setCurrentBanner(nextIndex, restart);
   }
 
-  private syncBannerRotation(): void {
-    if (this.isBannerHovered || this.isBannerFocusWithin) {
-      this.stopBannerRotation();
+  private setCurrentBanner(index: number, restart = true): void {
+    if (index < 0 || index >= this.banners.length) {
       return;
     }
 
-    this.startBannerRotation();
+    this.currentBannerIndex = index;
+    this.cdr.markForCheck();
+
+    if (restart) {
+      this.startBannerRotation();
+    }
   }
 
   private stopBannerRotation(): void {
     if (this.bannerTimer) {
-      clearInterval(this.bannerTimer);
+      window.clearInterval(this.bannerTimer);
       this.bannerTimer = null;
     }
   }

@@ -5,10 +5,6 @@
       <div
         class="main-slider"
         [style.aspect-ratio]="getActiveBannerAspectRatio()"
-        (mouseenter)="onBannerMouseEnter()"
-        (mouseleave)="onBannerMouseLeave()"
-        (focusin)="onBannerFocusIn($event)"
-        (focusout)="onBannerFocusOut($event)"
       >
         <div
           class="slide-item"
@@ -27,7 +23,7 @@
         </div>
 
         @if (banners.length > 1) {
-          <!-- Navegación lateral accesible para escritorio, teclado y dispositivos táctiles. -->
+          <!-- NavegaciÃ³n lateral accesible para escritorio, teclado y dispositivos tÃ¡ctiles. -->
           <button
             class="slider-arrow slider-arrow--previous"
             type="button"
@@ -60,7 +56,7 @@
     </div>
 
     @if (isMobile()) {
-      <!-- Reproductor móvil: debajo del banner y separado de la navegación inferior. -->
+      <!-- Reproductor mÃ³vil: debajo del banner y separado de la navegaciÃ³n inferior. -->
       <app-radio-player class="home-mobile-radio" variant="mobile"></app-radio-player>
     }
 
@@ -89,9 +85,9 @@
       </div>
     </div>
 
-    <!-- Nueva estructura: Sección Multimedia (8 cols) + Noticias (4 cols) -->
+    <!-- Nueva estructura: SecciÃ³n Multimedia (8 cols) + Noticias (4 cols) -->
     <div class="home-multimedia-grid">
-      <!-- Sección Multimedia - 8 columnas -->
+      <!-- SecciÃ³n Multimedia - 8 columnas -->
       <div class="multimedia-section">
         <!-- Video de la Unidad (16:9 aspect ratio) -->
         <div class="card-view rounded-xl shadow-subtle video-inst-card">
@@ -170,7 +166,7 @@
         </div>
       </div>
 
-      <!-- Sección de Noticias - 4 columnas -->
+      <!-- SecciÃ³n de Noticias - 4 columnas -->
       <div class="news-section">
         <div class="card-view rounded-xl shadow-subtle news-section-card">
           <div class="news-head">
@@ -208,7 +204,7 @@
                     <i class="fa-solid fa-heart" [class.liked]="hasLiked(item.id)"></i>
                     {{ item.megusta }}
                   </button>
-                  <span class="news-link">Leer más <i class="fa-solid fa-arrow-right"></i></span>
+                  <span class="news-link">Leer mÃ¡s <i class="fa-solid fa-arrow-right"></i></span>
                 </div>
               </div>
             </article>
@@ -224,7 +220,7 @@
       <p style="color: #666; margin: 10px">No hay movimientos recientes en tu cuenta.</p>
     </div>
 
-    <!-- Spotlight: Personajes del Mes y Línea de Mando -->
+    <!-- Spotlight: Personajes del Mes y LÃ­nea de Mando -->
     <section class="home-spotlight mt-4">
       <div class="card-view rounded-xl shadow-subtle">
         <div class="card-head card-head--dark">
