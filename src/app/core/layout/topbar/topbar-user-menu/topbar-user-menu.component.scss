@@ -37,6 +37,10 @@
     outline: 3px solid rgba(200, 255, 0, 0.35);
     outline-offset: 2px;
   }
+
+  &.is-loading {
+    cursor: progress;
+  }
 }
 
 .user-avatar {
@@ -61,11 +65,51 @@
   object-position: center;
 }
 
+.user-avatar--skeleton {
+  border-color: rgba(255, 255, 255, 0.16);
+  background: linear-gradient(
+    100deg,
+    rgba(255, 255, 255, 0.14) 0%,
+    rgba(255, 255, 255, 0.28) 40%,
+    rgba(255, 255, 255, 0.14) 80%
+  );
+  background-size: 220% 100%;
+  animation: profile-skeleton 1.1s ease-in-out infinite;
+}
+
 .user-details {
   display: grid;
   min-width: 0;
   gap: 2px;
   text-align: left;
+}
+
+.user-details--skeleton {
+  gap: 7px;
+}
+
+.profile-skeleton {
+  display: block;
+  height: 10px;
+  max-width: 100%;
+  border-radius: 999px;
+  background: linear-gradient(
+    100deg,
+    rgba(255, 255, 255, 0.16) 0%,
+    rgba(255, 255, 255, 0.34) 40%,
+    rgba(255, 255, 255, 0.16) 80%
+  );
+  background-size: 220% 100%;
+  animation: profile-skeleton 1.1s ease-in-out infinite;
+}
+
+.profile-skeleton--name {
+  width: min(165px, 84%);
+  height: 12px;
+}
+
+.profile-skeleton--role {
+  width: min(118px, 68%);
 }
 
 .user-name {
@@ -310,10 +354,31 @@
 }
 
 .profile-modal__loading {
-  padding: 28px 18px;
-  color: #64748b;
-  font-size: calc(0.88rem * var(--font-size-scale, 1));
-  text-align: center;
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr);
+  gap: 12px 18px;
+  padding: 18px;
+}
+
+.profile-modal__photo-skeleton,
+.profile-modal__field-skeleton {
+  display: block;
+  border-radius: 12px;
+  background: linear-gradient(100deg, #e5eaf0 0%, #f6f8fb 42%, #e5eaf0 82%);
+  background-size: 220% 100%;
+  animation: profile-skeleton 1.1s ease-in-out infinite;
+}
+
+.profile-modal__photo-skeleton {
+  grid-row: span 5;
+  width: 150px;
+  aspect-ratio: 3 / 4;
+}
+
+.profile-modal__field-skeleton {
+  width: 100%;
+  height: 34px;
+  align-self: start;
 }
 
 @keyframes dropdown-in {
@@ -335,6 +400,16 @@
 
   to {
     transform: translateX(calc(-50% - 16px));
+  }
+}
+
+@keyframes profile-skeleton {
+  from {
+    background-position: 120% 0;
+  }
+
+  to {
+    background-position: -120% 0;
   }
 }
 
@@ -372,7 +447,17 @@
     grid-template-columns: 1fr;
   }
 
+  .profile-modal__loading {
+    grid-template-columns: 1fr;
+  }
+
   .profile-photo {
+    width: min(150px, 55vw);
+    justify-self: center;
+  }
+
+  .profile-modal__photo-skeleton {
+    grid-row: auto;
     width: min(150px, 55vw);
     justify-self: center;
   }

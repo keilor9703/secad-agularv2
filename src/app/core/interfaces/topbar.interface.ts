@@ -11,6 +11,7 @@ export interface MiPerfilDto {
   gradAlfabetico?: string;
   GradAlfabetico?: string;
   grado?: string;
+  nombreGrado?: string;
   nombreCompleto?: string;
   cargo?: string;
   situacionLaboral?: string;

@@ -15,12 +15,13 @@ import { BrandingService } from '../../../services/branding.service';
   styleUrl: './topbar-user-menu.component.scss',
 })
 export class TopbarUserMenuComponent implements OnInit {
-  userName = 'Usuario';
-  userRole = 'OFTIC';
+  userName = '';
+  userRole = '';
   userPhotoUrl: string | null = null;
   perfil: MiPerfilDto | null = null;
   profileModalOpen = false;
   profileLoading = false;
+  profileSummaryLoading = true;
   dropdownOpen = false;
 
   private brandingRole = 'OFTIC';
@@ -33,7 +34,6 @@ export class TopbarUserMenuComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.userName = this.authService.getUsuario();
     this.loadBranding();
     this.loadMyPhoto();
     this.loadMyProfile(false);
@@ -84,6 +84,10 @@ export class TopbarUserMenuComponent implements OnInit {
     return this.userRole.length > 28;
   }
 
+  get hasProfileSummary(): boolean {
+    return !this.profileSummaryLoading && !!(this.userName || this.userRole);
+  }
+
   private loadBranding(): void {
     this.brandingService.getPublicConfig().subscribe({
       next: (cfg) => {
@@ -111,15 +115,18 @@ export class TopbarUserMenuComponent implements OnInit {
 
   private loadMyProfile(showLoading: boolean): void {
     this.profileLoading = showLoading;
+    this.profileSummaryLoading = !this.perfil;
 
     this.http.get<MiPerfilDto>(`${environment.apiBaseUrl}/Usuario/MiPerfil`).subscribe({
       next: (data) => {
         this.perfil = data ?? {};
         this.profileLoading = false;
+        this.profileSummaryLoading = false;
         this.applyProfileSummary();
       },
       error: () => {
         this.profileLoading = false;
+        this.profileSummaryLoading = false;
         this.applyProfileSummary();
       },
     });

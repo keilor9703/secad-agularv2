@@ -1,19 +1,24 @@
 <div class="topbar-user">
   <button
     class="profile-trigger"
+    [class.is-loading]="profileSummaryLoading"
     type="button"
     [attr.aria-expanded]="dropdownOpen"
+    [attr.aria-busy]="profileSummaryLoading"
     aria-haspopup="menu"
     (click)="toggleDropdown($event)"
   >
-    <span class="user-avatar">
+    <span class="user-avatar" *ngIf="hasProfileSummary; else avatarSkeletonTpl">
       <img *ngIf="userPhotoUrl; else userIconTpl" [src]="userPhotoUrl" alt="" class="user-avatar-img" />
       <ng-template #userIconTpl>
         <i class="fa-solid fa-user" aria-hidden="true"></i>
       </ng-template>
     </span>
+    <ng-template #avatarSkeletonTpl>
+      <span class="user-avatar user-avatar--skeleton" aria-hidden="true"></span>
+    </ng-template>
 
-    <span class="user-details">
+    <span class="user-details" *ngIf="hasProfileSummary; else summarySkeletonTpl">
       <span class="user-name">{{ userName }}</span>
       <span class="user-role" [class.user-role--scroll]="shouldScrollUserRole">
         <span class="user-role__track" *ngIf="shouldScrollUserRole; else fixedRoleTpl">
@@ -25,6 +30,12 @@
         </ng-template>
       </span>
     </span>
+    <ng-template #summarySkeletonTpl>
+      <span class="user-details user-details--skeleton" aria-hidden="true">
+        <span class="profile-skeleton profile-skeleton--name"></span>
+        <span class="profile-skeleton profile-skeleton--role"></span>
+      </span>
+    </ng-template>
 
     <i class="fa-solid fa-chevron-down profile-chevron" aria-hidden="true"></i>
   </button>
@@ -88,7 +99,10 @@
     </div>
 
     <ng-template #loadingTpl>
-      <div class="profile-modal__loading">Cargando perfil...</div>
+      <div class="profile-modal__loading" aria-hidden="true">
+        <span class="profile-modal__photo-skeleton"></span>
+        <span class="profile-modal__field-skeleton" *ngFor="let item of [1, 2, 3, 4, 5]"></span>
+      </div>
     </ng-template>
   </section>
 </div>
