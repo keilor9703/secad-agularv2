@@ -1,31 +1,18 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { BannerItem } from '../interfaces/banner.interface';
+import { BannerService } from './banner.service';
 
-export interface DtoSliders {
-  idSlider: number;
-  titulo?: string | null;
-  subtitulo?: string | null;
-  urlImagen?: string | null;
-  urlDestino?: string | null;
-  orden: number;
-  vigente: number;
-  fechaInicio?: string | null;
-  fechaFin?: string | null;
-}
+export type DtoSliders = BannerItem;
 
 @Injectable({ providedIn: 'root' })
 export class SliderService {
-  private readonly apiUrl = environment.sliderApiUrl;
-  public readonly imageBaseUrl = environment.sliderMediaBaseUrl;
+  public readonly imageBaseUrl = environment.mediaBaseUrl || environment.sliderMediaBaseUrl || '';
 
-  constructor(private http: HttpClient) {}
+  constructor(private bannerService: BannerService) {}
 
-  /**
-   * Obtiene los sliders desde la nueva API externa configurada.
-   */
-  getPublicos(): Observable<DtoSliders[]> {
-    return this.http.get<DtoSliders[]>(this.apiUrl);
+  getPublicos(): Observable<BannerItem[]> {
+    return this.bannerService.getPublicos();
   }
 }

@@ -1,6 +1,7 @@
-export const environment = {
+﻿export const environment = {
   production: true,
   apiBaseUrl: '/api',
+  bannerApiUrl: '/api/Banner',
   mediaBaseUrl: 'http://srvdockergusof.policia.gov.co:8088',
   sliderApiUrl: 'http://srvdockergusof.policia.gov.co:8088/api/Slider',
   sliderMediaBaseUrl: 'http://srvdockergusof.policia.gov.co:8088',

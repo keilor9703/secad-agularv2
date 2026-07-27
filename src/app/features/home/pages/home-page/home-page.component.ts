@@ -6,9 +6,10 @@ import { RouterLink } from '@angular/router';
 import { map } from 'rxjs';
 import { environment } from '../../../../../environments/environment';
 import { RadioPlayerComponent } from '../../../../core/layout/footer/radio-player/radio-player.component';
+import { BannerItem } from '../../../../core/interfaces/banner.interface';
 import { DtoLineaMando, LineaMandoService } from '../../../../core/services/linea-mando.service';
+import { BannerService } from '../../../../core/services/banner.service';
 import { NoticiaService } from '../../../../core/services/noticia.service';
-import { DtoSliders, SliderService } from '../../../../core/services/slider.service';
 import { VideoInstitucionalService } from '../../../../core/services/video-institucional.service';
 import { VideoUnidadService } from '../../../../core/services/video-unidad.service';
 import { SafeUrlPipe } from '../../../../shared/pipes/safe-url.pipe';
@@ -32,16 +33,12 @@ export class HomePageComponent implements OnInit, OnDestroy {
   private isBannerHovered = false;
   private isBannerFocusWithin = false;
 
-  /**
-   * Evita crear dos reproductores simultáneos: en escritorio existe en el
-   * footer y en móvil se crea debajo del banner de Inicio.
-   */
   readonly isMobile = toSignal(
     this.breakpointObserver.observe('(max-width: 768px)').pipe(map(({ matches }) => matches)),
     { initialValue: this.breakpointObserver.isMatched('(max-width: 768px)') },
   );
 
-  banners: DtoSliders[] = [];
+  banners: BannerItem[] = [];
   stats: HomeStats = {
     usuariosActivos: 0,
     reportesGenerados: 0,
@@ -54,6 +51,9 @@ export class HomePageComponent implements OnInit, OnDestroy {
   lineaMando: DtoLineaMando[] = [];
   lineaMandoLightboxOpen = false;
   lineaMandoLightboxItem: DtoLineaMando | null = null;
+  news: NewsItem[] = [];
+  newsModalOpen = false;
+  selectedNews: NewsItem | null = null;
 
   socialLinks: SocialLink[] = [
     {
@@ -83,7 +83,7 @@ export class HomePageComponent implements OnInit, OnDestroy {
   ];
 
   constructor(
-    private sliderService: SliderService,
+    private bannerService: BannerService,
     private homeService: HomeService,
     private videoUnidadService: VideoUnidadService,
     private videoInstitucionalService: VideoInstitucionalService,
@@ -100,10 +100,14 @@ export class HomePageComponent implements OnInit, OnDestroy {
     this.loadNoticias();
   }
 
+  ngOnDestroy(): void {
+    this.stopBannerRotation();
+    document.body.classList.remove('ui-modal-open');
+  }
+
   loadNoticias(): void {
     this.noticiaService.getActivas().subscribe({
       next: (noticias) => {
-        // Ordenar por fecha descendente y limitar a 5 noticias más recientes
         const sorted = noticias
           .sort((a, b) => new Date(b.fechaCreacion).getTime() - new Date(a.fechaCreacion).getTime())
           .slice(0, 5);
@@ -133,20 +137,17 @@ export class HomePageComponent implements OnInit, OnDestroy {
   private getNoticiaImageUrl(imagenNoticia: string | null | undefined): string {
     const raw = (imagenNoticia ?? '').trim();
     if (!raw) return '';
-    if (raw.startsWith('http://') || raw.startsWith('https://') || raw.startsWith('data:'))
+    if (raw.startsWith('http://') || raw.startsWith('https://') || raw.startsWith('data:')) {
       return raw;
+    }
 
-    // Si la imagen viene como /api/... o simplemente el nombre, apuntamos al servidor externo
     if (raw.startsWith('/api/')) {
-      return `${this.sliderService.imageBaseUrl}${raw}`;
+      return `${this.getMediaBaseUrl()}${raw}`;
     }
 
     const fileName = raw.split('/').filter(Boolean).pop() ?? '';
-    // Como no sabemos la ruta exacta de las imágenes en el nuevo API,
-    // asumimos que el API de Slider/Image o similar podría servirlas o que vienen con ruta completa.
-    // Si viene solo el nombre, intentamos el endpoint que parece ser el estándar en este server.
     return fileName
-      ? `${this.sliderService.imageBaseUrl}/api/NoticiaUpload/Imagen/${encodeURIComponent(fileName)}`
+      ? `${this.getMediaBaseUrl()}/api/NoticiaUpload/Imagen/${encodeURIComponent(fileName)}`
       : '';
   }
 
@@ -163,13 +164,8 @@ export class HomePageComponent implements OnInit, OnDestroy {
     }
   }
 
-  ngOnDestroy(): void {
-    this.stopBannerRotation();
-    document.body.classList.remove('ui-modal-open');
-  }
-
   private loadBanners(): void {
-    this.sliderService.getPublicos().subscribe({
+    this.bannerService.getPublicos().subscribe({
       next: (items) => {
         const now = new Date();
         const ordered = (items ?? [])
@@ -188,7 +184,7 @@ export class HomePageComponent implements OnInit, OnDestroy {
     });
   }
 
-  private isBannerVigenteNow(item: DtoSliders, now: Date): boolean {
+  private isBannerVigenteNow(item: BannerItem, now: Date): boolean {
     if (Number(item?.vigente ?? 0) !== 1) {
       return false;
     }
@@ -214,11 +210,7 @@ export class HomePageComponent implements OnInit, OnDestroy {
     }
 
     const parsed = new Date(raw);
-    if (Number.isNaN(parsed.getTime())) {
-      return null;
-    }
-
-    return parsed;
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
   }
 
   private loadStats(): void {
@@ -254,8 +246,7 @@ export class HomePageComponent implements OnInit, OnDestroy {
   private loadVideoInstitucional(): void {
     this.videoInstitucionalService.getCurrent().subscribe({
       next: (data) => {
-        this.videoInstitucionalUrl =
-          data?.hasVideo && data.data?.embedUrl ? data.data.embedUrl : '';
+        this.videoInstitucionalUrl = data?.hasVideo && data.data?.embedUrl ? data.data.embedUrl : '';
       },
       error: () => {
         this.videoInstitucionalUrl = '';
@@ -380,8 +371,6 @@ export class HomePageComponent implements OnInit, OnDestroy {
 
   onBannerFocusIn(event: FocusEvent): void {
     const target = event.target as HTMLElement;
-
-    // El clic con mouse ya está cubierto por hover; solo pausamos el foco de teclado.
     this.isBannerFocusWithin = target.matches(':focus-visible');
     this.syncBannerRotation();
   }
@@ -398,7 +387,7 @@ export class HomePageComponent implements OnInit, OnDestroy {
     this.syncBannerRotation();
   }
 
-  getBannerImageUrl(item: DtoSliders): string {
+  getBannerImageUrl(item: BannerItem): string {
     const raw = (item.urlImagen ?? '').trim();
     if (!raw) {
       return '';
@@ -408,12 +397,10 @@ export class HomePageComponent implements OnInit, OnDestroy {
       return raw;
     }
 
-    // Si la URL empieza con /api/Slider/Image/, viene de la nueva API externa configurada.
     if (raw.startsWith('/api/Slider/Image/')) {
-      return `${this.sliderService.imageBaseUrl}${raw}`;
+      return `${this.getMediaBaseUrl()}${raw}`;
     }
 
-    // Si viene URL absoluta/local con /uploads/sliders, resolvemos por API para evitar problemas de host/puerto/proxy.
     const uploadPathIndex = raw.toLowerCase().indexOf('/uploads/sliders/');
     if (uploadPathIndex >= 0) {
       const fileName = raw.substring(uploadPathIndex).split('/').filter(Boolean).pop() ?? '';
@@ -425,19 +412,24 @@ export class HomePageComponent implements OnInit, OnDestroy {
       const fileName = normalized.split('/').filter(Boolean).pop() ?? '';
       return fileName ? `${this.getApiBaseUrl()}/Slider/Image/${encodeURIComponent(fileName)}` : '';
     }
+
     if (raw.startsWith('http://') || raw.startsWith('https://')) {
       return raw;
     }
+
     if (raw.startsWith('/')) {
       return `${this.getApiOrigin()}${raw}`;
     }
 
-    // Si viene solo el nombre de archivo, apuntamos a la carpeta pública de sliders.
     if (/^[^/]+\.(jpg|jpeg|png|webp)$/i.test(normalized)) {
       return `${this.getApiBaseUrl()}/Slider/Image/${encodeURIComponent(normalized)}`;
     }
 
     return `/${raw}`;
+  }
+
+  private getMediaBaseUrl(): string {
+    return (environment.mediaBaseUrl || environment.sliderMediaBaseUrl || '').trim().replace(/\/+$/, '');
   }
 
   private getApiBaseUrl(): string {
@@ -450,6 +442,7 @@ export class HomePageComponent implements OnInit, OnDestroy {
     if (!/^https?:\/\//i.test(base)) {
       return '';
     }
+
     try {
       const url = new URL(base);
       return `${url.protocol}//${url.host}`;
@@ -495,10 +488,10 @@ export class HomePageComponent implements OnInit, OnDestroy {
     }
   }
 
-  private getFallbackBanners(): DtoSliders[] {
+  private getFallbackBanners(): BannerItem[] {
     return [
       {
-        idSlider: 1,
+        idBanner: 1,
         titulo: 'SISGE',
         subtitulo: 'Banner informativo',
         urlImagen: 'banner/banner1.jpg',
@@ -507,7 +500,7 @@ export class HomePageComponent implements OnInit, OnDestroy {
         vigente: 1,
       },
       {
-        idSlider: 2,
+        idBanner: 2,
         titulo: 'SISGE',
         subtitulo: 'Banner informativo',
         urlImagen: 'banner/banner2.jpg',
@@ -516,7 +509,7 @@ export class HomePageComponent implements OnInit, OnDestroy {
         vigente: 1,
       },
       {
-        idSlider: 3,
+        idBanner: 3,
         titulo: 'SISGE',
         subtitulo: 'Banner informativo',
         urlImagen: 'banner/banner3.jpg',
@@ -526,11 +519,6 @@ export class HomePageComponent implements OnInit, OnDestroy {
       },
     ];
   }
-
-  news: NewsItem[] = [];
-
-  newsModalOpen = false;
-  selectedNews: NewsItem | null = null;
 
   openNews(item: NewsItem): void {
     this.selectedNews = item;

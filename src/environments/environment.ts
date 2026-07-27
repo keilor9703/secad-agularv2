@@ -1,6 +1,8 @@
-export const environment = {
+﻿export const environment = {
   production: false,
   apiBaseUrl: '/api',
+  bannerApiUrl: '/api/Banner',
+  mediaBaseUrl: 'http://srvdockergusof.policia.gov.co:8088',
   sliderApiUrl: 'http://srvdockergusof.policia.gov.co:8088/api/Slider',
   sliderMediaBaseUrl: 'http://srvdockergusof.policia.gov.co:8088',
   noticiaApiUrl: 'http://srvdockergusof.policia.gov.co:8088/api/Noticia',
@@ -10,3 +12,4 @@ export const environment = {
   eventoMediaBaseUrl: 'http://srvdockergusof.policia.gov.co:8088',
   videoInstitucionalApiUrl: 'http://srvdockergusof.policia.gov.co:8088/api/VideoInstitucional'
 };
+
