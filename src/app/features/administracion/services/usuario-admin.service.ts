@@ -1,5 +1,5 @@
-﻿import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+﻿import { HttpClient } from '@angular/common/http';
+import { Injectable } from '@angular/core';
 import { forkJoin, map, Observable, of, switchMap } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { environment } from '../../../../environments/environment';
@@ -109,7 +109,7 @@ export class UsuarioAdminService {
     const id = identificacion.trim();
     return this.http
       .get<DtoFuncionario>(`${this.baseUrl}/Funcionario`, {
-        params: { identificacion: id }
+        params: { identificacion: id },
       })
       .pipe(
         map((funcionario) => funcionario ?? {}),
@@ -122,31 +122,31 @@ export class UsuarioAdminService {
             fotoBase64: this.http
               .get(`${this.baseUrl}/Foto`, {
                 params: { identificacion: id },
-                responseType: 'text'
+                responseType: 'text',
               })
               .pipe(
                 map((raw) => this.normalizeFotoResponse(raw)),
-                catchError(() => of(null))
+                catchError(() => of(null)),
               ),
             rolesAsignados: usuario
               ? this.http
                   .get<DtoRolAsignado[]>(`${this.baseUrl}/RolesAsignados`, {
-                    params: { usuario }
+                    params: { usuario },
                   })
                   .pipe(catchError(() => of([])))
               : of([]),
             rolesCatalogo: this.http
               .get<DtoRolCatalogo[]>(`${this.baseUrl}/Roles`)
-              .pipe(catchError(() => of([])))
+              .pipe(catchError(() => of([]))),
           });
-        })
+        }),
       );
   }
 
   getListadoUsuarios(nombre?: string): Observable<UsuarioListadoItem[]> {
     const term = (nombre ?? '').trim();
     return this.http.get<UsuarioListadoItem[]>(`${this.baseUrl}/Listado`, {
-      params: term ? { nombre: term } : {}
+      params: term ? { nombre: term } : {},
     });
   }
 
@@ -158,12 +158,16 @@ export class UsuarioAdminService {
     return this.http.post<AsignarRolResponse>(`${this.baseUrl}/Roles`, payload);
   }
 
-  eliminarRol(rolId: number, usuario: string, identificacion: string): Observable<EliminarRolResponse> {
+  eliminarRol(
+    rolId: number,
+    usuario: string,
+    identificacion: string,
+  ): Observable<EliminarRolResponse> {
     return this.http.delete<EliminarRolResponse>(`${this.baseUrl}/Roles/${rolId}`, {
       params: {
         usuario: (usuario ?? '').trim(),
-        identificacion: (identificacion ?? '').trim()
-      }
+        identificacion: (identificacion ?? '').trim(),
+      },
     });
   }
 
@@ -202,4 +206,3 @@ export class UsuarioAdminService {
     return `data:image/jpeg;base64,${decoded}`;
   }
 }
-
