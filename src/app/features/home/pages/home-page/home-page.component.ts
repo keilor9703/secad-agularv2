@@ -1,14 +1,21 @@
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { CommonModule } from '@angular/common';
-import { ChangeDetectorRef, Component, HostListener, inject, OnDestroy, OnInit } from '@angular/core';
+import {
+  ChangeDetectorRef,
+  Component,
+  HostListener,
+  inject,
+  OnDestroy,
+  OnInit,
+} from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { map } from 'rxjs';
 import { environment } from '../../../../../environments/environment';
-import { RadioPlayerComponent } from '../../../../core/layout/footer/radio-player/radio-player.component';
 import { BannerItem } from '../../../../core/interfaces/banner.interface';
-import { DtoLineaMando, LineaMandoService } from '../../../../core/services/linea-mando.service';
+import { RadioPlayerComponent } from '../../../../core/layout/footer/radio-player/radio-player.component';
 import { BannerService } from '../../../../core/services/banner.service';
+import { DtoLineaMando, LineaMandoService } from '../../../../core/services/linea-mando.service';
 import { NoticiaService } from '../../../../core/services/noticia.service';
 import { VideoInstitucionalService } from '../../../../core/services/video-institucional.service';
 import { VideoUnidadService } from '../../../../core/services/video-unidad.service';
@@ -245,7 +252,8 @@ export class HomePageComponent implements OnInit, OnDestroy {
   private loadVideoInstitucional(): void {
     this.videoInstitucionalService.getCurrent().subscribe({
       next: (data) => {
-        this.videoInstitucionalUrl = data?.hasVideo && data.data?.embedUrl ? data.data.embedUrl : '';
+        this.videoInstitucionalUrl =
+          data?.hasVideo && data.data?.embedUrl ? data.data.embedUrl : '';
       },
       error: () => {
         this.videoInstitucionalUrl = '';
@@ -358,8 +366,6 @@ export class HomePageComponent implements OnInit, OnDestroy {
     this.cdr.markForCheck();
   }
 
-
-
   getBannerImageUrl(item: BannerItem): string {
     const raw = (item.urlImagen ?? '').trim();
     if (!raw) {
@@ -402,7 +408,9 @@ export class HomePageComponent implements OnInit, OnDestroy {
   }
 
   private getMediaBaseUrl(): string {
-    return (environment.mediaBaseUrl || environment.sliderMediaBaseUrl || '').trim().replace(/\/+$/, '');
+    return (environment.mediaBaseUrl || environment.sliderMediaBaseUrl || '')
+      .trim()
+      .replace(/\/+$/, '');
   }
 
   private getApiBaseUrl(): string {
