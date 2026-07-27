@@ -109,7 +109,7 @@ export class UsuarioFormComponent implements OnChanges {
 
   /** Cambia la pestana activa sin perder los datos cargados. */
   setTab(tab: string): void {
-    if (tab === 'datos' || tab === 'contacto' || tab === 'roles') {
+    if (tab === 'datos' || tab === 'roles') {
       this.activeTab = tab;
     }
   }

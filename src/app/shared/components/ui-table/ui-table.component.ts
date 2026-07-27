@@ -1,3 +1,4 @@
+import { NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -25,7 +26,7 @@ import { UiTableActionsComponent } from '../ui-table-actions/ui-table-actions.co
 @Component({
   selector: 'app-ui-table',
   standalone: true,
-  imports: [ReactiveFormsModule, UiInputComponent, UiTableActionsComponent],
+  imports: [NgTemplateOutlet, ReactiveFormsModule, UiInputComponent, UiTableActionsComponent],
   templateUrl: './ui-table.component.html',
   styleUrl: './ui-table.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -158,6 +159,14 @@ export class UiTableComponent<T extends object = Record<string, unknown>> {
 
   getBadgeClass(badge: UiTableBadge): string {
     return `ui-badge ${badge.variant ?? 'neutral'}`;
+  }
+
+  getCellContext(row: T, column: UiTableColumn<T>) {
+    return {
+      $implicit: row,
+      row,
+      column,
+    };
   }
 
   filterControlId(filter: UiTableFilter): string {

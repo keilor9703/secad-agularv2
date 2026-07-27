@@ -50,7 +50,7 @@ export class UsuariosPageComponent implements OnInit, OnDestroy {
   searchNombreListado = '';
   private searchNombreTimeout: ReturnType<typeof setTimeout> | null = null;
   readonly minSearchChars = 6;
-  readonly pageSize = 10;
+  pageSize = 5;
   currentPage = 1;
   isSearchMode = false;
   searchIdentification = '';
@@ -390,28 +390,13 @@ export class UsuariosPageComponent implements OnInit, OnDestroy {
     return this.usuariosListado.slice(start, start + this.pageSize);
   }
 
-  canGoPrevListado(): boolean {
-    return this.currentPage > 1;
-  }
-
-  canGoNextListado(): boolean {
-    return this.currentPage < this.totalPaginasListado;
-  }
-
-  prevPaginaListado(): void {
-    if (this.canGoPrevListado()) {
-      this.currentPage -= 1;
-    }
-  }
-
-  nextPaginaListado(): void {
-    if (this.canGoNextListado()) {
-      this.currentPage += 1;
-    }
-  }
-
   setPaginaListado(page: number): void {
     this.currentPage = Math.min(Math.max(page, 1), this.totalPaginasListado);
+  }
+
+  setTamanoPaginaListado(size: number): void {
+    this.pageSize = Math.max(Number(size) || 5, 1);
+    this.currentPage = 1;
   }
 
   editarDesdeListado(item: UsuarioListadoItem): void {

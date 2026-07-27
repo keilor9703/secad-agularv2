@@ -1,4 +1,4 @@
-export type TabKey = 'datos' | 'contacto' | 'roles';
+export type TabKey = 'datos' | 'roles';
 export type RolEstado = 'Vigente' | 'Vencido';
 
 export interface UserRole {

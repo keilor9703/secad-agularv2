@@ -8,6 +8,8 @@ import {
   OnInit,
   Output,
   SimpleChanges,
+  TemplateRef,
+  ViewChild,
   inject,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -21,11 +23,18 @@ import {
   UiTableColumn,
 } from '../../../../shared/interfaces/ui-table.interface';
 import { UsuarioListadoItem } from '../../services/usuario-admin.service';
+import { UsuarioRolesDropdownComponent } from '../usuario-roles-dropdown/usuario-roles-dropdown.component';
 
 @Component({
-  selector: 'app-usuarios-table',
+  selector: 'app-usuarios-existentes',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, UiSearchInputComponent, UiTableComponent],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    UiSearchInputComponent,
+    UiTableComponent,
+    UsuarioRolesDropdownComponent,
+  ],
   templateUrl: './usuarios-table.component.html',
   styleUrls: ['./usuarios-table.component.scss'],
 })
@@ -38,54 +47,26 @@ export class UsuariosTableComponent implements OnChanges, OnInit {
   @Input() isSearchMode = false;
   @Input() minSearchChars = 6;
   @Input() currentPage = 1;
-  @Input() totalPaginas = 1;
   @Input() totalUsuarios = 0;
-  @Input() pageSize = 10;
-  @Input() canGoPrev = false;
-  @Input() canGoNext = false;
+  @Input() pageSize = 5;
   @Input() searchTerm = '';
 
   @Output() buscar = new EventEmitter<string>();
   @Output() cambiarPagina = new EventEmitter<number>();
-  @Output() paginaAnterior = new EventEmitter<void>();
-  @Output() paginaSiguiente = new EventEmitter<void>();
+  @Output() cambiarTamanoPagina = new EventEmitter<number>();
   @Output() editar = new EventEmitter<UsuarioListadoItem>();
   @Output() eliminar = new EventEmitter<UsuarioListadoItem>();
 
-  searchForm = this.fb.group({
+  @ViewChild('rolesCell', { static: true })
+  rolesCell!: TemplateRef<{
+    $implicit: UsuarioListadoItem;
+    row: UsuarioListadoItem;
+    column: UiTableColumn<UsuarioListadoItem>;
+  }>;
+
+  readonly searchForm = this.fb.group({
     nombre: [''],
   });
-
-  readonly columns: UiTableColumn<UsuarioListadoItem>[] = [
-    {
-      key: 'username',
-      label: 'Usuario empresarial',
-      width: '180px',
-      sortable: true,
-      value: (item) => item.username || 'N/A',
-    },
-    {
-      key: 'nombreCompleto',
-      label: 'Grado y nombre',
-      sortable: true,
-      value: (item) => item.nombreCompleto || 'N/A',
-    },
-    {
-      key: 'rol',
-      label: 'Rol',
-      width: '180px',
-      badge: (item) => ({
-        text: item.rol || 'Sin rol',
-        variant: item.rol ? 'primary' : 'neutral',
-      }),
-    },
-    {
-      key: 'fechaFinRol',
-      label: 'Vencimiento rol',
-      width: '160px',
-      value: (item) => item.fechaFinRol || 'Sin fecha',
-    },
-  ];
 
   readonly actions: UiTableAction<UsuarioListadoItem>[] = [
     {
@@ -116,7 +97,36 @@ export class UsuariosTableComponent implements OnChanges, OnInit {
     }
   }
 
+  get columns(): UiTableColumn<UsuarioListadoItem>[] {
+    return [
+      {
+        key: 'username',
+        label: 'Usuario empresarial',
+        width: '24%',
+        sortable: true,
+        value: (item) => item.username || 'N/A',
+      },
+      {
+        key: 'nombreCompleto',
+        label: 'Grado y nombre',
+        width: '38%',
+        sortable: true,
+        value: (item) => item.nombreCompleto || 'N/A',
+      },
+      {
+        key: 'rol',
+        label: 'Roles',
+        width: '38%',
+        cellTemplate: this.rolesCell,
+      },
+    ];
+  }
+
   get tableEmptyMessage(): string {
+    if (this.loading) {
+      return 'Consultando usuarios...';
+    }
+
     const term = (this.searchForm.controls.nombre.value ?? '').trim();
 
     if (this.isSearchMode && term.length < this.minSearchChars) {

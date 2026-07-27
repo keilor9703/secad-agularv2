@@ -44,25 +44,21 @@
     </div>
   </div>
 
-  <app-usuarios-table
+  <app-usuarios-existentes
     [usuarios]="usuariosListadoPaginado"
     [loading]="loadingListado"
     [isSearchMode]="isSearchMode"
     [minSearchChars]="minSearchChars"
     [currentPage]="currentPage"
-    [totalPaginas]="totalPaginasListado"
     [totalUsuarios]="totalUsuariosListado"
     [pageSize]="pageSize"
-    [canGoPrev]="canGoPrevListado()"
-    [canGoNext]="canGoNextListado()"
     [searchTerm]="searchNombreListado"
     (buscar)="onSearchNombreListadoChange($event)"
     (cambiarPagina)="setPaginaListado($event)"
-    (paginaAnterior)="prevPaginaListado()"
-    (paginaSiguiente)="nextPaginaListado()"
+    (cambiarTamanoPagina)="setTamanoPaginaListado($event)"
     (editar)="editarDesdeListado($event)"
     (eliminar)="abrirModalEliminarUsuario($event)"
-  ></app-usuarios-table>
+  ></app-usuarios-existentes>
 
   <app-usuario-delete-modal
     [open]="showDeleteUserModal"

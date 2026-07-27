@@ -3,32 +3,17 @@
 }
 
 .users-existing {
-  display: grid;
-  gap: 14px;
+  display: block;
   margin-top: 14px;
 }
 
 .users-existing__filters {
   display: grid;
-  max-width: 560px;
+  max-width: 520px;
 }
 
-.users-existing__loading {
-  display: flex;
-  min-height: 160px;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  border: 1px dashed rgba(var(--policia-oscuro-rgb), 0.2);
-  border-radius: 8px;
-  background: rgba(var(--policia-oscuro-rgb), 0.02);
-  color: rgba(var(--policia-neutral-oscuro-rgb), 0.95);
-  font-size: calc(13px * var(--font-size-scale));
-  font-weight: 800;
-}
-
-.users-existing__loading i {
-  color: var(--policia-medio);
+:host ::ng-deep .users-existing__table .ui-table-panel .ui-table {
+  min-width: 760px;
 }
 
 @media (max-width: 680px) {

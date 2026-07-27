@@ -1,39 +1,41 @@
 <section class="users-existing">
-  <form class="users-existing__filters" [formGroup]="searchForm">
-    <app-ui-search-input
-      formControlName="nombre"
-      label="Buscar por nombre"
-      placeholder="Escribe un nombre o usuario"
-      buttonText="Filtrar"
-      icon="fa-solid fa-magnifying-glass"
-      [clearable]="true"
-      [hint]="'La búsqueda se activa desde ' + minSearchChars + ' caracteres.'"
-      (search)="onSearchSubmit($event)"
-      (cleared)="onSearchClear()"
-    ></app-ui-search-input>
-  </form>
+  <app-ui-table
+    class="users-existing__table"
+    title="Usuarios existentes"
+    titleIcon="fa-solid fa-users"
+    actionMenuLabel="Acciones del usuario"
+    [columns]="columns"
+    [rows]="loading ? [] : usuarios"
+    [actions]="actions"
+    [total]="totalUsuarios"
+    [page]="currentPage"
+    [pageSize]="pageSize"
+    [pageSizeOptions]="[5, 10, 20, 50]"
+    [emptyMessage]="tableEmptyMessage"
+    [stickyActions]="true"
+    (pageChange)="cambiarPagina.emit($event)"
+    (pageSizeChange)="cambiarTamanoPagina.emit($event)"
+    (actionClick)="handleAction($event)"
+  >
+    <form table-toolbar class="users-existing__filters" [formGroup]="searchForm">
+      <app-ui-search-input
+        formControlName="nombre"
+        label="Buscar por nombre"
+        placeholder="Escribe un nombre o usuario"
+        buttonText="Filtrar"
+        icon="fa-solid fa-magnifying-glass"
+        [clearable]="true"
+        [hint]="'La búsqueda se activa desde ' + minSearchChars + ' caracteres.'"
+        (search)="onSearchSubmit($event)"
+        (cleared)="onSearchClear()"
+      ></app-ui-search-input>
+    </form>
+  </app-ui-table>
 
-  <div class="users-existing__loading" *ngIf="loading; else tableTpl">
-    <i class="fa-solid fa-circle-notch fa-spin" aria-hidden="true"></i>
-    <span>Consultando usuarios...</span>
-  </div>
-
-  <ng-template #tableTpl>
-    <app-ui-table
-      title="Usuarios existentes"
-      titleIcon="fa-solid fa-users"
-      actionMenuLabel="Acciones del usuario"
-      [columns]="columns"
-      [rows]="usuarios"
-      [actions]="actions"
-      [total]="totalUsuarios"
-      [page]="currentPage"
-      [pageSize]="pageSize"
-      [pageSizeOptions]="[pageSize]"
-      [emptyMessage]="tableEmptyMessage"
-      [stickyActions]="true"
-      (pageChange)="cambiarPagina.emit($event)"
-      (actionClick)="handleAction($event)"
-    ></app-ui-table>
+  <ng-template #rolesCell let-row="row">
+    <app-usuario-roles-dropdown
+      [roles]="row.rol"
+      [vencimientos]="row.fechaFinRol || ''"
+    ></app-usuario-roles-dropdown>
   </ng-template>
 </section>

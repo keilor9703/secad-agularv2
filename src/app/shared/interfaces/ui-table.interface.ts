@@ -1,3 +1,5 @@
+import type { TemplateRef } from '@angular/core';
+
 export type UiTableAlign = 'left' | 'center' | 'right';
 export type UiTableActionVariant =
   | 'primary'
@@ -24,6 +26,11 @@ export interface UiTableColumn<T> {
   width?: string;
   value?: (row: T) => string | number | null | undefined;
   badge?: (row: T) => UiTableBadge | null;
+  cellTemplate?: TemplateRef<{
+    $implicit: T;
+    row: T;
+    column: UiTableColumn<T>;
+  }>;
 }
 
 export interface UiTableFilter {

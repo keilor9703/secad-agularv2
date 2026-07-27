@@ -20,6 +20,15 @@
   margin-bottom: 22px;
 }
 
+.ui-table-toolbar {
+  display: block;
+  margin-bottom: 18px;
+}
+
+.ui-table-toolbar:empty {
+  display: none;
+}
+
 .ui-table-filter {
   min-width: 0;
 }

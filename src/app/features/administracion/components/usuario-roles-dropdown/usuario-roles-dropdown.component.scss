@@ -1,0 +1,95 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.roles-dropdown {
+  display: inline-block;
+  width: min(360px, 100%);
+}
+
+.roles-dropdown__trigger {
+  display: inline-flex;
+  width: 100%;
+  min-height: 34px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 10px;
+  border: 1px solid rgba(8, 166, 203, 0.18);
+  border-radius: 6px;
+  background: #d8f4fb;
+  color: var(--policia-oscuro, #002a66);
+  cursor: pointer;
+  font: inherit;
+  font-size: calc(12px * var(--font-size-scale));
+  font-weight: 850;
+  line-height: 1.1;
+  text-align: left;
+}
+
+.roles-dropdown__trigger span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.roles-dropdown__trigger i {
+  flex: 0 0 auto;
+  font-size: calc(10px * var(--font-size-scale));
+  transition: transform 150ms ease;
+}
+
+.roles-dropdown.is-open .roles-dropdown__trigger i {
+  transform: rotate(180deg);
+}
+
+.roles-dropdown__menu {
+  width: 100%;
+  margin-top: 6px;
+  overflow: hidden;
+  border: 1px solid rgba(8, 166, 203, 0.22);
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 10px 20px rgba(2, 6, 23, 0.1);
+}
+
+.roles-dropdown__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(92px, 0.8fr);
+  gap: 10px;
+  align-items: center;
+  padding: 9px 11px;
+  border-top: 1px solid rgba(148, 163, 184, 0.2);
+  color: #41516a;
+  font-size: calc(12px * var(--font-size-scale));
+  line-height: 1.25;
+}
+
+.roles-dropdown__row:first-child {
+  border-top: 0;
+}
+
+.roles-dropdown__row strong,
+.roles-dropdown__row span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.roles-dropdown__row--head {
+  background: #f2f8fd;
+  color: var(--policia-oscuro, #002a66);
+  font-size: calc(11px * var(--font-size-scale));
+  font-weight: 900;
+}
+
+:host-context(html.dark-mode) {
+  .roles-dropdown__menu {
+    background: var(--ui-surface);
+  }
+
+  .roles-dropdown__row {
+    color: var(--ui-text);
+  }
+}

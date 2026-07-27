@@ -1,0 +1,18 @@
+<div class="roles-dropdown" [class.is-open]="open">
+  <button class="roles-dropdown__trigger" type="button" (click)="toggle($event)">
+    <span>{{ selectedLabel }}</span>
+    <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
+  </button>
+
+  <div class="roles-dropdown__menu" *ngIf="open" (click)="$event.stopPropagation()">
+    <div class="roles-dropdown__row roles-dropdown__row--head">
+      <span>Rol</span>
+      <span>Vencimiento</span>
+    </div>
+
+    <div class="roles-dropdown__row" *ngFor="let item of items">
+      <strong>{{ item.nombre }}</strong>
+      <span>{{ item.vencimiento }}</span>
+    </div>
+  </div>
+</div>
