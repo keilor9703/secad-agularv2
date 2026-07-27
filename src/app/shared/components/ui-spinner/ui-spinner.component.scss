@@ -1,0 +1,296 @@
+:host {
+  display: inline-block;
+  max-width: 100%;
+}
+
+:host(.ui-spinner-host--overlay) {
+  position: absolute;
+  inset: 0;
+  z-index: 12;
+  display: block;
+}
+
+.ui-spinner {
+  --ui-spinner-tone: var(--policia-medio, #003a70);
+  --ui-spinner-size: 30px;
+  --ui-spinner-label-size: calc(12px * var(--font-size-scale, 1));
+  --ui-spinner-gap: 9px;
+  --_ui-spinner-color: var(--ui-spinner-color, var(--ui-spinner-tone));
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ui-spinner-gap);
+  box-sizing: border-box;
+  max-width: 100%;
+  color: var(--_ui-spinner-color);
+}
+
+.ui-spinner--stacked {
+  flex-direction: column;
+  text-align: center;
+}
+
+.ui-spinner--inline {
+  flex-direction: row;
+  text-align: left;
+}
+
+.ui-spinner--contained {
+  width: 100%;
+  min-height: 96px;
+  padding: 18px;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(248, 250, 252, 0.88)),
+    var(--ui-surface, #ffffff);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
+}
+
+.ui-spinner--overlay {
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+  padding: 16px;
+  border-radius: inherit;
+}
+
+.ui-spinner--backdrop {
+  background: rgba(248, 250, 252, 0.84);
+  backdrop-filter: blur(2px);
+}
+
+.ui-spinner--primary {
+  --ui-spinner-tone: var(--policia-medio, #003a70);
+}
+
+.ui-spinner--info {
+  --ui-spinner-tone: var(--policia-cielo, #08a6cb);
+}
+
+.ui-spinner--accent {
+  --ui-spinner-tone: #8eb600;
+}
+
+.ui-spinner--success {
+  --ui-spinner-tone: #168447;
+}
+
+.ui-spinner--warning {
+  --ui-spinner-tone: #d97706;
+}
+
+.ui-spinner--danger {
+  --ui-spinner-tone: #c5221f;
+}
+
+.ui-spinner--neutral {
+  --ui-spinner-tone: #64748b;
+}
+
+.ui-spinner--xs {
+  --ui-spinner-size: 16px;
+  --ui-spinner-label-size: calc(10px * var(--font-size-scale, 1));
+  --ui-spinner-gap: 6px;
+}
+
+.ui-spinner--sm {
+  --ui-spinner-size: 22px;
+  --ui-spinner-label-size: calc(11px * var(--font-size-scale, 1));
+  --ui-spinner-gap: 7px;
+}
+
+.ui-spinner--md {
+  --ui-spinner-size: 30px;
+}
+
+.ui-spinner--lg {
+  --ui-spinner-size: 42px;
+  --ui-spinner-label-size: calc(13px * var(--font-size-scale, 1));
+  --ui-spinner-gap: 11px;
+}
+
+.ui-spinner--xl {
+  --ui-spinner-size: 56px;
+  --ui-spinner-label-size: calc(14px * var(--font-size-scale, 1));
+  --ui-spinner-gap: 13px;
+}
+
+.ui-spinner__visual {
+  position: relative;
+  display: inline-flex;
+  flex: 0 0 var(--ui-spinner-size);
+  align-items: center;
+  justify-content: center;
+  width: var(--ui-spinner-size);
+  height: var(--ui-spinner-size);
+}
+
+.ui-spinner__ring {
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  border: var(--ui-spinner-thickness) solid
+    color-mix(in srgb, var(--_ui-spinner-color) 20%, transparent);
+  border-top-color: var(--_ui-spinner-color);
+  border-right-color: color-mix(in srgb, var(--_ui-spinner-color) 70%, #ffffff);
+  border-radius: 50%;
+  filter: drop-shadow(0 2px 4px color-mix(in srgb, var(--_ui-spinner-color) 24%, transparent));
+  animation: ui-spinner-rotate var(--ui-spinner-duration) linear infinite;
+}
+
+.ui-spinner__dots {
+  gap: max(2px, calc(var(--ui-spinner-size) * 0.1));
+}
+
+.ui-spinner__dot {
+  width: max(4px, calc(var(--ui-spinner-size) * 0.2));
+  height: max(4px, calc(var(--ui-spinner-size) * 0.2));
+  border-radius: 50%;
+  background: var(--_ui-spinner-color);
+  box-shadow: 0 2px 5px color-mix(in srgb, var(--_ui-spinner-color) 22%, transparent);
+  animation: ui-spinner-dot var(--ui-spinner-duration) ease-in-out infinite;
+}
+
+.ui-spinner__dot:nth-child(2) {
+  animation-delay: -120ms;
+}
+
+.ui-spinner__dot:nth-child(3) {
+  animation-delay: -240ms;
+}
+
+.ui-spinner__bars {
+  gap: max(2px, calc(var(--ui-spinner-size) * 0.06));
+}
+
+.ui-spinner__bar {
+  width: max(2px, calc(var(--ui-spinner-size) * 0.1));
+  height: 70%;
+  border-radius: 999px;
+  background: var(--_ui-spinner-color);
+  transform-origin: center;
+  animation: ui-spinner-bar var(--ui-spinner-duration) ease-in-out infinite;
+}
+
+.ui-spinner__bar:nth-child(2),
+.ui-spinner__bar:nth-child(4) {
+  animation-delay: -90ms;
+}
+
+.ui-spinner__bar:nth-child(3) {
+  animation-delay: -180ms;
+}
+
+.ui-spinner__pulse {
+  isolation: isolate;
+}
+
+.ui-spinner__pulse-core {
+  width: 38%;
+  height: 38%;
+  border-radius: 50%;
+  background: var(--_ui-spinner-color);
+  box-shadow: 0 3px 8px color-mix(in srgb, var(--_ui-spinner-color) 28%, transparent);
+  animation: ui-spinner-core var(--ui-spinner-duration) ease-in-out infinite;
+}
+
+.ui-spinner__pulse-halo {
+  position: absolute;
+  inset: 12%;
+  z-index: -1;
+  border: max(1px, var(--ui-spinner-thickness)) solid var(--_ui-spinner-color);
+  border-radius: 50%;
+  animation: ui-spinner-halo var(--ui-spinner-duration) ease-out infinite;
+}
+
+.ui-spinner__label {
+  min-width: 0;
+  color: color-mix(in srgb, var(--_ui-spinner-color) 68%, #1e293b);
+  font-size: var(--ui-spinner-label-size);
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+@keyframes ui-spinner-rotate {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes ui-spinner-dot {
+  0%,
+  60%,
+  100% {
+    opacity: 0.28;
+    transform: translateY(0) scale(0.72);
+  }
+
+  30% {
+    opacity: 1;
+    transform: translateY(-28%) scale(1);
+  }
+}
+
+@keyframes ui-spinner-bar {
+  0%,
+  100% {
+    opacity: 0.36;
+    transform: scaleY(0.45);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+}
+
+@keyframes ui-spinner-core {
+  0%,
+  100% {
+    transform: scale(0.82);
+  }
+
+  50% {
+    transform: scale(1);
+  }
+}
+
+@keyframes ui-spinner-halo {
+  0% {
+    opacity: 0.7;
+    transform: scale(0.45);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1.18);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-spinner__ring,
+  .ui-spinner__dot,
+  .ui-spinner__bar,
+  .ui-spinner__pulse-core,
+  .ui-spinner__pulse-halo {
+    animation-duration: 2400ms;
+  }
+}
+
+:host-context(html.dark-mode) {
+  .ui-spinner--contained {
+    border-color: var(--ui-border);
+    background: var(--ui-surface);
+    box-shadow: none;
+  }
+
+  .ui-spinner--backdrop {
+    background: rgba(15, 23, 42, 0.82);
+  }
+
+  .ui-spinner__label {
+    color: color-mix(in srgb, var(--_ui-spinner-color) 45%, var(--ui-text));
+  }
+}

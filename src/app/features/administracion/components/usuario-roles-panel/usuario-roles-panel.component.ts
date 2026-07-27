@@ -1,18 +1,19 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, signal } from '@angular/core';
 import { FormGroup, ReactiveFormsModule } from '@angular/forms';
 
 import { UiButtonComponent } from '../../../../shared/components/ui-button/ui-button.component';
+import { UiDateTimePickerComponent } from '../../../../shared/components/ui-date-time-picker/ui-date-time-picker.component';
 import { UiInputComponent } from '../../../../shared/components/ui-input/ui-input.component';
 import { UiModalComponent } from '../../../../shared/components/ui-modal/ui-modal.component';
 import { UiSelectComponent } from '../../../../shared/components/ui-select/ui-select.component';
 import { UiTableComponent } from '../../../../shared/components/ui-table/ui-table.component';
+import { UiSelectOption } from '../../../../shared/interfaces/ui-select-option.interface';
 import {
   UiTableAction,
   UiTableActionEvent,
   UiTableColumn,
 } from '../../../../shared/interfaces/ui-table.interface';
-import { UiSelectOption } from '../../../../shared/interfaces/ui-select-option.interface';
 import { getFormErrorMessage } from '../../../../shared/utils/form-error.util';
 import { UserRole } from '../../interfaces/usuario-admin-view.interface';
 import { DtoRolCatalogo } from '../../services/usuario-admin.service';
@@ -28,6 +29,7 @@ import { DtoRolCatalogo } from '../../services/usuario-admin.service';
     UiModalComponent,
     UiSelectComponent,
     UiTableComponent,
+    UiDateTimePickerComponent,
   ],
   templateUrl: './usuario-roles-panel.component.html',
   styleUrls: ['./usuario-roles-panel.component.scss'],
@@ -47,6 +49,9 @@ export class UsuarioRolesPanelComponent {
   @Output() cancelarRol = new EventEmitter<void>();
   @Output() editarRol = new EventEmitter<UserRole>();
   @Output() eliminarRol = new EventEmitter<UserRole>();
+
+  readonly tableHeaderColor = signal('#c8d8e9');
+  readonly tableHeaderColorEnd = signal('#d8e3e5');
 
   readonly roleColumns: UiTableColumn<UserRole>[] = [
     {

@@ -13,6 +13,7 @@ import {
   viewChildren,
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { UiFormControlSizeDirective } from '../../directives/ui-form-control-size.directive';
 import { UiTimeFormat, UiTimeOption } from './ui-time-picker.types';
 import { buildTimeOptions, formatTimeLabel, normalizeTimeValue } from './ui-time-picker.utils';
 
@@ -22,6 +23,12 @@ let nextTimePickerId = 0;
   selector: 'app-ui-time-picker',
   standalone: true,
   imports: [OverlayModule],
+  hostDirectives: [
+    {
+      directive: UiFormControlSizeDirective,
+      inputs: ['controlSize'],
+    },
+  ],
   templateUrl: './ui-time-picker.component.html',
   styleUrl: './ui-time-picker.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

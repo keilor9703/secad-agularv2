@@ -1,10 +1,13 @@
+@use '../../../../styles/components/form-control-sizing' as form-sizing;
+
 :host {
-  display: block;
   --_form-inset-shadow: var(
     --form-control-inset-shadow,
     inset 0 1px 2px rgba(15, 23, 42, 0.05),
     inset 0 0 0 1px rgba(148, 163, 184, 0.025)
   );
+
+  @include form-sizing.host-sizing;
 }
 
 .form-field {
@@ -14,7 +17,8 @@
 }
 
 .form-field__control {
-  min-height: var(--form-field-height, 42px);
+  height: var(--_form-control-height);
+  min-height: var(--_form-control-height);
   display: flex;
   align-items: center;
   position: relative;
@@ -43,6 +47,7 @@
 
 .form-field__native {
   width: 100%;
+  height: 100%;
   border: 0;
   outline: 0;
   background: transparent;
@@ -53,9 +58,15 @@
 }
 
 textarea.form-field__native {
+  height: auto;
   resize: vertical;
   min-height: 84px;
   padding-top: 12px;
+}
+
+.form-field--multiline .form-field__control {
+  height: auto;
+  min-height: max(84px, var(--_form-control-height));
 }
 
 .form-field__native::placeholder {

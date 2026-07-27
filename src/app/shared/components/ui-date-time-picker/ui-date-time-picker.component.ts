@@ -16,6 +16,7 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import flatpickr from 'flatpickr';
 import type { Instance } from 'flatpickr/dist/types/instance';
 import type { Options } from 'flatpickr/dist/types/options';
+import { UiFormControlSizeDirective } from '../../directives/ui-form-control-size.directive';
 import { UI_DATE_TIME_MODE_CONFIG } from './ui-date-time-picker.config';
 import { UI_DATE_TIME_SPANISH_LOCALE } from './ui-date-time-picker.locale';
 import { UiDateTimeMode } from './ui-date-time-picker.types';
@@ -25,6 +26,12 @@ let nextControlId = 0;
 @Component({
   selector: 'app-ui-date-time-picker',
   standalone: true,
+  hostDirectives: [
+    {
+      directive: UiFormControlSizeDirective,
+      inputs: ['controlSize'],
+    },
+  ],
   templateUrl: './ui-date-time-picker.component.html',
   styleUrl: './ui-date-time-picker.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

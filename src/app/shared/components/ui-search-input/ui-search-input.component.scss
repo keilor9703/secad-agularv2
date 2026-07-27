@@ -1,10 +1,13 @@
+@use '../../../../styles/components/form-control-sizing' as form-sizing;
+
 :host {
-  display: block;
   --_form-inset-shadow: var(
     --form-control-inset-shadow,
     inset 0 1px 2px rgba(15, 23, 42, 0.05),
     inset 0 0 0 1px rgba(148, 163, 184, 0.025)
   );
+
+  @include form-sizing.host-sizing;
 }
 
 .search-field {
@@ -28,7 +31,8 @@
 .search-field__shell {
   display: grid;
   grid-template-columns: 1fr auto auto;
-  min-height: var(--form-field-height, 42px);
+  height: var(--_form-control-height);
+  min-height: var(--_form-control-height);
   border: 1px solid var(--form-border-color, #cbd5e1);
   border-radius: var(--form-border-radius, 7px);
   overflow: hidden;
@@ -39,7 +43,28 @@
     box-shadow 0.15s ease;
 }
 
+.search-field__shell--without-button {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+}
+
+.search-field__leading-icon {
+  display: grid;
+  width: 38px;
+  height: 100%;
+  place-items: center;
+  align-self: center;
+  color: #718096;
+  font-size: calc(12px * var(--font-size-scale));
+  pointer-events: none;
+}
+
+.search-field__shell--without-button .search-field__input {
+  padding-left: 0;
+}
+
 .search-field__input {
+  min-width: 0;
+  height: 100%;
   border: 0;
   outline: 0;
   padding: 0 11px;
@@ -82,8 +107,8 @@
 }
 
 .search-field__button--icon-only {
-  width: var(--form-field-height, 42px);
-  min-width: var(--form-field-height, 42px);
+  width: var(--_form-control-height);
+  min-width: var(--_form-control-height);
   padding: 0;
 }
 
@@ -134,20 +159,73 @@
 
 @media (max-width: 640px) {
   .search-field__shell {
-    grid-template-columns: 1fr auto;
+    /*
+     * En móvil todos los controles permanecen en una sola fila.
+     * Las columnas automáticas reservan espacio para limpiar y buscar
+     * sin permitir que esos botones compriman el campo de texto.
+     */
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    grid-template-rows: var(--_form-control-height);
   }
 
-  .search-field__button:not(.search-field__button--icon-only) {
-    grid-column: 1 / -1;
-    min-height: 40px;
-    border-left: 0;
-    border-top: 1px solid var(--form-border-color, #cbd5e1);
+  .search-field__input {
+    grid-column: 1;
+    grid-row: 1;
+    min-width: 0;
+    height: var(--_form-control-height);
+    min-height: var(--_form-control-height);
+    padding: 9px 12px;
+    line-height: 1.25;
   }
 
-  .search-field__button--icon-only {
-    grid-column: auto;
+  .search-field__clear {
+    grid-column: 2;
+    grid-row: 1;
+    height: var(--_form-control-height);
+    min-height: var(--_form-control-height);
+  }
+
+  .search-field__button {
+    grid-column: 2;
+    grid-row: 1;
+    height: var(--_form-control-height);
+    min-height: var(--_form-control-height);
     border-top: 0;
     border-left: 1px solid var(--form-border-color, #cbd5e1);
+  }
+
+  .search-field__clear + .search-field__button {
+    grid-column: 3;
+  }
+
+  .search-field__shell--without-button .search-field__leading-icon {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .search-field__shell--without-button .search-field__input {
+    grid-column: 2;
+    grid-row: 1;
+    padding-left: 0;
+  }
+
+  .search-field__shell--without-button .search-field__clear {
+    grid-column: 3;
+    grid-row: 1;
+  }
+
+  /*
+   * Comportamiento móvil predeterminado. Solo oculta el texto visual:
+   * title y aria-label conservan el nombre accesible de la acción.
+   */
+  .search-field__button--mobile-icon-only {
+    width: var(--_form-control-height);
+    min-width: var(--_form-control-height);
+    padding: 0;
+  }
+
+  .search-field__button--mobile-icon-only span {
+    display: none;
   }
 }
 
@@ -173,5 +251,9 @@
 
   .search-field__clear {
     color: #cbd5e1;
+  }
+
+  .search-field__leading-icon {
+    color: #aeb9ca;
   }
 }

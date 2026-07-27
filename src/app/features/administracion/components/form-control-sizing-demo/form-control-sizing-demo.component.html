@@ -1,0 +1,95 @@
+<section class="ui-panel sizing-demo" aria-labelledby="form-sizing-title">
+  <header class="ui-panel__head">
+    <div class="ui-panel__title" id="form-sizing-title">
+      <i class="fa-solid fa-ruler-combined" aria-hidden="true"></i>
+      Dimensiones responsive de formularios
+    </div>
+  </header>
+
+  <div class="ui-panel__body">
+    <p class="sizing-demo__intro">
+      Una misma configuración controla inputs, buscadores, selects y pickers. La altura y el ancho
+      preferidos siempre respetan sus límites mínimo y máximo.
+    </p>
+
+    <form class="sizing-demo__form" [formGroup]="demoForm">
+      <article class="sizing-demo__section">
+        <div class="sizing-demo__heading">
+          <span>01</span>
+          <div>
+            <h3>Configuración por componente</h3>
+            <p>
+              Utiliza <code>[controlSize]</code> cuando solo una instancia necesita otro tamaño.
+            </p>
+          </div>
+        </div>
+
+        <div class="sizing-demo__grid">
+          <app-ui-input
+            formControlName="nombre"
+            label="Nombre del funcionario"
+            placeholder="Ingrese un nombre"
+            icon="fa-solid fa-user"
+            [controlSize]="compactControlSize"
+          />
+
+          <app-ui-select
+            formControlName="unidad"
+            label="Unidad"
+            placeholder="Seleccione una unidad"
+            [options]="unidadOptions"
+            [controlSize]="compactControlSize"
+          />
+        </div>
+      </article>
+
+      <article class="sizing-demo__section">
+        <div class="sizing-demo__heading">
+          <span>02</span>
+          <div>
+            <h3>Configuración por formulario o contenedor</h3>
+            <p>
+              Las variables CSS del contenedor se heredan sin repetir propiedades en cada control.
+            </p>
+          </div>
+        </div>
+
+        <!-- Las variables de .sizing-demo__scope controlan todos sus descendientes. -->
+        <div class="sizing-demo__scope">
+          <app-ui-date-time-picker formControlName="fecha" label="Fecha programada" mode="date" />
+
+          <app-ui-time-picker
+            formControlName="hora"
+            label="Hora programada"
+            hourFormat="24"
+            [minuteStep]="15"
+          />
+
+          <app-ui-search-input
+            formControlName="busqueda"
+            label="Buscar registro"
+            placeholder="Nombre o identificación"
+            buttonText="Buscar"
+          />
+        </div>
+      </article>
+    </form>
+
+    <div class="sizing-demo__code-grid">
+      <article>
+        <h4>TypeScript</h4>
+        <pre><code>{{ typescriptExample }}</code></pre>
+      </article>
+
+      <article>
+        <h4>HTML por instancia</h4>
+        <pre><code>{{ htmlExample }}</code></pre>
+      </article>
+
+      <article class="sizing-demo__code-wide">
+        <h4>SCSS para una sección completa</h4>
+        <pre><code>{{ cssExample }}</code></pre>
+      </article>
+    </div>
+  </div>
+</section>

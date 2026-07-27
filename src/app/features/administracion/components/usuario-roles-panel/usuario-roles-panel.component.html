@@ -5,18 +5,29 @@
       <p>Roles vigentes asociados al usuario consultado.</p>
     </div>
 
-    <app-ui-button variant="secondary" icon="fa-solid fa-plus" (buttonClick)="agregarRol.emit()">
+    <app-ui-button
+      variant="secondary"
+      size="sm"
+      icon="fa-solid fa-plus"
+      (buttonClick)="agregarRol.emit()"
+    >
       Agregar rol
     </app-ui-button>
   </header>
 
+  <!-- Esta sección ya aporta su propio contenedor; la tabla no debe dibujar otra tarjeta. -->
   <app-ui-table
+    embedded
     emptyMessage="El usuario no tiene roles asignados actualmente."
+    [headerColor]="tableHeaderColor()"
+    [headerColorEnd]="tableHeaderColorEnd()"
+    headerTextColor="#ffffff"
+    bodyTextColor="#34495e"
     [columns]="roleColumns"
     [rows]="roles"
     [actions]="roleActions"
     [total]="roles.length"
-    [showPagination]="false"
+    [showPagination]="true"
     [stickyActions]="true"
     actionMenuLabel="Acciones del rol asignado"
     (actionClick)="handleRoleAction($event)"
@@ -46,14 +57,14 @@
       </div>
 
       <div class="ui-col-6">
-        <app-ui-input
+        <app-ui-date-time-picker
           formControlName="fechaFin"
           label="Fecha fin"
-          type="date"
-          icon="fa-solid fa-calendar-days"
+          mode="date"
+          hint="Formato visible: dd/mm/aaaa"
           [required]="true"
           [error]="getRoleError('fechaFin')"
-        ></app-ui-input>
+        ></app-ui-date-time-picker>
       </div>
 
       <div class="ui-col-12">

@@ -1,5 +1,7 @@
 :host {
   display: block;
+  width: 100%;
+  max-width: 100%;
   min-width: 0;
 }
 
@@ -10,6 +12,7 @@
   --_tab-primary: var(--policia-oscuro, #151b3b);
   --_tab-accent: var(--policia-cielo, #0870cb);
   width: 100%;
+  max-width: 100%;
   min-width: 0;
 }
 
@@ -77,7 +80,9 @@
 }
 
 .ui-tabs__panel {
+  box-sizing: border-box;
   min-width: 0;
+  max-width: 100%;
   width: 100%;
   padding: 18px;
   border: 1px solid rgba(21, 27, 59, 0.16);
@@ -277,6 +282,25 @@
   .ui-tabs__panel {
     animation: none;
     transition: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .ui-tabs {
+    --_tab-padding-x: 8px;
+  }
+
+  .ui-tabs.is-stretched .ui-tabs__list {
+    overflow-x: hidden;
+  }
+
+  .ui-tabs.is-stretched .ui-tabs__tab {
+    flex-basis: 0;
+    max-width: 100%;
+  }
+
+  .ui-tabs__panel {
+    padding: 12px;
   }
 }
 

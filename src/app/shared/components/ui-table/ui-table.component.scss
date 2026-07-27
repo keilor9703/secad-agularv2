@@ -4,6 +4,26 @@
 }
 
 .ui-table-panel {
+  --ui-table-body-text-color: #5b708a;
+  --ui-table-body-font-size: 13px;
+  --ui-table-body-font-weight: 600;
+  --ui-table-body-text-transform: none;
+  --ui-table-row-height: auto;
+  --ui-table-row-padding-block: 14px;
+  /*
+   * Tokens privados del encabezado. Los colores inicial/final y el color del
+   * texto llegan desde headerColor, headerColorEnd y headerTextColor.
+   */
+  --ui-table-header-background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--ui-table-header-color) 78%, #173b55) 0%,
+    color-mix(in srgb, var(--ui-table-header-color-end) 52%, #061d37) 100%
+  );
+  --ui-table-header-border-color: color-mix(
+    in srgb,
+    var(--ui-table-header-color-end) 52%,
+    rgba(255, 255, 255, 0.32)
+  );
   border-color: rgba(148, 163, 184, 0.18);
   box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
   margin-top: 0;
@@ -11,6 +31,23 @@
 
 .ui-table-panel .ui-panel__body {
   padding: 18px 16px 0;
+}
+
+/*
+ * Modo embebido: evita una tarjeta duplicada cuando el consumidor ya aporta
+ * su propio contenedor visual. No modifica la caja ni el scroll de la grilla.
+ */
+.ui-table-panel.ui-table-panel--embedded {
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  overflow: visible;
+}
+
+.ui-table-panel.ui-table-panel--embedded .ui-panel__body {
+  padding: 0;
 }
 
 .ui-table-filters {
@@ -33,6 +70,12 @@
   min-width: 0;
 }
 
+.ui-table-viewport {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+}
+
 .ui-table-panel .ui-table-wrap {
   border-color: rgba(148, 163, 184, 0.22);
   border-radius: 2px;
@@ -45,7 +88,7 @@
   border-collapse: separate;
   border-spacing: 0;
   color: #5b708a;
-  font-size: calc(13px * var(--font-size-scale));
+  font-size: calc(var(--ui-table-body-font-size) * var(--font-size-scale));
   min-width: 980px;
 }
 
@@ -65,30 +108,32 @@
 //   text-transform: none;
 // }
 
-/*
- * Encabezado institucional reforzado contra estilos de Bootstrap.
- */
+/* Compatibilidad con las variables de tabla de Bootstrap sin fijar colores. */
 .ui-table-panel .ui-table > thead {
-  --bs-table-bg: #e0effd !important;
-  --bs-table-color: #163b63 !important;
-  --bs-table-accent-bg: transparent !important;
-  --bs-table-striped-bg: transparent !important;
-  --bs-table-hover-bg: transparent !important;
-  --bs-table-active-bg: transparent !important;
+  --bs-table-bg: transparent;
+  --bs-table-color: var(--ui-table-header-text-color);
+  --bs-table-accent-bg: transparent;
+  --bs-table-striped-bg: transparent;
+  --bs-table-hover-bg: transparent;
+  --bs-table-active-bg: transparent;
 }
 
 .ui-table-panel .ui-table > thead > tr > th {
-  background: #f8f8ff !important;
-  background-color: #e0effd !important;
-  box-shadow: none !important;
-  border-bottom: 1px solid rgba(22, 59, 99, 0.18);
-  border-right: 1px solid rgba(22, 59, 99, 0.12);
-  color: #163b63 !important;
+  background: var(--ui-table-header-background);
+  background-color: transparent;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    inset 0 -2px 0 var(--ui-table-header-border-color);
+  border-bottom: 0;
+  border-right: 1px solid rgba(255, 255, 255, 0.14);
+  color: var(--ui-table-header-text-color);
   font-size: calc(12px * var(--font-size-scale));
   font-weight: 800;
   letter-spacing: 0;
   padding: 12px 14px;
+  text-shadow: 0 1px 1px rgba(2, 12, 27, 0.22);
   text-transform: none;
+  transition: filter 160ms ease;
 }
 
 .ui-table-panel .ui-table--sticky-header thead th {
@@ -102,38 +147,133 @@
   border-right: 0;
 }
 
-.ui-table th span {
+.ui-table th > span,
+.ui-table-sort-button span {
   display: inline-flex;
   align-items: center;
   gap: 6px;
 }
 
-.ui-table th i {
-  float: right;
-  margin-left: 10px;
-  color: rgba(var(--policia-neutral-oscuro-rgb), 0.55);
+.ui-table-sort-button {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  font-weight: inherit;
+  gap: 10px;
+  padding: 0;
+  text-align: inherit;
+}
+
+.ui-table th.align-left .ui-table-sort-button {
+  justify-content: flex-start;
+}
+
+.ui-table th.align-center .ui-table-sort-button {
+  justify-content: center;
+}
+
+.ui-table th.align-right .ui-table-sort-button {
+  justify-content: flex-end;
+}
+
+.ui-table-panel .ui-table thead .ui-table-sort-button i {
+  margin-left: auto;
+  color: color-mix(in srgb, var(--ui-table-header-text-color) 78%, transparent);
   font-size: calc(11px * var(--font-size-scale));
+  transition:
+    color 160ms ease,
+    transform 160ms ease;
 }
 
 .ui-table th.is-sortable {
-  cursor: pointer;
   user-select: none;
 }
 
-.ui-table th.is-sortable:hover {
-  color: var(--policia-oscuro);
+.ui-table-panel .ui-table > thead > tr > th.is-sortable:hover {
+  color: var(--ui-table-header-text-color);
+  filter: brightness(1.1);
+}
+
+.ui-table-panel .ui-table > thead > tr > th[aria-sort='ascending'],
+.ui-table-panel .ui-table > thead > tr > th[aria-sort='descending'] {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    inset 0 -3px 0 #c8ff00;
+}
+
+.ui-table-panel .ui-table > thead > tr > th[aria-sort='ascending'] .ui-table-sort-button i,
+.ui-table-panel .ui-table > thead > tr > th[aria-sort='descending'] .ui-table-sort-button i {
+  color: #c8ff00;
+}
+
+.ui-table-sort-button:focus-visible {
+  border-radius: 3px;
+  outline: 2px solid #c8ff00;
+  outline-offset: 4px;
+}
+
+.ui-table-panel .ui-table tbody tr:not(.ui-table-loading-row) {
+  height: var(--ui-table-current-row-height, var(--ui-table-row-height));
 }
 
 .ui-table-panel .ui-table tbody td {
   border-bottom: 1px solid rgba(148, 163, 184, 0.2);
   border-right: 1px solid rgba(148, 163, 184, 0.16);
-  color: #5b708a;
-  font-weight: 600;
-  padding: 14px;
+  color: var(
+    --ui-table-cell-text-color,
+    var(--ui-table-row-text-color, var(--ui-table-body-text-color))
+  );
+  font-size: calc(
+    var(--ui-table-cell-font-size, var(--ui-table-row-font-size, var(--ui-table-body-font-size))) *
+      var(--font-size-scale)
+  );
+  font-weight: var(
+    --ui-table-cell-font-weight,
+    var(--ui-table-row-font-weight, var(--ui-table-body-font-weight))
+  );
+  padding: var(--ui-table-current-row-padding-block, var(--ui-table-row-padding-block)) 14px;
+  text-transform: var(--ui-table-cell-text-transform, var(--ui-table-body-text-transform));
 }
 
 .ui-table-panel .ui-table tbody tr:hover {
   background: rgba(241, 245, 249, 0.7);
+}
+
+.ui-table-panel .ui-table tbody .ui-table-loading-cell {
+  height: 142px;
+  padding: 0;
+  border-right: 0;
+  background:
+    linear-gradient(180deg, rgba(248, 250, 252, 0.82), rgba(255, 255, 255, 0.96)), #ffffff;
+}
+
+.ui-table-panel .ui-table tbody .ui-table-loading-row:hover {
+  background: transparent;
+}
+
+.ui-table-loading-overlay {
+  position: absolute;
+  inset: 43px 1px 1px;
+  z-index: 7;
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  padding: 18px;
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, rgba(248, 250, 252, 0.82), rgba(255, 255, 255, 0.96)), #ffffff;
+  pointer-events: none;
+}
+
+.ui-table-loading-overlay app-ui-spinner {
+  display: inline-block;
+  max-width: calc(100% - 24px);
 }
 
 .align-center {
@@ -226,15 +366,17 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 34px;
+  gap: clamp(18px, 2vw, 34px);
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
   min-height: 78px;
-  padding: 16px 34px 18px;
+  padding: 16px 16px 18px;
   background: transparent;
   border: 0;
   color: #23252b;
   font-size: calc(14px * var(--font-size-scale));
   font-weight: 400;
-  padding-right: 16px;
 }
 
 .ui-table-page-size {
@@ -308,11 +450,16 @@
   width: 24px;
   height: 34px;
   border: 0;
+  border-radius: 5px;
   background: transparent;
   color: #2f343b;
   cursor: pointer;
   font: inherit;
   padding: 0;
+  transition:
+    color 0.15s ease,
+    background-color 0.15s ease,
+    transform 0.15s ease;
 }
 
 .ui-table-page-icon i {
@@ -321,13 +468,22 @@
 }
 
 .ui-table-page-icon:hover:not(:disabled) {
-  color: #111827;
+  background: rgba(31, 78, 121, 0.08);
+  color: var(--policia-medio, #1f4e79);
+  transform: translateY(-1px);
+}
+
+.ui-table-page-icon:focus-visible {
+  outline: 2px solid var(--form-focus-color, #1f4e79);
+  outline-offset: 1px;
 }
 
 .ui-table-page-icon:disabled {
+  background: transparent;
   color: #a4a6ab;
   cursor: default;
   opacity: 1;
+  transform: none;
 }
 
 @media (max-width: 900px) {
@@ -336,8 +492,35 @@
   }
 
   .ui-table-pagination {
-    gap: 22px;
-    padding-inline: 22px;
+    gap: clamp(10px, 2vw, 20px);
+    min-height: 68px;
+    padding: 13px 12px 15px;
+    font-size: calc(13px * var(--font-size-scale));
+  }
+
+  .ui-table-page-size {
+    gap: 8px;
+  }
+
+  .ui-table-page-size__select {
+    width: 68px;
+    height: 38px;
+  }
+
+  .ui-table-page-size__select select {
+    padding-inline: 13px 27px;
+  }
+
+  .ui-table-page-size__select i {
+    right: 11px;
+  }
+
+  .ui-table-pagination__range {
+    min-width: 92px;
+  }
+
+  .ui-table-pagination__actions {
+    gap: 8px;
   }
 }
 
@@ -347,29 +530,125 @@
   }
 
   .ui-table-pagination {
-    align-items: flex-end;
-    flex-direction: column;
-    gap: 14px;
-    min-height: auto;
-    padding: 18px 0 20px;
+    /*
+     * Paginación móvil: selector, rango y navegación permanecen siempre
+     * en una sola fila y se ajustan al ancho disponible.
+     */
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    justify-content: stretch;
+    gap: 6px;
+    min-height: 54px;
+    padding: 10px 4px 12px;
+    font-size: calc(11px * var(--font-size-scale));
+    justify-items: end;
+  }
+
+  /*
+   * El texto continúa asociado al select para lectores de pantalla,
+   * pero no consume ancho en la presentación móvil.
+   */
+  .ui-table-page-size__label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .ui-table-page-size {
+    min-width: 0;
+    gap: 0;
+  }
+
+  .ui-table-page-size__select {
+    width: 50px;
+    height: 34px;
+  }
+
+  .ui-table-page-size__select select {
+    padding: 0 20px 0 9px;
+    border-width: 1px;
+  }
+
+  .ui-table-page-size__select i {
+    right: 8px;
+    font-size: calc(10px * var(--font-size-scale));
+  }
+
+  .ui-table-pagination__range {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: clip;
   }
 
   .ui-table-pagination__actions {
-    gap: 16px;
+    justify-self: end;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  .ui-table-page-icon {
+    width: 30px;
+    height: 34px;
+  }
+
+  .ui-table-page-icon i {
+    font-size: calc(14px * var(--font-size-scale));
+  }
+}
+
+@media (max-width: 380px) {
+  .ui-table-pagination {
+    gap: 2px;
+    padding-inline: 0;
+    font-size: calc(10px * var(--font-size-scale));
+  }
+
+  .ui-table-page-size__select {
+    width: 46px;
+  }
+
+  .ui-table-page-icon {
+    width: 27px;
+  }
+
+  .ui-table-pagination__actions {
+    gap: 0;
   }
 }
 
 :host-context(html.dark-mode) {
+  .ui-table-panel {
+    --ui-table-body-text-color: var(--ui-text);
+  }
+
   .ui-table-panel .ui-table-wrap {
     background: var(--ui-surface);
   }
 
-  .ui-table-panel .ui-table thead th {
-    background: rgba(255, 255, 255, 0.06);
-    color: var(--ui-text);
+  .ui-table-panel .ui-table > thead > tr > th {
+    background: var(--ui-table-header-background);
+    color: var(--ui-table-header-text-color);
   }
 
-  .ui-table-panel .ui-table tbody td,
+  /*
+   * Evita que la regla global de botones del tema oscuro convierta el control
+   * del encabezado en un botón sólido.
+   */
+  .ui-table-panel .ui-table thead .ui-table-sort-button,
+  .ui-table-panel .ui-table thead .ui-table-sort-button:hover {
+    border-color: transparent;
+    background: transparent;
+    color: inherit;
+  }
+
   .ui-table-empty,
   .ui-table-pagination,
   .ui-table-page-size,
@@ -378,7 +657,22 @@
     color: var(--ui-text);
   }
 
+  .ui-table-panel .ui-table tbody td {
+    color: var(
+      --ui-table-cell-text-color,
+      var(--ui-table-row-text-color, var(--ui-table-body-text-color))
+    );
+  }
+
   .ui-table-panel .ui-table .ui-table-actions-cell {
+    background: var(--ui-surface);
+  }
+
+  .ui-table-panel .ui-table tbody .ui-table-loading-cell {
+    background: var(--ui-surface);
+  }
+
+  .ui-table-loading-overlay {
     background: var(--ui-surface);
   }
 

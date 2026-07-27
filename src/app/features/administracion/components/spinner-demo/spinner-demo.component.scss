@@ -1,0 +1,216 @@
+:host {
+  display: block;
+  margin-top: 12px;
+}
+
+.spinner-demo__body {
+  display: grid;
+  gap: 18px;
+}
+
+.spinner-demo__example {
+  display: grid;
+  gap: 14px;
+  padding: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 5px;
+  background: var(--ui-surface, #ffffff);
+  box-shadow: 0 5px 14px rgba(21, 27, 59, 0.045);
+}
+
+.spinner-demo__example-head {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  align-items: start;
+  gap: 10px;
+}
+
+.spinner-demo__number {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 25px;
+  border-radius: 3px;
+  background: var(--policia-oscuro, #151b3b);
+  color: #ffffff;
+  font-size: calc(10px * var(--font-size-scale, 1));
+  font-weight: 750;
+}
+
+.spinner-demo__example-head > div {
+  min-width: 0;
+}
+
+.spinner-demo__example h3 {
+  margin: 0;
+  color: var(--policia-oscuro, #163b63);
+  font-size: calc(13px * var(--font-size-scale, 1));
+  font-weight: 750;
+}
+
+.spinner-demo__example-head p {
+  margin: 3px 0 0;
+  color: var(--form-hint-color, #64748b);
+  font-size: calc(11px * var(--font-size-scale, 1));
+  line-height: 1.45;
+}
+
+.spinner-demo__sizes {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(92px, 1fr));
+  align-items: end;
+  gap: 10px;
+}
+
+.spinner-demo__sample {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 9px;
+  min-height: 100px;
+  padding: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  background: rgba(248, 250, 252, 0.72);
+}
+
+.spinner-demo__sample > span,
+.spinner-demo__type-name {
+  color: #64748b;
+  font-size: calc(10px * var(--font-size-scale, 1));
+  font-weight: 700;
+  text-align: center;
+}
+
+.spinner-demo__types {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(150px, 1fr));
+  gap: 10px;
+}
+
+.spinner-demo__type-card {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 12px;
+  min-height: 128px;
+  padding: 13px 10px;
+  border-left: 3px solid var(--policia-cielo, #08a6cb);
+  background: rgba(8, 166, 203, 0.045);
+}
+
+.spinner-demo__variants {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 20px;
+  min-height: 72px;
+  padding: 14px;
+  border-left: 3px solid var(--policia-cielo, #08a6cb);
+  background: rgba(8, 166, 203, 0.04);
+}
+
+.spinner-demo__preview {
+  position: relative;
+  display: grid;
+  gap: 12px;
+  min-height: 168px;
+  padding: 18px;
+  overflow: hidden;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.spinner-demo__preview-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: #173b55;
+  font-size: calc(11px * var(--font-size-scale, 1));
+}
+
+.spinner-demo__preview-head span {
+  color: #64748b;
+}
+
+.spinner-demo__preview-row {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr 0.6fr;
+  gap: 12px;
+}
+
+.spinner-demo__preview-row span {
+  display: block;
+  height: 14px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, #e2e8f0, #f1f5f9);
+}
+
+.spinner-demo__actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+@media (max-width: 880px) {
+  .spinner-demo__sizes {
+    grid-template-columns: repeat(3, minmax(92px, 1fr));
+  }
+
+  .spinner-demo__types {
+    grid-template-columns: repeat(2, minmax(150px, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .spinner-demo__sizes {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .spinner-demo__types {
+    grid-template-columns: 1fr;
+  }
+
+  .spinner-demo__variants {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .spinner-demo__preview-head {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .spinner-demo__actions {
+    justify-content: stretch;
+  }
+
+  .spinner-demo__actions app-ui-button {
+    width: 100%;
+  }
+}
+
+:host-context(html.dark-mode) {
+  .spinner-demo__example,
+  .spinner-demo__sample,
+  .spinner-demo__preview {
+    border-color: var(--ui-border);
+    background: var(--ui-surface);
+  }
+
+  .spinner-demo__example h3,
+  .spinner-demo__preview-head {
+    color: var(--ui-text);
+  }
+
+  .spinner-demo__sample,
+  .spinner-demo__variants,
+  .spinner-demo__type-card {
+    background: rgba(8, 166, 203, 0.07);
+  }
+
+  .spinner-demo__preview-row span {
+    background: linear-gradient(90deg, #334155, #26324c);
+  }
+}

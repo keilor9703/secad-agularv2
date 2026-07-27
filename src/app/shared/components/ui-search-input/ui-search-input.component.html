@@ -8,7 +8,13 @@
     {{ label }} <strong *ngIf="required">*</strong>
   </span>
 
-  <div class="search-field__shell">
+  <div class="search-field__shell" [class.search-field__shell--without-button]="!showButton()">
+    <i
+      *ngIf="!showButton() && icon"
+      [class]="'search-field__leading-icon ' + icon"
+      aria-hidden="true"
+    ></i>
+
     <input
       class="search-field__input"
       [id]="inputId"
@@ -16,6 +22,7 @@
       [placeholder]="placeholder"
       [disabled]="isDisabled"
       [attr.maxlength]="maxlength"
+      [attr.aria-label]="ariaLabel || (!label ? placeholder : null)"
       [attr.aria-required]="required"
       [attr.aria-describedby]="describedBy"
       [attr.aria-invalid]="!!error"
@@ -38,12 +45,14 @@
     </button>
 
     <button
+      *ngIf="showButton()"
       class="search-field__button"
       [class.search-field__button--icon-only]="iconOnly"
+      [class.search-field__button--mobile-icon-only]="hideButtonTextOnMobile()"
       type="button"
       [disabled]="isDisabled"
       [title]="searchLabel"
-      [attr.aria-label]="iconOnly ? searchLabel : null"
+      [attr.aria-label]="iconOnly || hideButtonTextOnMobile() ? searchLabel : null"
       (click)="emitSearch()"
     >
       <i [class]="icon" *ngIf="icon"></i>

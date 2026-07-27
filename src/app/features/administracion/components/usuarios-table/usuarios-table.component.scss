@@ -7,9 +7,40 @@
   margin-top: 14px;
 }
 
-.users-existing__filters {
+.users-existing__toolbar {
   display: grid;
-  max-width: 520px;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 350px);
+  align-items: center;
+  gap: 24px;
+  padding: 2px 0 0px;
+  border-bottom: 1px solid rgba(var(--policia-oscuro-rgb), 0.11);
+}
+
+.users-existing__intro {
+  min-width: 0;
+}
+
+.users-existing__intro h2 {
+  margin: 0;
+  color: var(--policia-oscuro, #151b3b);
+  font-size: calc(18px * var(--font-size-scale));
+  font-weight: 850;
+  line-height: 1.2;
+}
+
+.users-existing__intro p {
+  margin: 4px 0 0;
+  color: var(--form-hint-color, #64748b);
+  font-size: calc(12px * var(--font-size-scale));
+  line-height: 1.35;
+}
+
+.users-existing__filters {
+  display: block;
+  width: 100%;
+  max-width: 350px;
+  justify-self: end;
+  margin: 0;
 }
 
 :host ::ng-deep .users-existing__table .ui-table-panel .ui-table {
@@ -17,7 +48,25 @@
 }
 
 @media (max-width: 680px) {
+  .users-existing__toolbar {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 13px;
+    padding-bottom: 14px;
+  }
+
   .users-existing__filters {
+    width: 100%;
     max-width: 100%;
+    justify-self: stretch;
+  }
+}
+
+:host-context(html.dark-mode) {
+  .users-existing__toolbar {
+    border-bottom-color: rgba(255, 255, 255, 0.13);
+  }
+
+  .users-existing__intro h2 {
+    color: var(--ui-text);
   }
 }

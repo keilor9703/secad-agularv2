@@ -1,0 +1,154 @@
+<section class="ui-panel spinner-demo">
+  <div class="ui-panel__head">
+    <div class="ui-panel__title">
+      <i class="fa-solid fa-arrows-rotate" aria-hidden="true"></i>
+      Guía visual de indicadores de carga
+    </div>
+
+    <div class="ui-panel__actions">
+      <span class="ui-badge info">Componente reutilizable</span>
+    </div>
+  </div>
+
+  <div class="ui-panel__body spinner-demo__body">
+    <!-- Ejemplo 1: una misma animación en las cinco escalas disponibles. -->
+    <article class="spinner-demo__example">
+      <header class="spinner-demo__example-head">
+        <span class="spinner-demo__number">01</span>
+        <div>
+          <h3>Tamaños disponibles</h3>
+          <p>Utilice size: xs, sm, md, lg o xl según la jerarquía de la operación.</p>
+        </div>
+      </header>
+
+      <div class="spinner-demo__sizes">
+        @for (example of sizeExamples; track example.value) {
+          <div class="spinner-demo__sample">
+            <app-ui-spinner
+              type="ring"
+              variant="primary"
+              [size]="example.value"
+              [label]="'Cargando en tamaño ' + example.label"
+              [showLabel]="false"
+            />
+            <span>{{ example.label }}</span>
+          </div>
+        }
+      </div>
+    </article>
+
+    <!-- Ejemplo 2: animaciones intercambiables sin cambiar la API del consumidor. -->
+    <article class="spinner-demo__example">
+      <header class="spinner-demo__example-head">
+        <span class="spinner-demo__number">02</span>
+        <div>
+          <h3>Tipos de animación</h3>
+          <p>Cuatro alternativas para procesos, sincronización, validación y conexión.</p>
+        </div>
+      </header>
+
+      <div class="spinner-demo__types">
+        @for (example of typeExamples; track example.value) {
+          <div class="spinner-demo__type-card">
+            <span class="spinner-demo__type-name">{{ example.label }}</span>
+            <app-ui-spinner
+              [type]="example.value"
+              size="md"
+              variant="info"
+              [label]="example.message"
+              [speed]="780"
+            />
+          </div>
+        }
+      </div>
+    </article>
+
+    <!-- Ejemplo 3: colores semánticos centralizados y color CSS opcional. -->
+    <article class="spinner-demo__example">
+      <header class="spinner-demo__example-head">
+        <span class="spinner-demo__number">03</span>
+        <div>
+          <h3>Variantes semánticas</h3>
+          <p>El color comunica contexto; también puede sobrescribirse mediante color.</p>
+        </div>
+      </header>
+
+      <div class="spinner-demo__variants">
+        @for (example of variantExamples; track example.value) {
+          <app-ui-spinner
+            type="dots"
+            size="sm"
+            layout="inline"
+            [variant]="example.value"
+            [label]="example.label"
+          />
+        }
+
+        <app-ui-spinner
+          type="ring"
+          size="sm"
+          layout="inline"
+          variant="primary"
+          color="#6d28d9"
+          label="Color personalizado"
+          [thickness]="4"
+        />
+      </div>
+    </article>
+
+    <!-- Ejemplo 4: overlay controlado por una señal desde el componente consumidor. -->
+    <article class="spinner-demo__example">
+      <header class="spinner-demo__example-head">
+        <span class="spinner-demo__number">04</span>
+        <div>
+          <h3>Estado de carga sobre contenido</h3>
+          <p>El contenedor conserva su tamaño mientras una señal controla el overlay.</p>
+        </div>
+      </header>
+
+      <div class="spinner-demo__preview" [attr.aria-busy]="previewLoading()">
+        <div class="spinner-demo__preview-head">
+          <strong>Resumen de registros</strong>
+          <span>Actualización automática</span>
+        </div>
+
+        <div class="spinner-demo__preview-row">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+
+        <div class="spinner-demo__preview-row">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+
+        @if (previewLoading()) {
+          <app-ui-spinner
+            type="ring"
+            size="lg"
+            variant="info"
+            label="Actualizando registros..."
+            [overlay]="true"
+            [backdrop]="true"
+            [speed]="720"
+            [thickness]="4"
+          />
+        }
+      </div>
+
+      <div class="spinner-demo__actions">
+        <app-ui-button
+          type="button"
+          variant="secondary"
+          size="sm"
+          [icon]="previewLoading() ? 'fa-solid fa-check' : 'fa-solid fa-rotate'"
+          (buttonClick)="togglePreviewLoading()"
+        >
+          {{ previewLoading() ? 'Finalizar simulación' : 'Simular carga' }}
+        </app-ui-button>
+      </div>
+    </article>
+  </div>
+</section>

@@ -1,0 +1,51 @@
+<div
+  [class]="
+    'ui-spinner ui-spinner--' + variant() + ' ui-spinner--' + size() + ' ui-spinner--' + layout()
+  "
+  [class.ui-spinner--contained]="contained()"
+  [class.ui-spinner--overlay]="overlay()"
+  [class.ui-spinner--backdrop]="overlay() && backdrop()"
+  [style.--ui-spinner-color]="color() || null"
+  [style.--ui-spinner-duration]="animationDuration()"
+  [style.--ui-spinner-thickness]="borderWidth()"
+  role="status"
+  aria-busy="true"
+  aria-atomic="true"
+  [attr.aria-live]="ariaLive()"
+  [attr.aria-label]="accessibleLabel()"
+>
+  @switch (type()) {
+    @case ('dots') {
+      <span class="ui-spinner__visual ui-spinner__dots" aria-hidden="true">
+        @for (item of dotItems; track item) {
+          <span class="ui-spinner__dot"></span>
+        }
+      </span>
+    }
+
+    @case ('bars') {
+      <span class="ui-spinner__visual ui-spinner__bars" aria-hidden="true">
+        @for (item of barItems; track item) {
+          <span class="ui-spinner__bar"></span>
+        }
+      </span>
+    }
+
+    @case ('pulse') {
+      <span class="ui-spinner__visual ui-spinner__pulse" aria-hidden="true">
+        <span class="ui-spinner__pulse-core"></span>
+        <span class="ui-spinner__pulse-halo"></span>
+      </span>
+    }
+
+    @default {
+      <span class="ui-spinner__visual" aria-hidden="true">
+        <span class="ui-spinner__ring"></span>
+      </span>
+    }
+  }
+
+  @if (showLabel() && label()) {
+    <span class="ui-spinner__label" aria-hidden="true">{{ label() }}</span>
+  }
+</div>

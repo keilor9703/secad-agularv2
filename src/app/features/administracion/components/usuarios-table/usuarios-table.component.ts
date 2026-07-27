@@ -11,6 +11,7 @@ import {
   TemplateRef,
   ViewChild,
   inject,
+  signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
@@ -22,6 +23,7 @@ import {
   UiTableActionEvent,
   UiTableColumn,
 } from '../../../../shared/interfaces/ui-table.interface';
+import { UiFormControlSize } from '../../../../shared/models/ui-form-control-size.model';
 import { UsuarioListadoItem } from '../../services/usuario-admin.service';
 import { UsuarioRolesDropdownComponent } from '../usuario-roles-dropdown/usuario-roles-dropdown.component';
 
@@ -41,6 +43,9 @@ import { UsuarioRolesDropdownComponent } from '../usuario-roles-dropdown/usuario
 export class UsuariosTableComponent implements OnChanges, OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly destroyRef = inject(DestroyRef);
+  readonly tableHeaderColor = signal('#c8d8e9');
+  readonly tableHeaderColorEnd = signal('#d8e3e5');
+  readonly tableTitleId = 'usuarios-existentes-title';
 
   @Input() usuarios: UsuarioListadoItem[] = [];
   @Input() loading = false;
@@ -85,6 +90,24 @@ export class UsuariosTableComponent implements OnChanges, OnInit {
     },
   ];
 
+  /** Tamaño compacto del buscador ubicado en el encabezado de la tabla. */
+  readonly alturaCompacta: UiFormControlSize = {
+    height: '36px',
+    minHeight: '32px',
+    maxHeight: '42px',
+    width: '350px',
+    minWidth: '220px',
+    maxWidth: '100%',
+    mobile: {
+      height: '40px',
+      minHeight: '38px',
+      maxHeight: '44px',
+      width: '100%',
+      minWidth: '0px',
+      maxWidth: '100%',
+    },
+  };
+
   ngOnInit(): void {
     this.searchForm.controls.nombre.valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -102,48 +125,38 @@ export class UsuariosTableComponent implements OnChanges, OnInit {
       {
         key: 'username',
         label: 'Usuario empresarial',
-        width: '24%',
+        width: '35%',
+        textTransform: 'uppercase',
         sortable: true,
         value: (item) => item.username || 'N/A',
       },
       {
         key: 'nombreCompleto',
         label: 'Grado y nombre',
-        width: '38%',
+        width: '35%',
         sortable: true,
         value: (item) => item.nombreCompleto || 'N/A',
       },
       {
         key: 'rol',
         label: 'Roles',
-        width: '38%',
+        width: '30%',
+        align: 'center',
         cellTemplate: this.rolesCell,
       },
     ];
   }
 
   get tableEmptyMessage(): string {
-    if (this.loading) {
-      return 'Consultando usuarios...';
-    }
-
     const term = (this.searchForm.controls.nombre.value ?? '').trim();
 
     if (this.isSearchMode && term.length < this.minSearchChars) {
       return `Escribe mínimo ${this.minSearchChars} caracteres para activar la búsqueda.`;
     }
 
-    return this.isSearchMode ? 'No hay resultados para la búsqueda.' : 'No hay usuarios para mostrar.';
-  }
-
-  onSearchSubmit(term: string): void {
-    this.searchForm.patchValue({ nombre: term }, { emitEvent: false });
-    this.buscar.emit(term);
-  }
-
-  onSearchClear(): void {
-    this.searchForm.patchValue({ nombre: '' }, { emitEvent: false });
-    this.buscar.emit('');
+    return this.isSearchMode
+      ? 'No hay resultados para la búsqueda.'
+      : 'No hay usuarios para mostrar.';
   }
 
   handleAction(event: UiTableActionEvent<UsuarioListadoItem>): void {

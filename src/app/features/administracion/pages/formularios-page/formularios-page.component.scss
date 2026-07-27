@@ -154,8 +154,14 @@ app-funcionarios-table-demo {
   }
 
   .form-actions {
-    flex-direction: column;
-    align-items: stretch;
+    align-items: center;
+    justify-content: flex-start;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    gap: 6px;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scrollbar-width: none;
   }
 
   .modal-demo__grid {
@@ -167,8 +173,24 @@ app-funcionarios-table-demo {
   }
 
   .modal-demo__actions {
-    flex-direction: column-reverse;
-    align-items: stretch;
+    align-items: center;
+    justify-content: flex-start;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    gap: 6px;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scrollbar-width: none;
+  }
+
+  .form-actions::-webkit-scrollbar,
+  .modal-demo__actions::-webkit-scrollbar {
+    display: none;
+  }
+
+  .form-actions app-ui-button,
+  .modal-demo__actions app-ui-button {
+    flex: 0 0 auto;
   }
 }
 

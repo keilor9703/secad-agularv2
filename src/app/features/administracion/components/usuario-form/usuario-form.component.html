@@ -64,7 +64,7 @@
       ariaLabel="Administración del usuario"
       [activeTabId]="activeTab"
       [stretch]="true"
-      [showPanelAccent]="true"
+      [showPanelAccent]="false"
       (selectionChange)="setTab($event.id)"
     >
       <app-ui-tab id="datos" label="Datos personales">
@@ -141,7 +141,7 @@
                 [error]="getFieldError('usuario', 'gradAlfabetico')"
               ></app-ui-input>
             </div>
-            
+
             <div class="ui-col-6">
               <app-ui-input
                 formControlName="email"

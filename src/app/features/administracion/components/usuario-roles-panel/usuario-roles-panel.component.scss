@@ -4,7 +4,15 @@
 
 .access-section {
   display: grid;
-  gap: 14px;
+  min-width: 0;
+  max-width: 100%;
+  gap: 12px;
+  box-sizing: border-box;
+  padding: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 5px;
+  background: var(--ui-surface, #ffffff);
+  box-shadow: 0 5px 14px rgba(21, 27, 59, 0.045);
 }
 
 .access-section__header {
@@ -14,18 +22,31 @@
   gap: 14px;
 }
 
+.access-section__header > div {
+  min-width: 0;
+}
+
 .access-section__header h3 {
   margin: 0;
-  color: var(--policia-oscuro);
-  font-size: calc(15px * var(--font-size-scale));
-  font-weight: 900;
+  color: var(--policia-oscuro, #163b63);
+  font-size: calc(13px * var(--font-size-scale, 1));
+  font-weight: 750;
+  line-height: 1.25;
 }
 
 .access-section__header p {
   margin: 3px 0 0;
-  color: rgba(var(--policia-neutral-oscuro-rgb), 0.84);
-  font-size: calc(12px * var(--font-size-scale));
-  font-weight: 650;
+  color: var(--form-hint-color, #64748b);
+  font-size: calc(11px * var(--font-size-scale, 1));
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.access-section > app-ui-table {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .role-modal-body {
@@ -48,10 +69,33 @@
 }
 
 @media (max-width: 760px) {
-  .access-section__header,
-  .role-modal-actions {
+  .access-section {
+    gap: 11px;
+    padding: 12px;
+  }
+
+  .access-section__header {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .role-modal-actions {
+    align-items: center;
+    justify-content: flex-start;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    gap: 6px;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scrollbar-width: none;
+  }
+
+  .role-modal-actions::-webkit-scrollbar {
+    display: none;
+  }
+
+  .role-modal-actions app-ui-button {
+    flex: 0 0 auto;
   }
 
   .role-modal-grid {
@@ -60,6 +104,11 @@
 }
 
 :host-context(html.dark-mode) {
+  .access-section {
+    border-color: var(--ui-border);
+    border-left-color: var(--policia-cielo, #08a6cb);
+  }
+
   .access-section__header h3 {
     color: var(--ui-text);
   }

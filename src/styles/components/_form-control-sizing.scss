@@ -1,0 +1,36 @@
+/**
+ * Resolución única de dimensiones para todos los controles compartidos.
+ *
+ * Las variables públicas pueden venir de :root, de un contenedor o del input
+ * controlSize expuesto por cada componente.
+ */
+@mixin host-sizing {
+  --_form-control-height: clamp(
+    var(--form-control-min-height, 36px),
+    var(--form-control-height, var(--form-field-height, 42px)),
+    var(--form-control-max-height, 52px)
+  );
+  --_form-control-width: clamp(
+    var(--form-control-min-width, 0px),
+    var(--form-control-width, 100%),
+    var(--form-control-max-width, 100%)
+  );
+
+  display: block;
+  width: var(--_form-control-width);
+  max-width: 100%;
+  min-width: 0;
+
+  @media (max-width: 640px) {
+    --_form-control-height: clamp(
+      var(--form-control-mobile-min-height, var(--form-control-min-height, 36px)),
+      var(--form-control-mobile-height, var(--form-control-height, var(--form-field-height, 42px))),
+      var(--form-control-mobile-max-height, var(--form-control-max-height, 52px))
+    );
+    --_form-control-width: clamp(
+      var(--form-control-mobile-min-width, var(--form-control-min-width, 0px)),
+      var(--form-control-mobile-width, var(--form-control-width, 100%)),
+      var(--form-control-mobile-max-width, var(--form-control-max-width, 100%))
+    );
+  }
+}

@@ -10,12 +10,20 @@ import {
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
+import { UiFormControlSizeDirective } from '../../directives/ui-form-control-size.directive';
+
 let nextUiInputId = 0;
 
 @Component({
   selector: 'app-ui-input',
   standalone: true,
   imports: [CommonModule],
+  hostDirectives: [
+    {
+      directive: UiFormControlSizeDirective,
+      inputs: ['controlSize'],
+    },
+  ],
   templateUrl: './ui-input.component.html',
   styleUrls: ['./ui-input.component.scss'],
   providers: [

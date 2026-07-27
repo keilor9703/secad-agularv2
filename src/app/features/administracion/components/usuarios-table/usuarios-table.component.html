@@ -1,35 +1,56 @@
 <section class="users-existing">
   <app-ui-table
     class="users-existing__table"
-    title="Usuarios existentes"
-    titleIcon="fa-solid fa-users"
+    [labelledBy]="tableTitleId"
     actionMenuLabel="Acciones del usuario"
+    [headerColor]="tableHeaderColor()"
+    [headerColorEnd]="tableHeaderColorEnd()"
+    headerTextColor="#ffffff"
     [columns]="columns"
-    [rows]="loading ? [] : usuarios"
+    [rows]="usuarios"
+    [bodyFontSize]="12"
+    bodyFontWeight="regular"
+    bodyTextColor="#292929"
+    [rowHeight]="44"
+    [rowPadding]="8"
     [actions]="actions"
     [total]="totalUsuarios"
     [page]="currentPage"
     [pageSize]="pageSize"
     [pageSizeOptions]="[5, 10, 20, 50]"
     [emptyMessage]="tableEmptyMessage"
+    [loading]="loading"
+    loadingMessage="Consultando usuarios..."
+    loadingSpinnerSize="lg"
+    loadingSpinnerVariant="info"
     [stickyActions]="true"
     (pageChange)="cambiarPagina.emit($event)"
     (pageSizeChange)="cambiarTamanoPagina.emit($event)"
     (actionClick)="handleAction($event)"
   >
-    <form table-toolbar class="users-existing__filters" [formGroup]="searchForm">
-      <app-ui-search-input
-        formControlName="nombre"
-        label="Buscar por nombre"
-        placeholder="Escribe un nombre o usuario"
-        buttonText="Filtrar"
-        icon="fa-solid fa-magnifying-glass"
-        [clearable]="true"
-        [hint]="'La búsqueda se activa desde ' + minSearchChars + ' caracteres.'"
-        (search)="onSearchSubmit($event)"
-        (cleared)="onSearchClear()"
-      ></app-ui-search-input>
-    </form>
+    <div table-toolbar class="users-existing__toolbar">
+      <header class="users-existing__intro">
+        <h2 [id]="tableTitleId">Usuarios existentes</h2>
+        <p>Consulta y administra los usuarios registrados en el sistema.</p>
+      </header>
+
+      <form
+        class="users-existing__filters"
+        role="search"
+        aria-label="Buscar usuarios"
+        [formGroup]="searchForm"
+      >
+        <app-ui-search-input
+          formControlName="nombre"
+          ariaLabel="Buscar por nombre o usuario empresarial"
+          placeholder="Buscar usuario..."
+          icon="fa-solid fa-magnifying-glass"
+          [showButton]="false"
+          [clearable]="true"
+          [controlSize]="alturaCompacta"
+        ></app-ui-search-input>
+      </form>
+    </div>
   </app-ui-table>
 
   <ng-template #rolesCell let-row="row">

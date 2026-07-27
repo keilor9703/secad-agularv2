@@ -1,18 +1,77 @@
-<div class="roles-dropdown" [class.is-open]="open">
-  <button class="roles-dropdown__trigger" type="button" (click)="toggle($event)">
-    <span>{{ selectedLabel }}</span>
-    <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
+<div class="roles-dropdown" [class.is-open]="opened()">
+  <button
+    #trigger
+    cdkOverlayOrigin
+    #origin="cdkOverlayOrigin"
+    class="roles-dropdown__trigger"
+    type="button"
+    aria-haspopup="dialog"
+    [id]="triggerId"
+    [attr.aria-expanded]="opened()"
+    [attr.aria-controls]="opened() ? panelId : null"
+    (click)="toggle()"
+  >
+    <span class="roles-dropdown__trigger-icon" aria-hidden="true">
+      <i class="fa-solid fa-user-shield"></i>
+    </span>
+
+    <span class="roles-dropdown__trigger-label">{{ selectedLabel() }}</span>
+
+    <i class="fa-solid fa-chevron-down roles-dropdown__chevron" aria-hidden="true"></i>
   </button>
 
-  <div class="roles-dropdown__menu" *ngIf="open" (click)="$event.stopPropagation()">
-    <div class="roles-dropdown__row roles-dropdown__row--head">
-      <span>Rol</span>
-      <span>Vencimiento</span>
-    </div>
+  <ng-template
+    cdkConnectedOverlay
+    [cdkConnectedOverlayOrigin]="origin"
+    [cdkConnectedOverlayOpen]="opened()"
+    [cdkConnectedOverlayPositions]="positions()"
+    [cdkConnectedOverlayWidth]="panelWidth()"
+    [cdkConnectedOverlayPush]="true"
+    [cdkConnectedOverlayViewportMargin]="8"
+    [cdkConnectedOverlayHasBackdrop]="true"
+    cdkConnectedOverlayPanelClass="usuario-roles-overlay-pane"
+    cdkConnectedOverlayBackdropClass="cdk-overlay-transparent-backdrop"
+    (attach)="onOverlayAttached()"
+    (backdropClick)="close()"
+    (detach)="close()"
+  >
+    <section
+      #panel
+      class="roles-dropdown__panel"
+      role="dialog"
+      tabindex="-1"
+      [id]="panelId"
+      [attr.aria-labelledby]="panelTitleId"
+      [attr.aria-describedby]="panelId + '-description'"
+    >
+      <header class="roles-dropdown__panel-head">
+        <div>
+          <strong [id]="panelTitleId">Roles asignados</strong>
+          <span [id]="panelId + '-description'">Vigencias asociadas al usuario</span>
+        </div>
 
-    <div class="roles-dropdown__row" *ngFor="let item of items">
-      <strong>{{ item.nombre }}</strong>
-      <span>{{ item.vencimiento }}</span>
-    </div>
-  </div>
+        <span class="roles-dropdown__count" [attr.aria-label]="items().length + ' roles'">
+          {{ items().length }}
+        </span>
+      </header>
+
+      <!-- Desde el cuarto rol, este contenedor conserva tres filas visibles y activa scroll. -->
+      <div class="roles-dropdown__list" role="list" tabindex="0">
+        @for (item of items(); track $index) {
+          <article class="roles-dropdown__item" role="listitem">
+            <span class="roles-dropdown__item-icon" aria-hidden="true">
+              <i class="fa-solid fa-shield-halved"></i>
+            </span>
+
+            <div class="roles-dropdown__item-content">
+              <strong>{{ item.nombre }}</strong>
+              <span>Vencimiento: {{ item.vencimiento }}</span>
+            </div>
+
+            <i class="fa-solid fa-check roles-dropdown__status" aria-hidden="true"></i>
+          </article>
+        }
+      </div>
+    </section>
+  </ng-template>
 </div>

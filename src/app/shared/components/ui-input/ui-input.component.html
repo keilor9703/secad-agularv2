@@ -4,6 +4,7 @@
   [class.form-field--filled]="shouldFloat"
   [class.form-field--invalid]="error"
   [class.form-field--disabled]="isDisabled"
+  [class.form-field--multiline]="multiline"
 >
   <span class="form-field__label" *ngIf="label">
     {{ label }} <strong *ngIf="required">*</strong>

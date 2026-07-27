@@ -257,14 +257,29 @@
 
 @media (max-width: 640px) {
   .ui-modal {
-    align-items: end;
-    padding: 12px;
+    /*
+     * En móvil la modal conserva el patrón de diálogo centrado.
+     * El padding contempla las áreas seguras sin desplazarla hacia abajo.
+     */
+    place-items: center;
+    padding: max(12px, env(safe-area-inset-top, 0px)) max(12px, env(safe-area-inset-right, 0px))
+      max(12px, env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-left, 0px));
   }
 
   .ui-modal__dialog {
     width: 100%;
-    max-height: calc(100dvh - 24px);
+    max-height: min(
+      88dvh,
+      calc(
+        100dvh - max(
+            24px,
+            calc(env(safe-area-inset-top, 0px) + env(safe-area-inset-bottom, 0px) + 16px)
+          )
+      )
+    );
+    margin: auto;
     border-radius: 14px;
+    transform-origin: 50% 50%;
   }
 
   .ui-modal__head {

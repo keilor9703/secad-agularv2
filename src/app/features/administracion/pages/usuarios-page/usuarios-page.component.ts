@@ -7,6 +7,7 @@ import { ToastService } from '../../../../core/services/toast.service';
 import { AlertService } from '../../../../shared/services/alert.service';
 import { UsuarioDeleteModalComponent } from '../../components/usuario-delete-modal/usuario-delete-modal.component';
 import { UsuarioFormComponent } from '../../components/usuario-form/usuario-form.component';
+
 import { UsuariosTableComponent } from '../../components/usuarios-table/usuarios-table.component';
 import {
   NewRoleForm,
@@ -24,7 +25,12 @@ import {
 @Component({
   selector: 'app-usuarios',
   standalone: true,
-  imports: [CommonModule, UsuarioDeleteModalComponent, UsuarioFormComponent, UsuariosTableComponent],
+  imports: [
+    CommonModule,
+    UsuarioDeleteModalComponent,
+    UsuarioFormComponent,
+    UsuariosTableComponent,
+  ],
   templateUrl: './usuarios-page.component.html',
   styleUrls: ['./usuarios-page.component.scss'],
 })

@@ -5,10 +5,13 @@ import {
   EventEmitter,
   forwardRef,
   Input,
+  input,
   numberAttribute,
   Output,
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+
+import { UiFormControlSizeDirective } from '../../directives/ui-form-control-size.directive';
 
 let nextUiSearchInputId = 0;
 
@@ -16,6 +19,12 @@ let nextUiSearchInputId = 0;
   selector: 'app-ui-search-input',
   standalone: true,
   imports: [CommonModule],
+  hostDirectives: [
+    {
+      directive: UiFormControlSizeDirective,
+      inputs: ['controlSize'],
+    },
+  ],
   templateUrl: './ui-search-input.component.html',
   styleUrls: ['./ui-search-input.component.scss'],
   providers: [
@@ -28,6 +37,7 @@ let nextUiSearchInputId = 0;
 })
 export class UiSearchInputComponent implements ControlValueAccessor {
   @Input() label = '';
+  @Input() ariaLabel = '';
   @Input() placeholder = '';
   @Input() buttonText = 'Buscar';
   @Input() icon = 'fa-solid fa-magnifying-glass';
@@ -39,6 +49,17 @@ export class UiSearchInputComponent implements ControlValueAccessor {
   @Input({ transform: booleanAttribute }) required = false;
   @Input({ transform: booleanAttribute }) disabled = false;
   @Input({ transform: booleanAttribute }) clearable = true;
+
+  /**
+   * En móvil compacta el botón mostrando únicamente su icono.
+   * Puede desactivarse por instancia con [hideButtonTextOnMobile]="false".
+   */
+  readonly hideButtonTextOnMobile = input(true, { transform: booleanAttribute });
+  /**
+   * Permite usar el componente como buscador reactivo sin botón.
+   * En ese modo, `icon` se presenta dentro del campo como icono inicial.
+   */
+  readonly showButton = input(true, { transform: booleanAttribute });
 
   @Output() search = new EventEmitter<string>();
   @Output() cleared = new EventEmitter<void>();

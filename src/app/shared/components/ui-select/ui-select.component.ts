@@ -9,6 +9,7 @@ import {
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
+import { UiFormControlSizeDirective } from '../../directives/ui-form-control-size.directive';
 import { UiSelectOption } from '../../interfaces/ui-select-option.interface';
 
 let nextUiSelectId = 0;
@@ -17,6 +18,12 @@ let nextUiSelectId = 0;
   selector: 'app-ui-select',
   standalone: true,
   imports: [CommonModule],
+  hostDirectives: [
+    {
+      directive: UiFormControlSizeDirective,
+      inputs: ['controlSize'],
+    },
+  ],
   templateUrl: './ui-select.component.html',
   styleUrls: ['./ui-select.component.scss'],
   providers: [

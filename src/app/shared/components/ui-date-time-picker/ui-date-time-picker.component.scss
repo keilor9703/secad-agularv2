@@ -1,11 +1,13 @@
+@use '../../../../styles/components/form-control-sizing' as form-sizing;
+
 :host {
-  display: block;
-  min-width: 0;
   --_form-inset-shadow: var(
     --form-control-inset-shadow,
     inset 0 1px 2px rgba(15, 23, 42, 0.05),
     inset 0 0 0 1px rgba(148, 163, 184, 0.025)
   );
+
+  @include form-sizing.host-sizing;
 }
 
 .ui-date-time {
@@ -37,7 +39,8 @@
   display: flex;
   align-items: center;
   width: 100%;
-  min-height: var(--form-field-height, 42px);
+  height: var(--_form-control-height);
+  min-height: var(--_form-control-height);
   overflow: hidden;
   border: 1px solid var(--form-border-color, #cbd5e1);
   border-radius: var(--form-border-radius, 7px);
@@ -76,7 +79,7 @@
 .ui-date-time__input {
   width: 100%;
   min-width: 0;
-  height: var(--form-field-height, 42px);
+  height: 100%;
   padding: 0 40px 0 12px;
   border: 0;
   outline: 0;

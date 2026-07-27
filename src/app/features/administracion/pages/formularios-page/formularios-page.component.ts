@@ -11,8 +11,10 @@ import { UiSelectComponent } from '../../../../shared/components/ui-select/ui-se
 import { UiTimePickerComponent } from '../../../../shared/components/ui-time-picker/ui-time-picker.component';
 import { UiSelectOption } from '../../../../shared/interfaces/ui-select-option.interface';
 import { getFormErrorMessage } from '../../../../shared/utils/form-error.util';
+import { FormControlSizingDemoComponent } from '../../components/form-control-sizing-demo/form-control-sizing-demo.component';
 import { FuncionariosTableDemoComponent } from '../../components/funcionarios-table-demo/funcionarios-table-demo.component';
 import { NotificacionesDemoComponent } from '../../components/notificaciones-demo/notificaciones-demo.component';
+import { SpinnerDemoComponent } from '../../components/spinner-demo/spinner-demo.component';
 import { TabsDemoComponent } from '../../components/tabs-demo/tabs-demo.component';
 
 interface FormulariosDemoForm {
@@ -50,8 +52,10 @@ interface ModalActividadForm {
     UiSearchInputComponent,
     UiSelectComponent,
     UiTimePickerComponent,
+    FormControlSizingDemoComponent,
     FuncionariosTableDemoComponent,
     NotificacionesDemoComponent,
+    SpinnerDemoComponent,
     TabsDemoComponent,
   ],
   templateUrl: './formularios-page.component.html',

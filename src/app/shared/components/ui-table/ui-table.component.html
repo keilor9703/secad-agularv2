@@ -1,5 +1,17 @@
 @if (hasConfiguredTable()) {
-  <section class="ui-panel ui-table-panel">
+  <section
+    class="ui-panel ui-table-panel"
+    [class.ui-table-panel--embedded]="embedded()"
+    [style.--ui-table-header-color]="headerColor()"
+    [style.--ui-table-header-color-end]="headerColorEnd() || headerColor()"
+    [style.--ui-table-header-text-color]="headerTextColor()"
+    [style.--ui-table-body-text-color]="bodyTextColor() || null"
+    [style.--ui-table-body-font-size]="bodyFontSizeCss()"
+    [style.--ui-table-body-font-weight]="bodyFontWeightCss()"
+    [style.--ui-table-body-text-transform]="bodyTextTransform()"
+    [style.--ui-table-row-height]="rowHeightCss()"
+    [style.--ui-table-row-padding-block]="rowPaddingCss()"
+  >
     @if (title()) {
       <div class="ui-panel__head">
         <div class="ui-panel__title" [id]="titleId">
@@ -36,86 +48,142 @@
         </form>
       }
 
-      <div class="ui-table-wrap">
-        <table
-          class="ui-table"
-          [class.ui-table--sticky-header]="stickyHeader()"
-          [class.ui-table--sticky-actions]="stickyActions()"
-          [attr.aria-labelledby]="labelledBy() || titleId"
-        >
-          <thead>
-            <tr>
-              @if (actions().length > 0) {
-                <th class="align-center ui-table-actions-header" scope="col">Acciones</th>
-              }
-
-              @for (column of columns(); track trackColumn($index, column)) {
-                <th
-                  [class]="getHeaderClass(column)"
-                  [style.width]="column.width"
-                  (click)="toggleSort(column)"
-                >
-                  <span>{{ column.label }}</span>
-
-                  @if (column.sortable) {
-                    <i [class]="getSortIcon(column)"></i>
-                  }
-                </th>
-              }
-            </tr>
-          </thead>
-
-          <tbody>
-            @for (row of rows(); track trackRow($index, row)) {
+      <div class="ui-table-viewport">
+        <div class="ui-table-wrap">
+          <table
+            class="ui-table"
+            [class.ui-table--sticky-header]="stickyHeader()"
+            [class.ui-table--sticky-actions]="stickyActions()"
+            [attr.aria-labelledby]="labelledBy() || titleId"
+            [attr.aria-busy]="loading()"
+          >
+            <thead>
               <tr>
                 @if (actions().length > 0) {
-                  <td class="ui-table-actions-cell">
-                    <app-ui-table-actions
-                      [actions]="actions()"
-                      [row]="row"
-                      [ariaLabel]="actionMenuLabel()"
-                      (actionClick)="emitAction($event)"
-                    ></app-ui-table-actions>
-                  </td>
+                  <th class="align-center ui-table-actions-header" scope="col">Acciones</th>
                 }
 
                 @for (column of columns(); track trackColumn($index, column)) {
-                  <td [class]="getCellClass(column)">
-                    @if (column.cellTemplate) {
-                      <ng-container
-                        [ngTemplateOutlet]="column.cellTemplate"
-                        [ngTemplateOutletContext]="getCellContext(row, column)"
-                      ></ng-container>
-                    } @else if (getBadge(row, column); as badge) {
-                      <span [class]="getBadgeClass(badge)">
-                        {{ badge.text }}
-
-                        @if (badge.icon) {
-                          <i [class]="badge.icon"></i>
-                        }
-                      </span>
+                  <th
+                    [class]="getHeaderClass(column)"
+                    [style.width]="column.width"
+                    [attr.aria-sort]="getAriaSort(column)"
+                    scope="col"
+                  >
+                    @if (column.sortable) {
+                      <button
+                        class="ui-table-sort-button"
+                        type="button"
+                        [attr.aria-label]="getSortLabel(column)"
+                        (click)="toggleSort(column)"
+                      >
+                        <span>{{ column.label }}</span>
+                        <i [class]="getSortIcon(column)" aria-hidden="true"></i>
+                      </button>
                     } @else {
-                      {{ getCellValue(row, column) }}
+                      <span>{{ column.label }}</span>
                     }
-                  </td>
+                  </th>
                 }
               </tr>
-            }
-          </tbody>
-        </table>
+            </thead>
+
+            <tbody>
+              @if (loading()) {
+                <tr class="ui-table-loading-row">
+                  <td
+                    class="ui-table-loading-cell"
+                    aria-hidden="true"
+                    [attr.colspan]="visibleColumnCount()"
+                  ></td>
+                </tr>
+              } @else {
+                @for (row of displayedRows(); track trackRow($index, row)) {
+                  @let appearance = getRowAppearance(row, $index);
+
+                  <tr
+                    [style.--ui-table-row-text-color]="appearance?.textColor || null"
+                    [style.--ui-table-row-font-size]="resolveCssSize(appearance?.fontSize)"
+                    [style.--ui-table-row-font-weight]="resolveFontWeight(appearance?.fontWeight)"
+                    [style.--ui-table-current-row-height]="resolveCssSize(appearance?.height)"
+                    [style.--ui-table-current-row-padding-block]="
+                      resolveCssSize(appearance?.paddingBlock)
+                    "
+                  >
+                    @if (actions().length > 0) {
+                      <td class="ui-table-actions-cell">
+                        <app-ui-table-actions
+                          [actions]="actions()"
+                          [row]="row"
+                          [ariaLabel]="actionMenuLabel()"
+                          (actionClick)="emitAction($event)"
+                        ></app-ui-table-actions>
+                      </td>
+                    }
+
+                    @for (column of columns(); track trackColumn($index, column)) {
+                      <td
+                        [class]="getCellClass(column)"
+                        [style.--ui-table-cell-text-color]="column.textColor || null"
+                        [style.--ui-table-cell-font-size]="resolveCssSize(column.fontSize)"
+                        [style.--ui-table-cell-font-weight]="resolveFontWeight(column.fontWeight)"
+                        [style.--ui-table-cell-text-transform]="column.textTransform || null"
+                      >
+                        @if (column.cellTemplate) {
+                          <ng-container
+                            [ngTemplateOutlet]="column.cellTemplate"
+                            [ngTemplateOutletContext]="getCellContext(row, column)"
+                          ></ng-container>
+                        } @else if (getBadge(row, column); as badge) {
+                          <span [class]="getBadgeClass(badge)">
+                            {{ badge.text }}
+
+                            @if (badge.icon) {
+                              <i [class]="badge.icon"></i>
+                            }
+                          </span>
+                        } @else {
+                          {{ getCellValue(row, column) }}
+                        }
+                      </td>
+                    }
+                  </tr>
+                }
+              }
+            </tbody>
+          </table>
+        </div>
+
+        @if (loading()) {
+          <!--
+            Se centra contra el viewport visible, no contra el min-width interno
+            de la tabla. Esto mantiene el indicador visible en pantallas móviles.
+          -->
+          <div class="ui-table-loading-overlay">
+            <app-ui-spinner
+              type="ring"
+              layout="stacked"
+              [size]="loadingSpinnerSize()"
+              [variant]="loadingSpinnerVariant()"
+              [label]="loadingMessage()"
+              [speed]="760"
+              [thickness]="4"
+            />
+          </div>
+        }
       </div>
 
-      @if (rows().length === 0) {
+      @if (!loading() && displayedRows().length === 0) {
         <div class="ui-table-empty">
           <i class="fa-solid fa-table"></i>
           <span>{{ emptyMessage() }}</span>
         </div>
       }
 
-      @if (showPagination() && totalRecords() > 0) {
+      @if (!loading() && showPagination() && totalRecords() > 0) {
         <nav class="ui-table-pagination" aria-label="Paginación de tabla">
           <label class="ui-table-page-size">
-            <span>Registros por página:</span>
+            <span class="ui-table-page-size__label">Registros por página:</span>
 
             <span class="ui-table-page-size__select">
               <select [value]="normalizedPageSize()" (change)="changePageSize($event)">
