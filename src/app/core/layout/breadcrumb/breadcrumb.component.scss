@@ -74,18 +74,14 @@
   height: 30px;
   flex: 0 0 30px;
   object-fit: contain;
-  filter:
-    drop-shadow(0 1px 2px rgba(0, 25, 58, 0.38))
-    drop-shadow(0 0 1px rgba(0, 25, 58, 0.58));
+  filter: drop-shadow(0 1px 2px rgba(0, 25, 58, 0.38)) drop-shadow(0 0 1px rgba(0, 25, 58, 0.58));
   transition:
     filter 180ms ease,
     transform 180ms ease;
 }
 
 .breadcrumb-brand:hover .breadcrumb-brand__logo {
-  filter:
-    drop-shadow(0 2px 3px rgba(0, 25, 58, 0.42))
-    drop-shadow(0 0 1px rgba(0, 25, 58, 0.68));
+  filter: drop-shadow(0 2px 3px rgba(0, 25, 58, 0.42)) drop-shadow(0 0 1px rgba(0, 25, 58, 0.68));
   transform: scale(1.04);
 }
 
