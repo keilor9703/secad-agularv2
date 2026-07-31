@@ -1,181 +1,112 @@
-<section class="dominio-admin-page" *ngIf="visible">
-  <div class="ui-panel">
-    <div class="ui-panel__head">
-      <div class="ui-panel__title">
-        <i class="fa-solid fa-sitemap"></i>
-        Administraci&oacute;n de Dominios
+<section class="domain-admin-page">
+  <article class="domain-admin-shell">
+    <header class="domain-admin-shell__header">
+      <div class="domain-admin-shell__heading">
+        <span class="domain-admin-shell__icon" aria-hidden="true">
+          <i class="fa-solid fa-folder-tree"></i>
+        </span>
+
+        <div>
+          <h1>Administración de Dominios</h1>
+          <p>Configure catálogos jerárquicos y valores reutilizables del sistema.</p>
+        </div>
       </div>
 
-      <div class="ui-panel__actions ui-window-controls">
-        <button class="ui-icon-btn ui-win-btn is-min" type="button" title="Minimizar" (click)="toggleMinimize()">
-          <i class="fa-solid fa-minus"></i>
-        </button>
+      <div class="domain-admin-shell__summary" aria-label="Resumen de dominios">
+        <app-ui-button
+          class="domain-admin-shell__create"
+          size="sm"
+          variant="primary"
+          icon="fa-solid fa-plus"
+          [hideTextOnMobile]="true"
+          backgroundColor="var(--policia-acento, #c8ff00)"
+          textColor="#102342"
+          borderColor="rgba(200, 255, 0, 0.72)"
+          iconColor="#102342"
+          [disabled]="loading()"
+          (buttonClick)="startCreateRoot()"
+        >
+          Nuevo dominio
+        </app-ui-button>
+
+        <span>
+          <strong>{{ totalCount() }}</strong>
+          dominios
+        </span>
+        <span>
+          <strong>{{ activeCount() }}</strong>
+          activos
+        </span>
+        <span>
+          <strong>{{ rootCount() }}</strong>
+          principales
+        </span>
+
+        <app-ui-button
+          size="sm"
+          variant="ghost"
+          [icon]="minimized() ? 'fa-solid fa-chevron-down' : 'fa-solid fa-minus'"
+          [iconOnly]="true"
+          [ariaLabel]="
+            minimized()
+              ? 'Expandir Administración de Dominios'
+              : 'Minimizar Administración de Dominios'
+          "
+          backgroundColor="rgba(255, 255, 255, 0.1)"
+          borderColor="rgba(255, 255, 255, 0.2)"
+          iconColor="#ffffff"
+          (buttonClick)="toggleMinimize()"
+        />
       </div>
-    </div>
+    </header>
 
-    <div class="ui-panel__body" *ngIf="!minimized">
-      <div class="admin-grid">
-        <article class="tab-card form-card">
-          <form class="dominio-form" [formGroup]="dominioForm" (ngSubmit)="guardar()">
-            <h3>{{ editingId ? 'Editar dominio' : 'Nuevo dominio' }}</h3>
-
-            <div class="ui-grid">
-              <div class="ui-col-12">
-                <app-ui-input
-                  formControlName="Descripcion"
-                  label="Descripci&oacute;n *"
-                  placeholder="Nombre del dominio"
-                  [maxlength]="255"
-                  [error]="descripcionError"
-                ></app-ui-input>
-              </div>
-
-              <div class="ui-col-12">
-                <app-ui-select
-                  formControlName="IdPadre"
-                  label="Dominio padre"
-                  [options]="dominioPadreOptions"
-                ></app-ui-select>
-              </div>
-
-              <div class="ui-col-6">
-                <app-ui-input
-                  formControlName="Abreviatura"
-                  label="Abreviatura"
-                  placeholder="Ej: DOM"
-                  [maxlength]="50"
-                ></app-ui-input>
-              </div>
-
-              <div class="ui-col-6">
-                <app-ui-select
-                  formControlName="Vigente"
-                  label="Vigente"
-                  [options]="vigenteOptions"
-                ></app-ui-select>
-              </div>
-
-              <div class="ui-col-12">
-                <app-ui-input
-                  formControlName="Observacion"
-                  label="Observaci&oacute;n"
-                  placeholder="Observaciones adicionales"
-                  [maxlength]="500"
-                  [rows]="3"
-                  [multiline]="true"
-                ></app-ui-input>
-              </div>
-            </div>
-
-            <div class="tab-actions">
-              <app-ui-button variant="secondary" (buttonClick)="nuevo()">Limpiar</app-ui-button>
-              <app-ui-button
-                type="submit"
-                variant="primary"
-                icon="fa-solid fa-floppy-disk"
-                [disabled]="saving"
-                [loading]="saving"
-              >
-                {{ saving ? 'Guardando...' : 'Guardar' }}
-              </app-ui-button>
-            </div>
-          </form>
-        </article>
-
-        <article class="tab-card list-card">
-          <h3>Dominios registrados</h3>
-
-          <div class="list-loading" *ngIf="loading">Cargando dominios...</div>
-
-          <div class="dominio-list" *ngIf="!loading && dominiosTree.length > 0">
-            <div class="dominio-tree">
-              <ng-container *ngFor="let grupo of dominiosTree; let i = index">
-                <div class="dominio-item is-parent">
-                  <div class="dominio-item__content">
-                    <i
-                      class="fa-solid dominio-icon expand-icon"
-                      [class.fa-folder]="!grupo.expanded"
-                      [class.fa-folder-open]="grupo.expanded"
-                      [class.is-hidden]="grupo.children.length === 0"
-                      (click)="toggleExpand(i)"
-                    ></i>
-                    <strong>{{ grupo.item.descripcion }}</strong>
-                  </div>
-                  <div class="dominio-item__actions">
-                    <app-ui-button variant="secondary" (buttonClick)="editar(grupo.item)">Editar</app-ui-button>
-                    <app-ui-button [variant]="getEstadoButtonVariant(grupo.item)" (buttonClick)="cambiarEstado(grupo.item)">
-                      {{ grupo.item.vigente === 1 ? 'Inactivar' : 'Activar' }}
-                    </app-ui-button>
-                    <app-ui-button
-                      variant="danger"
-                      icon="fa-solid fa-trash"
-                      title="Eliminar"
-                      ariaLabel="Eliminar dominio"
-                      (buttonClick)="eliminar(grupo.item)"
-                    ></app-ui-button>
-                  </div>
-                </div>
-
-                <div class="dominio-children" *ngIf="grupo.expanded && grupo.children.length > 0">
-                  <ng-container *ngFor="let child of grupo.children; let childIdx = index">
-                    <div class="dominio-item is-child">
-                      <div class="dominio-item__content">
-                        <i
-                          class="fa-solid dominio-icon expand-icon"
-                          [class.fa-folder]="!child.expanded"
-                          [class.fa-folder-open]="child.expanded"
-                          [class.is-hidden]="child.children.length === 0"
-                          (click)="toggleChildExpand(i, childIdx)"
-                        ></i>
-                        <span>{{ child.item.descripcion }}</span>
-                      </div>
-                      <div class="dominio-item__actions">
-                        <app-ui-button variant="secondary" (buttonClick)="editar(child.item)">Editar</app-ui-button>
-                        <app-ui-button [variant]="getEstadoButtonVariant(child.item)" (buttonClick)="cambiarEstado(child.item)">
-                          {{ child.item.vigente === 1 ? 'Inactivar' : 'Activar' }}
-                        </app-ui-button>
-                        <app-ui-button
-                          variant="danger"
-                          icon="fa-solid fa-trash"
-                          title="Eliminar"
-                          ariaLabel="Eliminar dominio"
-                          (buttonClick)="eliminar(child.item)"
-                        ></app-ui-button>
-                      </div>
-                    </div>
-
-                    <div class="dominio-children" *ngIf="child.expanded && child.children.length > 0">
-                      <div class="dominio-item is-grandchild" *ngFor="let grandchild of child.children">
-                        <div class="dominio-item__content">
-                          <i class="fa-solid fa-file-lines dominio-icon"></i>
-                          <span>{{ grandchild.descripcion }}</span>
-                        </div>
-                        <div class="dominio-item__actions">
-                          <app-ui-button variant="secondary" (buttonClick)="editar(grandchild)">Editar</app-ui-button>
-                          <app-ui-button [variant]="getEstadoButtonVariant(grandchild)" (buttonClick)="cambiarEstado(grandchild)">
-                            {{ grandchild.vigente === 1 ? 'Inactivar' : 'Activar' }}
-                          </app-ui-button>
-                          <app-ui-button
-                            variant="danger"
-                            icon="fa-solid fa-trash"
-                            title="Eliminar"
-                            ariaLabel="Eliminar dominio"
-                            (buttonClick)="eliminar(grandchild)"
-                          ></app-ui-button>
-                        </div>
-                      </div>
-                    </div>
-                  </ng-container>
-                </div>
-              </ng-container>
-            </div>
+    @if (!minimized()) {
+      <div class="domain-admin-shell__body">
+        <aside class="domain-admin-shell__guide">
+          <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+          <div>
+            <strong>Catálogos jerárquicos centralizados</strong>
+            <span>
+              Cree dominios principales desde la cabecera o valores hijos desde cualquier nivel. La
+              estructura admite profundidad dinámica y evita relaciones circulares.
+            </span>
           </div>
+        </aside>
 
-          <div class="news-state" *ngIf="!loading && listaDominios.length === 0">
-            No hay dominios registrados.
-          </div>
-        </article>
+        <div class="domain-admin-layout" [class.has-editor]="sideEditorVisible()">
+          @if (editorMode(); as mode) {
+            @if (!inlineChildEditorVisible()) {
+              <app-dominio-admin-form
+                [mode]="mode"
+                [editingItem]="editingItem()"
+                [createParent]="createParent()"
+                [parentOptions]="parentOptions()"
+                [saving]="saving()"
+                [resetVersion]="formResetVersion()"
+                (saveRequested)="save($event)"
+                (cancelRequested)="closeEditor()"
+              />
+            }
+          }
+
+          <app-dominio-admin-tree
+            [items]="domainItems()"
+            [loading]="loading()"
+            [processingId]="processingDomainId()"
+            [selectedId]="selectedDomainId()"
+            [focusedId]="focusedDomainId()"
+            [inlineCreateParent]="inlineChildEditorVisible() ? createParent() : null"
+            [inlineCreateResetVersion]="formResetVersion()"
+            [savingChild]="saving()"
+            (createChildRequested)="startCreateChild($event)"
+            (editRequested)="edit($event)"
+            (stateRequested)="changeState($event)"
+            (deleteRequested)="delete($event)"
+            (saveChildRequested)="save($event)"
+            (closeChildRequested)="closeEditor()"
+          />
+        </div>
       </div>
-    </div>
-  </div>
+    }
+  </article>
 </section>

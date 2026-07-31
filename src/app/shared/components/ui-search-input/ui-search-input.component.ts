@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import {
   booleanAttribute,
   Component,
+  computed,
   EventEmitter,
   forwardRef,
   Input,
@@ -12,13 +13,19 @@ import {
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
 import { UiFormControlSizeDirective } from '../../directives/ui-form-control-size.directive';
+import {
+  UiButtonAppearance,
+  UiButtonComponent,
+  UiButtonVariant,
+} from '../ui-button/ui-button.component';
 
 let nextUiSearchInputId = 0;
+export type UiSearchButtonLayout = 'attached' | 'detached';
 
 @Component({
   selector: 'app-ui-search-input',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, UiButtonComponent],
   hostDirectives: [
     {
       directive: UiFormControlSizeDirective,
@@ -60,6 +67,31 @@ export class UiSearchInputComponent implements ControlValueAccessor {
    * En ese modo, `icon` se presenta dentro del campo como icono inicial.
    */
   readonly showButton = input(true, { transform: booleanAttribute });
+  /**
+   * Decide si se representa el asterisco; no desactiva la validación requerida.
+   */
+  readonly showRequiredMarker = input(true, { transform: booleanAttribute });
+  /** Apariencia del botón reutilizable integrado en el buscador. */
+  readonly buttonVariant = input<UiButtonVariant>('secondary');
+  readonly buttonAppearance = input<UiButtonAppearance>('solid');
+  /**
+   * attached: botón unido al campo.
+   * detached: botón independiente con separación configurable.
+   */
+  readonly buttonLayout = input<UiSearchButtonLayout>('attached');
+  readonly buttonGap = input<string | number>(8);
+  /** Colores opcionales por instancia; vacío conserva la variante seleccionada. */
+  readonly buttonBackgroundColor = input('');
+  readonly buttonTextColor = input('');
+  readonly buttonBorderColor = input('');
+  readonly buttonIconColor = input('');
+  readonly leadingIconColor = input('');
+
+  readonly buttonGapCss = computed(() => {
+    const gap = this.buttonGap();
+
+    return typeof gap === 'number' ? `${Math.max(0, gap)}px` : gap;
+  });
 
   @Output() search = new EventEmitter<string>();
   @Output() cleared = new EventEmitter<void>();

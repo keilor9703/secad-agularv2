@@ -13,6 +13,89 @@
   gap: 18px;
 }
 
+.required-marker-demo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 14px;
+  border: 1px solid rgba(31, 78, 121, 0.16);
+  border-left: 3px solid var(--policia-cielo);
+  border-radius: 6px;
+  background: rgba(31, 78, 121, 0.035);
+}
+
+.required-marker-demo strong {
+  display: block;
+  color: var(--policia-oscuro);
+  font-size: calc(12px * var(--font-size-scale));
+  font-weight: 850;
+}
+
+.required-marker-demo p {
+  margin: 3px 0 0;
+  color: var(--form-hint-color, #64748b);
+  font-size: calc(11px * var(--font-size-scale));
+  line-height: 1.4;
+}
+
+.required-marker-demo__switch {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 8px;
+  color: var(--ui-text);
+  cursor: pointer;
+  font-size: calc(11px * var(--font-size-scale));
+  font-weight: 750;
+}
+
+.required-marker-demo__switch input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  opacity: 0;
+}
+
+.required-marker-demo__track {
+  position: relative;
+  width: 36px;
+  height: 20px;
+  border: 1px solid #94a3b8;
+  border-radius: 999px;
+  background: #e2e8f0;
+  transition:
+    border-color 160ms ease,
+    background 160ms ease;
+}
+
+.required-marker-demo__track::after {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.24);
+  content: '';
+  transition: transform 160ms ease;
+}
+
+.required-marker-demo__switch input:checked + .required-marker-demo__track {
+  border-color: var(--policia-medio);
+  background: var(--policia-medio);
+}
+
+.required-marker-demo__switch input:checked + .required-marker-demo__track::after {
+  transform: translateX(16px);
+}
+
+.required-marker-demo__switch input:focus-visible + .required-marker-demo__track {
+  box-shadow: var(--ui-focus-ring);
+}
+
 app-funcionarios-table-demo {
   display: block;
   margin-top: 12px;
@@ -153,6 +236,11 @@ app-funcionarios-table-demo {
     grid-column: span 12;
   }
 
+  .required-marker-demo {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
   .form-actions {
     align-items: center;
     justify-content: flex-start;
@@ -195,6 +283,16 @@ app-funcionarios-table-demo {
 }
 
 :host-context(html.dark-mode) {
+  .required-marker-demo {
+    border-color: rgba(8, 166, 203, 0.2);
+    border-left-color: var(--policia-cielo);
+    background: rgba(8, 166, 203, 0.06);
+  }
+
+  .required-marker-demo strong {
+    color: var(--ui-text);
+  }
+
   .form-section {
     border-color: var(--ui-border);
   }

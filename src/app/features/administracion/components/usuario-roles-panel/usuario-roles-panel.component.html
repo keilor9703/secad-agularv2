@@ -1,7 +1,7 @@
 <article class="access-section">
   <header class="access-section__header">
     <div>
-      <h3>Control de acceso</h3>
+      <h3 id="usuarios-roles-title">Control de acceso</h3>
       <p>Roles vigentes asociados al usuario consultado.</p>
     </div>
 
@@ -17,20 +17,30 @@
 
   <!-- Esta sección ya aporta su propio contenedor; la tabla no debe dibujar otra tarjeta. -->
   <app-ui-table
+    variant="plain"
+    paginationVariant="numbered"
+    actionDisplay="row-hover"
+    actionsPosition="right"
     embedded
     emptyMessage="El usuario no tiene roles asignados actualmente."
-    [headerColor]="tableHeaderColor()"
-    [headerColorEnd]="tableHeaderColorEnd()"
-    headerTextColor="#ffffff"
-    bodyTextColor="#34495e"
+    [variant]="roleTableVariant()"
+    [actionDisplay]="roleActionDisplay()"
+    [actionsPosition]="roleActionsPosition()"
     [columns]="roleColumns"
     [rows]="roles"
     [actions]="roleActions"
     [total]="roles.length"
-    [rowHeight]="40"
-    [rowPadding]="2"
+    [paginationShowPageSize]="false"
+    [paginationShowSummary]="false"
     [showPagination]="true"
-    [stickyActions]="true"
+    [paginationMaxVisiblePages]="5"
+    labelledBy="usuarios-roles-title"
+    [showRecordBadge]="false"
+    [pageSize]="5"
+    [bodyFontSize]="12"
+    bodyFontWeight="normal"
+    [rowPadding]="7"
+    headerTextColor="#263247"
     actionMenuLabel="Acciones del rol asignado"
     (actionClick)="handleRoleAction($event)"
   ></app-ui-table>
@@ -59,14 +69,14 @@
       </div>
 
       <div class="ui-col-6">
-        <app-ui-date-time-picker
+        <app-ui-input
           formControlName="fechaFin"
           label="Fecha fin"
-          mode="date"
-          hint="Formato visible: dd/mm/aaaa"
+          type="date"
+          icon="fa-solid fa-calendar-days"
           [required]="true"
           [error]="getRoleError('fechaFin')"
-        ></app-ui-date-time-picker>
+        ></app-ui-input>
       </div>
 
       <div class="ui-col-12">

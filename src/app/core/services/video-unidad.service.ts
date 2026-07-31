@@ -1,6 +1,7 @@
-﻿import { Injectable } from '@angular/core';
-import { HttpClient, HttpEventType, HttpRequest } from '@angular/common/http';
-import { Observable, timeout, map } from 'rxjs';
+﻿import { HttpClient, HttpEventType, HttpRequest, HttpResponse } from '@angular/common/http';
+import { Injectable, inject } from '@angular/core';
+import { Observable, filter, map, timeout } from 'rxjs';
+
 import { environment } from '../../../environments/environment';
 
 export interface VideoUnidadInfo {
@@ -26,30 +27,53 @@ export interface VideoUnidadUploadResponse {
 @Injectable({ providedIn: 'root' })
 export class VideoUnidadService {
   private readonly baseUrl = `${environment.apiBaseUrl}/VideoUnidad`;
-
-  constructor(private http: HttpClient) {}
+  private readonly http = inject(HttpClient);
 
   getCurrent(): Observable<VideoUnidadInfo> {
     return this.http.get<VideoUnidadInfo>(`${this.baseUrl}/current`);
   }
 
-  upload(file: File, descripcion?: string, observaciones?: string): Observable<VideoUnidadUploadResponse> {
+  upload(
+    file: File,
+    descripcion?: string,
+    observaciones?: string,
+  ): Observable<VideoUnidadUploadResponse> {
     const formData = new FormData();
     formData.append('File', file);
-    if (descripcion) formData.append('Descripcion', descripcion);
-    if (observaciones) formData.append('Observaciones', observaciones);
-    const req = new HttpRequest('POST', `${this.baseUrl}/upload`, formData, {
-      reportProgress: true
+
+    if (descripcion) {
+      formData.append('Descripcion', descripcion);
+    }
+
+    if (observaciones) {
+      formData.append('Observaciones', observaciones);
+    }
+
+    const request = new HttpRequest('POST', `${this.baseUrl}/upload`, formData, {
+      reportProgress: true,
     });
-    return this.http.request(req).pipe(
+
+    /*
+     * HttpClient emite eventos intermedios cuando reportProgress está activo.
+     * Solo se expone la respuesta final para que un evento de progreso no sea
+     * interpretado por la interfaz como una carga fallida.
+     */
+    return this.http.request<VideoUnidadUploadResponse>(request).pipe(
       timeout(300000),
-      map((event) => {
-        if (event.type === HttpEventType.Response) {
-          return event.body as VideoUnidadUploadResponse;
-        }
-        return { success: false, url: '', fileName: '', sizeBytes: 0, message: 'Cargando...', detail: '' } as VideoUnidadUploadResponse;
-      })
+      filter(
+        (event): event is HttpResponse<VideoUnidadUploadResponse> =>
+          event.type === HttpEventType.Response,
+      ),
+      map(
+        (event) =>
+          event.body ?? {
+            success: false,
+            url: '',
+            fileName: '',
+            sizeBytes: 0,
+            message: 'El servidor no devolvió una respuesta válida.',
+          },
+      ),
     );
   }
 }
-

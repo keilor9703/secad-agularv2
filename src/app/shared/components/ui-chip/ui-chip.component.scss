@@ -1,0 +1,171 @@
+:host {
+  display: inline-flex;
+  max-width: 100%;
+  vertical-align: middle;
+}
+
+.ui-status-chip {
+  --chip-color: #526174;
+  --chip-bg: rgba(100, 116, 139, 0.08);
+  --chip-border: rgba(100, 116, 139, 0.25);
+  --chip-solid-bg: #64748b;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 100%;
+  border: 1px solid var(--chip-border);
+  border-radius: 999px;
+  color: var(--chip-color);
+  font-weight: 750;
+  line-height: 1.15;
+  white-space: nowrap;
+}
+
+.ui-status-chip--xs {
+  min-height: 25px;
+  gap: 5px;
+  padding: 3px 8px;
+  font-size: calc(9.5px * var(--font-size-scale, 1));
+}
+
+.ui-status-chip--sm {
+  min-height: 31px;
+  gap: 7px;
+  padding: 5px 11px;
+  font-size: calc(10.5px * var(--font-size-scale, 1));
+}
+
+.ui-status-chip--md {
+  min-height: 38px;
+  gap: 8px;
+  padding: 7px 14px;
+  font-size: calc(12px * var(--font-size-scale, 1));
+}
+
+.ui-status-chip--soft {
+  background: var(--chip-bg);
+}
+
+.ui-status-chip--outline {
+  background: color-mix(in srgb, var(--ui-surface, #ffffff) 96%, var(--chip-color));
+}
+
+.ui-status-chip--solid {
+  border-color: var(--chip-solid-bg);
+  background: var(--chip-solid-bg);
+  color: #ffffff;
+}
+
+.ui-status-chip--primary {
+  --chip-color: #1557c0;
+  --chip-bg: #e9f0ff;
+  --chip-border: #9bb9f2;
+  --chip-solid-bg: #2864dc;
+}
+
+.ui-status-chip--secondary {
+  --chip-color: #526174;
+  --chip-bg: #eef2f6;
+  --chip-border: #c7d0dc;
+  --chip-solid-bg: #364155;
+}
+
+.ui-status-chip--success {
+  --chip-color: #16855d;
+  --chip-bg: #e5f7ef;
+  --chip-border: #9fd5c2;
+  --chip-solid-bg: #16855d;
+}
+
+.ui-status-chip--info {
+  --chip-color: #00698f;
+  --chip-bg: #e3f5fb;
+  --chip-border: #9ed9e9;
+  --chip-solid-bg: #087da5;
+}
+
+.ui-status-chip--warning {
+  --chip-color: #a35300;
+  --chip-bg: #fff2dc;
+  --chip-border: #eec487;
+  --chip-solid-bg: #cf7009;
+}
+
+.ui-status-chip--danger {
+  --chip-color: #b42318;
+  --chip-bg: #fde9e7;
+  --chip-border: #e9aaa4;
+  --chip-solid-bg: #c93d30;
+}
+
+.ui-status-chip--neutral {
+  --chip-color: #526174;
+  --chip-bg: #f0f3f7;
+  --chip-border: #cfd7e2;
+  --chip-solid-bg: #64748b;
+}
+
+.ui-status-chip__dot {
+  width: 8px;
+  height: 8px;
+  flex: 0 0 8px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 0 4px color-mix(in srgb, currentColor 13%, transparent);
+}
+
+.ui-status-chip > i {
+  flex: 0 0 auto;
+  font-size: 0.95em;
+}
+
+.ui-status-chip__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ui-status-chip__remove {
+  display: inline-grid;
+  width: 20px;
+  height: 20px;
+  place-items: center;
+  margin: -2px -5px -2px 0;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  outline: 0;
+  background: transparent;
+  color: currentColor;
+  cursor: pointer;
+}
+
+.ui-status-chip__remove:hover:not(:disabled),
+.ui-status-chip__remove:focus-visible {
+  background: color-mix(in srgb, currentColor 12%, transparent);
+}
+
+.ui-status-chip__remove:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 1px;
+}
+
+.ui-status-chip.is-disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+:host-context(html.dark-mode) {
+  .ui-status-chip--soft,
+  .ui-status-chip--outline {
+    background: color-mix(in srgb, var(--ui-surface, #1e2840) 84%, var(--chip-color));
+  }
+
+  .ui-status-chip__remove,
+  .ui-status-chip__remove:hover:not(:disabled),
+  .ui-status-chip__remove:focus-visible {
+    border-color: transparent !important;
+    background: transparent !important;
+    color: inherit;
+  }
+}

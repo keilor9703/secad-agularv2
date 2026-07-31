@@ -1,0 +1,129 @@
+<section class="submenu-form-card" aria-labelledby="submenu-form-title">
+  <header class="submenu-form-card__header">
+    <span class="submenu-form-card__icon" aria-hidden="true">
+      <i class="fa-solid fa-folder-plus"></i>
+    </span>
+
+    <div class="submenu-form-card__heading">
+      <h3 id="submenu-form-title">Crear submenú</h3>
+      <p>
+        El nuevo elemento quedará dentro de
+        <strong>{{ parent().descripcion }}</strong
+        >.
+      </p>
+    </div>
+
+    <app-ui-chip
+      class="submenu-form-card__parent"
+      [label]="'Padre · ID ' + parent().idMenu"
+      variant="info"
+      appearance="soft"
+      size="xs"
+      icon="fa-solid fa-turn-down"
+    />
+  </header>
+
+  <form class="submenu-form" [formGroup]="form" (ngSubmit)="submit()">
+    <div class="submenu-form__grid">
+      <div class="submenu-form__field submenu-form__field--description">
+        <app-ui-input
+          formControlName="descripcion"
+          label="Nombre del submenú"
+          placeholder="Nombre visible"
+          icon="fa-solid fa-font"
+          [required]="true"
+          [maxlength]="255"
+          [controlSize]="compactControlSize"
+          [error]="errorFor('descripcion')"
+        />
+      </div>
+
+      <div class="submenu-form__field submenu-form__field--position">
+        <app-ui-input
+          formControlName="posicion"
+          label="Posición"
+          type="number"
+          placeholder="0"
+          icon="fa-solid fa-arrow-down-1-9"
+          [required]="true"
+          [controlSize]="compactControlSize"
+          [error]="errorFor('posicion')"
+        />
+      </div>
+
+      <div class="submenu-form__field submenu-form__field--type">
+        <app-ui-select
+          formControlName="tipo"
+          label="Tipo"
+          placeholder="Seleccione"
+          [options]="typeOptions"
+          [required]="true"
+          [clearable]="false"
+          [searchable]="false"
+          [controlSize]="compactControlSize"
+          [error]="errorFor('tipo')"
+        />
+      </div>
+
+      <div class="submenu-form__field submenu-form__field--status">
+        <app-ui-select
+          formControlName="vigente"
+          label="Estado"
+          placeholder="Seleccione"
+          [options]="statusOptions"
+          [required]="true"
+          [clearable]="false"
+          [searchable]="false"
+          [controlSize]="compactControlSize"
+          [error]="errorFor('vigente')"
+        />
+      </div>
+
+      <div class="submenu-form__field submenu-form__field--icon">
+        <app-ui-icon-picker
+          formControlName="icono"
+          label="Icono"
+          placeholder="Seleccione"
+          density="compact"
+          [error]="errorFor('icono')"
+        />
+      </div>
+
+      <div class="submenu-form__field submenu-form__field--detail">
+        <app-ui-input
+          formControlName="detalle"
+          label="Ruta o recurso"
+          placeholder="/administracion/nueva-ruta"
+          icon="fa-solid fa-link"
+          [maxlength]="500"
+          [controlSize]="compactControlSize"
+          [error]="errorFor('detalle')"
+        />
+      </div>
+    </div>
+
+    <footer class="submenu-form__footer">
+      <app-ui-button
+        type="button"
+        size="sm"
+        variant="outline"
+        icon="fa-solid fa-xmark"
+        [disabled]="saving()"
+        (buttonClick)="cancel()"
+      >
+        Cancelar
+      </app-ui-button>
+
+      <app-ui-button
+        type="submit"
+        size="sm"
+        variant="primary"
+        icon="fa-solid fa-folder-plus"
+        [loading]="saving()"
+        [disabled]="form.invalid"
+      >
+        Guardar submenú
+      </app-ui-button>
+    </footer>
+  </form>
+</section>

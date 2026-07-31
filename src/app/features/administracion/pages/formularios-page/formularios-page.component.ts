@@ -11,10 +11,13 @@ import { UiSelectComponent } from '../../../../shared/components/ui-select/ui-se
 import { UiTimePickerComponent } from '../../../../shared/components/ui-time-picker/ui-time-picker.component';
 import { UiSelectOption } from '../../../../shared/interfaces/ui-select-option.interface';
 import { getFormErrorMessage } from '../../../../shared/utils/form-error.util';
+import { ButtonSearchDemoComponent } from '../../components/button-search-demo/button-search-demo.component';
 import { FormControlSizingDemoComponent } from '../../components/form-control-sizing-demo/form-control-sizing-demo.component';
 import { FuncionariosTableDemoComponent } from '../../components/funcionarios-table-demo/funcionarios-table-demo.component';
 import { NotificacionesDemoComponent } from '../../components/notificaciones-demo/notificaciones-demo.component';
 import { SpinnerDemoComponent } from '../../components/spinner-demo/spinner-demo.component';
+import { StatusComponentsDemoComponent } from '../../components/status-components-demo/status-components-demo.component';
+import { TableVariantsDemoComponent } from '../../components/table-variants-demo/table-variants-demo.component';
 import { TabsDemoComponent } from '../../components/tabs-demo/tabs-demo.component';
 
 interface FormulariosDemoForm {
@@ -52,10 +55,13 @@ interface ModalActividadForm {
     UiSearchInputComponent,
     UiSelectComponent,
     UiTimePickerComponent,
+    ButtonSearchDemoComponent,
     FormControlSizingDemoComponent,
     FuncionariosTableDemoComponent,
     NotificacionesDemoComponent,
     SpinnerDemoComponent,
+    StatusComponentsDemoComponent,
+    TableVariantsDemoComponent,
     TabsDemoComponent,
   ],
   templateUrl: './formularios-page.component.html',
@@ -68,6 +74,11 @@ export class FormulariosPageComponent {
   readonly minimized = signal(false);
   readonly modalOpen = signal(false);
   readonly submittedJson = signal('');
+  /**
+   * Variable consumidora de ejemplo:
+   * cambia únicamente la visibilidad del asterisco en los controles requeridos.
+   */
+  readonly showRequiredMarkers = signal(true);
   readonly today = new Date();
 
   readonly unidadOptions: UiSelectOption<number>[] = [
@@ -191,6 +202,14 @@ export class FormulariosPageComponent {
     });
 
     this.submittedJson.set('');
+  }
+
+  /**
+   * Demuestra que el asterisco se puede ocultar sin eliminar Validators.required.
+   */
+  updateRequiredMarkerVisibility(event: Event): void {
+    const checkbox = event.target as HTMLInputElement;
+    this.showRequiredMarkers.set(checkbox.checked);
   }
 
   /**

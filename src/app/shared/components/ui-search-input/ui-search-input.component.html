@@ -5,59 +5,80 @@
   [class.search-field--disabled]="isDisabled"
 >
   <span class="search-field__label" *ngIf="label">
-    {{ label }} <strong *ngIf="required">*</strong>
+    {{ label }}
+    @if (required && showRequiredMarker()) {
+      <strong class="search-field__required-marker" [class.is-invalid]="!!error" aria-hidden="true">
+        *
+      </strong>
+    }
   </span>
 
-  <div class="search-field__shell" [class.search-field__shell--without-button]="!showButton()">
-    <i
-      *ngIf="!showButton() && icon"
-      [class]="'search-field__leading-icon ' + icon"
-      aria-hidden="true"
-    ></i>
+  <div
+    class="search-field__control"
+    [class.search-field__control--attached]="showButton() && buttonLayout() === 'attached'"
+    [class.search-field__control--detached]="showButton() && buttonLayout() === 'detached'"
+    [class.search-field__control--without-button]="!showButton()"
+    [style.--search-button-gap]="buttonGapCss()"
+  >
+    <div class="search-field__shell" [class.search-field__shell--without-button]="!showButton()">
+      <i
+        *ngIf="!showButton() && icon"
+        [class]="'search-field__leading-icon ' + icon"
+        [style.color]="leadingIconColor() || null"
+        aria-hidden="true"
+      ></i>
 
-    <input
-      class="search-field__input"
-      [id]="inputId"
-      type="text"
-      [placeholder]="placeholder"
-      [disabled]="isDisabled"
-      [attr.maxlength]="maxlength"
-      [attr.aria-label]="ariaLabel || (!label ? placeholder : null)"
-      [attr.aria-required]="required"
-      [attr.aria-describedby]="describedBy"
-      [attr.aria-invalid]="!!error"
-      [value]="value"
-      (input)="handleInput($event)"
-      (focus)="handleFocus()"
-      (blur)="handleBlur()"
-      (keydown.enter)="emitSearch()"
-    />
+      <input
+        class="search-field__input"
+        [id]="inputId"
+        type="text"
+        [placeholder]="placeholder"
+        [disabled]="isDisabled"
+        [attr.maxlength]="maxlength"
+        [attr.aria-label]="ariaLabel || (!label ? placeholder : null)"
+        [attr.aria-required]="required"
+        [attr.aria-describedby]="describedBy"
+        [attr.aria-invalid]="!!error"
+        [value]="value"
+        (input)="handleInput($event)"
+        (focus)="handleFocus()"
+        (blur)="handleBlur()"
+        (keydown.enter)="emitSearch()"
+      />
 
-    <button
-      class="search-field__clear"
-      type="button"
-      *ngIf="clearable && value"
-      [disabled]="isDisabled"
-      (click)="clear()"
-      title="Limpiar"
-    >
-      ×
-    </button>
+      <button
+        class="search-field__clear"
+        type="button"
+        *ngIf="clearable && value"
+        [disabled]="isDisabled"
+        (click)="clear()"
+        title="Limpiar"
+        aria-label="Limpiar búsqueda"
+      >
+        ×
+      </button>
+    </div>
 
-    <button
+    <app-ui-button
       *ngIf="showButton()"
       class="search-field__button"
-      [class.search-field__button--icon-only]="iconOnly"
-      [class.search-field__button--mobile-icon-only]="hideButtonTextOnMobile()"
       type="button"
+      [variant]="buttonVariant()"
+      [appearance]="buttonAppearance()"
+      [icon]="icon"
+      [iconOnly]="iconOnly"
+      [hideTextOnMobile]="hideButtonTextOnMobile()"
+      [backgroundColor]="buttonBackgroundColor()"
+      [textColor]="buttonTextColor()"
+      [borderColor]="buttonBorderColor()"
+      [iconColor]="buttonIconColor()"
       [disabled]="isDisabled"
       [title]="searchLabel"
-      [attr.aria-label]="iconOnly || hideButtonTextOnMobile() ? searchLabel : null"
-      (click)="emitSearch()"
+      [ariaLabel]="searchLabel"
+      (buttonClick)="emitSearch()"
     >
-      <i [class]="icon" *ngIf="icon"></i>
-      <span *ngIf="!iconOnly">{{ buttonText }}</span>
-    </button>
+      {{ buttonText }}
+    </app-ui-button>
   </div>
 
   <small class="search-field__error" *ngIf="error" [id]="inputId + '-error'">{{ error }}</small>

@@ -44,11 +44,6 @@ interface DragOrigin {
   fabY: number;
 }
 
-interface FabActionOffset {
-  x: number;
-  y: number;
-}
-
 type HorizontalDirection = 'left' | 'right';
 type VerticalDirection = 'up' | 'down';
 
@@ -59,18 +54,9 @@ const DEFAULT_BOTTOM_OFFSET = 76;
 const DRAG_THRESHOLD = 6;
 const POSITION_STORAGE_KEY = 'accessibility-fab-position-v1';
 
-/**
- * Curva base del flower speed dial.
- * En la posición predeterminada las acciones crecen hacia arriba y a la izquierda.
- * La distancia entre centros permanece entre 62 px y 68 px para conservar ritmo visual.
- */
-const ACTION_OFFSETS: readonly FabActionOffset[] = [
-  { x: -68, y: -4 },
-  { x: -116, y: -48 },
-  { x: -108, y: -110 },
-  { x: -58, y: -156 },
-  { x: 0, y: -184 },
-];
+/** Separación vertical entre las acciones de la columna ascendente. */
+const ACTION_STEP = 62;
+const ACTION_COUNT = 5;
 
 @Component({
   selector: 'app-accessibility-menu',
@@ -151,7 +137,19 @@ export class AccessibilityMenuComponent implements OnDestroy {
       return 'left';
     }
 
-    return position.x + FAB_SIZE / 2 > viewport.width / 2 ? 'left' : 'right';
+    const leftSpace = Math.max(0, position.x - FAB_MARGIN);
+    const rightSpace = Math.max(0, viewport.width - position.x - FAB_SIZE - FAB_MARGIN);
+    const requiredSpace = 260;
+
+    if (rightSpace >= requiredSpace) {
+      return 'right';
+    }
+
+    if (leftSpace >= requiredSpace) {
+      return 'left';
+    }
+
+    return leftSpace >= rightSpace ? 'left' : 'right';
   });
   readonly verticalDirection = computed<VerticalDirection>(() => {
     const position = this.position();
@@ -279,14 +277,8 @@ export class AccessibilityMenuComponent implements OnDestroy {
     return raw.startsWith('@') ? raw : `@${raw.replace(/\s+/g, '').toLowerCase()}`;
   }
 
-  actionX(index: number): number {
-    const multiplier = this.horizontalDirection() === 'left' ? 1 : -1;
-    return (ACTION_OFFSETS[index]?.x ?? 0) * multiplier * this.actionScale();
-  }
-
   actionY(index: number): number {
-    const multiplier = this.verticalDirection() === 'up' ? 1 : -1;
-    return (ACTION_OFFSETS[index]?.y ?? 0) * multiplier * this.actionScale();
+    return -ACTION_STEP * (index + 1) * this.actionScale();
   }
 
   actionDelay(index: number): string {
@@ -459,12 +451,13 @@ export class AccessibilityMenuComponent implements OnDestroy {
 
   private clampPosition(x: number, y: number): FabPosition {
     const viewport = this.viewport();
+    const minY = this.minimumFabY();
     const maxX = Math.max(FAB_MARGIN, viewport.width - FAB_SIZE - FAB_MARGIN);
-    const maxY = Math.max(FAB_MARGIN, viewport.height - FAB_SIZE - FAB_MARGIN);
+    const maxY = Math.max(minY, viewport.height - FAB_SIZE - FAB_MARGIN);
 
     return {
       x: Math.min(Math.max(x, FAB_MARGIN), maxX),
-      y: Math.min(Math.max(y, FAB_MARGIN), maxY),
+      y: Math.min(Math.max(y, minY), maxY),
     };
   }
 
@@ -477,11 +470,12 @@ export class AccessibilityMenuComponent implements OnDestroy {
     }
 
     const viewport = this.viewport();
+    const minY = this.minimumFabY();
     const availableX = Math.max(1, viewport.width - FAB_SIZE - FAB_MARGIN * 2);
-    const availableY = Math.max(1, viewport.height - FAB_SIZE - FAB_MARGIN * 2);
+    const availableY = Math.max(1, viewport.height - FAB_SIZE - FAB_MARGIN - minY);
     const storedPosition: StoredFabPosition = {
       xRatio: (currentPosition.x - FAB_MARGIN) / availableX,
-      yRatio: (currentPosition.y - FAB_MARGIN) / availableY,
+      yRatio: (currentPosition.y - minY) / availableY,
     };
 
     try {
@@ -517,12 +511,13 @@ export class AccessibilityMenuComponent implements OnDestroy {
       }
 
       const viewport = this.viewport();
+      const minY = this.minimumFabY();
       const availableX = Math.max(1, viewport.width - FAB_SIZE - FAB_MARGIN * 2);
-      const availableY = Math.max(1, viewport.height - FAB_SIZE - FAB_MARGIN * 2);
+      const availableY = Math.max(1, viewport.height - FAB_SIZE - FAB_MARGIN - minY);
 
       return this.clampPosition(
         FAB_MARGIN + Math.min(Math.max(storedPosition.xRatio, 0), 1) * availableX,
-        FAB_MARGIN + Math.min(Math.max(storedPosition.yRatio, 0), 1) * availableY,
+        minY + Math.min(Math.max(storedPosition.yRatio, 0), 1) * availableY,
       );
     } catch {
       return null;
@@ -534,21 +529,27 @@ export class AccessibilityMenuComponent implements OnDestroy {
     this.socialPanelOpen.set(false);
   }
 
-  /**
-   * Reduce la curva en móvil y orientación horizontal para evitar desbordes.
-   */
+  /** Reduce la separación en viewports de poca altura para evitar desbordes. */
   private actionScale(): number {
     const viewport = this.viewport();
 
     if (viewport.height < 420) {
-      return 0.68;
+      return 0.8;
     }
 
-    if (viewport.width < 480) {
-      return 0.82;
+    if (viewport.width < 900) {
+      return 0.9;
     }
 
     return 1;
+  }
+
+  /**
+   * Reserva el espacio superior necesario para que las cinco acciones puedan
+   * desplegarse en columna sin salir del viewport.
+   */
+  private minimumFabY(): number {
+    return FAB_MARGIN + ACTION_STEP * ACTION_COUNT * this.actionScale();
   }
 
   private handleSpeechError(error: string | null): void {

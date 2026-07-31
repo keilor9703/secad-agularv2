@@ -1,0 +1,229 @@
+<article class="menu-tree-card">
+  <header class="menu-tree-card__header">
+    <div class="menu-tree-card__heading">
+      <span class="menu-tree-card__icon" aria-hidden="true">
+        <i class="fa-solid fa-sitemap"></i>
+      </span>
+
+      <div>
+        <h2>Estructura del menú</h2>
+        <p>Explore la jerarquía y administre cada destino.</p>
+      </div>
+    </div>
+
+    <app-ui-chip
+      [label]="totalItems() + ' ítems'"
+      variant="info"
+      appearance="soft"
+      size="sm"
+      icon="fa-solid fa-layer-group"
+    />
+  </header>
+
+  <div class="menu-tree-card__toolbar">
+    <app-ui-search-input
+      [formControl]="searchControl"
+      label="Filtrar estructura"
+      placeholder="Nombre, ruta, tipo o identificador"
+      icon="fa-solid fa-magnifying-glass"
+      [showButton]="false"
+      [clearable]="true"
+    />
+  </div>
+
+  <div class="menu-tree-card__body">
+    @if (loading()) {
+      <app-ui-spinner
+        type="bars"
+        size="md"
+        variant="primary"
+        label="Cargando estructura del menú..."
+        [contained]="true"
+      />
+    } @else if (visibleRows().length === 0) {
+      <div class="menu-tree-empty">
+        <i class="fa-solid fa-folder-open" aria-hidden="true"></i>
+        <strong>No hay elementos para mostrar</strong>
+        <span>Modifique el filtro o cree un nuevo ítem de menú.</span>
+      </div>
+    } @else {
+      <div class="menu-tree" role="tree" aria-label="Estructura administrativa del menú">
+        @for (row of visibleRows(); track row.item.idMenu) {
+          <article
+            class="menu-tree-item"
+            [class.is-child]="row.depth > 0"
+            [class.is-selected]="isPanelSelected(row.item.idMenu)"
+            [class.is-editing]="isEditing(row.item.idMenu)"
+            [class.is-created]="focusedMenuId() === row.item.idMenu"
+            [style.--menu-indent]="row.indent + 'px'"
+            [attr.data-menu-id]="row.item.idMenu"
+            [attr.tabindex]="focusedMenuId() === row.item.idMenu ? -1 : null"
+            role="treeitem"
+            [attr.aria-level]="row.depth + 1"
+            [attr.aria-expanded]="row.hasChildren ? isExpanded(row.item.idMenu) : null"
+            [attr.aria-selected]="isPanelSelected(row.item.idMenu)"
+          >
+            @if (row.depth > 0) {
+              <!-- La rama continúa hasta el siguiente hermano y finaliza en el último visible. -->
+              <span
+                class="menu-tree-item__branch"
+                [class.is-continuing]="!row.isLastSibling"
+                aria-hidden="true"
+              ></span>
+            }
+
+            <div class="menu-tree-item__main">
+              @if (row.hasChildren) {
+                <button
+                  class="menu-tree-item__toggle"
+                  [class.is-expanded]="isExpanded(row.item.idMenu)"
+                  type="button"
+                  [attr.aria-label]="
+                    (isExpanded(row.item.idMenu) ? 'Contraer ' : 'Expandir ') + row.item.descripcion
+                  "
+                  (click)="toggle(row.item.idMenu)"
+                >
+                  <i
+                    [class]="
+                      isExpanded(row.item.idMenu)
+                        ? 'fa-solid fa-chevron-down'
+                        : 'fa-solid fa-chevron-right'
+                    "
+                    aria-hidden="true"
+                  ></i>
+                </button>
+              } @else {
+                <span class="menu-tree-item__toggle-spacer" aria-hidden="true"></span>
+              }
+
+              <span class="menu-tree-item__leading" aria-hidden="true">
+                <i [class]="itemIcon(row.item)"></i>
+              </span>
+
+              <div class="menu-tree-item__content">
+                <div class="menu-tree-item__title">
+                  <strong>{{ row.item.descripcion }}</strong>
+
+                  <app-ui-chip
+                    [label]="row.item.vigente === 1 ? 'Activo' : 'Inactivo'"
+                    [variant]="row.item.vigente === 1 ? 'success' : 'neutral'"
+                    appearance="soft"
+                    size="xs"
+                    [dot]="true"
+                  />
+                </div>
+
+                <div class="menu-tree-item__meta">
+                  <span>ID {{ row.item.idMenu }}</span>
+                  <span>Posición {{ row.item.posicion }}</span>
+                  <span>{{ typeLabel(row.item.tipo) }}</span>
+                </div>
+
+                <span class="menu-tree-item__route">
+                  <i class="fa-solid fa-link" aria-hidden="true"></i>
+                  {{ row.item.detalle || 'Sin ruta configurada' }}
+                </span>
+              </div>
+            </div>
+
+            <div class="menu-tree-item__actions">
+              <app-ui-button
+                size="sm"
+                variant="primary"
+                appearance="soft"
+                icon="fa-solid fa-folder-plus"
+                [iconOnly]="true"
+                [tooltip]="'Crear submenú dentro de ' + row.item.descripcion"
+                tooltipAlign="end"
+                [ariaLabel]="'Crear submenú dentro de ' + row.item.descripcion"
+                (buttonClick)="submenuRequested.emit(row.item)"
+              />
+
+              <app-ui-button
+                size="sm"
+                variant="info"
+                appearance="soft"
+                icon="fa-solid fa-user-shield"
+                [iconOnly]="true"
+                [tooltip]="'Gestionar roles de ' + row.item.descripcion"
+                tooltipAlign="end"
+                [ariaLabel]="'Gestionar roles de ' + row.item.descripcion"
+                (buttonClick)="rolesRequested.emit(row.item)"
+              />
+
+              <app-ui-button
+                size="sm"
+                variant="outline"
+                icon="fa-solid fa-pen"
+                [iconOnly]="true"
+                [tooltip]="'Editar ' + row.item.descripcion"
+                tooltipAlign="end"
+                [ariaLabel]="'Editar ' + row.item.descripcion"
+                (buttonClick)="editRequested.emit(row.item)"
+              />
+
+              <app-ui-button
+                size="sm"
+                [variant]="row.item.vigente === 1 ? 'warning' : 'success'"
+                appearance="soft"
+                [icon]="row.item.vigente === 1 ? 'fa-solid fa-pause' : 'fa-solid fa-play'"
+                [iconOnly]="true"
+                [loading]="processingMenuId() === row.item.idMenu"
+                [tooltip]="
+                  (row.item.vigente === 1 ? 'Desactivar ' : 'Activar ') + row.item.descripcion
+                "
+                tooltipAlign="end"
+                [ariaLabel]="
+                  (row.item.vigente === 1 ? 'Desactivar ' : 'Activar ') + row.item.descripcion
+                "
+                (buttonClick)="stateRequested.emit(row.item)"
+              />
+            </div>
+          </article>
+
+          <!-- El formulario se compone debajo del padre, igual que el panel de roles. -->
+          @if (selectedSubmenuParent(); as submenuParent) {
+            @if (submenuParent.idMenu === row.item.idMenu) {
+              <div
+                class="menu-tree-item__inline-panel menu-tree-item__submenu-panel"
+                [style.--menu-indent]="row.indent + 'px'"
+                [attr.data-submenu-parent-id]="row.item.idMenu"
+              >
+                <app-menu-admin-submenu-form
+                  [parent]="submenuParent"
+                  [suggestedPosition]="submenuSuggestedPosition()"
+                  [saving]="savingSubmenu()"
+                  (saveRequested)="saveSubmenuRequested.emit($event)"
+                  (cancelRequested)="closeSubmenuRequested.emit()"
+                />
+              </div>
+            }
+          }
+
+          <!-- El componente conserva su responsabilidad; solo se compone debajo de la fila activa. -->
+          @if (selectedMenu(); as selected) {
+            @if (selected.idMenu === row.item.idMenu) {
+              <div
+                class="menu-tree-item__inline-panel menu-tree-item__role-panel"
+                [style.--menu-indent]="row.indent + 'px'"
+                [attr.data-role-menu-id]="row.item.idMenu"
+              >
+                <app-menu-role-access
+                  [menu]="selected"
+                  [rolesCatalog]="rolesCatalog()"
+                  [assignedRoles]="assignedRoles()"
+                  [loading]="loadingRoles()"
+                  [saving]="savingRole()"
+                  [removingRoleId]="removingRoleId()"
+                  (assignRequested)="assignRoleRequested.emit($event)"
+                  (removeRequested)="removeRoleRequested.emit($event)"
+                  (closeRequested)="closeRolesRequested.emit()"
+                />
+              </div>
+            }
+          }
+        }
+      </div>
+    }
+  </div>
+</article>

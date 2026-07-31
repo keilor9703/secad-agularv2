@@ -1,4 +1,5 @@
 @use '../../../../styles/components/form-control-sizing' as form-sizing;
+@use '../../../../styles/components/floating-label' as floating-label;
 
 :host {
   --_form-inset-shadow: var(
@@ -33,16 +34,26 @@
 }
 
 .form-field__label {
+  @include floating-label.surface;
+
   position: absolute;
   top: -8px;
   left: 11px;
   z-index: 2;
-  padding: 0 5px;
-  background: var(--form-bg, #fff);
   color: var(--form-label-color, #334155);
   font-size: calc(11px * var(--font-size-scale));
   font-weight: 700;
   line-height: 1.2;
+}
+
+.form-field__required-marker {
+  margin-left: 2px;
+  color: var(--form-required-marker-color, #111827);
+  transition: color 150ms ease;
+}
+
+.form-field__required-marker.is-invalid {
+  color: var(--form-error-color, #b42318);
 }
 
 .form-field__native {
@@ -127,8 +138,7 @@ textarea.form-field__native {
     inset 0 0 0 1px rgba(255, 255, 255, 0.02)
   );
 
-  .form-field__control,
-  .form-field__label {
+  .form-field__control {
     background: #1e2840;
   }
 

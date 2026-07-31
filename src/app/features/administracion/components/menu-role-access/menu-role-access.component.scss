@@ -1,0 +1,139 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.menu-role-card {
+  overflow: visible;
+  border: 1px solid var(--ui-border, #d8dee8);
+  border-left: 3px solid var(--policia-cielo, #08a6cb);
+  border-radius: 7px;
+  background: var(--ui-surface, #ffffff);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+}
+
+.menu-role-card__header,
+.menu-role-card__heading,
+.menu-role-card__assignment,
+.menu-role-card__subheading {
+  display: flex;
+  align-items: center;
+}
+
+.menu-role-card__header {
+  justify-content: space-between;
+  gap: 12px;
+  padding: 13px 14px;
+  border-bottom: 1px solid var(--ui-border, #d8dee8);
+  background: linear-gradient(180deg, #fbfcfe, #f6f8fb);
+}
+
+.menu-role-card__heading {
+  gap: 10px;
+  min-width: 0;
+}
+
+.menu-role-card__icon {
+  display: grid;
+  flex: 0 0 35px;
+  width: 35px;
+  height: 35px;
+  place-items: center;
+  border-radius: 6px;
+  background: rgba(8, 166, 203, 0.1);
+  color: var(--policia-medio, #002a66);
+}
+
+.menu-role-card__header h2,
+.menu-role-card__header p,
+.menu-role-card__subheading h3,
+.menu-role-card__subheading p {
+  margin: 0;
+}
+
+.menu-role-card__header h2 {
+  color: var(--ui-text, #0f172a);
+  font-size: calc(13.5px * var(--font-size-scale, 1));
+  font-weight: 850;
+}
+
+.menu-role-card__header p,
+.menu-role-card__subheading p {
+  margin-top: 2px;
+  color: var(--ui-muted, #64748b);
+  font-size: calc(10px * var(--font-size-scale, 1));
+}
+
+.menu-role-card__assignment {
+  align-items: center;
+  gap: 9px;
+  padding: 18px 14px 14px;
+}
+
+.menu-role-card__select {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.menu-role-card__assignment > app-ui-button {
+  flex: 0 0 auto;
+  margin-top: 1px;
+}
+
+.menu-role-card__assigned {
+  padding: 13px 14px 14px;
+  border-top: 1px solid var(--ui-border, #d8dee8);
+  background: color-mix(in srgb, var(--ui-surface, #ffffff) 97%, #e2e8f0);
+}
+
+.menu-role-card__subheading {
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.menu-role-card__subheading h3 {
+  color: var(--ui-text, #0f172a);
+  font-size: calc(11.5px * var(--font-size-scale, 1));
+  font-weight: 800;
+}
+
+@media (max-width: 640px) {
+  .menu-role-card__header {
+    padding: 10px 11px;
+  }
+
+  .menu-role-card__assignment {
+    align-items: stretch;
+    padding: 17px 11px 12px;
+  }
+
+  .menu-role-card__assignment > app-ui-button {
+    margin-top: 0;
+  }
+
+  .menu-role-card__assigned {
+    padding: 12px 10px;
+  }
+}
+
+@media (max-width: 430px) {
+  .menu-role-card__assignment {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+}
+
+:host-context(html.dark-mode) {
+  .menu-role-card__header {
+    background: #182238;
+  }
+
+  .menu-role-card__assigned {
+    background: #162036;
+  }
+
+  .menu-role-card__icon {
+    color: var(--policia-cielo, #55c8e5);
+  }
+}

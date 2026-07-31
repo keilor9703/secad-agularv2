@@ -1,341 +1,466 @@
-import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { RouterModule } from '@angular/router';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  OnInit,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { finalize } from 'rxjs';
 
 import { ToastService } from '../../../../core/services/toast.service';
-import {
-  UiButtonComponent,
-  UiButtonVariant
-} from '../../../../shared/components/ui-button/ui-button.component';
-import { UiInputComponent } from '../../../../shared/components/ui-input/ui-input.component';
-import { UiSelectComponent } from '../../../../shared/components/ui-select/ui-select.component';
+import { UiButtonComponent } from '../../../../shared/components/ui-button/ui-button.component';
 import { UiSelectOption } from '../../../../shared/interfaces/ui-select-option.interface';
+import { AlertService } from '../../../../shared/services/alert.service';
+import { getApiErrorMessage } from '../../../../shared/utils/api-error-message.util';
+import {
+  DominioAdminFormComponent,
+  DominioEditorMode,
+} from '../../components/dominio-admin-form/dominio-admin-form.component';
+import { DominioAdminTreeComponent } from '../../components/dominio-admin-tree/dominio-admin-tree.component';
 import { DominioService, DtoDominio, DtoDominioRequest } from '../../services/dominio.service';
-
-interface DtoDominioApi extends Partial<DtoDominio> {
-  IdDominio?: number;
-  id_dominio?: number;
-  ID_DOMINIO?: number;
-  Descripcion?: string;
-  IdPadre?: number;
-  id_padre?: number;
-  ID_PADRE?: number;
-  Vigente?: number;
-  Abreviatura?: string;
-  Observacion?: string;
-}
-
-interface DominioForm {
-  Descripcion: FormControl<string>;
-  IdPadre: FormControl<number>;
-  Vigente: FormControl<number>;
-  Abreviatura: FormControl<string>;
-  Observacion: FormControl<string>;
-}
 
 @Component({
   selector: 'app-dominio',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule, UiButtonComponent, UiInputComponent, UiSelectComponent],
+  imports: [UiButtonComponent, DominioAdminFormComponent, DominioAdminTreeComponent],
   templateUrl: './dominio-page.component.html',
-  styleUrls: ['./dominio-page.component.scss']
+  styleUrl: './dominio-page.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DominioPageComponent implements OnInit {
-  readonly vigenteOptions: UiSelectOption<number>[] = [
-    { label: 'Si', value: 1 },
-    { label: 'No', value: 0 }
-  ];
+  private readonly dominioService = inject(DominioService);
+  private readonly toast = inject(ToastService);
+  private readonly alert = inject(AlertService);
+  private readonly destroyRef = inject(DestroyRef);
+  private focusResetTimer: ReturnType<typeof setTimeout> | null = null;
 
-  readonly dominioForm = new FormGroup<DominioForm>({
-    Descripcion: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.maxLength(255)]
-    }),
-    IdPadre: new FormControl(0, { nonNullable: true }),
-    Vigente: new FormControl(1, { nonNullable: true }),
-    Abreviatura: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.maxLength(50)]
-    }),
-    Observacion: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.maxLength(500)]
-    })
+  readonly minimized = signal(false);
+  readonly loading = signal(false);
+  readonly saving = signal(false);
+  readonly processingDomainId = signal<number | null>(null);
+
+  readonly items = signal<readonly DtoDominio[]>([]);
+  readonly editorMode = signal<DominioEditorMode | null>(null);
+  readonly editingItem = signal<DtoDominio | null>(null);
+  readonly createParent = signal<DtoDominio | null>(null);
+  readonly formResetVersion = signal(0);
+  readonly focusedDomainId = signal<number | null>(null);
+
+  readonly domainItems = computed(() => this.items().filter((item) => item.idDominio > 0));
+  readonly totalCount = computed(() => this.domainItems().length);
+  readonly activeCount = computed(
+    () => this.domainItems().filter((item) => item.vigente === 1).length,
+  );
+  readonly rootCount = computed(
+    () => this.domainItems().filter((item) => item.idPadre === 0).length,
+  );
+  readonly inlineChildEditorVisible = computed(
+    () => this.editorMode() === 'create' && this.createParent() !== null,
+  );
+  readonly sideEditorVisible = computed(
+    () => this.editorMode() !== null && !this.inlineChildEditorVisible(),
+  );
+  readonly selectedDomainId = computed(() => {
+    if (this.editorMode() === 'edit') {
+      return this.editingItem()?.idDominio ?? null;
+    }
+
+    return this.createParent()?.idDominio ?? null;
   });
 
-  visible = true;
-  minimized = false;
+  readonly parentOptions = computed<UiSelectOption<number>[]>(() => {
+    const editing = this.editingItem();
+    const excludedIds = editing
+      ? this.collectDescendantIds(editing.idDominio, this.domainItems())
+      : new Set<number>();
 
-  loading = false;
-  saving = false;
+    if (editing) {
+      excludedIds.add(editing.idDominio);
+    }
 
-  listaDominios: DtoDominio[] = [];
-  dominiosTree: {
-    item: DtoDominio;
-    children: { item: DtoDominio; children: DtoDominio[]; expanded: boolean }[];
-    expanded: boolean;
-  }[] = [];
-  editingId: number | null = null;
-
-  dominioOptions: { id: number; descripcion: string }[] = [];
-
-  constructor(
-    private readonly toast: ToastService,
-    private readonly dominioService: DominioService
-  ) {}
+    return [
+      { value: 0, label: 'Dominio principal · sin padre' },
+      ...this.domainItems()
+        .filter((item) => !excludedIds.has(item.idDominio))
+        .slice()
+        .sort((a, b) =>
+          this.domainPath(a).localeCompare(this.domainPath(b), 'es', {
+            sensitivity: 'base',
+          }),
+        )
+        .map((item) => ({
+          value: item.idDominio,
+          label: `${this.domainPath(item)} · ID ${item.idDominio}`,
+        })),
+    ];
+  });
 
   ngOnInit(): void {
-    this.cargarDominios();
-  }
-
-  cargarDominios(): void {
-    this.loading = true;
-    this.dominioService.getAll().subscribe({
-      next: (data) => {
-        this.listaDominios = (data ?? []).map((item) => this.normalizarDominio(item));
-        this.buildTree();
-        this.actualizarOpcionesPadre();
-        this.loading = false;
-      },
-      error: () => {
-        this.loading = false;
-        this.toast.error('Error', 'No se pudieron cargar los dominios');
+    this.destroyRef.onDestroy(() => {
+      if (this.focusResetTimer !== null) {
+        clearTimeout(this.focusResetTimer);
       }
     });
-  }
 
-  toggleExpand(index: number): void {
-    this.dominiosTree[index].expanded = !this.dominiosTree[index].expanded;
-  }
-
-  toggleChildExpand(padreIndex: number, childIndex: number): void {
-    this.dominiosTree[padreIndex].children[childIndex].expanded =
-      !this.dominiosTree[padreIndex].children[childIndex].expanded;
-  }
-
-  nuevo(): void {
-    this.editingId = null;
-    this.dominioForm.reset(this.getDefaultForm());
-    this.dominioForm.markAsPristine();
-    this.actualizarOpcionesPadre();
-  }
-
-  editar(item: DtoDominio): void {
-    this.editingId = item.idDominio;
-    this.dominioForm.reset({
-      Descripcion: item.descripcion,
-      IdPadre: item.idPadre,
-      Vigente: item.vigente,
-      Abreviatura: item.abreviatura || '',
-      Observacion: item.observacion || ''
-    });
-    this.actualizarOpcionesPadre();
-  }
-
-  guardar(): void {
-    if (this.dominioForm.invalid) {
-      this.dominioForm.markAllAsTouched();
-      this.toast.warning('Guardar', 'Revisa los campos obligatorios antes de guardar.');
-      return;
-    }
-
-    const formValue = this.dominioForm.getRawValue();
-    const descripcion = formValue.Descripcion.trim();
-    if (!descripcion) {
-      this.toast.warning('Guardar', 'La descripcion es requerida');
-      return;
-    }
-
-    this.saving = true;
-
-    const request: DtoDominioRequest = {
-      Descripcion: descripcion,
-      IdPadre: formValue.IdPadre || 0,
-      Vigente: formValue.Vigente,
-      Abreviatura: formValue.Abreviatura.trim(),
-      Observacion: formValue.Observacion.trim()
-    };
-
-    if (this.editingId) {
-      this.dominioService.update(this.editingId, request).subscribe({
-        next: (resp) => {
-          this.saving = false;
-          if (resp.success) {
-            this.toast.success('Guardar', resp.message);
-            this.nuevo();
-            this.cargarDominios();
-          } else {
-            this.toast.warning('Guardar', resp.message);
-          }
-        },
-        error: () => {
-          this.saving = false;
-          this.toast.error('Guardar', 'Error al actualizar dominio');
-        }
-      });
-      return;
-    }
-
-    this.dominioService.create(request).subscribe({
-      next: (resp) => {
-        this.saving = false;
-        if (resp.success) {
-          this.toast.success('Guardar', resp.message);
-          this.nuevo();
-          this.cargarDominios();
-        } else {
-          this.toast.warning('Guardar', resp.message);
-        }
-      },
-      error: () => {
-        this.saving = false;
-        this.toast.error('Guardar', 'Error al crear dominio');
-      }
-    });
-  }
-
-  eliminar(item: DtoDominio): void {
-    if (!confirm(`Esta seguro de eliminar el dominio "${item.descripcion}"?`)) {
-      return;
-    }
-
-    this.dominioService.delete(item.idDominio).subscribe({
-      next: (resp) => {
-        if (resp.success) {
-          this.toast.success('Eliminar', resp.message);
-          this.cargarDominios();
-        } else {
-          this.toast.warning('Eliminar', resp.message);
-        }
-      },
-      error: () => {
-        this.toast.error('Eliminar', 'Error al eliminar dominio');
-      }
-    });
-  }
-
-  cambiarEstado(item: DtoDominio): void {
-    const nuevoEstado = item.vigente === 1 ? 0 : 1;
-    const request: DtoDominioRequest = {
-      Descripcion: item.descripcion,
-      IdPadre: item.idPadre,
-      Vigente: nuevoEstado,
-      Abreviatura: item.abreviatura || '',
-      Observacion: item.observacion || ''
-    };
-
-    this.dominioService.update(item.idDominio, request).subscribe({
-      next: (resp) => {
-        if (resp.success) {
-          this.toast.success('Estado', resp.message);
-          this.cargarDominios();
-        } else {
-          this.toast.warning('Estado', resp.message);
-        }
-      },
-      error: () => {
-        this.toast.error('Estado', 'Error al cambiar estado');
-      }
-    });
-  }
-
-  getNombrePadre(idPadre: number | string | null): string {
-    if (!idPadre || idPadre === 0 || idPadre === '0' || idPadre === 'null') {
-      return 'Raiz (sin padre)';
-    }
-    const padre = this.listaDominios.find((dominio) => dominio.idDominio === Number(idPadre));
-    return padre?.descripcion || 'Sin padre';
+    this.loadDomains();
   }
 
   toggleMinimize(): void {
-    this.minimized = !this.minimized;
+    this.minimized.update((value) => !value);
   }
 
-  closePanel(): void {
-    this.visible = false;
+  startCreateRoot(): void {
+    this.editingItem.set(null);
+    this.createParent.set(null);
+    this.editorMode.set('create');
+    this.formResetVersion.update((version) => version + 1);
   }
 
-  get dominioPadreOptions(): UiSelectOption<number>[] {
-    return [
-      { label: 'Dominio principal', value: 0 },
-      ...this.dominioOptions.map((option) => ({
-        label: option.descripcion,
-        value: option.id
-      }))
-    ];
+  startCreateChild(parent: DtoDominio): void {
+    this.editingItem.set(null);
+    this.createParent.set({ ...parent });
+    this.editorMode.set('create');
+    this.formResetVersion.update((version) => version + 1);
   }
 
-  get descripcionError(): string {
-    const control = this.dominioForm.controls.Descripcion;
-    if (!control.touched && !control.dirty) {
-      return '';
+  edit(item: DtoDominio): void {
+    this.createParent.set(null);
+    this.editingItem.set({ ...item });
+    this.editorMode.set('edit');
+    this.formResetVersion.update((version) => version + 1);
+  }
+
+  closeEditor(): void {
+    this.editorMode.set(null);
+    this.editingItem.set(null);
+    this.createParent.set(null);
+    this.formResetVersion.update((version) => version + 1);
+  }
+
+  save(request: DtoDominioRequest): void {
+    if (this.saving()) {
+      return;
     }
 
-    if (control.hasError('required')) {
-      return 'La descripcion es requerida.';
-    }
+    const editing = this.editingItem();
+    const creating = this.editorMode() === 'create';
+    const operation = editing
+      ? this.dominioService.update(editing.idDominio, request)
+      : this.dominioService.create(request);
 
-    if (control.hasError('maxlength')) {
-      return 'La descripcion no puede superar 255 caracteres.';
-    }
-
-    return '';
-  }
-
-  getEstadoButtonVariant(item: DtoDominio): UiButtonVariant {
-    return item.vigente === 0 ? 'primary' : 'secondary';
-  }
-
-  private actualizarOpcionesPadre(): void {
-    this.dominioOptions = this.listaDominios
-      .filter(
-        (dominio) =>
-          dominio.idDominio !== 0 &&
-          dominio.idDominio !== (this.editingId ?? 0) &&
-          Number(dominio.idPadre) === 0
+    this.saving.set(true);
+    operation
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.saving.set(false)),
       )
-      .map((dominio) => ({
-        id: dominio.idDominio,
-        descripcion: dominio.descripcion
-      }));
+      .subscribe({
+        next: (response) => {
+          if (!response?.success) {
+            this.toast.warning(
+              creating ? 'Crear dominio' : 'Editar dominio',
+              response?.message || 'No fue posible guardar el dominio.',
+            );
+            return;
+          }
+
+          this.toast.success(
+            creating ? 'Crear dominio' : 'Editar dominio',
+            response.message ||
+              (creating ? 'Dominio creado correctamente.' : 'Dominio actualizado correctamente.'),
+          );
+
+          const focusId = response.id > 0 ? response.id : (editing?.idDominio ?? null);
+          this.closeEditor();
+          this.loadDomains(focusId, creating ? request : null);
+        },
+        error: (error: unknown) => {
+          this.toast.error(
+            creating ? 'Crear dominio' : 'Editar dominio',
+            getApiErrorMessage(error, 'Se presentó un error guardando el dominio.'),
+          );
+        },
+      });
   }
 
-  private normalizarDominio(item: DtoDominioApi): DtoDominio {
-    return {
-      idDominio: Number(item?.idDominio ?? item?.IdDominio ?? item?.id_dominio ?? item?.ID_DOMINIO ?? 0),
-      descripcion: String(item?.descripcion ?? item?.Descripcion ?? ''),
-      idPadre: Number(item?.idPadre ?? item?.IdPadre ?? item?.id_padre ?? item?.ID_PADRE ?? 0),
-      vigente: Number(item?.vigente ?? item?.Vigente ?? 0),
-      abreviatura: String(item?.abreviatura ?? item?.Abreviatura ?? ''),
-      observacion: String(item?.observacion ?? item?.Observacion ?? '')
-    };
-  }
+  async changeState(item: DtoDominio): Promise<void> {
+    if (this.processingDomainId() !== null) {
+      return;
+    }
 
-  private buildTree(): void {
-    const noRaiz = this.listaDominios.filter((dominio) => dominio.idDominio !== 0);
-    const raiz = noRaiz.filter((dominio) => !dominio.idPadre || dominio.idPadre === 0);
-    this.dominiosTree = raiz.map((padre) => {
-      const children = noRaiz.filter((hijo) => hijo.idPadre === padre.idDominio);
-      return {
-        item: padre,
-        children: children.map((hijo) => ({
-          item: hijo,
-          children: noRaiz.filter((nieto) => nieto.idPadre === hijo.idDominio),
-          expanded: true
-        })),
-        expanded: true
-      };
+    const activating = item.vigente !== 1;
+    const confirmed = await this.alert.confirm({
+      title: activating ? 'Activar dominio' : 'Desactivar dominio',
+      message: `¿Desea ${activating ? 'activar' : 'desactivar'} “${item.descripcion}”?`,
+      confirmText: activating ? 'Sí, activar' : 'Sí, desactivar',
+      cancelText: 'No, cancelar',
+      icon: 'question',
+      intent: activating ? 'primary' : 'danger',
+      focusCancel: true,
     });
+
+    if (!confirmed) {
+      return;
+    }
+
+    const nextState = activating ? 1 : 0;
+    const request = this.toRequest(item, nextState);
+    this.processingDomainId.set(item.idDominio);
+
+    this.dominioService
+      .update(item.idDominio, request)
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.processingDomainId.set(null)),
+      )
+      .subscribe({
+        next: (response) => {
+          if (!response?.success) {
+            this.toast.warning(
+              'Estado del dominio',
+              response?.message || 'No fue posible actualizar el estado.',
+            );
+            return;
+          }
+
+          this.items.update((items) =>
+            items.map((current) =>
+              current.idDominio === item.idDominio ? { ...current, vigente: nextState } : current,
+            ),
+          );
+          this.toast.success(
+            'Estado del dominio',
+            response.message || 'Estado actualizado correctamente.',
+          );
+        },
+        error: (error: unknown) => {
+          this.toast.error(
+            'Estado del dominio',
+            getApiErrorMessage(error, 'Se presentó un error actualizando el estado.'),
+          );
+        },
+      });
   }
 
-  private getDefaultForm(): DtoDominioRequest {
+  async delete(item: DtoDominio): Promise<void> {
+    if (this.processingDomainId() !== null) {
+      return;
+    }
+
+    const descendantCount = this.collectDescendantIds(item.idDominio, this.domainItems()).size;
+    const relationshipWarning =
+      descendantCount > 0
+        ? ` Este dominio contiene ${descendantCount} ${
+            descendantCount === 1 ? 'descendiente' : 'descendientes'
+          }.`
+        : '';
+    const confirmed = await this.alert.confirmDelete(
+      'Eliminar dominio',
+      `¿Desea eliminar “${item.descripcion}”?${relationshipWarning} Esta acción no se puede deshacer.`,
+      'Sí, eliminar',
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    this.processingDomainId.set(item.idDominio);
+    this.dominioService
+      .delete(item.idDominio)
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.processingDomainId.set(null)),
+      )
+      .subscribe({
+        next: (response) => {
+          if (!response?.success) {
+            this.toast.warning(
+              'Eliminar dominio',
+              response?.message || 'No fue posible eliminar el dominio.',
+            );
+            return;
+          }
+
+          if (
+            this.editingItem()?.idDominio === item.idDominio ||
+            this.createParent()?.idDominio === item.idDominio
+          ) {
+            this.closeEditor();
+          }
+
+          this.toast.success(
+            'Eliminar dominio',
+            response.message || 'Dominio eliminado correctamente.',
+          );
+          this.loadDomains();
+        },
+        error: (error: unknown) => {
+          this.toast.error(
+            'Eliminar dominio',
+            getApiErrorMessage(error, 'Se presentó un error eliminando el dominio.'),
+          );
+        },
+      });
+  }
+
+  private loadDomains(
+    focusId: number | null = null,
+    focusFallback: DtoDominioRequest | null = null,
+  ): void {
+    if (this.loading()) {
+      return;
+    }
+
+    this.loading.set(true);
+    this.dominioService
+      .getAll()
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.loading.set(false)),
+      )
+      .subscribe({
+        next: (items) => {
+          const normalized = [...(items ?? [])].sort(
+            (a, b) =>
+              a.idPadre - b.idPadre ||
+              a.descripcion.localeCompare(b.descripcion, 'es', {
+                sensitivity: 'base',
+              }) ||
+              a.idDominio - b.idDominio,
+          );
+
+          this.items.set(normalized);
+          this.reconcileEditor(normalized);
+
+          if (focusId !== null || focusFallback !== null) {
+            this.scheduleFocus(this.resolveFocusId(normalized, focusId, focusFallback));
+          }
+        },
+        error: (error: unknown) => {
+          this.toast.error(
+            'Administración de dominios',
+            getApiErrorMessage(error, 'No fue posible cargar los dominios.'),
+          );
+        },
+      });
+  }
+
+  private toRequest(item: DtoDominio, vigente = item.vigente): DtoDominioRequest {
     return {
-      Descripcion: '',
-      IdPadre: 0,
-      Vigente: 1,
-      Abreviatura: '',
-      Observacion: ''
+      Descripcion: item.descripcion,
+      IdPadre: item.idPadre,
+      Vigente: vigente,
+      Abreviatura: item.abreviatura || '',
+      Observacion: item.observacion || '',
     };
+  }
+
+  private reconcileEditor(items: readonly DtoDominio[]): void {
+    const editing = this.editingItem();
+    if (editing) {
+      const updated = items.find((item) => item.idDominio === editing.idDominio) ?? null;
+      this.editingItem.set(updated);
+
+      if (!updated) {
+        this.closeEditor();
+      }
+    }
+
+    const parent = this.createParent();
+    if (parent) {
+      const updated = items.find((item) => item.idDominio === parent.idDominio) ?? null;
+      this.createParent.set(updated);
+
+      if (!updated) {
+        this.closeEditor();
+      }
+    }
+  }
+
+  private domainPath(item: DtoDominio): string {
+    const byId = new Map(this.domainItems().map((domain) => [domain.idDominio, domain]));
+    const path = [item.descripcion];
+    const visited = new Set<number>([item.idDominio]);
+    let parent = byId.get(item.idPadre);
+
+    while (parent && !visited.has(parent.idDominio) && path.length < 8) {
+      visited.add(parent.idDominio);
+      path.unshift(parent.descripcion);
+      parent = byId.get(parent.idPadre);
+    }
+
+    return path.join(' / ');
+  }
+
+  private collectDescendantIds(parentId: number, items: readonly DtoDominio[]): Set<number> {
+    const descendants = new Set<number>();
+    const pending = [parentId];
+
+    while (pending.length > 0) {
+      const current = pending.pop();
+      if (current === undefined) {
+        continue;
+      }
+
+      for (const item of items) {
+        if (item.idPadre === current && !descendants.has(item.idDominio)) {
+          descendants.add(item.idDominio);
+          pending.push(item.idDominio);
+        }
+      }
+    }
+
+    return descendants;
+  }
+
+  private resolveFocusId(
+    items: readonly DtoDominio[],
+    requestedId: number | null,
+    fallback: DtoDominioRequest | null,
+  ): number | null {
+    if (requestedId !== null && items.some((item) => item.idDominio === requestedId)) {
+      return requestedId;
+    }
+
+    if (!fallback) {
+      return null;
+    }
+
+    return (
+      items
+        .filter(
+          (item) =>
+            item.idPadre === fallback.IdPadre &&
+            item.descripcion.trim() === fallback.Descripcion.trim(),
+        )
+        .sort((a, b) => b.idDominio - a.idDominio)[0]?.idDominio ?? null
+    );
+  }
+
+  private scheduleFocus(domainId: number | null): void {
+    if (this.focusResetTimer !== null) {
+      clearTimeout(this.focusResetTimer);
+      this.focusResetTimer = null;
+    }
+
+    this.focusedDomainId.set(null);
+
+    if (domainId === null) {
+      return;
+    }
+
+    queueMicrotask(() => {
+      this.focusedDomainId.set(domainId);
+      this.focusResetTimer = setTimeout(() => {
+        if (this.focusedDomainId() === domainId) {
+          this.focusedDomainId.set(null);
+        }
+
+        this.focusResetTimer = null;
+      }, 1400);
+    });
   }
 }

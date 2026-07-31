@@ -1,0 +1,251 @@
+<article class="domain-tree-card">
+  <header class="domain-tree-card__header">
+    <div class="domain-tree-card__heading">
+      <span class="domain-tree-card__icon" aria-hidden="true">
+        <i class="fa-solid fa-folder-tree"></i>
+      </span>
+
+      <div>
+        <h2>Estructura de dominios</h2>
+        <p>Explore niveles, valores asociados y disponibilidad.</p>
+      </div>
+    </div>
+
+    <app-ui-chip
+      [label]="totalItems() + ' dominios'"
+      variant="info"
+      appearance="soft"
+      size="sm"
+      icon="fa-solid fa-layer-group"
+    />
+  </header>
+
+  <div class="domain-tree-card__toolbar">
+    <app-ui-search-input
+      [formControl]="searchControl"
+      label="Filtrar dominios"
+      placeholder="Nombre, abreviatura, observación o identificador"
+      icon="fa-solid fa-magnifying-glass"
+      [showButton]="false"
+      [clearable]="true"
+    />
+  </div>
+
+  <div class="domain-tree-card__body">
+    @if (loading()) {
+      <app-ui-spinner
+        type="bars"
+        size="md"
+        variant="primary"
+        label="Cargando estructura de dominios..."
+        [contained]="true"
+      />
+    } @else if (visibleRows().length === 0) {
+      <div class="domain-tree-empty">
+        <i class="fa-solid fa-folder-open" aria-hidden="true"></i>
+        <strong>No hay dominios para mostrar</strong>
+        <span>Modifique el filtro o cree un dominio principal.</span>
+      </div>
+    } @else {
+      <div class="domain-tree" role="tree" aria-label="Estructura administrativa de dominios">
+        @for (row of visibleRows(); track row.item.idDominio) {
+          <article
+            class="domain-tree-item"
+            [class.is-child]="row.depth > 0"
+            [class.is-selected]="selectedId() === row.item.idDominio"
+            [class.is-created]="focusedId() === row.item.idDominio"
+            [style.--domain-indent]="row.indent + 'px'"
+            [style.--domain-indent-mobile]="row.mobileIndent + 'px'"
+            [attr.data-domain-id]="row.item.idDominio"
+            [attr.tabindex]="focusedId() === row.item.idDominio ? -1 : null"
+            role="treeitem"
+            [attr.aria-level]="row.depth + 1"
+            [attr.aria-expanded]="row.hasChildren ? isExpanded(row.item.idDominio) : null"
+          >
+            @for (continuationLevel of row.ancestorContinuationLevels; track continuationLevel) {
+              <span
+                class="domain-tree-item__ancestor-line"
+                [style.--domain-ancestor-offset]="(continuationLevel - row.depth) * 25 + 'px'"
+                [style.--domain-ancestor-offset-mobile]="
+                  (continuationLevel - row.depth) * 17 + 'px'
+                "
+                aria-hidden="true"
+              ></span>
+            }
+
+            @if (row.depth > 0) {
+              <span
+                class="domain-tree-item__branch"
+                [class.is-continuing]="!row.isLastSibling"
+                aria-hidden="true"
+              ></span>
+            }
+
+            @if (row.showsChildren || inlineCreateParent()?.idDominio === row.item.idDominio) {
+              <span class="domain-tree-item__child-stem" aria-hidden="true"></span>
+            }
+
+            <div class="domain-tree-item__main">
+              @if (row.hasChildren) {
+                <button
+                  class="domain-tree-item__toggle"
+                  [class.is-expanded]="isExpanded(row.item.idDominio)"
+                  type="button"
+                  [attr.aria-label]="
+                    (isExpanded(row.item.idDominio) ? 'Contraer ' : 'Expandir ') +
+                    row.item.descripcion
+                  "
+                  (click)="toggle(row.item.idDominio)"
+                >
+                  <i
+                    [class]="
+                      isExpanded(row.item.idDominio)
+                        ? 'fa-solid fa-chevron-down'
+                        : 'fa-solid fa-chevron-right'
+                    "
+                    aria-hidden="true"
+                  ></i>
+                </button>
+              } @else {
+                <span class="domain-tree-item__toggle-spacer" aria-hidden="true"></span>
+              }
+
+              <span class="domain-tree-item__leading" aria-hidden="true">
+                <i [class]="row.hasChildren ? 'fa-solid fa-folder-tree' : 'fa-solid fa-tag'"></i>
+              </span>
+
+              <div class="domain-tree-item__content">
+                <div class="domain-tree-item__title">
+                  <strong>{{ row.item.descripcion }}</strong>
+
+                  <app-ui-chip
+                    [label]="row.item.vigente === 1 ? 'Activo' : 'Inactivo'"
+                    [variant]="row.item.vigente === 1 ? 'success' : 'neutral'"
+                    appearance="soft"
+                    size="xs"
+                    [dot]="true"
+                  />
+
+                  @if (row.item.abreviatura) {
+                    <app-ui-chip
+                      [label]="row.item.abreviatura"
+                      variant="primary"
+                      appearance="outline"
+                      size="xs"
+                    />
+                  }
+
+                  @if (isProcessing(row.item.idDominio)) {
+                    <i
+                      class="fa-solid fa-spinner fa-spin domain-tree-item__processing"
+                      aria-label="Procesando"
+                    ></i>
+                  }
+                </div>
+
+                <div class="domain-tree-item__meta">
+                  <span>ID {{ row.item.idDominio }}</span>
+                  <span>Nivel {{ row.depth + 1 }}</span>
+                  @if (row.hasChildren) {
+                    <span>
+                      {{ row.childrenCount }}
+                      {{ row.childrenCount === 1 ? 'hijo' : 'hijos' }}
+                    </span>
+                  } @else {
+                    <span>Valor final</span>
+                  }
+                </div>
+
+                <span class="domain-tree-item__observation">
+                  <i class="fa-regular fa-note-sticky" aria-hidden="true"></i>
+                  {{ row.item.observacion || 'Sin observación' }}
+                </span>
+              </div>
+            </div>
+
+            <div class="domain-tree-item__actions">
+              <app-ui-button
+                size="sm"
+                variant="primary"
+                appearance="soft"
+                icon="fa-solid fa-folder-plus"
+                [iconOnly]="true"
+                [disabled]="processingId() !== null"
+                [tooltip]="'Crear hijo dentro de ' + row.item.descripcion"
+                tooltipAlign="end"
+                [ariaLabel]="'Crear dominio hijo dentro de ' + row.item.descripcion"
+                (buttonClick)="createChildRequested.emit(row.item)"
+              />
+
+              <app-ui-button
+                size="sm"
+                variant="outline"
+                icon="fa-solid fa-pen"
+                [iconOnly]="true"
+                [disabled]="processingId() !== null"
+                [tooltip]="'Editar ' + row.item.descripcion"
+                tooltipAlign="end"
+                [ariaLabel]="'Editar ' + row.item.descripcion"
+                (buttonClick)="editRequested.emit(row.item)"
+              />
+
+              <app-ui-button
+                size="sm"
+                [variant]="row.item.vigente === 1 ? 'warning' : 'success'"
+                appearance="soft"
+                [icon]="row.item.vigente === 1 ? 'fa-solid fa-pause' : 'fa-solid fa-play'"
+                [iconOnly]="true"
+                [disabled]="processingId() !== null"
+                [tooltip]="
+                  (row.item.vigente === 1 ? 'Desactivar ' : 'Activar ') + row.item.descripcion
+                "
+                tooltipAlign="end"
+                [ariaLabel]="
+                  (row.item.vigente === 1 ? 'Desactivar ' : 'Activar ') + row.item.descripcion
+                "
+                (buttonClick)="stateRequested.emit(row.item)"
+              />
+
+              <app-ui-button
+                size="sm"
+                variant="danger"
+                appearance="soft"
+                icon="fa-solid fa-trash-can"
+                [iconOnly]="true"
+                [disabled]="processingId() !== null"
+                [tooltip]="'Eliminar ' + row.item.descripcion"
+                tooltipAlign="end"
+                [ariaLabel]="'Eliminar ' + row.item.descripcion"
+                (buttonClick)="deleteRequested.emit(row.item)"
+              />
+            </div>
+          </article>
+
+          <!--
+            Crear un hijo es una acción contextual: el formulario aparece
+            inmediatamente debajo del padre, sin trasladar lógica CRUD al árbol.
+          -->
+          @if (inlineCreateParent(); as createParent) {
+            @if (createParent.idDominio === row.item.idDominio) {
+              <div
+                class="domain-tree-item__inline-panel"
+                [style.--domain-indent]="row.indent + 'px'"
+                [style.--domain-indent-mobile]="row.mobileIndent + 'px'"
+                [attr.data-domain-child-parent-id]="row.item.idDominio"
+              >
+                <app-dominio-admin-form
+                  mode="create"
+                  [createParent]="createParent"
+                  [saving]="savingChild()"
+                  [resetVersion]="inlineCreateResetVersion()"
+                  (saveRequested)="saveChildRequested.emit($event)"
+                  (cancelRequested)="closeChildRequested.emit()"
+                />
+              </div>
+            }
+          }
+        }
+      </div>
+    }
+  </div>
+</article>

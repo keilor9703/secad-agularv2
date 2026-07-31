@@ -78,6 +78,7 @@
   --form-label-color: #334155;
   --form-border-color: #cbd5e1;
   --form-focus-color: #1f4e79;
+  --form-required-marker-color: #111827;
   --form-error-color: #b42318;
   --form-hint-color: #64748b;
   --form-bg: #ffffff;
@@ -123,6 +124,18 @@ html.dark-mode {
   --ui-text: #e4e7eb;
   --ui-border: rgba(200, 200, 200, 0.1);
   --ui-muted: #9ca3af;
+  /*
+   * Variables semánticas consumidas por todos los controles reutilizables.
+   * Deben redefinirse aquí: un fallback oscuro dentro del componente no se usa
+   * cuando la variable clara ya existe en :root.
+   */
+  --form-bg: #1e2840;
+  --form-disabled-bg: #182238;
+  --form-label-color: #e7edf6;
+  --form-border-color: rgba(203, 213, 225, 0.32);
+  --form-focus-color: #25b9da;
+  --form-hint-color: #aab8cc;
+  --form-required-marker-color: #e4e7eb;
 
   /* Body */
   body {
@@ -788,18 +801,6 @@ body {
     color 0.3s ease;
 }
 
-/* Soporte íconos Font Awesome */
-.fa,
-.fas,
-.far,
-.fal,
-.fab,
-.fa-solid,
-.fa-regular,
-.fa-light,
-.fa-brands {
-  font-family: 'Font Awesome 6 Free', 'Font Awesome 6 Pro', 'Font Awesome 6 Brands' !important;
-}
 html.no-scroll,
 body.no-scroll {
   overflow: hidden !important;

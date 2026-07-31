@@ -1,10 +1,12 @@
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import { Component, HostListener, OnInit } from '@angular/core';
+import { Component, HostListener, OnInit, computed, inject } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { Router, RouterModule } from '@angular/router';
 import { environment } from '../../../../../environments/environment';
 import { AuthService } from '../../../auth/auth.service';
 import { MiPerfilDto } from '../../../interfaces/topbar.interface';
+import { AccessibilityService } from '../../../services/accessibility.service';
 import { BrandingService } from '../../../services/branding.service';
 
 @Component({
@@ -15,6 +17,13 @@ import { BrandingService } from '../../../services/branding.service';
   styleUrl: './topbar-user-menu.component.scss',
 })
 export class TopbarUserMenuComponent implements OnInit {
+  private readonly accessibilityService = inject(AccessibilityService);
+  private readonly accessibility = toSignal(this.accessibilityService.accessibility$, {
+    initialValue: this.accessibilityService.getState(),
+  });
+
+  readonly isDarkMode = computed(() => this.accessibility().darkMode);
+
   userName = '';
   userRole = '';
   userPhotoUrl: string | null = null;
@@ -56,6 +65,15 @@ export class TopbarUserMenuComponent implements OnInit {
   toggleDropdown(event: Event): void {
     event.stopPropagation();
     this.dropdownOpen = !this.dropdownOpen;
+  }
+
+  /**
+   * Control compacto exclusivo del nav móvil. Usa el mismo servicio global del
+   * menú de accesibilidad, por lo que el tema queda sincronizado y persistido.
+   */
+  toggleTheme(event: MouseEvent): void {
+    event.stopPropagation();
+    this.accessibilityService.toggleDarkMode();
   }
 
   openProfileModal(): void {

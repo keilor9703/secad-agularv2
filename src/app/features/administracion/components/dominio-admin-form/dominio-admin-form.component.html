@@ -1,0 +1,133 @@
+<article class="domain-form-card" [class.is-child-create]="childCreation()">
+  <header class="domain-form-card__header">
+    <span class="domain-form-card__icon" aria-hidden="true">
+      <i [class]="mode() === 'edit' ? 'fa-solid fa-pen-to-square' : 'fa-solid fa-folder-plus'"></i>
+    </span>
+
+    <div>
+      <h2>{{ title }}</h2>
+      @if (childCreation()) {
+        <p>
+          El nuevo dominio quedará dentro de
+          <strong>{{ createParent()?.descripcion }}</strong
+          >.
+        </p>
+      } @else {
+        <p>{{ description }}</p>
+      }
+    </div>
+  </header>
+
+  <form class="domain-form" [formGroup]="form" (ngSubmit)="submit()">
+    <div class="domain-form__grid">
+      <div class="domain-form__field domain-form__field--full">
+        <app-ui-input
+          formControlName="descripcion"
+          label="Descripción"
+          placeholder="Nombre visible del dominio"
+          icon="fa-solid fa-font"
+          [required]="true"
+          [maxlength]="255"
+          [controlSize]="compactControlSize"
+          [error]="errorFor('descripcion')"
+        />
+      </div>
+
+      @if (mode() === 'create') {
+        <div class="domain-form__field domain-form__field--full">
+          <div class="domain-form__parent-context">
+            <span aria-hidden="true">
+              <i
+                [class]="createParent() ? 'fa-solid fa-folder-tree' : 'fa-solid fa-layer-group'"
+              ></i>
+            </span>
+
+            <div>
+              <small>Ubicación protegida</small>
+              <strong>{{ createParent()?.descripcion || 'Dominio principal · sin padre' }}</strong>
+            </div>
+
+            <i class="fa-solid fa-lock" aria-hidden="true"></i>
+          </div>
+        </div>
+      } @else {
+        <div class="domain-form__field domain-form__field--full">
+          <app-ui-select
+            formControlName="idPadre"
+            label="Dominio padre"
+            placeholder="Seleccione una ubicación"
+            [options]="parentOptions()"
+            [required]="true"
+            [clearable]="false"
+            [searchable]="true"
+            [controlSize]="compactControlSize"
+            [error]="errorFor('idPadre')"
+          />
+        </div>
+      }
+
+      <div class="domain-form__field">
+        <app-ui-input
+          formControlName="abreviatura"
+          label="Abreviatura"
+          placeholder="Ej.: TH"
+          icon="fa-solid fa-tag"
+          [maxlength]="50"
+          [controlSize]="compactControlSize"
+          [error]="errorFor('abreviatura')"
+        />
+      </div>
+
+      <div class="domain-form__field">
+        <app-ui-select
+          formControlName="vigente"
+          label="Estado"
+          placeholder="Seleccione"
+          [options]="statusOptions"
+          [required]="true"
+          [clearable]="false"
+          [searchable]="false"
+          [controlSize]="compactControlSize"
+          [error]="errorFor('vigente')"
+        />
+      </div>
+
+      <div class="domain-form__field domain-form__field--full">
+        <app-ui-input
+          formControlName="observacion"
+          label="Observación"
+          placeholder="Descripción complementaria o condiciones de uso"
+          [multiline]="true"
+          [rows]="3"
+          [maxlength]="500"
+          [controlSize]="observationControlSize"
+          [error]="errorFor('observacion')"
+        />
+      </div>
+    </div>
+
+    <footer class="domain-form__footer">
+      <app-ui-button
+        type="button"
+        size="sm"
+        variant="outline"
+        icon="fa-solid fa-xmark"
+        [disabled]="saving()"
+        (buttonClick)="cancel()"
+      >
+        Cancelar
+      </app-ui-button>
+
+      <app-ui-button
+        type="submit"
+        size="sm"
+        variant="primary"
+        [icon]="mode() === 'edit' ? 'fa-solid fa-floppy-disk' : 'fa-solid fa-folder-plus'"
+        [loading]="saving()"
+        [disabled]="form.invalid"
+      >
+        {{ submitLabel }}
+      </app-ui-button>
+    </footer>
+  </form>
+</article>

@@ -1,11 +1,14 @@
 /* Card grande tipo blog */
 .news-card {
   border-radius: 22px;
-  background: rgba(255, 255, 255, .92);
-  border: 1px solid rgba(21, 27, 59, .10);
-  box-shadow: 0 18px 50px rgba(2, 6, 23, .08);
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(21, 27, 59, 0.1);
+  box-shadow: 0 18px 50px rgba(2, 6, 23, 0.08);
   overflow: hidden;
-  transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    border-color 0.15s ease;
   cursor: pointer;
   display: flex;
   flex-direction: column;
@@ -14,8 +17,8 @@
 
 .news-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 26px 70px rgba(2, 6, 23, .14);
-  border-color: rgba(8, 166, 203, .28);
+  box-shadow: 0 26px 70px rgba(2, 6, 23, 0.14);
+  border-color: rgba(8, 166, 203, 0.28);
 }
 
 /* Imagen */
@@ -29,8 +32,8 @@
   border-radius: 18px;
   aspect-ratio: 16 / 9;
   object-fit: cover;
-  border: 1px solid rgba(21, 27, 59, .10);
-  background: rgba(21, 27, 59, .04);
+  border: 1px solid rgba(21, 27, 59, 0.1);
+  background: rgba(21, 27, 59, 0.04);
 }
 
 /* Body */
@@ -71,13 +74,13 @@
   gap: 8px;
   font-size: 13px;
   font-weight: 800;
-  color: rgba(83, 86, 90, .92);
+  color: rgba(83, 86, 90, 0.92);
 }
 
 /* Entradilla */
 .news-lead {
   margin: 0 0 16px;
-  color: rgba(83, 86, 90, .92);
+  color: rgba(83, 86, 90, 0.92);
   line-height: 1.55;
   font-size: 14px;
   min-height: 66px;
@@ -110,7 +113,7 @@
 }
 
 .news-arrow {
-  transition: transform .15s ease;
+  transition: transform 0.15s ease;
 }
 
 .news-list {
@@ -301,11 +304,6 @@
   .news-title {
     font-size: 18px;
   }
-}
-
-/* Fix para Font Awesome */
-.fa, .fas, .far, .fal, .fab, .fa-solid, .fa-regular, .fa-light, .fa-brands {
-  font-family: "Font Awesome 6 Free", "Font Awesome 6 Pro", "Font Awesome 6 Brands" !important;
 }
 
 /* ==========================================

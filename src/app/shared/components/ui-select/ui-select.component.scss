@@ -1,4 +1,5 @@
 @use '../../../../styles/components/form-control-sizing' as form-sizing;
+@use '../../../../styles/components/floating-label' as floating-label;
 
 :host {
   --_form-inset-shadow: var(
@@ -16,19 +17,34 @@
 }
 
 .form-select__label {
+  @include floating-label.surface;
+
   position: absolute;
   top: -8px;
   left: 11px;
   z-index: 3;
-  padding: 0 5px;
-  background: var(--form-bg, #fff);
   color: var(--form-label-color, #334155);
   font-size: calc(11px * var(--font-size-scale));
   font-weight: 700;
   line-height: 1.2;
+  max-width: calc(100% - 22px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.form-select__required-marker {
+  margin-left: 2px;
+  color: var(--form-required-marker-color, #111827);
+  transition: color 150ms ease;
+}
+
+.form-select__required-marker.is-invalid {
+  color: var(--form-error-color, #b42318);
 }
 
 .form-select__control {
+  position: relative;
   width: 100%;
   height: var(--_form-control-height);
   min-height: var(--_form-control-height);
@@ -50,7 +66,15 @@
     box-shadow 0.15s ease;
 }
 
+.form-select__control--with-clear {
+  padding-right: 64px;
+}
+
 .form-select__value {
+  display: block;
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -62,25 +86,32 @@
 
 .form-select__clear {
   position: absolute;
+  top: 50%;
   right: 34px;
+  display: grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
   font-size: 18px;
   line-height: 1;
   color: #64748b;
+  transform: translateY(-50%);
 }
 
 .form-select__arrow {
   position: absolute;
+  top: 50%;
   right: 14px;
   width: 8px;
   height: 8px;
   border-right: 2px solid #53565a;
   border-bottom: 2px solid #53565a;
-  transform: rotate(45deg);
+  transform: translateY(-65%) rotate(45deg);
   transition: transform 0.15s ease;
 }
 
 .form-select--open .form-select__arrow {
-  transform: rotate(225deg);
+  transform: translateY(-35%) rotate(225deg);
 }
 
 .form-select--open .form-select__control {
@@ -109,11 +140,11 @@
 }
 
 .form-select__panel {
-  position: absolute;
-  z-index: 40;
-  top: calc(100% + 5px);
+  position: fixed;
+  z-index: 1300;
+  top: 0;
   left: 0;
-  right: 0;
+  box-sizing: border-box;
   padding: 7px;
   border-radius: 10px;
   background: var(--form-bg, #fff);
@@ -123,9 +154,38 @@
   gap: 3px;
   max-height: 260px;
   overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-5px) scale(0.992);
+  transform-origin: top center;
+}
+
+.form-select__panel.is-positioned {
+  visibility: visible;
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0) scale(1);
+  transition:
+    opacity 140ms ease,
+    transform 140ms ease;
+}
+
+.form-select__panel--above {
+  transform: translateY(5px) scale(0.992);
+  transform-origin: bottom center;
+}
+
+.form-select__panel--above.is-positioned {
+  transform: translateY(0) scale(1);
 }
 
 .form-select__search {
+  position: sticky;
+  z-index: 1;
+  top: 0;
   width: 100%;
   border: 1px solid var(--form-border-color, #cbd5e1);
   border-radius: 7px;
@@ -154,13 +214,36 @@
   background: transparent;
   color: var(--ui-text, #0f172a);
   display: grid;
-  grid-template-columns: 20px 1fr;
+  grid-template-columns: 20px minmax(0, 1fr);
   align-items: center;
   text-align: left;
   padding: 0 9px;
   cursor: pointer;
   font-family: inherit;
   font-size: calc(13px * var(--font-size-scale));
+}
+
+.form-select__option-check {
+  justify-self: center;
+  color: var(--form-focus-color, #1f4e79);
+  opacity: 0;
+  transform: scale(0.72);
+  transition:
+    opacity 140ms ease,
+    transform 140ms ease;
+}
+
+.form-select__option-check.is-visible {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.form-select__option-label {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .form-select__option:hover,
@@ -202,7 +285,6 @@
     inset 0 0 0 1px rgba(255, 255, 255, 0.02)
   );
 
-  .form-select__label,
   .form-select__control,
   .form-select__panel {
     background: #1e2840;

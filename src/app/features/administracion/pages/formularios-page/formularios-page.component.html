@@ -32,16 +32,42 @@
         <!-- El formulario envuelve cuerpo y footer para conservar el submit nativo. -->
         <form class="demo-form" [formGroup]="formularioDemo" (ngSubmit)="guardar()">
           <div class="ui-panel__body demo-form__content">
+            <aside class="required-marker-demo" aria-labelledby="required-marker-demo-title">
+              <div>
+                <strong id="required-marker-demo-title">Asterisco de campo obligatorio</strong>
+                <p>
+                  Es negro en estado normal y cambia a rojo cuando la validación presenta un error.
+                </p>
+              </div>
+
+              <label class="required-marker-demo__switch">
+                <input
+                  type="checkbox"
+                  [checked]="showRequiredMarkers()"
+                  (change)="updateRequiredMarkerVisibility($event)"
+                />
+                <span class="required-marker-demo__track" aria-hidden="true"></span>
+                <span>Mostrar asteriscos</span>
+              </label>
+            </aside>
+
             <article class="form-section">
               <h3>Inputs básicos</h3>
 
               <div class="form-grid">
                 <div class="col-6">
+                  <!--
+                    required conserva Validators.required y la semántica accesible.
+                    showRequiredMarker controla únicamente el asterisco visual.
+                    Opciones directas: true = mostrar; false = ocultar.
+                    Aquí se enlaza a una signal para cambiar todos los ejemplos en vivo.
+                  -->
                   <app-ui-input
                     formControlName="nombres"
                     label="Nombres"
                     placeholder="Ingrese nombres"
                     [required]="true"
+                    [showRequiredMarker]="showRequiredMarkers()"
                     [maxlength]="80"
                     [error]="error('nombres')"
                   />
@@ -55,6 +81,7 @@
                     icon="fa-solid fa-phone"
                     hint="Ejemplo: 3001234567"
                     [required]="true"
+                    [showRequiredMarker]="showRequiredMarkers()"
                     [error]="error('telefono')"
                   />
                 </div>
@@ -67,6 +94,7 @@
                     type="email"
                     icon="fa-solid fa-envelope"
                     [required]="true"
+                    [showRequiredMarker]="showRequiredMarkers()"
                     [error]="error('correo')"
                   />
                 </div>
@@ -94,6 +122,7 @@
                     placeholder="Seleccione una unidad"
                     searchPlaceholder="Buscar unidad..."
                     [required]="true"
+                    [showRequiredMarker]="showRequiredMarkers()"
                     [options]="unidadOptions"
                     [error]="error('unidad')"
                   />
@@ -106,6 +135,7 @@
                     placeholder="Seleccione una ciudad"
                     searchPlaceholder="Buscar ciudad..."
                     [required]="true"
+                    [showRequiredMarker]="showRequiredMarkers()"
                     [options]="ciudadOptions"
                     [error]="error('ciudad')"
                   />
@@ -125,6 +155,7 @@
                     hint="Formato visible: dd/mm/aaaa"
                     [maxDate]="today"
                     [required]="true"
+                    [showRequiredMarker]="showRequiredMarkers()"
                     [error]="error('fechaNacimiento')"
                   />
                 </div>
@@ -137,6 +168,7 @@
                     hint="Formato de 24 horas"
                     [minuteStep]="5"
                     [required]="true"
+                    [showRequiredMarker]="showRequiredMarkers()"
                     [error]="error('horaInicio')"
                   />
                 </div>
@@ -149,6 +181,7 @@
                     hint="Seleccione fecha y hora en un solo control"
                     [minuteStep]="5"
                     [required]="true"
+                    [showRequiredMarker]="showRequiredMarkers()"
                     [error]="error('fechaHoraCita')"
                   />
                 </div>
@@ -181,6 +214,7 @@
                     hint="Presentación de 12 horas; el formulario conserva el valor HH:mm."
                     [minuteStep]="30"
                     [required]="true"
+                    [showRequiredMarker]="showRequiredMarkers()"
                     [error]="error('horaAmPm')"
                   />
                 </div>
@@ -194,6 +228,7 @@
                     hint="Presentación de 24 horas; intervalos configurables."
                     [minuteStep]="30"
                     [required]="true"
+                    [showRequiredMarker]="showRequiredMarkers()"
                     [error]="error('hora24Horas')"
                   />
                 </div>
@@ -270,6 +305,7 @@
                   placeholder="Ingrese un nombre descriptivo"
                   icon="fa-solid fa-clipboard-check"
                   [required]="true"
+                  [showRequiredMarker]="showRequiredMarkers()"
                   [maxlength]="100"
                   [error]="modalError('actividad')"
                 />
@@ -282,6 +318,7 @@
                   placeholder="Seleccione una unidad"
                   searchPlaceholder="Buscar unidad..."
                   [required]="true"
+                  [showRequiredMarker]="showRequiredMarkers()"
                   [options]="unidadOptions"
                   [error]="modalError('unidadResponsable')"
                 />
@@ -296,6 +333,7 @@
                   [minDate]="today"
                   [minuteStep]="5"
                   [required]="true"
+                  [showRequiredMarker]="showRequiredMarkers()"
                   [error]="modalError('fechaProgramada')"
                 />
               </div>
@@ -366,6 +404,9 @@
     <!-- API y ejemplos responsive para dimensionar todos los controles compartidos. -->
     <app-form-control-sizing-demo />
 
+    <!-- Catálogo técnico de ui-search-input y ui-button con ejemplos copiables. -->
+    <app-button-search-demo />
+
     <!-- Sección demostrativa independiente de los componentes compartidos ui-tabs y ui-tab. -->
     <app-tabs-demo />
 
@@ -373,6 +414,12 @@
     <app-spinner-demo />
 
     <app-funcionarios-table-demo />
+
+    <!-- Segunda apariencia de ui-table con paginación y acciones intercambiables. -->
+    <app-table-variants-demo />
+
+    <!-- Catálogo reutilizable de badges rectangulares y cápsulas redondeadas. -->
+    <app-status-components-demo />
 
     <app-notificaciones-demo />
   </section>

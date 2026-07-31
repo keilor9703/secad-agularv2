@@ -166,7 +166,7 @@
 .accessibility-speed-dial.is-open:not(.has-subpanel) .fab-action {
   opacity: 1;
   pointer-events: auto;
-  transform: translate(var(--fab-x), var(--fab-y)) scale(1);
+  transform: translate(var(--fab-x, 0px), var(--fab-y, 0px)) scale(1);
 }
 
 .fab-action:hover:not(:disabled),
@@ -180,7 +180,7 @@
 }
 
 .fab-action:active:not(:disabled) {
-  transform: translate(var(--fab-x), var(--fab-y)) scale(0.92) !important;
+  transform: translate(var(--fab-x, 0px), var(--fab-y, 0px)) scale(0.92) !important;
 }
 
 .fab-action.active {
@@ -232,20 +232,41 @@
   white-space: nowrap;
 }
 
-.opens-left .fab-tooltip,
 .opens-left .fab-main__tooltip {
   right: calc(100% + 10px);
   transform: translate(5px, -50%);
 }
 
-.opens-right .fab-tooltip,
 .opens-right .fab-main__tooltip {
   left: calc(100% + 10px);
   transform: translate(-5px, -50%);
 }
 
-.fab-action:hover .fab-tooltip,
-.fab-action:focus-visible .fab-tooltip,
+.opens-left .fab-tooltip {
+  top: 50%;
+  right: calc(100% + 9px);
+  bottom: auto;
+  left: auto;
+  transform: translate(5px, -50%);
+}
+
+.opens-right .fab-tooltip {
+  top: 50%;
+  right: auto;
+  bottom: auto;
+  left: calc(100% + 9px);
+  transform: translate(-5px, -50%);
+}
+
+.opens-left .fab-action:hover .fab-tooltip,
+.opens-left .fab-action:focus-visible .fab-tooltip,
+.opens-right .fab-action:hover .fab-tooltip,
+.opens-right .fab-action:focus-visible .fab-tooltip {
+  opacity: 1;
+  transform: translate(0, -50%);
+  visibility: visible;
+}
+
 .fab-main:hover .fab-main__tooltip,
 .fab-main:focus-visible .fab-main__tooltip {
   opacity: 1;
@@ -633,47 +654,9 @@
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 768px) {
   :host {
-    --_fab-size: 50px;
-    --_fab-action-size: 44px;
-  }
-
-  .fab-main i {
-    font-size: clamp(18px, calc(19px * var(--font-size-scale, 1)), 21px);
-  }
-
-  .fab-tooltip,
-  .fab-main__tooltip {
     display: none;
-  }
-
-  .fab-subpanel {
-    width: min(244px, calc(100vw - 24px));
-  }
-
-  .social-drawer {
-    top: auto;
-    bottom: 0;
-    width: 100%;
-    max-height: min(78dvh, 620px);
-    height: auto;
-    min-height: 340px;
-    border-top: 1px solid var(--_fab-border);
-    border-left: 0;
-    animation-name: drawerInMobile;
-  }
-}
-
-@keyframes drawerInMobile {
-  from {
-    opacity: 0.85;
-    transform: translateY(100%);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
   }
 }
 

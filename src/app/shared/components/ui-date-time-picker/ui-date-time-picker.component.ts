@@ -57,6 +57,10 @@ export class UiDateTimePickerComponent implements AfterViewInit, OnDestroy, Cont
   readonly maxTime = input<string | null>(null);
   readonly minuteStep = input(5);
   readonly required = input(false, { transform: booleanAttribute });
+  /**
+   * Oculta o muestra el asterisco sin modificar la validación requerida.
+   */
+  readonly showRequiredMarker = input(true, { transform: booleanAttribute });
   readonly disabled = input(false, { transform: booleanAttribute });
   readonly allowManualInput = input(false, { transform: booleanAttribute });
 

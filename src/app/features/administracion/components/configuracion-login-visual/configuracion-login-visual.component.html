@@ -1,0 +1,177 @@
+<section class="settings-section">
+  <header class="settings-section__header">
+    <div class="settings-section__heading">
+      <span class="settings-section__icon" aria-hidden="true">
+        <i class="fa-regular fa-images"></i>
+      </span>
+      <div>
+        <h2>Imágenes de acceso</h2>
+        <p>Configure la rotación visual presentada en la pantalla de inicio de sesión.</p>
+      </div>
+    </div>
+
+    <app-ui-chip
+      [label]="items.length + ' ' + (items.length === 1 ? 'imagen' : 'imágenes')"
+      [variant]="items.length > 0 ? 'success' : 'neutral'"
+      appearance="outline"
+      size="sm"
+      [dot]="true"
+    />
+  </header>
+
+  <div class="settings-layout">
+    <article class="settings-surface">
+      <header class="settings-surface__head">
+        <div>
+          <h3>Parámetros de rotación</h3>
+          <p>El intervalo permitido está entre 1.500 y 60.000 milisegundos.</p>
+        </div>
+      </header>
+
+      <form class="settings-form" [formGroup]="form" (ngSubmit)="saveConfiguration()">
+        <app-ui-input
+          formControlName="intervalMs"
+          label="Intervalo de rotación"
+          type="number"
+          placeholder="6000"
+          icon="fa-solid fa-stopwatch"
+          hint="Valor expresado en milisegundos."
+          [required]="true"
+          [disabled]="loading() || saving()"
+          [error]="intervalError()"
+        />
+
+        <app-ui-file-upload
+          label="Agregar imagen"
+          accept=".jpg,.jpeg,.png,.webp,image/*"
+          hint="JPG, PNG o WEBP. Tamaño máximo: 10 MB."
+          buttonText="Buscar imagen"
+          icon="fa-solid fa-image"
+          [fileName]="pendingFileName()"
+          [allowedMimeTypes]="acceptedImageTypes"
+          [allowedExtensions]="acceptedImageExtensions"
+          [maxSizeBytes]="maximumImageSize"
+          [loading]="uploading()"
+          [clearable]="false"
+          (fileSelected)="onImageSelected($event)"
+          (validationError)="showFileValidationError($event)"
+        />
+      </form>
+
+      <footer class="settings-actions">
+        <app-ui-button
+          type="button"
+          size="sm"
+          variant="primary"
+          icon="fa-solid fa-floppy-disk"
+          [loading]="saving()"
+          [disabled]="loading() || uploading()"
+          (buttonClick)="saveConfiguration()"
+        >
+          Guardar configuración
+        </app-ui-button>
+      </footer>
+    </article>
+
+    <article class="settings-surface">
+      <header class="settings-surface__head">
+        <div>
+          <h3>Contenido configurado</h3>
+          <p>Edite el orden, la visibilidad y los textos complementarios.</p>
+        </div>
+      </header>
+
+      @if (loading()) {
+        <div class="settings-surface__body">
+          <app-ui-spinner
+            type="dots"
+            size="md"
+            variant="primary"
+            label="Cargando imágenes..."
+            [contained]="true"
+          />
+        </div>
+      } @else if (items.length > 0) {
+        <div class="asset-list">
+          @for (
+            itemForm of items.controls;
+            track itemForm.controls.file.value;
+            let index = $index
+          ) {
+            <article class="asset-item" [formGroup]="itemForm">
+              <div class="asset-item__preview">
+                <img [src]="imageSource(itemForm)" [alt]="'Imagen de acceso ' + (index + 1)" />
+                <span>{{ index + 1 }}</span>
+              </div>
+
+              <div class="asset-item__form">
+                <div class="asset-item__row">
+                  <app-ui-input
+                    formControlName="order"
+                    label="Orden"
+                    type="number"
+                    placeholder="1"
+                    [required]="true"
+                    [error]="itemError(itemForm, 'order')"
+                  />
+
+                  <app-ui-select
+                    formControlName="active"
+                    label="Estado"
+                    [options]="activeOptions"
+                    [searchable]="false"
+                    [clearable]="false"
+                  />
+                </div>
+
+                <app-ui-input
+                  formControlName="title"
+                  label="Título"
+                  placeholder="Título opcional"
+                  [maxlength]="120"
+                  [error]="itemError(itemForm, 'title')"
+                />
+
+                <app-ui-input
+                  formControlName="subtitle"
+                  label="Subtítulo"
+                  placeholder="Subtítulo opcional"
+                  [maxlength]="200"
+                  [error]="itemError(itemForm, 'subtitle')"
+                />
+
+                <small class="asset-item__file" [title]="itemForm.controls.file.value">
+                  <i class="fa-regular fa-file-image" aria-hidden="true"></i>
+                  {{ itemForm.controls.file.value }}
+                </small>
+              </div>
+
+              <footer class="asset-item__actions">
+                <app-ui-button
+                  type="button"
+                  size="sm"
+                  variant="danger"
+                  icon="fa-solid fa-trash-can"
+                  [loading]="isDeleting(itemForm.controls.file.value)"
+                  (buttonClick)="deleteImage(index)"
+                >
+                  Eliminar
+                </app-ui-button>
+              </footer>
+            </article>
+          }
+        </div>
+      } @else {
+        <div class="settings-empty">
+          <div class="settings-empty__content">
+            <span class="settings-empty__icon" aria-hidden="true">
+              <i class="fa-regular fa-images"></i>
+            </span>
+            <strong>No hay imágenes configuradas</strong>
+            <p>Agregue la primera imagen para activar la rotación del acceso.</p>
+          </div>
+        </div>
+      }
+    </article>
+  </div>
+</section>

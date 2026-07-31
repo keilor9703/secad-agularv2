@@ -4,6 +4,13 @@
 
 .topbar-user {
   position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mobile-theme-toggle {
+  display: none;
 }
 
 .profile-trigger {
@@ -420,6 +427,80 @@
 }
 
 @media (max-width: 768px) {
+  .mobile-theme-toggle {
+    display: grid;
+    width: 34px;
+    height: 40px;
+    flex: 0 0 34px;
+    place-items: center;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    outline: 0;
+    background: transparent;
+    box-shadow: none;
+    color: #ffffff;
+    cursor: pointer;
+    transition:
+      transform 160ms ease,
+      color 160ms ease,
+      filter 160ms ease;
+
+    &:hover,
+    &:focus-visible {
+      background: transparent;
+      color: var(--policia-acento, #c8ff00);
+      filter: drop-shadow(0 0 7px rgba(200, 255, 0, 0.3));
+      transform: translateY(-1px);
+    }
+
+    &:focus-visible {
+      outline: 2px solid rgba(200, 255, 0, 0.6);
+      outline-offset: 1px;
+    }
+
+    &:active {
+      transform: scale(0.94);
+    }
+
+    &.is-dark .mobile-theme-toggle__disc {
+      color: var(--policia-acento, #c8ff00);
+    }
+  }
+
+  .mobile-theme-toggle__disc {
+    display: grid;
+    width: 24px;
+    height: 24px;
+    place-items: center;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: #ffffff;
+    font-size: calc(1.05rem * var(--font-size-scale, 1));
+    transition:
+      color 160ms ease,
+      transform 220ms ease;
+  }
+
+  .mobile-theme-toggle:hover .mobile-theme-toggle__disc,
+  .mobile-theme-toggle:focus-visible .mobile-theme-toggle__disc {
+    transform: rotate(-10deg);
+  }
+
+  /*
+   * La regla genérica de botones del tema oscuro está en styles.scss y tiene
+   * mayor especificidad. Este override evita que convierta el icono en un
+   * botón rectangular sin alterar el resto de controles del topbar.
+   */
+  :host-context(html.dark-mode) .mobile-theme-toggle,
+  :host-context(html.dark-mode) .mobile-theme-toggle:hover,
+  :host-context(html.dark-mode) .mobile-theme-toggle:focus-visible {
+    border-color: transparent !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
   .profile-trigger {
     width: 44px;
     max-width: 44px;

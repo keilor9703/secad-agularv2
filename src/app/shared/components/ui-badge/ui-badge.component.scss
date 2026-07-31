@@ -1,0 +1,128 @@
+:host {
+  display: inline-flex;
+  max-width: 100%;
+  vertical-align: middle;
+}
+
+.ui-status-badge {
+  --status-color: #475569;
+  --status-soft-bg: rgba(100, 116, 139, 0.11);
+  --status-border: rgba(100, 116, 139, 0.3);
+  --status-solid-bg: #475569;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 100%;
+  border: 1px solid var(--status-border);
+  border-radius: 4px;
+  color: var(--status-color);
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.ui-status-badge--xs {
+  min-height: 20px;
+  gap: 4px;
+  padding: 2px 6px;
+  font-size: calc(9px * var(--font-size-scale, 1));
+}
+
+.ui-status-badge--sm {
+  min-height: 24px;
+  gap: 5px;
+  padding: 3px 8px;
+  font-size: calc(10.5px * var(--font-size-scale, 1));
+}
+
+.ui-status-badge--md {
+  min-height: 29px;
+  gap: 6px;
+  padding: 4px 10px;
+  font-size: calc(12px * var(--font-size-scale, 1));
+}
+
+.ui-status-badge--soft {
+  background: var(--status-soft-bg);
+}
+
+.ui-status-badge--outline {
+  background: color-mix(in srgb, var(--ui-surface, #ffffff) 94%, var(--status-color));
+}
+
+.ui-status-badge--solid {
+  border-color: var(--status-solid-bg);
+  background: var(--status-solid-bg);
+  color: #ffffff;
+}
+
+.ui-status-badge--primary {
+  --status-color: #1557c0;
+  --status-soft-bg: #e9f0ff;
+  --status-border: #7ca6ff;
+  --status-solid-bg: #2864dc;
+}
+
+.ui-status-badge--secondary {
+  --status-color: #526174;
+  --status-soft-bg: #eef2f6;
+  --status-border: #c4cfdd;
+  --status-solid-bg: #364155;
+}
+
+.ui-status-badge--success {
+  --status-color: #147a16;
+  --status-soft-bg: #e5f8df;
+  --status-border: #7ed26a;
+  --status-solid-bg: #16a10f;
+}
+
+.ui-status-badge--info {
+  --status-color: #005f8e;
+  --status-soft-bg: #dff4ff;
+  --status-border: #63c8f3;
+  --status-solid-bg: #079fdc;
+}
+
+.ui-status-badge--warning {
+  --status-color: #b64d00;
+  --status-soft-bg: #fff1d8;
+  --status-border: #ffbd62;
+  --status-solid-bg: #e97900;
+}
+
+.ui-status-badge--danger {
+  --status-color: #b42318;
+  --status-soft-bg: #ffe7e3;
+  --status-border: #ff8b7d;
+  --status-solid-bg: #ef3826;
+}
+
+.ui-status-badge--neutral {
+  --status-color: #526174;
+  --status-soft-bg: #f0f3f7;
+  --status-border: #c9d2de;
+  --status-solid-bg: #64748b;
+}
+
+.ui-status-badge--uppercase {
+  letter-spacing: 0.015em;
+  text-transform: uppercase;
+}
+
+.ui-status-badge i {
+  flex: 0 0 auto;
+  font-size: 0.92em;
+}
+
+.ui-status-badge__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+:host-context(html.dark-mode) {
+  .ui-status-badge--soft,
+  .ui-status-badge--outline {
+    background: color-mix(in srgb, var(--ui-surface, #1e2840) 84%, var(--status-color));
+  }
+}

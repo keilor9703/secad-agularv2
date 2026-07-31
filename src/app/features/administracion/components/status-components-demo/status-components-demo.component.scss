@@ -1,0 +1,132 @@
+:host {
+  display: block;
+  margin-top: 12px;
+}
+
+.status-demo {
+  overflow: hidden;
+}
+
+.status-demo__header {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr);
+  align-items: center;
+  gap: 11px;
+  padding: 13px 15px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.status-demo__number {
+  display: grid;
+  width: 38px;
+  height: 31px;
+  place-items: center;
+  border-radius: 5px;
+  background: var(--policia-oscuro, #151b3b);
+  color: #ffffff;
+  font-size: calc(10px * var(--font-size-scale, 1));
+  font-weight: 850;
+}
+
+.status-demo h2,
+.status-demo h3,
+.status-demo p {
+  margin: 0;
+}
+
+.status-demo h2,
+.status-demo h3 {
+  color: var(--policia-oscuro, #151b3b);
+  font-weight: 850;
+}
+
+.status-demo h2 {
+  font-size: calc(13px * var(--font-size-scale, 1));
+}
+
+.status-demo h3 {
+  font-size: calc(11.5px * var(--font-size-scale, 1));
+}
+
+.status-demo p {
+  margin-top: 3px;
+  color: var(--ui-muted, #64748b);
+  font-size: calc(10px * var(--font-size-scale, 1));
+}
+
+.status-demo__body {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 11px;
+  padding: 14px;
+}
+
+.status-demo__group {
+  min-width: 0;
+  padding: 13px;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 7px;
+  background: #fbfcfe;
+}
+
+.status-demo__group--wide,
+.status-demo__code-grid {
+  grid-column: 1 / -1;
+}
+
+.status-demo__items {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 13px;
+}
+
+.status-demo__code-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.status-demo__code-grid pre {
+  overflow: auto;
+  margin: 0;
+  padding: 12px;
+  border-radius: 6px;
+  background: #0f172a;
+  color: #dbeafe;
+  font-size: calc(9.5px * var(--font-size-scale, 1));
+  line-height: 1.5;
+}
+
+@media (max-width: 900px) {
+  .status-demo__body {
+    grid-template-columns: 1fr;
+  }
+
+  .status-demo__code-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 520px) {
+  .status-demo__body {
+    padding: 9px;
+  }
+
+  .status-demo__group {
+    padding: 11px;
+  }
+}
+
+:host-context(html.dark-mode) {
+  .status-demo h2,
+  .status-demo h3 {
+    color: var(--ui-text, #e4e7eb);
+  }
+
+  .status-demo__group {
+    border-color: rgba(255, 255, 255, 0.12);
+    background: #182238;
+  }
+}

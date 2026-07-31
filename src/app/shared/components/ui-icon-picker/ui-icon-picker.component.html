@@ -1,0 +1,132 @@
+<div
+  class="ui-icon-picker"
+  [class.ui-icon-picker--open]="opened()"
+  [class.ui-icon-picker--invalid]="!!error()"
+  [class.ui-icon-picker--disabled]="disabledState()"
+  [class.ui-icon-picker--compact]="density() === 'compact'"
+>
+  <span class="ui-icon-picker__label" [id]="labelId">
+    {{ label() }}
+    @if (required()) {
+      <span class="ui-icon-picker__required" aria-hidden="true">*</span>
+    }
+  </span>
+
+  <div
+    class="ui-icon-picker__trigger"
+    [id]="controlId"
+    role="combobox"
+    [attr.tabindex]="disabledState() ? -1 : 0"
+    [attr.aria-disabled]="disabledState()"
+    aria-haspopup="listbox"
+    [attr.aria-expanded]="opened()"
+    [attr.aria-controls]="panelId"
+    [attr.aria-labelledby]="labelId + ' ' + controlId"
+    (click)="toggle()"
+    (keydown)="handleTriggerKeydown($event)"
+  >
+    <span class="ui-icon-picker__preview" aria-hidden="true">
+      <i [class]="value() || 'fa-solid fa-icons'"></i>
+    </span>
+
+    <span class="ui-icon-picker__selection">
+      @if (selectedOption(); as selected) {
+        <strong>{{ selected.label }}</strong>
+        <small>{{ selected.value }}</small>
+      } @else if (value()) {
+        <strong>Icono personalizado</strong>
+        <small>{{ value() }}</small>
+      } @else {
+        <span class="ui-icon-picker__placeholder">{{ placeholder() }}</span>
+      }
+    </span>
+
+    @if (clearable() && value()) {
+      <button
+        class="ui-icon-picker__clear"
+        type="button"
+        aria-label="Quitar icono seleccionado"
+        (click)="clear($event)"
+      >
+        <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+      </button>
+    }
+
+    <i class="fa-solid fa-chevron-down ui-icon-picker__chevron" aria-hidden="true"></i>
+  </div>
+
+  @if (opened()) {
+    <section
+      class="ui-icon-picker__panel"
+      [class.ui-icon-picker__panel--above]="panelPlacement() === 'above'"
+      [class.is-positioned]="panelPositioned()"
+      [id]="panelId"
+      role="listbox"
+      [attr.aria-label]="'Iconos disponibles para ' + label()"
+      [style.top]="panelStyles().top"
+      [style.left]="panelStyles().left"
+      [style.width]="panelStyles().width"
+      [style.max-height]="panelStyles().maxHeight"
+    >
+      <label class="ui-icon-picker__search">
+        <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+        <span class="sr-only">Buscar icono</span>
+        <input
+          type="search"
+          placeholder="Buscar por nombre..."
+          [value]="searchTerm()"
+          (input)="updateSearch($event)"
+        />
+      </label>
+
+      <div class="ui-icon-picker__categories" aria-label="Categorías de iconos">
+        @for (category of categories; track category) {
+          <button
+            type="button"
+            [class.is-selected]="selectedCategory() === category"
+            [attr.aria-pressed]="selectedCategory() === category"
+            (click)="selectCategory(category)"
+          >
+            {{ category }}
+          </button>
+        }
+      </div>
+
+      <div class="ui-icon-picker__result-count" aria-live="polite">
+        {{ filteredOptions().length }}
+        {{ filteredOptions().length === 1 ? 'icono disponible' : 'iconos disponibles' }}
+      </div>
+
+      <div class="ui-icon-picker__options">
+        @for (option of filteredOptions(); track option.value) {
+          <button
+            class="ui-icon-picker__option"
+            [class.is-selected]="option.value === value()"
+            type="button"
+            role="option"
+            [attr.aria-selected]="option.value === value()"
+            [title]="option.label"
+            (click)="select(option)"
+          >
+            <i [class]="option.value" aria-hidden="true"></i>
+            <span>{{ option.label }}</span>
+            <small>{{ option.category }}</small>
+          </button>
+        } @empty {
+          <div class="ui-icon-picker__empty">
+            <i class="fa-regular fa-face-frown" aria-hidden="true"></i>
+            <span>No se encontraron iconos.</span>
+          </div>
+        }
+      </div>
+    </section>
+  }
+
+  @if (error()) {
+    <p class="ui-icon-picker__message ui-icon-picker__message--error">
+      {{ error() }}
+    </p>
+  } @else if (hint()) {
+    <p class="ui-icon-picker__message">{{ hint() }}</p>
+  }
+</div>

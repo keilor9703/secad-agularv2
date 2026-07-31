@@ -1,0 +1,24 @@
+/*
+ * Superficie compartida para las etiquetas flotantes.
+ *
+ * El contenedor que tenga un fondo propio puede declarar:
+ *   --form-floating-label-bg: #f5f7fa;
+ *
+ * Los extremos transparentes evitan que la etiqueta se perciba como
+ * un rectángulo recortado sobre el borde del control.
+ */
+@mixin surface {
+  --_form-floating-label-bg: var(
+    --form-floating-label-bg,
+    var(--ui-surface, var(--form-bg, #ffffff))
+  );
+
+  padding: 0 9px;
+  background: linear-gradient(
+    90deg,
+    transparent 0,
+    var(--_form-floating-label-bg) 6px,
+    var(--_form-floating-label-bg) calc(100% - 6px),
+    transparent 100%
+  );
+}

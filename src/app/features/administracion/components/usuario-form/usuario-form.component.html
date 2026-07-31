@@ -59,6 +59,7 @@
 
   <section class="right-column">
     <app-ui-tabs
+      [class.has-form-footer]="activeTab !== 'roles'"
       variant="contained"
       size="md"
       ariaLabel="Administración del usuario"
@@ -81,6 +82,7 @@
                 [maxlength]="20"
                 [disabled]="loading"
                 [clearable]="false"
+                [showRequiredMarker]="false"
                 [error]="getFieldError('consulta', 'identificacion')"
                 (search)="onConsultar($event)"
               ></app-ui-search-input>
@@ -94,6 +96,7 @@
                 [readonly]="true"
                 [required]="true"
                 [maxlength]="20"
+                [showRequiredMarker]="false"
                 [error]="getFieldError('usuario', 'identificacion')"
               ></app-ui-input>
             </div>
@@ -106,6 +109,7 @@
                 [readonly]="true"
                 [required]="true"
                 [maxlength]="200"
+                [showRequiredMarker]="false"
                 [error]="getFieldError('usuario', 'nombreCompleto')"
               ></app-ui-input>
             </div>
@@ -118,6 +122,7 @@
                 [readonly]="true"
                 [required]="true"
                 [maxlength]="100"
+                [showRequiredMarker]="false"
                 [error]="getFieldError('usuario', 'usuarioEmpresarial')"
               ></app-ui-input>
             </div>
@@ -151,6 +156,7 @@
                 [readonly]="true"
                 [required]="true"
                 [maxlength]="150"
+                [showRequiredMarker]="false"
                 [error]="getFieldError('usuario', 'email')"
               ></app-ui-input>
             </div>
@@ -263,12 +269,16 @@
         formControlName="identificacion"
         label="Buscar usuario"
         placeholder="Identificación"
+        buttonText="Filtrar"
+        buttonLayout="detached"
+        buttonVariant="primary"
         [buttonText]="loading ? 'Consultando usuario' : 'Buscar usuario'"
-        [iconOnly]="true"
+        [iconOnly]="false"
         [required]="true"
         [maxlength]="20"
         [disabled]="loading"
         [clearable]="false"
+        [buttonGap]="10"
         [error]="getFieldError('consulta', 'identificacion')"
         (search)="onConsultar($event)"
       ></app-ui-search-input>

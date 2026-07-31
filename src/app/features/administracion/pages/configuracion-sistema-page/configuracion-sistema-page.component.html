@@ -1,298 +1,54 @@
-<section class="video-admin-page">
-  <div class="ui-panel">
-    <div class="ui-panel__head">
-      <div class="ui-panel__title">
-        <i class="fa-solid fa-circle-play"></i>
-        Configuracion sistema
-      </div>
-      <div class="ui-panel__actions ui-window-controls">
-        <button class="ui-icon-btn ui-win-btn is-min" type="button" title="Minimizar" (click)="togglePanel('video')">
-          <i class="fa-solid fa-minus"></i>
-        </button>
-      </div>
+<section class="settings-page">
+  <header class="settings-page__intro">
+    <span class="settings-page__intro-icon" aria-hidden="true">
+      <i class="fa-solid fa-sliders"></i>
+    </span>
+
+    <div class="settings-page__intro-copy">
+      <span class="settings-page__eyebrow">Administración central</span>
+      <h1>Configuración del sistema</h1>
+      <p>
+        Gestione el contenido institucional y la identidad visual desde secciones independientes.
+      </p>
     </div>
 
-    <div class="ui-panel__body" *ngIf="!videoPanelMinimized">
-      <div class="video-grid">
-        <article class="tab-card form-card">
-          <h3>Cargar video institucional</h3>
-
-          <div class="ui-field">
-            <label class="ui-label">Archivo (máx 100MB)</label>
-            <input
-              class="ui-control"
-              type="file"
-              accept=".mp4,.webm,.ogg,.mov,video/*"
-              (change)="onFileSelected($event)">
-            <small class="meta">Se conserva un solo video activo. Al cargar uno nuevo se reemplaza el anterior.</small>
-          </div>
-
-          <div class="ui-field">
-            <label class="ui-label">Descripción <span class="required">*</span></label>
-            <input
-              class="ui-control"
-              type="text"
-              maxlength="255"
-              [(ngModel)]="videoDescripcion"
-              placeholder="Ej: Video institucional 2025"
-              [disabled]="!selectedVideoFile">
-          </div>
-
-          <div class="ui-field">
-            <label class="ui-label">Observaciones</label>
-            <textarea
-              class="ui-control"
-              rows="3"
-              maxlength="500"
-              [(ngModel)]="videoObservaciones"
-              placeholder="Observaciones adicionales (opcional)"
-              [disabled]="!selectedVideoFile"></textarea>
-          </div>
-
-          <div class="list-loading" *ngIf="uploading">Cargando video, por favor espere...</div>
-
-          <div class="tab-actions">
-            <button
-              class="ui-btn primary"
-              type="button"
-              (click)="saveVideo()"
-              [disabled]="uploading || !selectedVideoFile">
-              <i class="fa-solid fa-floppy-disk"></i>
-              {{ uploading ? 'Guardando...' : 'Guardar video' }}
-            </button>
-          </div>
-        </article>
-
-        <article class="tab-card list-card">
-          <h3>Vista previa</h3>
-          <div class="list-loading" *ngIf="loading">Consultando video actual...</div>
-
-          <div *ngIf="selectedVideoPreviewUrl" class="video-preview">
-            <small class="meta">Nuevo video seleccionado (pendiente de guardar)</small>
-            <video class="video-player" controls preload="metadata">
-              <source [src]="selectedVideoPreviewUrl">
-              Tu navegador no soporta reproducción de video.
-            </video>
-          </div>
-
-          <div *ngIf="!selectedVideoPreviewUrl && !loading && info?.hasVideo && previewUrl" class="video-preview">
-            <small class="meta">Video actual</small>
-            <video class="video-player" controls preload="metadata">
-              <source [src]="previewUrl" type="video/mp4">
-              Tu navegador no soporta reproducción de video.
-            </video>
-            <div class="meta mt-2">
-              <div *ngIf="info?.descripcion"><strong>Descripción:</strong> {{ info?.descripcion }}</div>
-              <div *ngIf="info?.observaciones"><strong>Observaciones:</strong> {{ info?.observaciones }}</div>
-              <div><strong>Archivo:</strong> {{ info?.fileName }}</div>
-              <div><strong>Tamaño:</strong> {{ (info?.sizeBytes ?? 0) / 1048576 | number:'1.1-1' }} MB</div>
-            </div>
-          </div>
-
-          <div class="news-state" *ngIf="!selectedVideoPreviewUrl && !loading && !info?.hasVideo">
-            No hay video configurado.
-          </div>
-        </article>
-      </div>
-
+    <div class="settings-page__summary" aria-label="Resumen del módulo">
+      <app-ui-chip
+        label="3 secciones"
+        variant="primary"
+        appearance="outline"
+        size="xs"
+        icon="fa-solid fa-layer-group"
+      />
+      <app-ui-chip
+        label="Configuración protegida"
+        variant="success"
+        appearance="outline"
+        size="xs"
+        icon="fa-solid fa-shield-halved"
+      />
     </div>
-  </div>
+  </header>
 
-  <div class="ui-panel mt-3">
-    <div class="ui-panel__head">
-      <div class="ui-panel__title">
-        <i class="fa-regular fa-images"></i>
-        Imagen Login
-      </div>
-      <div class="ui-panel__actions ui-window-controls">
-        <button class="ui-icon-btn ui-win-btn is-min" type="button" title="Minimizar" (click)="togglePanel('login')">
-          <i class="fa-solid fa-minus"></i>
-        </button>
-      </div>
-    </div>
+  <app-ui-tabs
+    variant="underline"
+    size="md"
+    ariaLabel="Secciones de configuración del sistema"
+    [stretch]="true"
+    [showPanelAccent]="false"
+    [activeTabId]="activeSectionId()"
+    (activeTabIdChange)="activeSectionId.set($event)"
+  >
+    <app-ui-tab id="video" label="Video institucional" icon="fa-solid fa-circle-play">
+      <app-configuracion-video />
+    </app-ui-tab>
 
-    <div class="ui-panel__body" *ngIf="!loginPanelMinimized">
-      <div class="login-visual-grid">
-        <article class="tab-card form-card">
-          <div class="ui-field">
-            <label class="ui-label">Intervalo de rotación (ms)</label>
-            <input class="ui-control" type="number" min="1500" step="500" [(ngModel)]="loginIntervalMs">
-          </div>
+    <app-ui-tab id="login" label="Imágenes de acceso" icon="fa-regular fa-images">
+      <app-configuracion-login-visual />
+    </app-ui-tab>
 
-          <div class="ui-field">
-            <label class="ui-label">Agregar imagen login</label>
-            <input
-              class="ui-control"
-              type="file"
-              accept=".jpg,.jpeg,.png,.webp,image/*"
-              (change)="onLoginImageSelected($event)">
-            <small class="meta">Formatos: JPG, PNG, WEBP. Máximo 10MB.</small>
-          </div>
-
-          <div class="list-loading" *ngIf="loginUploading">Cargando imagen login...</div>
-
-          <div class="tab-actions">
-            <button class="ui-btn primary" type="button" (click)="saveLoginConfig()" [disabled]="loginSaving">
-              <i class="fa-solid fa-floppy-disk"></i>
-              {{ loginSaving ? 'Guardando...' : 'Guardar imagen login' }}
-            </button>
-          </div>
-        </article>
-
-        <article class="tab-card list-card">
-          <h3 class="sub-title">Imágenes login configuradas</h3>
-          <div class="list-loading" *ngIf="loginLoading">Cargando configuración de login...</div>
-
-          <div class="news-state" *ngIf="!loginLoading && loginItems.length === 0">
-            No hay imágenes de login configuradas.
-          </div>
-
-          <div class="login-list" *ngIf="!loginLoading && loginItems.length > 0">
-            <div class="login-item" *ngFor="let item of loginItems">
-              <div class="login-item__preview">
-                <img [src]="item.url || '/api/LoginVisual/image/' + item.file" alt="Visual login">
-              </div>
-
-              <div class="login-item__content">
-                <div class="row-2">
-                  <div class="ui-field">
-                    <label class="ui-label">Orden</label>
-                    <input class="ui-control" type="number" min="1" [(ngModel)]="item.order">
-                  </div>
-                  <div class="ui-field">
-                    <label class="ui-label">Activo</label>
-                    <select class="ui-control" [(ngModel)]="item.active">
-                      <option [ngValue]="true">Sí</option>
-                      <option [ngValue]="false">No</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div class="ui-field">
-                  <label class="ui-label">Título (opcional)</label>
-                  <input class="ui-control" type="text" [(ngModel)]="item.title" maxlength="120">
-                </div>
-
-                <div class="ui-field">
-                  <label class="ui-label">Subtítulo (opcional)</label>
-                  <input class="ui-control" type="text" [(ngModel)]="item.subtitle" maxlength="200">
-                </div>
-
-                <small class="meta">Archivo: {{ item.file }}</small>
-              </div>
-
-              <div class="login-item__actions">
-                <button class="ui-btn secondary" type="button" (click)="deleteLoginImage(item)">Eliminar</button>
-              </div>
-            </div>
-          </div>
-        </article>
-      </div>
-    </div>
-  </div>
-
-  <div class="ui-panel mt-3">
-    <div class="ui-panel__head">
-      <div class="ui-panel__title">
-        <i class="fa-solid fa-signature"></i>
-        Marca del Sistema
-      </div>
-      <div class="ui-panel__actions ui-window-controls">
-        <button class="ui-icon-btn ui-win-btn is-min" type="button" title="Minimizar" (click)="togglePanel('branding')">
-          <i class="fa-solid fa-minus"></i>
-        </button>
-      </div>
-    </div>
-
-    <div class="ui-panel__body" *ngIf="!brandingPanelMinimized">
-      <div class="login-visual-grid">
-        <article class="tab-card form-card">
-          <div class="list-loading" *ngIf="brandingLoading">Cargando configuracion de marca...</div>
-
-          <div class="ui-field">
-            <label class="ui-label">Sigla del sistema</label>
-            <small class="meta">Maximo 10 caracteres.</small>
-            <input
-              class="ui-control"
-              type="text"
-              maxlength="10"
-              [(ngModel)]="brandingSistema"
-              placeholder="Ej: SISGE">
-            
-          </div>
-
-          <div class="ui-field">
-            <label class="ui-label">Nombre del sistema</label>
-            <small class="meta">Maximo 50 caracteres.</small>
-            <input
-              class="ui-control"
-              type="text"
-              maxlength="50"
-              [(ngModel)]="brandingNombreSistema"
-              placeholder="Ej: Sistema de Gestion">
-            
-          </div>
-
-          <div class="ui-field">
-            <label class="ui-label">Logo del sistema</label>
-            <small class="meta">Formatos: JPG, PNG, WEBP o SVG. Maximo 5MB.</small>
-            <input
-              class="ui-control"
-              type="file"
-              accept=".jpg,.jpeg,.png,.webp,.svg,image/*"
-              (change)="onBrandingLogoSelected($event)">
-            
-          </div>
-
-          <div class="ui-field">
-            <label class="ui-label">Favicon</label>
-             <small class="meta">Formatos: ICO, PNG, WEBP o SVG. Maximo 50Kb.</small>
-            <input
-              class="ui-control"
-              type="file"
-              accept=".ico,.png,.webp,.svg,image/x-icon,image/vnd.microsoft.icon,image/png,image/webp,image/svg+xml"
-              (change)="onBrandingFaviconSelected($event)">
-           
-          </div>
-
-          <div class="list-loading" *ngIf="brandingUploading">Cargando logo...</div>
-          <div class="list-loading" *ngIf="brandingUploadingFavicon">Cargando favicon...</div>
-
-          <div class="tab-actions">
-            <button class="ui-btn primary" type="button" (click)="saveBrandingConfig()" [disabled]="brandingSaving">
-              <i class="fa-solid fa-floppy-disk"></i>
-              {{ brandingSaving ? 'Guardando...' : 'Guardar marca del sistema' }}
-            </button>
-          </div>
-        </article>
-
-        <article class="tab-card list-card">
-          <h3 class="sub-title">Vista previa</h3>
-          <div class="news-state" *ngIf="!brandingLogoUrl && !brandingFaviconUrl">No hay marca configurada.</div>
-
-          <div class="login-item" *ngIf="brandingLogoUrl">
-            <div class="login-item__preview">
-              <img [src]="brandingLogoUrl" alt="Logo del sistema">
-            </div>
-            <div class="login-item__content">
-              <div><strong>Sistema:</strong> {{ brandingSistema }}</div>
-              <div><strong>Nombre del sistema:</strong> {{ brandingNombreSistema }}</div>
-              <small class="meta">Archivo logo: {{ brandingLogoFileName || 'N/D' }}</small>
-              <small class="meta">Archivo favicon: {{ brandingFaviconFileName || 'N/D' }}</small>
-            </div>
-          </div>
-
-          <div class="login-item" *ngIf="brandingFaviconUrl">
-            <div class="login-item__preview">
-              <img [src]="brandingFaviconUrl" alt="Favicon del sistema">
-            </div>
-            <div class="login-item__content">
-              <div><strong>Favicon actual</strong></div>
-              <small class="meta">Archivo favicon: {{ brandingFaviconFileName || 'N/D' }}</small>
-            </div>
-          </div>
-        </article>
-      </div>
-    </div>
-  </div>
+    <app-ui-tab id="marca" label="Identidad del sistema" icon="fa-solid fa-signature">
+      <app-configuracion-marca />
+    </app-ui-tab>
+  </app-ui-tabs>
 </section>

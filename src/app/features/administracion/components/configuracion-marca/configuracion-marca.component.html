@@ -1,0 +1,254 @@
+<section class="settings-section">
+  <header class="settings-section__header">
+    <div class="settings-section__heading">
+      <span class="settings-section__icon" aria-hidden="true">
+        <i class="fa-solid fa-signature"></i>
+      </span>
+      <div>
+        <h2>Identidad del sistema</h2>
+        <p>Administre el nombre, la sigla y los recursos gráficos institucionales.</p>
+      </div>
+    </div>
+
+    <app-ui-chip
+      [label]="statusLabel()"
+      [variant]="configured() ? 'success' : 'neutral'"
+      appearance="outline"
+      size="sm"
+      [dot]="true"
+    />
+  </header>
+
+  <div class="settings-layout">
+    <article class="settings-surface">
+      <header class="settings-surface__head">
+        <div>
+          <h3>Información de marca</h3>
+          <p>Los cambios de texto se aplican al guardar la configuración.</p>
+        </div>
+      </header>
+
+      @if (loading()) {
+        <div class="settings-surface__body">
+          <app-ui-spinner
+            type="ring"
+            size="md"
+            variant="primary"
+            label="Cargando configuración..."
+            [contained]="true"
+          />
+        </div>
+      } @else {
+        <form class="settings-form" [formGroup]="form" (ngSubmit)="saveConfiguration()">
+          <div class="settings-form__grid">
+            <div class="settings-form__field">
+              <app-ui-input
+                formControlName="sistema"
+                label="Sigla del sistema"
+                placeholder="Ej.: SISGE"
+                icon="fa-solid fa-font"
+                hint="Máximo 10 caracteres."
+                [required]="true"
+                [maxlength]="10"
+                [error]="error('sistema')"
+              />
+            </div>
+
+            <div class="settings-form__field">
+              <app-ui-input
+                formControlName="nombreSistema"
+                label="Nombre del sistema"
+                placeholder="Ej.: Sistema de Gestión"
+                icon="fa-solid fa-heading"
+                hint="Máximo 50 caracteres."
+                [required]="true"
+                [maxlength]="50"
+                [error]="error('nombreSistema')"
+              />
+            </div>
+
+            <!-- Controles del encabezado de marca que aparece dentro del menú lateral. -->
+            <div class="settings-form__subheading settings-form__field--full">
+              <i class="fa-solid fa-bars" aria-hidden="true"></i>
+              <div>
+                <h4>Presentación en el menú</h4>
+                <p>Ajuste nombres extensos sin modificar la identidad del sistema.</p>
+              </div>
+            </div>
+
+            <div class="settings-form__field">
+              <app-ui-select
+                formControlName="menuTextSizePx"
+                label="Tamaño del nombre"
+                hint="Se limita entre 10 y 18 px para conservar la legibilidad."
+                [options]="menuTextSizeOptions"
+                [searchable]="false"
+                [clearable]="false"
+              />
+            </div>
+
+            <div class="settings-form__field">
+              <app-ui-select
+                formControlName="menuShowAcronym"
+                label="Visibilidad de la sigla"
+                [options]="menuAcronymVisibilityOptions"
+                [searchable]="false"
+                [clearable]="false"
+              />
+            </div>
+
+            <div class="settings-form__field settings-form__field--full">
+              <app-ui-select
+                formControlName="menuBrandLayout"
+                label="Posición del nombre y la sigla"
+                hint="La distribución vertical permite que el nombre use hasta dos líneas."
+                [options]="menuBrandLayoutOptions"
+                [searchable]="false"
+                [clearable]="false"
+              />
+            </div>
+
+            <div class="settings-form__field settings-form__field--full">
+              <app-ui-file-upload
+                label="Logo del sistema"
+                accept=".jpg,.jpeg,.png,.webp,.svg,image/*"
+                hint="JPG, PNG, WEBP o SVG. Tamaño máximo: 5 MB."
+                buttonText="Cambiar logo"
+                icon="fa-solid fa-shapes"
+                [fileName]="logoFileName()"
+                [allowedMimeTypes]="acceptedLogoTypes"
+                [allowedExtensions]="acceptedLogoExtensions"
+                [maxSizeBytes]="maximumLogoSize"
+                [loading]="uploadingLogo()"
+                [clearable]="false"
+                (fileSelected)="onLogoSelected($event)"
+                (validationError)="showFileValidationError($event)"
+              />
+            </div>
+
+            <div class="settings-form__field settings-form__field--full">
+              <app-ui-file-upload
+                label="Favicon"
+                accept=".ico,.png,.webp,.svg,image/x-icon,image/png,image/webp,image/svg+xml"
+                hint="ICO, PNG, WEBP o SVG. Tamaño máximo: 2 MB."
+                buttonText="Cambiar favicon"
+                icon="fa-regular fa-window-maximize"
+                [fileName]="faviconFileName()"
+                [allowedMimeTypes]="acceptedFaviconTypes"
+                [allowedExtensions]="acceptedFaviconExtensions"
+                [maxSizeBytes]="maximumFaviconSize"
+                [loading]="uploadingFavicon()"
+                [clearable]="false"
+                (fileSelected)="onFaviconSelected($event)"
+                (validationError)="showFileValidationError($event)"
+              />
+            </div>
+          </div>
+        </form>
+      }
+
+      <footer class="settings-actions">
+        <app-ui-button
+          type="button"
+          size="sm"
+          variant="outline"
+          icon="fa-solid fa-rotate-left"
+          [disabled]="loading() || saving()"
+          (buttonClick)="resetForm()"
+        >
+          Restablecer
+        </app-ui-button>
+
+        <app-ui-button
+          type="button"
+          size="sm"
+          variant="primary"
+          icon="fa-solid fa-floppy-disk"
+          [loading]="saving()"
+          [disabled]="loading() || uploadingLogo() || uploadingFavicon()"
+          (buttonClick)="saveConfiguration()"
+        >
+          Guardar marca
+        </app-ui-button>
+      </footer>
+    </article>
+
+    <article class="settings-surface">
+      <header class="settings-surface__head">
+        <div>
+          <h3>Vista previa</h3>
+          <p>Representación aproximada de la identidad configurada.</p>
+        </div>
+      </header>
+
+      @if (loading()) {
+        <div class="settings-surface__body">
+          <app-ui-spinner
+            type="pulse"
+            size="md"
+            variant="primary"
+            label="Preparando vista previa..."
+            [contained]="true"
+          />
+        </div>
+      } @else {
+        <div class="branding-preview">
+          <div class="branding-preview__header">
+            <div class="branding-preview__logo">
+              @if (logoUrl()) {
+                <img [src]="logoUrl()" alt="Logo configurado del sistema" />
+              } @else {
+                <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
+              }
+            </div>
+
+            <div
+              class="branding-preview__name"
+              [class.branding-preview__name--stacked-acronym-first]="
+                previewValue().menuBrandLayout === 'stacked-acronym-first'
+              "
+              [class.branding-preview__name--inline-name-first]="
+                previewValue().menuBrandLayout === 'inline-name-first'
+              "
+              [class.branding-preview__name--inline-acronym-first]="
+                previewValue().menuBrandLayout === 'inline-acronym-first'
+              "
+              [style.--preview-menu-text-size]="(previewValue().menuTextSizePx || 14) + 'px'"
+            >
+              <strong class="branding-preview__system-name">
+                {{ previewValue().nombreSistema || 'Nombre del sistema' }}
+              </strong>
+              @if (previewValue().menuShowAcronym) {
+                <span class="branding-preview__acronym">
+                  {{ previewValue().sistema || 'SIGLA' }}
+                </span>
+              }
+            </div>
+          </div>
+
+          <div class="branding-preview__browser">
+            <div class="branding-preview__favicon">
+              @if (faviconUrl()) {
+                <img [src]="faviconUrl()" alt="Favicon configurado" />
+              } @else {
+                <i class="fa-solid fa-shield" aria-hidden="true"></i>
+              }
+            </div>
+            <span>{{ previewValue().nombreSistema || 'Nombre del sistema' }}</span>
+          </div>
+
+          <dl class="settings-meta">
+            <div>
+              <dt>Archivo del logo</dt>
+              <dd [title]="logoFileName()">{{ logoFileName() || 'No configurado' }}</dd>
+            </div>
+            <div>
+              <dt>Archivo del favicon</dt>
+              <dd [title]="faviconFileName()">{{ faviconFileName() || 'No configurado' }}</dd>
+            </div>
+          </dl>
+        </div>
+      }
+    </article>
+  </div>
+</section>

@@ -7,8 +7,14 @@
 >
   <label class="ui-time-picker__label" [for]="resolvedControlId()">
     {{ label() }}
-    @if (required()) {
-      <span aria-hidden="true">*</span>
+    @if (required() && showRequiredMarker()) {
+      <span
+        class="ui-time-picker__required-marker"
+        [class.is-invalid]="hasError()"
+        aria-hidden="true"
+      >
+        *
+      </span>
     }
   </label>
 
@@ -25,6 +31,7 @@
       [disabled]="isDisabled()"
       [attr.aria-expanded]="opened()"
       [attr.aria-controls]="opened() ? resolvedControlId() + '-listbox' : null"
+      [attr.aria-required]="required()"
       [attr.aria-invalid]="hasError()"
       [attr.aria-describedby]="describedBy()"
       (click)="toggle()"
@@ -40,10 +47,7 @@
         {{ selectedLabel() || resolvedPlaceholder() }}
       </span>
 
-      <i
-        class="fa-solid fa-chevron-down ui-time-picker__chevron"
-        aria-hidden="true"
-      ></i>
+      <i class="fa-solid fa-chevron-down ui-time-picker__chevron" aria-hidden="true"></i>
     </button>
 
     @if (clearable() && hasValue() && !isDisabled()) {

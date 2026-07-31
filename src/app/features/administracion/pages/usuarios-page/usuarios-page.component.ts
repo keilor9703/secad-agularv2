@@ -151,7 +151,11 @@ export class UsuariosPageComponent implements OnInit, OnDestroy {
     });
   }
 
-  guardarDatosUsuario(user: UserProfile): void {
+  async guardarDatosUsuario(user: UserProfile): Promise<void> {
+    if (this.loading) {
+      return;
+    }
+
     if (!user.identificacion?.trim()) {
       this.toast.warning(
         'Guardar datos',
@@ -209,6 +213,24 @@ export class UsuariosPageComponent implements OnInit, OnDestroy {
       codigoCargo: String(codigoCargo),
       activo: user.activo,
     };
+
+    /*
+     * La página orquesta la confirmación porque es responsable de la
+     * persistencia. El formulario reutilizable solamente valida y emite datos.
+     */
+    const confirmed = await this.alert.confirm({
+      title: 'Confirmar guardado',
+      message: `¿Desea guardar la información de ${user.nombreCompleto || username}?`,
+      confirmText: 'Sí, guardar',
+      cancelText: 'No, cancelar',
+      icon: 'question',
+      intent: 'primary',
+      focusCancel: true,
+    });
+
+    if (!confirmed) {
+      return;
+    }
 
     this.loading = true;
 

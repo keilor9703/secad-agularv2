@@ -1,4 +1,5 @@
 @use '../../../../styles/components/form-control-sizing' as form-sizing;
+@use '../../../../styles/components/floating-label' as floating-label;
 
 :host {
   --_form-inset-shadow: var(
@@ -16,21 +17,52 @@
 }
 
 .search-field__label {
+  @include floating-label.surface;
+
   position: absolute;
   top: -8px;
   left: 11px;
   z-index: 2;
-  background: var(--form-bg, #fff);
-  padding: 0 5px;
   color: var(--form-label-color, #334155);
   font-size: calc(11px * var(--font-size-scale));
   font-weight: 700;
   line-height: 1.2;
 }
 
+.search-field__required-marker {
+  margin-left: 2px;
+  color: var(--form-required-marker-color, #111827);
+  transition: color 150ms ease;
+}
+
+.search-field__required-marker.is-invalid {
+  color: var(--form-error-color, #b42318);
+}
+
+.search-field__control {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: stretch;
+  width: 100%;
+  min-width: 0;
+}
+
+.search-field__control--attached {
+  gap: 0;
+}
+
+.search-field__control--detached {
+  gap: var(--search-button-gap, 8px);
+}
+
+.search-field__control--without-button {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .search-field__shell {
   display: grid;
-  grid-template-columns: 1fr auto auto;
+  grid-template-columns: minmax(0, 1fr) auto;
+  min-width: 0;
   height: var(--_form-control-height);
   min-height: var(--_form-control-height);
   border: 1px solid var(--form-border-color, #cbd5e1);
@@ -45,6 +77,10 @@
 
 .search-field__shell--without-button {
   grid-template-columns: auto minmax(0, 1fr) auto;
+}
+
+.search-field__control--attached .search-field__shell {
+  border-radius: var(--form-border-radius, 7px) 0 0 var(--form-border-radius, 7px);
 }
 
 .search-field__leading-icon {
@@ -78,8 +114,7 @@
   color: #8a8f98;
 }
 
-.search-field__clear,
-.search-field__button {
+.search-field__clear {
   border: 0;
   border-left: 1px solid var(--form-border-color, #cbd5e1);
   font-family: inherit;
@@ -94,26 +129,18 @@
 }
 
 .search-field__button {
-  min-width: 104px;
-  padding: 0 12px;
-  background: var(--policia-medio);
-  color: #fff;
-  font-weight: 800;
-  font-size: calc(13px * var(--font-size-scale));
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
+  align-self: stretch;
+  min-width: max-content;
+  --ui-button-height: var(--_form-control-height);
 }
 
-.search-field__button--icon-only {
-  width: var(--_form-control-height);
-  min-width: var(--_form-control-height);
-  padding: 0;
+.search-field__control--attached .search-field__button {
+  margin-left: -1px;
+  --ui-button-radius: 0 var(--form-border-radius, 7px) var(--form-border-radius, 7px) 0;
 }
 
-.search-field__button:hover:not(:disabled) {
-  background: var(--policia-claro);
+.search-field__control--detached .search-field__button {
+  --ui-button-radius: var(--form-border-radius, 7px);
 }
 
 .search-field--focused .search-field__shell {
@@ -164,8 +191,12 @@
      * Las columnas automáticas reservan espacio para limpiar y buscar
      * sin permitir que esos botones compriman el campo de texto.
      */
-    grid-template-columns: minmax(0, 1fr) auto auto;
+    grid-template-columns: minmax(0, 1fr) auto;
     grid-template-rows: var(--_form-control-height);
+  }
+
+  .search-field__shell--without-button {
+    grid-template-columns: auto minmax(0, 1fr) auto;
   }
 
   .search-field__input {
@@ -188,14 +219,7 @@
   .search-field__button {
     grid-column: 2;
     grid-row: 1;
-    height: var(--_form-control-height);
-    min-height: var(--_form-control-height);
-    border-top: 0;
-    border-left: 1px solid var(--form-border-color, #cbd5e1);
-  }
-
-  .search-field__clear + .search-field__button {
-    grid-column: 3;
+    min-width: 0;
   }
 
   .search-field__shell--without-button .search-field__leading-icon {
@@ -218,15 +242,6 @@
    * Comportamiento móvil predeterminado. Solo oculta el texto visual:
    * title y aria-label conservan el nombre accesible de la acción.
    */
-  .search-field__button--mobile-icon-only {
-    width: var(--_form-control-height);
-    min-width: var(--_form-control-height);
-    padding: 0;
-  }
-
-  .search-field__button--mobile-icon-only span {
-    display: none;
-  }
 }
 
 :host-context(html.dark-mode) {
@@ -236,7 +251,6 @@
     inset 0 0 0 1px rgba(255, 255, 255, 0.02)
   );
 
-  .search-field__label,
   .search-field__shell {
     background: #1e2840;
   }

@@ -1,0 +1,29 @@
+<span
+  class="ui-status-badge"
+  [class]="
+    'ui-status-badge ui-status-badge--' +
+    variant() +
+    ' ui-status-badge--' +
+    appearance() +
+    ' ui-status-badge--' +
+    size()
+  "
+  [class.ui-status-badge--uppercase]="uppercase()"
+  [attr.aria-label]="ariaLabel()"
+>
+  @if (icon() && iconPosition() === 'start') {
+    <i [class]="icon()" aria-hidden="true"></i>
+  }
+
+  <span class="ui-status-badge__label">
+    @if (label()) {
+      {{ label() }}
+    } @else {
+      <ng-content />
+    }
+  </span>
+
+  @if (icon() && iconPosition() === 'end') {
+    <i [class]="icon()" aria-hidden="true"></i>
+  }
+</span>

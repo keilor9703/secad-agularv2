@@ -1,0 +1,204 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.submenu-form-card {
+  overflow: visible;
+  border: 1px solid color-mix(in srgb, var(--policia-cielo, #08a6cb) 30%, var(--ui-border, #d8dee8));
+  border-radius: 6px;
+  background: var(--ui-surface, #ffffff);
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.08);
+}
+
+.submenu-form-card__header {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 50px;
+  padding: 9px 11px;
+  border-bottom: 1px solid var(--ui-border, #d8dee8);
+  border-radius: 5px 5px 0 0;
+  background: linear-gradient(90deg, rgba(8, 166, 203, 0.1), rgba(31, 78, 121, 0.035));
+}
+
+.submenu-form-card__icon {
+  display: grid;
+  flex: 0 0 31px;
+  width: 31px;
+  height: 31px;
+  place-items: center;
+  border-radius: 5px;
+  background: var(--policia-medio, #002a66);
+  color: var(--policia-acento, #c8ff00);
+}
+
+.submenu-form-card__heading {
+  min-width: 0;
+}
+
+.submenu-form-card__heading h3,
+.submenu-form-card__heading p {
+  margin: 0;
+}
+
+.submenu-form-card__heading h3 {
+  color: var(--policia-oscuro, #151b3b);
+  font-size: calc(12px * var(--font-size-scale, 1));
+  font-weight: 850;
+}
+
+.submenu-form-card__heading p {
+  margin-top: 2px;
+  overflow: hidden;
+  color: var(--ui-muted, #64748b);
+  font-size: calc(9.5px * var(--font-size-scale, 1));
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.submenu-form-card__parent {
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+
+.submenu-form {
+  display: grid;
+}
+
+.submenu-form__grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 17px 9px;
+  padding: 16px 11px 13px;
+}
+
+.submenu-form__field {
+  min-width: 0;
+}
+
+.submenu-form__field--description {
+  grid-column: span 4;
+}
+
+.submenu-form__field--position {
+  grid-column: span 2;
+}
+
+.submenu-form__field--type,
+.submenu-form__field--status {
+  grid-column: span 3;
+}
+
+.submenu-form__field--icon {
+  grid-column: span 4;
+}
+
+.submenu-form__field--detail {
+  grid-column: span 8;
+}
+
+.submenu-form__footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 7px;
+  min-height: 51px;
+  padding: 8px 11px;
+  border-top: 1px solid var(--ui-border, #d8dee8);
+  border-radius: 0 0 5px 5px;
+  background: linear-gradient(180deg, #f8fafc, #f3f6f9);
+}
+
+@media (max-width: 920px) {
+  .submenu-form__field--description,
+  .submenu-form__field--icon,
+  .submenu-form__field--detail {
+    grid-column: span 6;
+  }
+
+  .submenu-form__field--position {
+    grid-column: span 2;
+  }
+
+  .submenu-form__field--type,
+  .submenu-form__field--status {
+    grid-column: span 5;
+  }
+}
+
+@media (max-width: 600px) {
+  .submenu-form-card__header {
+    align-items: flex-start;
+    padding: 9px;
+  }
+
+  .submenu-form-card__heading p {
+    max-width: calc(100vw - 180px);
+  }
+
+  .submenu-form-card__parent {
+    margin-top: 3px;
+  }
+
+  .submenu-form__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 17px 8px;
+    padding: 15px 9px 12px;
+  }
+
+  .submenu-form__field--description,
+  .submenu-form__field--type,
+  .submenu-form__field--icon,
+  .submenu-form__field--detail {
+    grid-column: 1 / -1;
+  }
+
+  .submenu-form__field--position,
+  .submenu-form__field--status {
+    grid-column: span 1;
+  }
+
+  .submenu-form__footer {
+    position: sticky;
+    bottom: 0;
+    z-index: 3;
+    overflow-x: auto;
+    justify-content: flex-start;
+    min-height: 54px;
+    padding: 8px 9px;
+    scrollbar-width: none;
+  }
+
+  .submenu-form__footer::-webkit-scrollbar {
+    display: none;
+  }
+
+  .submenu-form__footer app-ui-button {
+    flex: 0 0 auto;
+  }
+}
+
+@media (max-width: 390px) {
+  .submenu-form-card__parent {
+    display: none;
+  }
+
+  .submenu-form-card__heading p {
+    max-width: calc(100vw - 105px);
+  }
+}
+
+:host-context(html.dark-mode) {
+  .submenu-form-card__header {
+    background: linear-gradient(90deg, rgba(8, 166, 203, 0.14), #182238);
+  }
+
+  .submenu-form-card__heading h3 {
+    color: var(--ui-text, #f8fafc);
+  }
+
+  .submenu-form__footer {
+    background: #182238;
+  }
+}

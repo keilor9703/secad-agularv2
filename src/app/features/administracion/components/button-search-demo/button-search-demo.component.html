@@ -1,0 +1,356 @@
+<section class="control-demo ui-panel" aria-labelledby="button-search-demo-title">
+  <header class="control-demo__header">
+    <span class="control-demo__number" aria-hidden="true">07</span>
+    <div>
+      <h2 id="button-search-demo-title">Buscadores y botones reutilizables</h2>
+      <p>Variantes sólidas · colores configurables · composición responsive · código copiable.</p>
+    </div>
+  </header>
+
+  <div class="control-demo__body">
+    <article class="demo-card">
+      <header class="demo-card__head">
+        <div>
+          <span class="demo-card__eyebrow">UI Search Input</span>
+          <h3>Botón unido, separado y personalizado</h3>
+          <p>
+            El botón reutiliza <code>ui-button</code>; el texto se oculta en móvil solo cuando la
+            instancia lo solicita.
+          </p>
+        </div>
+      </header>
+
+      <div class="search-examples">
+        <div class="example-box">
+          <span class="example-box__label">Unido al campo</span>
+          <app-ui-search-input
+            [formControl]="attachedSearch"
+            label="Buscar funcionario"
+            placeholder="Nombre o identificación"
+            buttonText="Consultar"
+            buttonVariant="secondary"
+            buttonAppearance="solid"
+            buttonIconColor="#c8ff00"
+            [hideButtonTextOnMobile]="true"
+            (search)="onSearch('Búsqueda unida', $event)"
+          />
+        </div>
+
+        <div class="example-box">
+          <span class="example-box__label">Separado con margen</span>
+          <app-ui-search-input
+            [formControl]="detachedSearch"
+            label="Buscar por nombre"
+            placeholder="Escriba un nombre"
+            buttonText="Filtrar"
+            buttonLayout="detached"
+            buttonVariant="primary"
+            [buttonGap]="10"
+            [hideButtonTextOnMobile]="false"
+            (search)="onSearch('Búsqueda separada', $event)"
+          />
+        </div>
+
+        <div class="example-box example-box--wide">
+          <span class="example-box__label">Colores por instancia</span>
+          <app-ui-search-input
+            [formControl]="customSearch"
+            label="Validar referencia"
+            placeholder="Ingrese el consecutivo"
+            buttonText="Verificar"
+            buttonLayout="detached"
+            buttonVariant="neutral"
+            buttonBackgroundColor="#5b21b6"
+            buttonTextColor="#ffffff"
+            buttonBorderColor="#4c1d95"
+            buttonIconColor="#fde047"
+            [buttonGap]="12"
+            [hideButtonTextOnMobile]="true"
+            (search)="onSearch('Búsqueda personalizada', $event)"
+          />
+        </div>
+      </div>
+    </article>
+
+    <article class="demo-card">
+      <header class="demo-card__head">
+        <div>
+          <span class="demo-card__eyebrow">UI Button</span>
+          <h3>Tonos sólidos institucionales</h3>
+          <p>Todos los colores, estados y animaciones pertenecen al componente compartido.</p>
+        </div>
+      </header>
+
+      <div class="button-group" aria-label="Variantes sólidas">
+        @for (button of solidButtons; track button.variant) {
+          <app-ui-button
+            [variant]="button.variant"
+            appearance="solid"
+            [icon]="button.icon"
+            (buttonClick)="onButton(button.label)"
+          >
+            {{ button.label }}
+          </app-ui-button>
+        }
+      </div>
+
+      <div class="demo-divider"></div>
+
+      <h4>Apariencias</h4>
+      <div class="button-group" aria-label="Apariencias disponibles">
+        @for (item of appearances; track item.appearance) {
+          <app-ui-button
+            variant="secondary"
+            [appearance]="item.appearance"
+            icon="fa-solid fa-layer-group"
+            (buttonClick)="onButton(item.label)"
+          >
+            {{ item.label }}
+          </app-ui-button>
+        }
+      </div>
+
+      <h4>Tamaños y estados</h4>
+      <div class="button-group" aria-label="Tamaños y estados">
+        @for (item of sizes; track item.size) {
+          <app-ui-button
+            variant="secondary"
+            [size]="item.size"
+            icon="fa-solid fa-expand"
+            (buttonClick)="onButton(item.label)"
+          >
+            {{ item.label }}
+          </app-ui-button>
+        }
+
+        <app-ui-button variant="secondary" icon="fa-solid fa-spinner" [loading]="true">
+          Procesando
+        </app-ui-button>
+
+        <app-ui-button variant="neutral" appearance="soft" [disabled]="true">
+          Deshabilitado
+        </app-ui-button>
+
+        <app-ui-button
+          variant="secondary"
+          icon="fa-solid fa-gear"
+          iconOnly
+          ariaLabel="Configuración"
+          title="Configuración"
+          (buttonClick)="onButton('Configuración')"
+        />
+      </div>
+    </article>
+
+    <p class="control-demo__feedback" role="status" aria-live="polite">
+      <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+      {{ feedback() }}
+    </p>
+
+    <article class="technical-docs">
+      <header>
+        <span class="demo-card__eyebrow">Documentación técnica</span>
+        <h3>Implementación lista para copiar</h3>
+        <p>Use propiedades tipadas; los colores personalizados son opcionales.</p>
+      </header>
+
+      <div class="docs-grid">
+        <section class="code-card">
+          <header>
+            <h4>Buscador unido</h4>
+            <app-ui-button
+              variant="neutral"
+              appearance="ghost"
+              size="sm"
+              icon="fa-regular fa-copy"
+              (buttonClick)="copySnippet('buscador unido', attachedSearchCode)"
+            >
+              {{ copiedSnippet() === 'buscador unido' ? 'Copiado' : 'Copiar' }}
+            </app-ui-button>
+          </header>
+          <pre><code>{{ attachedSearchCode }}</code></pre>
+        </section>
+
+        <section class="code-card">
+          <header>
+            <h4>Buscador separado</h4>
+            <app-ui-button
+              variant="neutral"
+              appearance="ghost"
+              size="sm"
+              icon="fa-regular fa-copy"
+              (buttonClick)="copySnippet('buscador separado', detachedSearchCode)"
+            >
+              {{ copiedSnippet() === 'buscador separado' ? 'Copiado' : 'Copiar' }}
+            </app-ui-button>
+          </header>
+          <pre><code>{{ detachedSearchCode }}</code></pre>
+        </section>
+
+        <section class="code-card">
+          <header>
+            <h4>Buscador con colores propios</h4>
+            <app-ui-button
+              variant="neutral"
+              appearance="ghost"
+              size="sm"
+              icon="fa-regular fa-copy"
+              (buttonClick)="copySnippet('buscador personalizado', customSearchCode)"
+            >
+              {{ copiedSnippet() === 'buscador personalizado' ? 'Copiado' : 'Copiar' }}
+            </app-ui-button>
+          </header>
+          <pre><code>{{ customSearchCode }}</code></pre>
+        </section>
+
+        <section class="code-card">
+          <header>
+            <h4>Botón estándar</h4>
+            <app-ui-button
+              variant="neutral"
+              appearance="ghost"
+              size="sm"
+              icon="fa-regular fa-copy"
+              (buttonClick)="copySnippet('botón estándar', buttonCode)"
+            >
+              {{ copiedSnippet() === 'botón estándar' ? 'Copiado' : 'Copiar' }}
+            </app-ui-button>
+          </header>
+          <pre><code>{{ buttonCode }}</code></pre>
+        </section>
+
+        <section class="code-card">
+          <header>
+            <h4>Colores personalizados</h4>
+            <app-ui-button
+              variant="neutral"
+              appearance="ghost"
+              size="sm"
+              icon="fa-regular fa-copy"
+              (buttonClick)="copySnippet('colores personalizados', customButtonCode)"
+            >
+              {{ copiedSnippet() === 'colores personalizados' ? 'Copiado' : 'Copiar' }}
+            </app-ui-button>
+          </header>
+          <pre><code>{{ customButtonCode }}</code></pre>
+        </section>
+      </div>
+
+      <div class="api-grid">
+        <section>
+          <h4>API principal de ui-search-input</h4>
+          <div class="api-table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Propiedad</th>
+                  <th>Valores</th>
+                  <th>Uso</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>buttonLayout</code></td>
+                  <td><code>attached | detached</code></td>
+                  <td>Une o separa el botón del campo.</td>
+                </tr>
+                <tr>
+                  <td><code>buttonGap</code></td>
+                  <td><code>number | string</code></td>
+                  <td>Separación cuando el botón está detached.</td>
+                </tr>
+                <tr>
+                  <td><code>buttonText</code></td>
+                  <td><code>string</code></td>
+                  <td>Texto visible y nombre accesible de búsqueda.</td>
+                </tr>
+                <tr>
+                  <td><code>buttonVariant</code></td>
+                  <td>Tonos de <code>ui-button</code></td>
+                  <td>Aplica el color semántico compartido.</td>
+                </tr>
+                <tr>
+                  <td><code>buttonAppearance</code></td>
+                  <td><code>solid | soft | outline | ghost</code></td>
+                  <td>Define la intensidad visual.</td>
+                </tr>
+                <tr>
+                  <td><code>buttonIconColor</code></td>
+                  <td>Color CSS</td>
+                  <td>Personaliza únicamente el icono.</td>
+                </tr>
+                <tr>
+                  <td><code>buttonBackgroundColor</code></td>
+                  <td>Color CSS</td>
+                  <td>Sobrescribe el fondo de una instancia.</td>
+                </tr>
+                <tr>
+                  <td><code>buttonTextColor / buttonBorderColor</code></td>
+                  <td>Color CSS</td>
+                  <td>Controla texto y borde independientemente.</td>
+                </tr>
+                <tr>
+                  <td><code>hideButtonTextOnMobile</code></td>
+                  <td><code>boolean</code></td>
+                  <td>Oculta el texto visual conservando aria-label.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section>
+          <h4>API principal de ui-button</h4>
+          <div class="api-table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Propiedad</th>
+                  <th>Valores</th>
+                  <th>Uso</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>variant</code></td>
+                  <td>primary, secondary, info, success…</td>
+                  <td>Selecciona el tono semántico.</td>
+                </tr>
+                <tr>
+                  <td><code>appearance</code></td>
+                  <td><code>solid | soft | outline | ghost</code></td>
+                  <td>Selecciona la apariencia del tono.</td>
+                </tr>
+                <tr>
+                  <td><code>size</code></td>
+                  <td><code>sm | md | lg</code></td>
+                  <td>Escala responsive del botón.</td>
+                </tr>
+                <tr>
+                  <td><code>iconPosition</code></td>
+                  <td><code>start | end</code></td>
+                  <td>Posición del icono respecto al texto.</td>
+                </tr>
+                <tr>
+                  <td><code>loading / disabled</code></td>
+                  <td><code>boolean</code></td>
+                  <td>Estados no interactivos accesibles.</td>
+                </tr>
+                <tr>
+                  <td><code>backgroundColor</code></td>
+                  <td>Color CSS</td>
+                  <td>Sobrescribe el fondo de una instancia.</td>
+                </tr>
+                <tr>
+                  <td><code>textColor / iconColor</code></td>
+                  <td>Color CSS</td>
+                  <td>Ajusta texto e icono independientemente.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    </article>
+  </div>
+</section>

@@ -7,7 +7,12 @@
   [class.form-field--multiline]="multiline"
 >
   <span class="form-field__label" *ngIf="label">
-    {{ label }} <strong *ngIf="required">*</strong>
+    {{ label }}
+    @if (required && showRequiredMarker()) {
+      <strong class="form-field__required-marker" [class.is-invalid]="!!error" aria-hidden="true">
+        *
+      </strong>
+    }
   </span>
 
   <span class="form-field__control">
@@ -20,6 +25,7 @@
       [readonly]="readonly"
       [disabled]="isDisabled"
       [attr.maxlength]="maxlength"
+      [attr.aria-required]="required"
       [attr.aria-describedby]="describedBy"
       [attr.aria-invalid]="!!error"
       [value]="value"
@@ -38,6 +44,7 @@
         [readonly]="readonly"
         [disabled]="isDisabled"
         [attr.maxlength]="maxlength"
+        [attr.aria-required]="required"
         [attr.aria-describedby]="describedBy"
         [attr.aria-invalid]="!!error"
         [value]="value"

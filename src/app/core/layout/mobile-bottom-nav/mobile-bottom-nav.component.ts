@@ -18,7 +18,7 @@ export class MobileBottomNavComponent {
 
   /**
    * Configuración central de la navegación.
-   * El elemento central queda reservado y deshabilitado para una implementación futura.
+   * El elemento central queda reservado para una implementación futura.
    */
   readonly items: readonly MobileBottomNavItem[] = [
     {

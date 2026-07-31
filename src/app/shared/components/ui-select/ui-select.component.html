@@ -6,20 +6,31 @@
   [class.form-select--disabled]="isDisabled"
 >
   <span class="form-select__label" *ngIf="label">
-    {{ label }} <strong *ngIf="required">*</strong>
+    {{ label }}
+    @if (required && showRequiredMarker()) {
+      <strong class="form-select__required-marker" [class.is-invalid]="!!error" aria-hidden="true">
+        *
+      </strong>
+    }
   </span>
 
   <button
     class="form-select__control"
+    [class.form-select__control--with-clear]="clearable && value !== null"
     type="button"
     [id]="inputId"
     [disabled]="isDisabled"
     [attr.aria-expanded]="opened"
+    [attr.aria-required]="required"
     [attr.aria-invalid]="!!error"
     (click)="toggle()"
     (keydown)="handleKeydown($event)"
   >
-    <span class="form-select__value" [class.is-placeholder]="!selectedLabel">
+    <span
+      class="form-select__value"
+      [class.is-placeholder]="!selectedLabel"
+      [title]="selectedLabel || placeholder"
+    >
       {{ selectedLabel || placeholder }}
     </span>
 
@@ -30,7 +41,13 @@
     <span class="form-select__arrow"></span>
   </button>
 
-  <div class="form-select__panel" *ngIf="opened">
+  <div
+    class="form-select__panel"
+    *ngIf="opened"
+    [class.form-select__panel--above]="panelPlacement() === 'above'"
+    [class.is-positioned]="panelPositioned()"
+    [ngStyle]="panelStyles()"
+  >
     <input
       *ngIf="searchable"
       class="form-select__search"
@@ -48,8 +65,13 @@
       [class.is-selected]="isSelected(option)"
       (click)="selectOption(option)"
     >
-      <i class="fa-solid fa-check" *ngIf="isSelected(option)"></i>
-      <span>{{ option.label }}</span>
+      <!-- El espacio del icono siempre existe para que el texto use la columna correcta. -->
+      <i
+        class="fa-solid fa-check form-select__option-check"
+        [class.is-visible]="isSelected(option)"
+        aria-hidden="true"
+      ></i>
+      <span class="form-select__option-label" [title]="option.label">{{ option.label }}</span>
     </button>
 
     <div class="form-select__empty" *ngIf="filteredOptions.length === 0">Sin resultados.</div>

@@ -19,8 +19,8 @@
   }
 
   <!--
-    Acciones principales del flower speed dial.
-    Las posiciones se invierten automáticamente cuando el FAB cambia de cuadrante.
+    Columna principal del speed dial.
+    Las acciones nacen sobre el botón principal y ascienden verticalmente.
   -->
   <div
     id="accessibility-fab-actions"
@@ -33,7 +33,6 @@
       class="fab-action dark-mode-btn"
       type="button"
       [class.active]="isDarkMode()"
-      [style.--fab-x]="actionX(4) + 'px'"
       [style.--fab-y]="actionY(4) + 'px'"
       [style.--fab-delay]="actionDelay(4)"
       [attr.tabindex]="actionsInteractive() ? 0 : -1"
@@ -48,7 +47,6 @@
     <button
       class="fab-action font-size-btn"
       type="button"
-      [style.--fab-x]="actionX(3) + 'px'"
       [style.--fab-y]="actionY(3) + 'px'"
       [style.--fab-delay]="actionDelay(3)"
       [attr.tabindex]="actionsInteractive() ? 0 : -1"
@@ -64,7 +62,6 @@
       class="fab-action speech-to-text-btn"
       type="button"
       [class.active]="isListening()"
-      [style.--fab-x]="actionX(2) + 'px'"
       [style.--fab-y]="actionY(2) + 'px'"
       [style.--fab-delay]="actionDelay(2)"
       [attr.tabindex]="actionsInteractive() ? 0 : -1"
@@ -84,7 +81,6 @@
       type="button"
       [class.active]="isHoverMode()"
       [class.speaking]="isSpeaking()"
-      [style.--fab-x]="actionX(1) + 'px'"
       [style.--fab-y]="actionY(1) + 'px'"
       [style.--fab-delay]="actionDelay(1)"
       [attr.tabindex]="actionsInteractive() ? 0 : -1"
@@ -102,7 +98,6 @@
     <button
       class="fab-action social-toggle-btn"
       type="button"
-      [style.--fab-x]="actionX(0) + 'px'"
       [style.--fab-y]="actionY(0) + 'px'"
       [style.--fab-delay]="actionDelay(0)"
       [attr.tabindex]="actionsInteractive() ? 0 : -1"

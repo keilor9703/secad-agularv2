@@ -1,4 +1,5 @@
 @use '../../../../styles/components/form-control-sizing' as form-sizing;
+@use '../../../../styles/components/floating-label' as floating-label;
 
 :host {
   --_form-inset-shadow: var(
@@ -17,20 +18,25 @@
 }
 
 .ui-time-picker__label {
+  @include floating-label.surface;
+
   position: absolute;
   top: -8px;
   left: 11px;
   z-index: 3;
-  padding: 0 5px;
-  background: var(--form-bg, #ffffff);
   color: var(--form-label-color, #334155);
   font-size: calc(11px * var(--font-size-scale, 1));
   font-weight: 700;
   line-height: 1.2;
 }
 
-.ui-time-picker__label span {
+.ui-time-picker__required-marker {
   margin-left: 2px;
+  color: var(--form-required-marker-color, #111827);
+  transition: color 150ms ease;
+}
+
+.ui-time-picker__required-marker.is-invalid {
   color: var(--form-error-color, #b42318);
 }
 
@@ -290,7 +296,6 @@
     inset 0 0 0 1px rgba(255, 255, 255, 0.02)
   );
 
-  .ui-time-picker__label,
   .ui-time-picker__control,
   .ui-time-picker__panel {
     background: var(--form-bg, #1e2840);

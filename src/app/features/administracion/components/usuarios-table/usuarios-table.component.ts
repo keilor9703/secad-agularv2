@@ -43,8 +43,9 @@ import { UsuarioRolesDropdownComponent } from '../usuario-roles-dropdown/usuario
 export class UsuariosTableComponent implements OnChanges, OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly destroyRef = inject(DestroyRef);
-  readonly tableHeaderColor = signal('#c8d8e9');
-  readonly tableHeaderColorEnd = signal('#d8e3e5');
+  readonly tableHeaderColor = signal('#3E82B3');
+  readonly tableHeaderColorMiddle = signal('#2A6694');
+  readonly tableHeaderColorEnd = signal('#174E78');
   readonly tableTitleId = 'usuarios-existentes-title';
 
   @Input() usuarios: UsuarioListadoItem[] = [];

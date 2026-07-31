@@ -14,7 +14,9 @@ import { FormControl, FormRecord, ReactiveFormsModule } from '@angular/forms';
 
 import {
   UiTableAction,
+  UiTableActionDisplay,
   UiTableActionEvent,
+  UiTableActionsPosition,
   UiTableAlign,
   UiTableBadge,
   UiTableColumn,
@@ -27,8 +29,14 @@ import {
   UiTableSortDirection,
   UiTableSortEvent,
   UiTableTextTransform,
+  UiTableVariant,
 } from '../../interfaces/ui-table.interface';
+import { UiBadgeComponent } from '../ui-badge/ui-badge.component';
 import { UiInputComponent } from '../ui-input/ui-input.component';
+import {
+  UiPaginationComponent,
+  UiPaginationVariant,
+} from '../ui-pagination/ui-pagination.component';
 import {
   UiSpinnerComponent,
   UiSpinnerSize,
@@ -42,7 +50,9 @@ import { UiTableActionsComponent } from '../ui-table-actions/ui-table-actions.co
   imports: [
     NgTemplateOutlet,
     ReactiveFormsModule,
+    UiBadgeComponent,
     UiInputComponent,
+    UiPaginationComponent,
     UiSpinnerComponent,
     UiTableActionsComponent,
   ],
@@ -69,6 +79,15 @@ export class UiTableComponent<T extends object = Record<string, unknown>> {
    */
   readonly dataMode = input<UiTableDataMode>('client');
   readonly actions = input<UiTableAction<T>[]>([]);
+  /** Apariencia clásica institucional o encabezado limpio sin relleno. */
+  readonly variant = input<UiTableVariant>('institutional');
+  /** Menú desplegable tradicional o botones que aparecen al enfocar/pasar por la fila. */
+  readonly actionDisplay = input<UiTableActionDisplay>('menu');
+  /**
+   * Ubica la columna de acciones en el extremo izquierdo o derecho.
+   * También acepta start/end por compatibilidad con usos anteriores.
+   */
+  readonly actionsPosition = input<UiTableActionsPosition>('left');
   readonly total = input(0);
   readonly page = input(1);
   readonly pageSize = input(10);
@@ -76,6 +95,10 @@ export class UiTableComponent<T extends object = Record<string, unknown>> {
   readonly actionMenuLabel = input('Acciones disponibles para el registro');
   readonly showRecordBadge = input(true);
   readonly showPagination = input(true);
+  readonly paginationVariant = input<UiPaginationVariant>('standard');
+  readonly paginationShowSummary = input(true);
+  readonly paginationShowPageSize = input<boolean | null>(null);
+  readonly paginationMaxVisiblePages = input(5);
   readonly stickyHeader = input(true);
   readonly stickyActions = input(true);
   /**
@@ -88,6 +111,11 @@ export class UiTableComponent<T extends object = Record<string, unknown>> {
    * conserva el color del tema claro u oscuro.
    */
   readonly bodyTextColor = input('');
+  /**
+   * Color opcional equivalente para tema oscuro. Si se omite, se utiliza el
+   * texto de alto contraste definido por el tema.
+   */
+  readonly darkBodyTextColor = input('');
   /**
    * Tamaño y peso predeterminados del contenido. Los números de tamaño
    * se interpretan en píxeles y continúan respetando la escala de accesibilidad.
@@ -106,6 +134,11 @@ export class UiTableComponent<T extends object = Record<string, unknown>> {
   readonly rowHeight = input<UiTableCssSize | null>(null);
   readonly rowPadding = input<UiTableCssSize>(14);
   /**
+   * Ancho mínimo de la grilla. Permite tablas compactas de pocas columnas
+   * sin modificar el comportamiento amplio de los listados principales.
+   */
+  readonly tableMinWidth = input<UiTableCssSize | null>(null);
+  /**
    * Personalización opcional por registro. Se evalúa una sola vez por fila
    * durante cada actualización de la vista.
    */
@@ -116,6 +149,11 @@ export class UiTableComponent<T extends object = Record<string, unknown>> {
    */
   readonly headerColor = input('#005478');
   /**
+   * Tono intermedio opcional para suavizar la transición. Cuando no se envía,
+   * el SCSS lo calcula mezclando los colores inicial y final.
+   */
+  readonly headerColorMiddle = input('');
+  /**
    * Color final opcional del degradado. Si queda vacío, se reutiliza
    * headerColor para conservar exactamente el comportamiento anterior.
    */
@@ -123,7 +161,7 @@ export class UiTableComponent<T extends object = Record<string, unknown>> {
   /**
    * Permite conservar contraste cuando el consumidor usa un color base claro.
    */
-  readonly headerTextColor = input('#ffffff');
+  readonly headerTextColor = input('');
   /**
    * Elimina únicamente la tarjeta exterior de la tabla cuando esta ya vive
    * dentro de un panel o sección. La grilla, el scroll y la paginación se conservan.
@@ -136,6 +174,22 @@ export class UiTableComponent<T extends object = Record<string, unknown>> {
   );
   readonly rowHeightCss = computed(() => this.resolveCssSize(this.rowHeight()));
   readonly rowPaddingCss = computed(() => this.resolveCssSize(this.rowPadding()) ?? '14px');
+  readonly tableMinWidthCss = computed(() => this.resolveCssSize(this.tableMinWidth()));
+  readonly resolvedHeaderTextColor = computed(
+    () => this.headerTextColor() || (this.variant() === 'plain' ? '#263247' : '#ffffff'),
+  );
+  /** Normaliza los alias lógicos para que la vista trabaje con izquierda/derecha. */
+  readonly resolvedActionsPosition = computed<'left' | 'right'>(() => {
+    const position = this.actionsPosition();
+
+    return position === 'right' || position === 'end' ? 'right' : 'left';
+  });
+  readonly actionsAtStart = computed(
+    () => this.actions().length > 0 && this.resolvedActionsPosition() === 'left',
+  );
+  readonly actionsAtEnd = computed(
+    () => this.actions().length > 0 && this.resolvedActionsPosition() === 'right',
+  );
 
   readonly filterChange = output<Record<string, string>>();
   readonly sortChange = output<UiTableSortEvent<T>>();
@@ -201,17 +255,6 @@ export class UiTableComponent<T extends object = Record<string, unknown>> {
     Math.max(1, Math.ceil(this.totalRecords() / this.normalizedPageSize())),
   );
 
-  readonly startItem = computed(() =>
-    this.totalRecords() === 0 ? 0 : (this.page() - 1) * this.normalizedPageSize() + 1,
-  );
-
-  readonly endItem = computed(() =>
-    Math.min(this.page() * this.normalizedPageSize(), this.totalRecords()),
-  );
-
-  readonly isFirstPage = computed(() => this.page() <= 1);
-  readonly isLastPage = computed(() => this.page() >= this.totalPages());
-
   readonly pageSizeOptionsList = computed(() =>
     [...new Set([...this.pageSizeOptions(), this.normalizedPageSize()])]
       .filter((size) => Number.isFinite(size) && size > 0)
@@ -250,14 +293,6 @@ export class UiTableComponent<T extends object = Record<string, unknown>> {
 
     if (targetPage !== this.page()) {
       this.pageChange.emit(targetPage);
-    }
-  }
-
-  changePageSize(event: Event): void {
-    const value = Number((event.target as HTMLSelectElement).value);
-
-    if (Number.isFinite(value) && value > 0 && value !== this.normalizedPageSize()) {
-      this.pageSizeChange.emit(value);
     }
   }
 
@@ -343,10 +378,6 @@ export class UiTableComponent<T extends object = Record<string, unknown>> {
         : 'ascendente';
 
     return `Ordenar ${column.label} de forma ${nextDirection}`;
-  }
-
-  getBadgeClass(badge: UiTableBadge): string {
-    return `ui-badge ${badge.variant ?? 'neutral'}`;
   }
 
   getCellContext(row: T, column: UiTableColumn<T>) {

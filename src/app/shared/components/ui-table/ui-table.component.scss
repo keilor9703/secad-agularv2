@@ -4,25 +4,33 @@
 }
 
 .ui-table-panel {
-  --ui-table-body-text-color: #5b708a;
+  --ui-table-body-text-color: var(--ui-table-body-text-color-light, #5b708a);
   --ui-table-body-font-size: 13px;
   --ui-table-body-font-weight: 600;
   --ui-table-body-text-transform: none;
   --ui-table-row-height: auto;
   --ui-table-row-padding-block: 14px;
-  /*
-   * Tokens privados del encabezado. Los colores inicial/final y el color del
-   * texto llegan desde headerColor, headerColorEnd y headerTextColor.
-   */
-  --ui-table-header-background: linear-gradient(
-    135deg,
-    color-mix(in srgb, var(--ui-table-header-color) 78%, #173b55) 0%,
-    color-mix(in srgb, var(--ui-table-header-color-end) 52%, #061d37) 100%
+  --ui-table-header-color-middle: color-mix(
+    in srgb,
+    var(--ui-table-header-color) 48%,
+    var(--ui-table-header-color-end)
   );
+  /*
+   * El degradado es vertical para que no se reinicie visualmente con un tono
+   * diferente en columnas de distinto ancho.
+   */
+  --ui-table-header-background:
+    linear-gradient(180deg, rgba(3, 22, 38, 0.05) 0%, rgba(3, 22, 38, 0.13) 100%),
+    linear-gradient(
+      180deg,
+      var(--ui-table-header-color) 0%,
+      var(--ui-table-header-color-middle) 52%,
+      var(--ui-table-header-color-end) 100%
+    );
   --ui-table-header-border-color: color-mix(
     in srgb,
-    var(--ui-table-header-color-end) 52%,
-    rgba(255, 255, 255, 0.32)
+    var(--ui-table-header-text-color) 24%,
+    transparent
   );
   border-color: rgba(148, 163, 184, 0.18);
   box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
@@ -89,7 +97,7 @@
   border-spacing: 0;
   color: #5b708a;
   font-size: calc(var(--ui-table-body-font-size) * var(--font-size-scale));
-  min-width: 980px;
+  min-width: var(--ui-table-min-width, 980px);
 }
 
 .ui-table th {
@@ -125,15 +133,54 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.14),
     inset 0 -2px 0 var(--ui-table-header-border-color);
   border-bottom: 0;
-  border-right: 1px solid rgba(255, 255, 255, 0.14);
+  border-right: 1px solid color-mix(in srgb, var(--ui-table-header-text-color) 16%, transparent);
   color: var(--ui-table-header-text-color);
   font-size: calc(12px * var(--font-size-scale));
   font-weight: 800;
   letter-spacing: 0;
   padding: 12px 14px;
-  text-shadow: 0 1px 1px rgba(2, 12, 27, 0.22);
   text-transform: none;
   transition: filter 160ms ease;
+}
+
+/*
+ * Variante limpia inspirada en tablas de datos administrativas:
+ * conserva tipografía, ordenamiento, densidad y colores configurables, pero
+ * elimina el relleno institucional del encabezado y las divisiones verticales.
+ */
+.ui-table-panel--plain .ui-table-wrap {
+  border: 0;
+  border-top: 1px solid rgba(148, 163, 184, 0.2);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 0;
+}
+
+.ui-table-panel--plain .ui-table > thead > tr > th {
+  border-right: 0;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.28);
+  background: var(--ui-surface, #ffffff);
+  box-shadow: none;
+  color: var(--ui-table-header-text-color);
+}
+
+.ui-table-panel--plain .ui-table > thead > tr > th.is-sortable:hover {
+  background: #f7f9fc;
+  color: var(--policia-medio, #1f4e79);
+  filter: none;
+}
+
+.ui-table-panel--plain .ui-table thead .ui-table-sort-button i {
+  color: #77879a;
+}
+
+.ui-table-panel--plain .ui-table > thead > tr > th[aria-sort='ascending'],
+.ui-table-panel--plain .ui-table > thead > tr > th[aria-sort='descending'] {
+  box-shadow: inset 0 -2px 0 var(--policia-cielo, #08a6cb);
+}
+
+.ui-table-panel--plain .ui-table > thead > tr > th[aria-sort='ascending'] .ui-table-sort-button i,
+.ui-table-panel--plain .ui-table > thead > tr > th[aria-sort='descending'] .ui-table-sort-button i {
+  color: var(--policia-medio, #1f4e79);
 }
 
 .ui-table-panel .ui-table--sticky-header thead th {
@@ -226,8 +273,8 @@
   border-bottom: 1px solid rgba(148, 163, 184, 0.2);
   border-right: 1px solid rgba(148, 163, 184, 0.16);
   color: var(
-    --ui-table-cell-text-color,
-    var(--ui-table-row-text-color, var(--ui-table-body-text-color))
+    --ui-table-cell-text-color-light,
+    var(--ui-table-row-text-color-light, var(--ui-table-body-text-color))
   );
   font-size: calc(
     var(--ui-table-cell-font-size, var(--ui-table-row-font-size, var(--ui-table-body-font-size))) *
@@ -239,6 +286,11 @@
   );
   padding: var(--ui-table-current-row-padding-block, var(--ui-table-row-padding-block)) 14px;
   text-transform: var(--ui-table-cell-text-transform, var(--ui-table-body-text-transform));
+}
+
+.ui-table-panel--plain .ui-table tbody td {
+  border-right: 0;
+  background: transparent;
 }
 
 .ui-table-panel .ui-table tbody tr:hover {
@@ -291,15 +343,27 @@
   text-align: center;
 }
 
-.ui-table-panel .ui-table--sticky-actions .ui-table-actions-header,
-.ui-table-panel .ui-table--sticky-actions .ui-table-actions-cell {
+.ui-table-panel .ui-table--sticky-actions.ui-table--actions-start .ui-table-actions-header,
+.ui-table-panel .ui-table--sticky-actions.ui-table--actions-start .ui-table-actions-cell {
   position: sticky;
   left: 0;
+  right: auto;
+}
+
+.ui-table-panel .ui-table--sticky-actions.ui-table--actions-end .ui-table-actions-header,
+.ui-table-panel .ui-table--sticky-actions.ui-table--actions-end .ui-table-actions-cell {
+  position: sticky;
+  right: 0;
+  left: auto;
 }
 
 .ui-table-panel .ui-table--sticky-actions .ui-table-actions-header {
   z-index: 6;
   box-shadow: 8px 0 14px rgba(15, 23, 42, 0.05);
+}
+
+.ui-table-panel .ui-table--sticky-actions.ui-table--actions-end .ui-table-actions-header {
+  box-shadow: -8px 0 14px rgba(15, 23, 42, 0.05);
 }
 
 .ui-table-panel .ui-table .ui-table-actions-cell {
@@ -313,11 +377,38 @@
   box-shadow: 8px 0 14px rgba(15, 23, 42, 0.035);
 }
 
+.ui-table-panel .ui-table--sticky-actions.ui-table--actions-end .ui-table-actions-cell {
+  box-shadow: -8px 0 14px rgba(15, 23, 42, 0.035);
+}
+
 .ui-table-panel .ui-table tbody tr:hover .ui-table-actions-cell {
   background: #f6f9fc;
 }
 
 .ui-table-actions-cell app-ui-table-actions {
+  width: 100%;
+}
+
+.ui-table-panel .ui-table--hover-actions .ui-table-actions-header,
+.ui-table-panel .ui-table--hover-actions .ui-table-actions-cell {
+  box-sizing: border-box;
+  width: 54px;
+  min-width: 54px;
+  max-width: 54px;
+  overflow: visible;
+}
+
+.ui-table-panel .ui-table--hover-actions .ui-table-actions-header {
+  padding-right: 8px;
+  padding-left: 8px;
+}
+
+.ui-table-panel .ui-table--hover-actions .ui-table-actions-cell app-ui-table-actions {
+  overflow: visible;
+}
+
+app-ui-pagination {
+  display: block;
   width: 100%;
 }
 
@@ -362,165 +453,9 @@
   gap: 8px;
 }
 
-.ui-table-pagination {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: clamp(18px, 2vw, 34px);
-  box-sizing: border-box;
-  width: 100%;
-  max-width: 100%;
-  min-height: 78px;
-  padding: 16px 16px 18px;
-  background: transparent;
-  border: 0;
-  color: #23252b;
-  font-size: calc(14px * var(--font-size-scale));
-  font-weight: 400;
-}
-
-.ui-table-page-size {
-  display: inline-flex;
-  align-items: center;
-  gap: 12px;
-  margin: 0;
-  color: #23252b;
-  white-space: nowrap;
-}
-
-.ui-table-page-size__select {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  width: 82px;
-  height: 42px;
-}
-
-.ui-table-page-size__select select {
-  width: 100%;
-  height: 100%;
-  appearance: none;
-  border: 1.25px solid #747882;
-  border-radius: 5px;
-  background: transparent;
-  color: #23252b;
-  cursor: pointer;
-  font: inherit;
-  line-height: 1;
-  padding: 0 32px 0 18px;
-  outline: none;
-}
-
-.ui-table-page-size__select select:hover {
-  border-color: #4d525b;
-}
-
-.ui-table-page-size__select select:focus {
-  border-color: #23252b;
-  box-shadow: 0 0 0 2px rgba(35, 37, 43, 0.08);
-}
-
-.ui-table-page-size__select i {
-  position: absolute;
-  right: 14px;
-  top: 50%;
-  color: #4d525b;
-  font-size: calc(12px * var(--font-size-scale));
-  pointer-events: none;
-  transform: translateY(-50%);
-}
-
-.ui-table-pagination__range {
-  min-width: 112px;
-  color: #23252b;
-  text-align: center;
-  white-space: nowrap;
-}
-
-.ui-table-pagination__actions {
-  display: inline-flex;
-  align-items: center;
-  gap: 18px;
-}
-
-.ui-table-page-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 34px;
-  border: 0;
-  border-radius: 5px;
-  background: transparent;
-  color: #2f343b;
-  cursor: pointer;
-  font: inherit;
-  padding: 0;
-  transition:
-    color 0.15s ease,
-    background-color 0.15s ease,
-    transform 0.15s ease;
-}
-
-.ui-table-page-icon i {
-  font-size: calc(17px * var(--font-size-scale));
-  line-height: 1;
-}
-
-.ui-table-page-icon:hover:not(:disabled) {
-  background: rgba(31, 78, 121, 0.08);
-  color: var(--policia-medio, #1f4e79);
-  transform: translateY(-1px);
-}
-
-.ui-table-page-icon:focus-visible {
-  outline: 2px solid var(--form-focus-color, #1f4e79);
-  outline-offset: 1px;
-}
-
-.ui-table-page-icon:disabled {
-  background: transparent;
-  color: #a4a6ab;
-  cursor: default;
-  opacity: 1;
-  transform: none;
-}
-
 @media (max-width: 900px) {
   .ui-table-filters {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .ui-table-pagination {
-    gap: clamp(10px, 2vw, 20px);
-    min-height: 68px;
-    padding: 13px 12px 15px;
-    font-size: calc(13px * var(--font-size-scale));
-  }
-
-  .ui-table-page-size {
-    gap: 8px;
-  }
-
-  .ui-table-page-size__select {
-    width: 68px;
-    height: 38px;
-  }
-
-  .ui-table-page-size__select select {
-    padding-inline: 13px 27px;
-  }
-
-  .ui-table-page-size__select i {
-    right: 11px;
-  }
-
-  .ui-table-pagination__range {
-    min-width: 92px;
-  }
-
-  .ui-table-pagination__actions {
-    gap: 8px;
   }
 }
 
@@ -528,105 +463,16 @@
   .ui-table-filters {
     grid-template-columns: 1fr;
   }
-
-  .ui-table-pagination {
-    /*
-     * Paginación móvil: selector, rango y navegación permanecen siempre
-     * en una sola fila y se ajustan al ancho disponible.
-     */
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr) auto;
-    align-items: center;
-    justify-content: stretch;
-    gap: 6px;
-    min-height: 54px;
-    padding: 10px 4px 12px;
-    font-size: calc(11px * var(--font-size-scale));
-    justify-items: end;
-  }
-
-  /*
-   * El texto continúa asociado al select para lectores de pantalla,
-   * pero no consume ancho en la presentación móvil.
-   */
-  .ui-table-page-size__label {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0 0 0 0);
-    clip-path: inset(50%);
-    white-space: nowrap;
-    border: 0;
-  }
-
-  .ui-table-page-size {
-    min-width: 0;
-    gap: 0;
-  }
-
-  .ui-table-page-size__select {
-    width: 50px;
-    height: 34px;
-  }
-
-  .ui-table-page-size__select select {
-    padding: 0 20px 0 9px;
-    border-width: 1px;
-  }
-
-  .ui-table-page-size__select i {
-    right: 8px;
-    font-size: calc(10px * var(--font-size-scale));
-  }
-
-  .ui-table-pagination__range {
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: clip;
-  }
-
-  .ui-table-pagination__actions {
-    justify-self: end;
-    gap: 2px;
-    min-width: 0;
-  }
-
-  .ui-table-page-icon {
-    width: 30px;
-    height: 34px;
-  }
-
-  .ui-table-page-icon i {
-    font-size: calc(14px * var(--font-size-scale));
-  }
 }
 
-@media (max-width: 380px) {
-  .ui-table-pagination {
-    gap: 2px;
-    padding-inline: 0;
-    font-size: calc(10px * var(--font-size-scale));
-  }
-
-  .ui-table-page-size__select {
-    width: 46px;
-  }
-
-  .ui-table-page-icon {
-    width: 27px;
-  }
-
-  .ui-table-pagination__actions {
-    gap: 0;
-  }
+.ui-table-panel .ui-table--hover-actions tbody tr:hover .ui-table-actions-cell,
+.ui-table-panel .ui-table--hover-actions tbody tr:focus-within .ui-table-actions-cell {
+  z-index: 8;
 }
 
 :host-context(html.dark-mode) {
   .ui-table-panel {
-    --ui-table-body-text-color: var(--ui-text);
+    --ui-table-body-text-color: var(--ui-table-body-text-color-dark, var(--ui-text, #e4e7eb));
   }
 
   .ui-table-panel .ui-table-wrap {
@@ -636,6 +482,17 @@
   .ui-table-panel .ui-table > thead > tr > th {
     background: var(--ui-table-header-background);
     color: var(--ui-table-header-text-color);
+  }
+
+  .ui-table-panel--plain .ui-table > thead > tr > th {
+    border-bottom-color: rgba(255, 255, 255, 0.14);
+    background: var(--ui-surface, #1e2840);
+    color: var(--ui-table-header-text-color);
+  }
+
+  .ui-table-panel--plain .ui-table > thead > tr > th.is-sortable:hover {
+    background: #26324c;
+    color: #ffffff;
   }
 
   /*
@@ -649,18 +506,14 @@
     color: inherit;
   }
 
-  .ui-table-empty,
-  .ui-table-pagination,
-  .ui-table-page-size,
-  .ui-table-pagination__range,
-  .ui-table-page-size__select select {
+  .ui-table-empty {
     color: var(--ui-text);
   }
 
   .ui-table-panel .ui-table tbody td {
     color: var(
-      --ui-table-cell-text-color,
-      var(--ui-table-row-text-color, var(--ui-table-body-text-color))
+      --ui-table-cell-text-color-dark,
+      var(--ui-table-row-text-color-dark, var(--ui-table-body-text-color))
     );
   }
 
@@ -678,18 +531,5 @@
 
   .ui-table-panel .ui-table tbody tr:hover .ui-table-actions-cell {
     background: #26324c;
-  }
-
-  .ui-table-page-size__select select {
-    border-color: rgba(255, 255, 255, 0.45);
-  }
-
-  .ui-table-page-size__select i,
-  .ui-table-page-icon {
-    color: rgba(255, 255, 255, 0.82);
-  }
-
-  .ui-table-page-icon:disabled {
-    color: rgba(255, 255, 255, 0.32);
   }
 }

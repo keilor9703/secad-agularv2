@@ -1,4 +1,19 @@
 <div class="topbar-user">
+  <!-- En móvil el tema vive junto a la foto del usuario; en escritorio lo controla el FAB. -->
+  <button
+    class="mobile-theme-toggle"
+    [class.is-dark]="isDarkMode()"
+    type="button"
+    [attr.aria-pressed]="isDarkMode()"
+    [attr.aria-label]="isDarkMode() ? 'Activar modo claro' : 'Activar modo oscuro'"
+    [title]="isDarkMode() ? 'Activar modo claro' : 'Activar modo oscuro'"
+    (click)="toggleTheme($event)"
+  >
+    <span class="mobile-theme-toggle__disc" aria-hidden="true">
+      <i [class]="isDarkMode() ? 'fa-solid fa-sun' : 'fa-solid fa-moon'"></i>
+    </span>
+  </button>
+
   <button
     class="profile-trigger"
     [class.is-loading]="profileSummaryLoading"
@@ -9,7 +24,12 @@
     (click)="toggleDropdown($event)"
   >
     <span class="user-avatar" *ngIf="hasProfileSummary; else avatarSkeletonTpl">
-      <img *ngIf="userPhotoUrl; else userIconTpl" [src]="userPhotoUrl" alt="" class="user-avatar-img" />
+      <img
+        *ngIf="userPhotoUrl; else userIconTpl"
+        [src]="userPhotoUrl"
+        alt=""
+        class="user-avatar-img"
+      />
       <ng-template #userIconTpl>
         <i class="fa-solid fa-user" aria-hidden="true"></i>
       </ng-template>
@@ -45,7 +65,12 @@
       <i class="fa-solid fa-user-circle" aria-hidden="true"></i>
       Mi Perfil
     </button>
-    <a routerLink="/administracion" class="dropdown-item" role="menuitem" (click)="dropdownOpen = false">
+    <a
+      routerLink="/administracion"
+      class="dropdown-item"
+      role="menuitem"
+      (click)="dropdownOpen = false"
+    >
       <i class="fa-solid fa-cog" aria-hidden="true"></i>
       Configuración
     </a>

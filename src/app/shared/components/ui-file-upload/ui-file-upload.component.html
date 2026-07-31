@@ -1,0 +1,79 @@
+<section
+  class="ui-file-upload"
+  [class.is-disabled]="isDisabled()"
+  [class.has-error]="hasError()"
+  [attr.aria-busy]="loading()"
+>
+  <span class="ui-file-upload__label">
+    {{ label() }}
+    @if (required() && showRequiredMarker()) {
+      <strong
+        class="ui-file-upload__required-marker"
+        [class.is-invalid]="hasError()"
+        aria-hidden="true"
+      >
+        *
+      </strong>
+    }
+  </span>
+
+  <input
+    #fileInput
+    class="ui-file-upload__native"
+    type="file"
+    [id]="resolvedInputId()"
+    [accept]="accept()"
+    [disabled]="isDisabled()"
+    [attr.aria-required]="required()"
+    [attr.aria-invalid]="hasError()"
+    (change)="handleFileSelection($event)"
+  />
+
+  <div class="ui-file-upload__control">
+    <span class="ui-file-upload__icon" aria-hidden="true">
+      <i [class]="icon()"></i>
+    </span>
+
+    <div class="ui-file-upload__copy">
+      <strong [class.is-empty]="!fileName().trim()" [title]="displayedFileName()">
+        {{ displayedFileName() }}
+      </strong>
+
+      @if (hint() && !hasError()) {
+        <small>{{ hint() }}</small>
+      }
+    </div>
+
+    <div class="ui-file-upload__actions">
+      @if (clearable() && fileName().trim()) {
+        <app-ui-button
+          size="sm"
+          variant="ghost"
+          icon="fa-solid fa-xmark"
+          ariaLabel="Quitar archivo seleccionado"
+          title="Quitar archivo"
+          [disabled]="isDisabled()"
+          (buttonClick)="requestClear()"
+        />
+      }
+
+      <app-ui-button
+        size="sm"
+        variant="outline"
+        icon="fa-solid fa-folder-open"
+        [loading]="loading()"
+        [disabled]="isDisabled()"
+        (buttonClick)="openFileDialog(fileInput)"
+      >
+        {{ buttonText() }}
+      </app-ui-button>
+    </div>
+  </div>
+
+  @if (hasError()) {
+    <small class="ui-file-upload__error">
+      <i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i>
+      {{ resolvedError() }}
+    </small>
+  }
+</section>

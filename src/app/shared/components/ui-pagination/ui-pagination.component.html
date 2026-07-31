@@ -1,24 +1,122 @@
-<div class="table-pagination">
-  <span class="pagination-summary" *ngIf="showSummary">
-    Mostrando {{ startItem }} - {{ endItem }} de {{ total }}
-  </span>
+<nav
+  class="ui-pagination"
+  [class.ui-pagination--standard]="variant() === 'standard'"
+  [class.ui-pagination--numbered]="variant() === 'numbered'"
+  [class.ui-pagination--minimal]="variant() === 'minimal'"
+  [attr.aria-label]="ariaLabel()"
+>
+  @if (showPageSizeResolved()) {
+    <label class="ui-pagination__page-size">
+      <span class="ui-pagination__page-size-label">Registros por página:</span>
 
-  <div class="pagination-actions">
-    <button class="ui-btn secondary sm" type="button" [disabled]="page <= 1" (click)="goToPage(page - 1)">
-      <i class="fa-solid fa-chevron-left"></i>
-      Anterior
-    </button>
+      <span class="ui-pagination__select">
+        <select
+          [value]="normalizedPageSize()"
+          aria-label="Registros por página"
+          (change)="changePageSize($event)"
+        >
+          @for (size of pageSizeOptionsList(); track size) {
+            <option [value]="size">{{ size }}</option>
+          }
+        </select>
 
-    <span class="pagination-page">Página {{ page }} de {{ totalPages }}</span>
+        <i class="fa-solid fa-caret-down" aria-hidden="true"></i>
+      </span>
+    </label>
+  }
 
-    <button
-      class="ui-btn secondary sm"
-      type="button"
-      [disabled]="page >= totalPages"
-      (click)="goToPage(page + 1)"
-    >
-      Siguiente
-      <i class="fa-solid fa-chevron-right"></i>
-    </button>
-  </div>
-</div>
+  @if (showSummary()) {
+    <span class="ui-pagination__summary" aria-live="polite">
+      {{ startItem() }} - {{ endItem() }} de {{ total() }}
+    </span>
+  }
+
+  @if (variant() === 'standard') {
+    <div class="ui-pagination__navigation ui-pagination__navigation--standard">
+      <button
+        class="ui-pagination__button ui-pagination__button--icon"
+        type="button"
+        aria-label="Primera página"
+        [disabled]="isFirstPage()"
+        (click)="goToPage(1)"
+      >
+        <i class="fa-solid fa-backward-step" aria-hidden="true"></i>
+      </button>
+
+      <button
+        class="ui-pagination__button ui-pagination__button--icon"
+        type="button"
+        aria-label="Página anterior"
+        [disabled]="isFirstPage()"
+        (click)="goToPage(currentPage() - 1)"
+      >
+        <i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
+      </button>
+
+      <button
+        class="ui-pagination__button ui-pagination__button--icon"
+        type="button"
+        aria-label="Página siguiente"
+        [disabled]="isLastPage()"
+        (click)="goToPage(currentPage() + 1)"
+      >
+        <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
+      </button>
+
+      <button
+        class="ui-pagination__button ui-pagination__button--icon"
+        type="button"
+        aria-label="Última página"
+        [disabled]="isLastPage()"
+        (click)="goToPage(totalPages())"
+      >
+        <i class="fa-solid fa-forward-step" aria-hidden="true"></i>
+      </button>
+    </div>
+  } @else {
+    <div class="ui-pagination__navigation">
+      <button
+        class="ui-pagination__button ui-pagination__button--icon"
+        type="button"
+        aria-label="Página anterior"
+        [disabled]="isFirstPage()"
+        (click)="goToPage(currentPage() - 1)"
+      >
+        <i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
+      </button>
+
+      @if (variant() === 'numbered') {
+        @for (item of pageItems(); track item.id) {
+          @if (item.kind === 'page' && item.page; as pageNumber) {
+            <button
+              class="ui-pagination__button ui-pagination__button--page"
+              type="button"
+              [class.is-active]="pageNumber === currentPage()"
+              [attr.aria-current]="pageNumber === currentPage() ? 'page' : null"
+              [attr.aria-label]="'Ir a la página ' + pageNumber"
+              (click)="goToPage(pageNumber)"
+            >
+              {{ pageNumber }}
+            </button>
+          } @else {
+            <span class="ui-pagination__ellipsis" aria-hidden="true">…</span>
+          }
+        }
+      } @else {
+        <span class="ui-pagination__current">
+          Página {{ currentPage() }} de {{ totalPages() }}
+        </span>
+      }
+
+      <button
+        class="ui-pagination__button ui-pagination__button--icon"
+        type="button"
+        aria-label="Página siguiente"
+        [disabled]="isLastPage()"
+        (click)="goToPage(currentPage() + 1)"
+      >
+        <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
+      </button>
+    </div>
+  }
+</nav>

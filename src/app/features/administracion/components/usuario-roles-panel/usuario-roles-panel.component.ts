@@ -3,7 +3,6 @@ import { Component, EventEmitter, Input, Output, signal } from '@angular/core';
 import { FormGroup, ReactiveFormsModule } from '@angular/forms';
 
 import { UiButtonComponent } from '../../../../shared/components/ui-button/ui-button.component';
-import { UiDateTimePickerComponent } from '../../../../shared/components/ui-date-time-picker/ui-date-time-picker.component';
 import { UiInputComponent } from '../../../../shared/components/ui-input/ui-input.component';
 import { UiModalComponent } from '../../../../shared/components/ui-modal/ui-modal.component';
 import { UiSelectComponent } from '../../../../shared/components/ui-select/ui-select.component';
@@ -11,11 +10,15 @@ import { UiTableComponent } from '../../../../shared/components/ui-table/ui-tabl
 import { UiSelectOption } from '../../../../shared/interfaces/ui-select-option.interface';
 import {
   UiTableAction,
+  UiTableActionDisplay,
   UiTableActionEvent,
+  UiTableActionsPosition,
+  UiTableBadge,
   UiTableColumn,
+  UiTableVariant,
 } from '../../../../shared/interfaces/ui-table.interface';
 import { getFormErrorMessage } from '../../../../shared/utils/form-error.util';
-import { UserRole } from '../../interfaces/usuario-admin-view.interface';
+import { RolEstado, UserRole } from '../../interfaces/usuario-admin-view.interface';
 import { DtoRolCatalogo } from '../../services/usuario-admin.service';
 
 @Component({
@@ -29,7 +32,6 @@ import { DtoRolCatalogo } from '../../services/usuario-admin.service';
     UiModalComponent,
     UiSelectComponent,
     UiTableComponent,
-    UiDateTimePickerComponent,
   ],
   templateUrl: './usuario-roles-panel.component.html',
   styleUrls: ['./usuario-roles-panel.component.scss'],
@@ -50,30 +52,35 @@ export class UsuarioRolesPanelComponent {
   @Output() editarRol = new EventEmitter<UserRole>();
   @Output() eliminarRol = new EventEmitter<UserRole>();
 
-  readonly tableHeaderColor = signal('#c8d8e9');
-  readonly tableHeaderColorEnd = signal('#d8e3e5');
+  /**
+   * Configuración visual de esta tabla:
+   * - plain: encabezado limpio, sin relleno institucional.
+   * - row-hover: botones flotantes al pasar o enfocar la fila.
+   * - left: acciones fijas en el extremo izquierdo.
+   */
+  readonly roleTableVariant = signal<UiTableVariant>('plain');
+  readonly roleActionDisplay = signal<UiTableActionDisplay>('row-hover');
+  readonly roleActionsPosition = signal<UiTableActionsPosition>('right');
 
   readonly roleColumns: UiTableColumn<UserRole>[] = [
     {
       key: 'nombre',
       label: 'Rol',
       sortable: true,
-      width: '220px',
+      width: '20%',
+      fontWeight: 'semibold',
     },
     {
       key: 'estado',
       label: 'Estado',
       align: 'center',
-      width: '120px',
-      badge: (role) => ({
-        text: role.estado,
-        variant: role.estado === 'Vigente' ? 'success' : 'warning',
-      }),
+      width: '20%',
+      badge: (role) => this.statusBadge(role.estado),
     },
     {
       key: 'fechaExpiracion',
       label: 'Fecha expiración',
-      width: '150px',
+      width: '20%',
       value: (role) => role.fechaExpiracion || 'Sin fecha',
     },
     {
@@ -82,6 +89,39 @@ export class UsuarioRolesPanelComponent {
       value: (role) => role.justificacion || 'Sin justificación',
     },
   ];
+
+  private statusBadge(status: RolEstado): UiTableBadge {
+    if (status === 'Vigente') {
+      return {
+        text: status,
+        variant: 'success',
+        appearance: 'outline',
+        size: 'xs',
+        icon: 'fa-solid fa-check',
+        uppercase: true,
+      };
+    }
+
+    if (status === 'Vencido') {
+      return {
+        text: status,
+        variant: 'primary',
+        appearance: 'outline',
+        size: 'xs',
+        icon: 'fa-solid fa-triangle-exclamation',
+        uppercase: true,
+      };
+    }
+
+    return {
+      text: status,
+      variant: 'secondary',
+      appearance: 'outline',
+      size: 'xs',
+      icon: 'fa-solid fa-ban',
+      uppercase: true,
+    };
+  }
 
   readonly roleActions: UiTableAction<UserRole>[] = [
     {

@@ -178,27 +178,52 @@
 .sidebar__brand-copy {
   display: flex;
   min-width: 0;
+  flex: 1;
   flex-direction: column;
   gap: 2px;
+}
 
-  strong,
-  small {
-    overflow: hidden;
-    text-overflow: ellipsis;
+.sidebar__brand-name,
+.sidebar__brand-acronym {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar__brand-name {
+  display: -webkit-box;
+  font-size: clamp(10px, var(--sidebar-brand-font-size, 14px), 18px);
+  font-weight: 800;
+  line-height: 1.12;
+  white-space: normal;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.sidebar__brand-acronym {
+  color: rgba(255, 255, 255, 0.72);
+  font-size: clamp(9px, calc(var(--sidebar-brand-font-size, 14px) - 3px), 13px);
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  line-height: 1.1;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.sidebar__brand-copy--stacked-acronym-first .sidebar__brand-acronym,
+.sidebar__brand-copy--inline-acronym-first .sidebar__brand-acronym {
+  order: -1;
+}
+
+.sidebar__brand-copy--inline-name-first,
+.sidebar__brand-copy--inline-acronym-first {
+  flex-direction: row;
+  align-items: baseline;
+  gap: 7px;
+
+  .sidebar__brand-name {
+    display: block;
     white-space: nowrap;
-  }
-
-  strong {
-    font-size: calc(0.9rem * var(--font-size-scale, 1));
-    line-height: 1.15;
-  }
-
-  small {
-    color: rgba(255, 255, 255, 0.7);
-    font-size: calc(0.68rem * var(--font-size-scale, 1));
-    font-weight: 650;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
   }
 }
 
@@ -687,8 +712,14 @@
     padding-inline: 5px 10px;
   }
 
-  .sidebar__brand-copy strong {
-    font-size: calc(0.82rem * var(--font-size-scale, 1));
+  .sidebar__brand {
+    gap: 9px;
+  }
+
+  .sidebar__logo {
+    width: 46px;
+    height: 46px;
+    flex-basis: 46px;
   }
 }
 

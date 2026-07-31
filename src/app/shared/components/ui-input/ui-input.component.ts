@@ -5,6 +5,7 @@ import {
   EventEmitter,
   forwardRef,
   Input,
+  input,
   numberAttribute,
   Output,
 } from '@angular/core';
@@ -49,6 +50,12 @@ export class UiInputComponent implements ControlValueAccessor {
   @Input({ transform: booleanAttribute }) readonly = false;
   @Input({ transform: booleanAttribute }) disabled = false;
   @Input({ transform: booleanAttribute }) required = false;
+
+  /**
+   * Controla únicamente la representación visual del asterisco.
+   * `required` y los validadores continúan activos aunque se oculte.
+   */
+  readonly showRequiredMarker = input(true, { transform: booleanAttribute });
 
   @Output() enterPressed = new EventEmitter<void>();
 

@@ -156,10 +156,11 @@
   /*
    * El contenido debe permanecer visible para que dropdowns y anillos de foco
    * de controles proyectados no queden recortados por el contenedor de tabs.
+   * El radio se expone como token para poder unir un footer externo al panel.
    */
   overflow: visible;
   border: 1px solid rgba(21, 27, 59, 0.16);
-  border-radius: 6px;
+  border-radius: var(--ui-tabs-contained-border-radius, 6px);
   background: var(--ui-surface, #ffffff);
 }
 
@@ -187,7 +188,7 @@
 
 .ui-tabs--contained .ui-tabs__panel {
   border: 0;
-  border-radius: 0 0 5px 5px;
+  border-radius: var(--ui-tabs-contained-panel-border-radius, 0 0 5px 5px);
 }
 
 .ui-tabs--contained.with-panel-accent .ui-tabs__panel {

@@ -31,4 +31,7 @@
 </div>
 
 <!-- Menú de accesibilidad flotante. -->
-<app-accessibility-menu [socialGroups]="socialGroups"></app-accessibility-menu>
+@if (!isMobile()) {
+  <!-- En escritorio se conserva el menú completo; móvil usa el icono junto al perfil. -->
+  <app-accessibility-menu [socialGroups]="socialGroups"></app-accessibility-menu>
+}

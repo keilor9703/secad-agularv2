@@ -1,4 +1,5 @@
 import type { TemplateRef } from '@angular/core';
+import type { UiStatusAppearance, UiStatusSize, UiStatusVariant } from './ui-status.interface';
 
 export type UiTableAlign = 'left' | 'center' | 'right';
 export type UiTableTextTransform = 'none' | 'uppercase' | 'lowercase' | 'capitalize';
@@ -27,14 +28,24 @@ export type UiTableActionVariant =
   | 'ghost'
   | 'warning'
   | 'danger';
-export type UiTableBadgeVariant = 'success' | 'warning' | 'info' | 'neutral' | 'danger' | 'primary';
+export type UiTableBadgeVariant = UiStatusVariant;
 export type UiTableSortDirection = 'asc' | 'desc';
 export type UiTableDataMode = 'client' | 'external';
+export type UiTableVariant = 'institutional' | 'plain';
+export type UiTableActionDisplay = 'menu' | 'row-hover';
+/**
+ * Posición visual de la columna de acciones.
+ * `start` y `end` se conservan para no romper implementaciones anteriores.
+ */
+export type UiTableActionsPosition = 'left' | 'right' | 'start' | 'end';
 
 export interface UiTableBadge {
   text: string;
   variant?: UiTableBadgeVariant;
   icon?: string;
+  appearance?: UiStatusAppearance;
+  size?: UiStatusSize;
+  uppercase?: boolean;
 }
 
 /**
@@ -42,7 +53,10 @@ export interface UiTableBadge {
  * La columna tiene prioridad sobre la fila y la fila sobre la configuración general.
  */
 export interface UiTableRowAppearance {
+  /** Color de la fila en tema claro. */
   textColor?: string;
+  /** Color opcional de la fila en tema oscuro. */
+  darkTextColor?: string;
   fontSize?: UiTableCssSize;
   fontWeight?: UiTableFontWeight;
   height?: UiTableCssSize;
@@ -65,6 +79,8 @@ export interface UiTableColumn<T> {
   align?: UiTableAlign;
   /** Color CSS aplicado únicamente al contenido interior de esta columna. */
   textColor?: string;
+  /** Color CSS opcional aplicado a esta columna en tema oscuro. */
+  darkTextColor?: string;
   /** Tamaño de fuente de las celdas de esta columna. Un número se interpreta en px. */
   fontSize?: UiTableCssSize;
   /** Peso de fuente de las celdas de esta columna. */

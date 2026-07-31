@@ -1,0 +1,119 @@
+<section class="status-demo ui-panel">
+  <header class="status-demo__header">
+    <div class="status-demo__number">07</div>
+    <div>
+      <h2>Badges y cápsulas reutilizables</h2>
+      <p>Variantes semánticas, tres apariencias y tamaños configurables.</p>
+    </div>
+  </header>
+
+  <div class="status-demo__body">
+    <article class="status-demo__group">
+      <header>
+        <h3>Badges · apariencia outline</h3>
+        <p>Recomendados para estados compactos dentro de tablas.</p>
+      </header>
+
+      <div class="status-demo__items">
+        <app-ui-badge label="Primary" variant="primary" appearance="outline" [uppercase]="true" />
+        <app-ui-badge
+          label="Secondary"
+          variant="secondary"
+          appearance="outline"
+          [uppercase]="true"
+        />
+        <app-ui-badge label="Success" variant="success" appearance="outline" [uppercase]="true" />
+        <app-ui-badge label="Info" variant="info" appearance="outline" [uppercase]="true" />
+        <app-ui-badge label="Warning" variant="warning" appearance="outline" [uppercase]="true" />
+        <app-ui-badge label="Danger" variant="danger" appearance="outline" [uppercase]="true" />
+      </div>
+    </article>
+
+    <article class="status-demo__group">
+      <header>
+        <h3>Badges con iconos · apariencia soft</h3>
+        <p>El icono puede ubicarse al inicio o al final.</p>
+      </header>
+
+      <div class="status-demo__items">
+        <app-ui-badge
+          label="Primary"
+          variant="primary"
+          icon="fa-solid fa-cube"
+          [uppercase]="true"
+        />
+        <app-ui-badge
+          label="Secondary"
+          variant="secondary"
+          icon="fa-solid fa-plus"
+          [uppercase]="true"
+        />
+        <app-ui-badge
+          label="Success"
+          variant="success"
+          icon="fa-solid fa-check"
+          [uppercase]="true"
+        />
+        <app-ui-badge
+          label="Info"
+          variant="info"
+          icon="fa-solid fa-circle-info"
+          [uppercase]="true"
+        />
+        <app-ui-badge
+          label="Warning"
+          variant="warning"
+          icon="fa-solid fa-triangle-exclamation"
+          [uppercase]="true"
+        />
+        <app-ui-badge label="Danger" variant="danger" icon="fa-solid fa-xmark" [uppercase]="true" />
+      </div>
+    </article>
+
+    <article class="status-demo__group">
+      <header>
+        <h3>Badges sólidos</h3>
+        <p>Úselos con moderación para estados de alta prioridad.</p>
+      </header>
+
+      <div class="status-demo__items">
+        <app-ui-badge label="Primary" variant="primary" appearance="solid" />
+        <app-ui-badge label="Secondary" variant="secondary" appearance="solid" />
+        <app-ui-badge label="Success" variant="success" appearance="solid" />
+        <app-ui-badge label="Info" variant="info" appearance="solid" />
+        <app-ui-badge label="Warning" variant="warning" appearance="solid" />
+        <app-ui-badge label="Danger" variant="danger" appearance="solid" />
+      </div>
+    </article>
+
+    <article class="status-demo__group status-demo__group--wide">
+      <header>
+        <h3>Cápsulas</h3>
+        <p>Para filtros, metadatos, estados globales y etiquetas removibles.</p>
+      </header>
+
+      <div class="status-demo__items">
+        <app-ui-chip label="Marca configurada" variant="success" [dot]="true" />
+        <app-ui-chip
+          label="Configuración protegida"
+          variant="primary"
+          icon="fa-solid fa-shield-halved"
+        />
+        <app-ui-chip label="Cambios pendientes" variant="warning" appearance="soft" [dot]="true" />
+        <app-ui-chip label="Sin recursos" variant="neutral" appearance="outline" [dot]="true" />
+        <app-ui-chip label="Etiqueta removible" variant="info" [removable]="true" />
+        <app-ui-chip
+          label="Estado crítico"
+          variant="danger"
+          appearance="solid"
+          icon="fa-solid fa-triangle-exclamation"
+        />
+      </div>
+    </article>
+
+    <div class="status-demo__code-grid">
+      <pre><code>{{ badgeUsage }}</code></pre>
+      <pre><code>{{ chipUsage }}</code></pre>
+    </div>
+  </div>
+</section>

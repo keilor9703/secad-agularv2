@@ -1,0 +1,173 @@
+<section class="settings-section">
+  <header class="settings-section__header">
+    <div class="settings-section__heading">
+      <span class="settings-section__icon" aria-hidden="true">
+        <i class="fa-solid fa-circle-play"></i>
+      </span>
+      <div>
+        <h2>Video institucional</h2>
+        <p>Administre el contenido audiovisual publicado para las unidades.</p>
+      </div>
+    </div>
+
+    <app-ui-chip
+      [label]="statusLabel()"
+      [variant]="selectedFile() ? 'warning' : currentVideo()?.hasVideo ? 'success' : 'neutral'"
+      appearance="outline"
+      size="sm"
+      [dot]="true"
+    />
+  </header>
+
+  <div class="settings-layout">
+    <article class="settings-surface">
+      <header class="settings-surface__head">
+        <div>
+          <h3>Publicar un video</h3>
+          <p>El nuevo archivo reemplazará el video actualmente activo.</p>
+        </div>
+      </header>
+
+      <form class="settings-form" [formGroup]="form" (ngSubmit)="saveVideo()">
+        <app-ui-file-upload
+          label="Archivo de video"
+          accept=".mp4,.webm,.ogg,.mov,video/*"
+          hint="MP4, WEBM, OGG o MOV. Tamaño máximo: 100 MB."
+          buttonText="Buscar video"
+          icon="fa-solid fa-film"
+          [fileName]="selectedFileName()"
+          [allowedMimeTypes]="acceptedVideoTypes"
+          [allowedExtensions]="acceptedVideoExtensions"
+          [maxSizeBytes]="maximumVideoSize"
+          [required]="true"
+          [error]="fileError()"
+          [disabled]="uploading()"
+          (fileSelected)="onVideoSelected($event)"
+          (clearRequested)="clearDraft()"
+          (validationError)="showFileValidationError($event)"
+        />
+
+        <app-ui-input
+          formControlName="descripcion"
+          label="Descripción"
+          placeholder="Ej.: Video institucional 2026"
+          icon="fa-solid fa-align-left"
+          [required]="true"
+          [maxlength]="255"
+          [disabled]="uploading() || !selectedFile()"
+          [error]="error('descripcion')"
+        />
+
+        <app-ui-input
+          formControlName="observaciones"
+          label="Observaciones"
+          placeholder="Información complementaria opcional"
+          hint="Máximo 500 caracteres."
+          [rows]="4"
+          [maxlength]="500"
+          [multiline]="true"
+          [disabled]="uploading() || !selectedFile()"
+          [error]="error('observaciones')"
+        />
+      </form>
+
+      <footer class="settings-actions">
+        <app-ui-button
+          type="button"
+          size="sm"
+          variant="outline"
+          icon="fa-solid fa-eraser"
+          [disabled]="uploading() || !selectedFile()"
+          (buttonClick)="clearDraft()"
+        >
+          Limpiar
+        </app-ui-button>
+
+        <app-ui-button
+          type="button"
+          size="sm"
+          variant="primary"
+          icon="fa-solid fa-cloud-arrow-up"
+          [loading]="uploading()"
+          [disabled]="!selectedFile()"
+          (buttonClick)="saveVideo()"
+        >
+          Publicar video
+        </app-ui-button>
+      </footer>
+    </article>
+
+    <article class="settings-surface">
+      <header class="settings-surface__head">
+        <div>
+          <h3>Vista previa</h3>
+          <p>
+            {{
+              previewIsDraft()
+                ? 'Archivo pendiente de publicación.'
+                : 'Contenido actualmente publicado.'
+            }}
+          </p>
+        </div>
+      </header>
+
+      @if (loading()) {
+        <div class="settings-surface__body">
+          <app-ui-spinner
+            type="ring"
+            size="md"
+            variant="primary"
+            label="Consultando video actual..."
+            [contained]="true"
+          />
+        </div>
+      } @else if (previewUrl()) {
+        <div class="video-preview">
+          <div class="video-preview__frame">
+            <video [src]="previewUrl()" controls preload="metadata">
+              Su navegador no permite reproducir este video.
+            </video>
+            @if (previewIsDraft()) {
+              <span class="video-preview__badge">Vista previa local</span>
+            }
+          </div>
+
+          @if (!previewIsDraft() && currentVideo(); as video) {
+            <dl class="settings-meta">
+              <div>
+                <dt>Archivo</dt>
+                <dd [title]="video.fileName">{{ video.fileName }}</dd>
+              </div>
+              <div>
+                <dt>Tamaño</dt>
+                <dd>{{ video.sizeBytes / 1048576 | number: '1.1-1' }} MB</dd>
+              </div>
+              @if (video.lastModifiedUtc) {
+                <div>
+                  <dt>Actualizado</dt>
+                  <dd>{{ video.lastModifiedUtc | date: 'dd/MM/yyyy HH:mm' }}</dd>
+                </div>
+              }
+              @if (video.descripcion) {
+                <div>
+                  <dt>Descripción</dt>
+                  <dd [title]="video.descripcion">{{ video.descripcion }}</dd>
+                </div>
+              }
+            </dl>
+          }
+        </div>
+      } @else {
+        <div class="settings-empty">
+          <div class="settings-empty__content">
+            <span class="settings-empty__icon" aria-hidden="true">
+              <i class="fa-solid fa-video-slash"></i>
+            </span>
+            <strong>No hay video configurado</strong>
+            <p>Seleccione un archivo para visualizarlo antes de publicarlo.</p>
+          </div>
+        </div>
+      }
+    </article>
+  </div>
+</section>

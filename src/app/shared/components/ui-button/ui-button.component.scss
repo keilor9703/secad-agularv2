@@ -1,63 +1,341 @@
 :host {
+  position: relative;
   display: inline-flex;
   max-width: 100%;
 }
 
+:host(.ui-button-host--tooltip)::before,
+:host(.ui-button-host--tooltip)::after {
+  position: absolute;
+  z-index: 50;
+  left: 50%;
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 140ms ease,
+    transform 140ms ease;
+}
+
+:host(.ui-button-host--tooltip)::before {
+  top: calc(100% + 4px);
+  width: 8px;
+  height: 8px;
+  border: 1px solid rgba(15, 23, 42, 0.13);
+  border-right: 0;
+  border-bottom: 0;
+  background: #ffffff;
+  content: '';
+  transform: translate(-50%, -3px) rotate(45deg);
+}
+
+:host(.ui-button-host--tooltip)::after {
+  top: calc(100% + 8px);
+  width: max-content;
+  max-width: min(230px, calc(100vw - 24px));
+  padding: 6px 9px;
+  border: 1px solid rgba(15, 23, 42, 0.13);
+  border-radius: 6px;
+  background: #ffffff;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.14);
+  color: #1e293b;
+  content: attr(data-ui-tooltip);
+  font-size: calc(10px * var(--font-size-scale, 1));
+  font-weight: 750;
+  line-height: 1.25;
+  text-align: center;
+  white-space: normal;
+  transform: translate(-50%, -3px);
+}
+
+:host(.ui-button-host--tooltip-start)::before,
+:host(.ui-button-host--tooltip-start)::after,
+:host(.ui-button-host--tooltip-end)::before,
+:host(.ui-button-host--tooltip-end)::after {
+  left: auto;
+}
+
+:host(.ui-button-host--tooltip-start)::after {
+  left: 0;
+  transform: translate(0, -3px);
+}
+
+:host(.ui-button-host--tooltip-start)::before {
+  left: 14px;
+  transform: translate(0, -3px) rotate(45deg);
+}
+
+:host(.ui-button-host--tooltip-end)::after {
+  right: 0;
+  transform: translate(0, -3px);
+}
+
+:host(.ui-button-host--tooltip-end)::before {
+  right: 14px;
+  transform: translate(0, -3px) rotate(45deg);
+}
+
+:host(.ui-button-host--tooltip:hover),
+:host(.ui-button-host--tooltip:has(.ui-btn:focus-visible)) {
+  z-index: 30;
+}
+
+:host(.ui-button-host--tooltip:hover)::before,
+:host(.ui-button-host--tooltip:hover)::after,
+:host(.ui-button-host--tooltip:has(.ui-btn:focus-visible))::before,
+:host(.ui-button-host--tooltip:has(.ui-btn:focus-visible))::after {
+  opacity: 1;
+}
+
+:host(.ui-button-host--tooltip:hover)::before,
+:host(.ui-button-host--tooltip:has(.ui-btn:focus-visible))::before {
+  transform: translate(-50%, 0) rotate(45deg);
+}
+
+:host(.ui-button-host--tooltip:hover)::after,
+:host(.ui-button-host--tooltip:has(.ui-btn:focus-visible))::after {
+  transform: translate(-50%, 0);
+}
+
+:host(.ui-button-host--tooltip-start:hover)::before,
+:host(.ui-button-host--tooltip-start:has(.ui-btn:focus-visible))::before,
+:host(.ui-button-host--tooltip-end:hover)::before,
+:host(.ui-button-host--tooltip-end:has(.ui-btn:focus-visible))::before {
+  transform: translate(0, 0) rotate(45deg);
+}
+
+:host(.ui-button-host--tooltip-start:hover)::after,
+:host(.ui-button-host--tooltip-start:has(.ui-btn:focus-visible))::after,
+:host(.ui-button-host--tooltip-end:hover)::after,
+:host(.ui-button-host--tooltip-end:has(.ui-btn:focus-visible))::after {
+  transform: translate(0, 0);
+}
+
 :host .ui-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   box-sizing: border-box;
   min-width: 0;
   max-width: 100%;
-  height: 38px;
+  height: var(--ui-button-height, 38px);
   gap: 8px;
   padding: 0 13px;
-  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid transparent;
+  border-radius: var(--ui-button-radius, 10px);
+  outline: 0;
+  font-family: inherit;
   font-size: calc(13px * var(--font-size-scale, 1));
+  font-weight: 800;
   line-height: 1;
   white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+  transition:
+    transform 150ms ease,
+    filter 150ms ease,
+    box-shadow 150ms ease,
+    background-color 150ms ease,
+    border-color 150ms ease,
+    color 150ms ease;
 }
 
 :host .ui-btn i {
+  position: relative;
+  z-index: 1;
   flex: 0 0 auto;
+  color: var(--ui-button-icon-color, currentColor);
   font-size: calc(13px * var(--font-size-scale, 1));
   line-height: 1;
 }
 
+:host .ui-btn__label {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+}
+
+:host .ui-btn::before {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    112deg,
+    transparent 24%,
+    rgba(255, 255, 255, 0.28) 48%,
+    transparent 72%
+  );
+  content: '';
+  pointer-events: none;
+  transform: translateX(-130%);
+  transition: transform 420ms ease;
+}
+
+:host .ui-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  filter: brightness(1.025);
+  box-shadow: 0 7px 16px rgba(15, 23, 42, 0.15);
+}
+
+:host .ui-btn:hover:not(:disabled)::before {
+  transform: translateX(130%);
+}
+
+:host .ui-btn:active:not(:disabled) {
+  transform: translateY(0);
+  filter: brightness(0.98);
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.12);
+}
+
+:host .ui-btn:focus-visible {
+  box-shadow:
+    0 0 0 3px rgba(8, 166, 203, 0.24),
+    0 5px 14px rgba(15, 23, 42, 0.14);
+}
+
+:host .ui-btn:disabled {
+  cursor: not-allowed;
+  filter: grayscale(0.12);
+  opacity: 0.58;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Cada tono define tokens; appearance decide si es sólido, suave, contorno o ghost. */
+:host .ui-btn--primary {
+  --_btn-solid-bg: var(--btn-primary, #c8ff00);
+  --_btn-solid-text: var(--btn-primary-text, #062d4f);
+  --_btn-solid-border: #a9dc00;
+  --_btn-soft-bg: rgba(200, 255, 0, 0.16);
+  --_btn-soft-text: #315400;
+  --_btn-soft-border: rgba(137, 181, 0, 0.38);
+}
+
+:host .ui-btn--secondary {
+  --_btn-solid-bg: var(--policia-medio, #0b4f88);
+  --_btn-solid-text: #ffffff;
+  --_btn-solid-border: #0b4f88;
+  --_btn-soft-bg: rgba(31, 78, 121, 0.1);
+  --_btn-soft-text: var(--policia-medio, #0b4f88);
+  --_btn-soft-border: rgba(31, 78, 121, 0.28);
+}
+
+:host .ui-btn--info {
+  --_btn-solid-bg: var(--policia-cielo, #08a6cb);
+  --_btn-solid-text: #062d4f;
+  --_btn-solid-border: #078dad;
+  --_btn-soft-bg: rgba(8, 166, 203, 0.12);
+  --_btn-soft-text: #075e78;
+  --_btn-soft-border: rgba(8, 166, 203, 0.32);
+}
+
+:host .ui-btn--success {
+  --_btn-solid-bg: #15803d;
+  --_btn-solid-text: #ffffff;
+  --_btn-solid-border: #15803d;
+  --_btn-soft-bg: #e8f8ee;
+  --_btn-soft-text: #166534;
+  --_btn-soft-border: #86d7a2;
+}
+
+:host .ui-btn--neutral {
+  --_btn-solid-bg: #475569;
+  --_btn-solid-text: #ffffff;
+  --_btn-solid-border: #475569;
+  --_btn-soft-bg: #f1f5f9;
+  --_btn-soft-text: #334155;
+  --_btn-soft-border: #cbd5e1;
+}
+
+:host .ui-btn--warning {
+  --_btn-solid-bg: #d97706;
+  --_btn-solid-text: #ffffff;
+  --_btn-solid-border: #c76605;
+  --_btn-soft-bg: #fff5df;
+  --_btn-soft-text: #92400e;
+  --_btn-soft-border: #f3c777;
+}
+
+:host .ui-btn--danger {
+  --_btn-solid-bg: #c52828;
+  --_btn-solid-text: #ffffff;
+  --_btn-solid-border: #b42318;
+  --_btn-soft-bg: #fff0ef;
+  --_btn-soft-text: #a61b1b;
+  --_btn-soft-border: #f0a4a0;
+}
+
+:host .ui-btn--solid {
+  border-color: var(--ui-button-custom-border, var(--_btn-solid-border));
+  background: var(--ui-button-custom-bg, var(--_btn-solid-bg));
+  color: var(--ui-button-custom-text, var(--_btn-solid-text));
+}
+
+:host .ui-btn--soft {
+  border-color: var(--ui-button-custom-border, var(--_btn-soft-border));
+  background: var(--ui-button-custom-bg, var(--_btn-soft-bg));
+  color: var(--ui-button-custom-text, var(--_btn-soft-text));
+}
+
+:host .ui-btn--outline {
+  border-color: var(--ui-button-custom-border, var(--_btn-soft-border));
+  background: var(--ui-button-custom-bg, transparent);
+  color: var(--ui-button-custom-text, var(--_btn-soft-text));
+}
+
+:host .ui-btn--ghost {
+  border-color: var(--ui-button-custom-border, transparent);
+  background: var(--ui-button-custom-bg, transparent);
+  color: var(--ui-button-custom-text, var(--_btn-soft-text));
+  box-shadow: none;
+}
+
 /* Las escalas siguen disponibles, pero parten de medidas más compactas. */
-:host .ui-btn.sm {
-  height: 32px;
+:host .ui-btn--sm {
+  height: var(--ui-button-height, 32px);
   gap: 6px;
   padding-inline: 10px;
-  border-radius: 8px;
+  border-radius: var(--ui-button-radius, 8px);
   font-size: calc(12px * var(--font-size-scale, 1));
 }
 
-:host .ui-btn.sm i {
+:host .ui-btn--sm i {
   font-size: calc(11px * var(--font-size-scale, 1));
 }
 
-:host .ui-btn.lg {
-  height: 42px;
+:host .ui-btn--lg {
+  height: var(--ui-button-height, 42px);
   gap: 8px;
   padding-inline: 16px;
-  border-radius: 11px;
+  border-radius: var(--ui-button-radius, 11px);
   font-size: calc(14px * var(--font-size-scale, 1));
 }
 
-:host .ui-btn.lg i {
+:host .ui-btn--lg i {
   font-size: calc(14px * var(--font-size-scale, 1));
 }
 
-:host .ui-btn.block {
+:host .ui-btn--block {
   width: 100%;
+}
+
+:host .ui-btn--icon-only {
+  width: 38px;
+  min-width: 38px;
+  padding: 0;
+}
+
+:host .ui-btn--icon-only .ui-btn__label {
+  display: none;
 }
 
 /* Escala intermedia para portátiles pequeños y tabletas. */
 @media (max-width: 900px) {
   :host .ui-btn {
-    height: 36px;
+    height: var(--ui-button-height, 36px);
     gap: 7px;
     padding-inline: 12px;
-    border-radius: 9px;
+    border-radius: var(--ui-button-radius, 9px);
     font-size: calc(12.5px * var(--font-size-scale, 1));
   }
 
@@ -65,27 +343,27 @@
     font-size: calc(12px * var(--font-size-scale, 1));
   }
 
-  :host .ui-btn.sm {
-    height: 30px;
+  :host .ui-btn--sm {
+    height: var(--ui-button-height, 30px);
     gap: 5px;
     padding-inline: 9px;
-    border-radius: 7px;
+    border-radius: var(--ui-button-radius, 7px);
     font-size: calc(11.5px * var(--font-size-scale, 1));
   }
 
-  :host .ui-btn.sm i {
+  :host .ui-btn--sm i {
     font-size: calc(10.5px * var(--font-size-scale, 1));
   }
 
-  :host .ui-btn.lg {
-    height: 40px;
+  :host .ui-btn--lg {
+    height: var(--ui-button-height, 40px);
     gap: 7px;
     padding-inline: 14px;
-    border-radius: 10px;
+    border-radius: var(--ui-button-radius, 10px);
     font-size: calc(13.5px * var(--font-size-scale, 1));
   }
 
-  :host .ui-btn.lg i {
+  :host .ui-btn--lg i {
     font-size: calc(13px * var(--font-size-scale, 1));
   }
 }
@@ -93,10 +371,10 @@
 /* Escala móvil: conserva texto legible sin ocupar el ancho del formulario. */
 @media (max-width: 640px) {
   :host .ui-btn {
-    height: 34px;
+    height: var(--ui-button-height, 34px);
     gap: 6px;
     padding-inline: 10px;
-    border-radius: 8px;
+    border-radius: var(--ui-button-radius, 8px);
     font-size: calc(12px * var(--font-size-scale, 1));
     letter-spacing: 0;
   }
@@ -105,46 +383,122 @@
     font-size: calc(11.5px * var(--font-size-scale, 1));
   }
 
-  :host .ui-btn.sm {
-    height: 29px;
+  :host .ui-btn--sm {
+    height: var(--ui-button-height, 29px);
     gap: 5px;
     padding-inline: 8px;
-    border-radius: 7px;
+    border-radius: var(--ui-button-radius, 7px);
     font-size: calc(11px * var(--font-size-scale, 1));
   }
 
-  :host .ui-btn.sm i {
+  :host .ui-btn--sm i {
     font-size: calc(10px * var(--font-size-scale, 1));
   }
 
-  :host .ui-btn.lg {
-    height: 37px;
+  :host .ui-btn--lg {
+    height: var(--ui-button-height, 37px);
     gap: 6px;
     padding-inline: 12px;
-    border-radius: 9px;
+    border-radius: var(--ui-button-radius, 9px);
     font-size: calc(12.5px * var(--font-size-scale, 1));
   }
 
-  :host .ui-btn.lg i {
+  :host .ui-btn--lg i {
     font-size: calc(12px * var(--font-size-scale, 1));
   }
 }
 
 @media (max-width: 380px) {
   :host .ui-btn {
-    height: 32px;
+    height: var(--ui-button-height, 32px);
     padding-inline: 9px;
     font-size: calc(11.5px * var(--font-size-scale, 1));
   }
 
-  :host .ui-btn.sm {
-    height: 28px;
+  :host .ui-btn--sm {
+    height: var(--ui-button-height, 28px);
     padding-inline: 7px;
   }
 
-  :host .ui-btn.lg {
-    height: 35px;
+  :host .ui-btn--lg {
+    height: var(--ui-button-height, 35px);
     padding-inline: 10px;
     font-size: calc(12px * var(--font-size-scale, 1));
+  }
+}
+
+@media (max-width: 640px) {
+  :host .ui-btn--mobile-icon-only {
+    width: 34px;
+    min-width: 34px;
+    padding-inline: 0;
+  }
+
+  :host .ui-btn--mobile-icon-only .ui-btn__label {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :host .ui-btn,
+  :host .ui-btn::before,
+  :host(.ui-button-host--tooltip)::before,
+  :host(.ui-button-host--tooltip)::after {
+    transition: none;
+  }
+}
+
+:host-context(html.dark-mode) {
+  &.ui-button-host--tooltip::before,
+  &.ui-button-host--tooltip::after {
+    border-color: rgba(255, 255, 255, 0.13);
+    background: #1e2840;
+  }
+
+  &.ui-button-host--tooltip::after {
+    color: #f4f7fb;
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.3);
+  }
+
+  .ui-btn--primary {
+    --_btn-soft-bg: rgba(200, 255, 0, 0.11);
+    --_btn-soft-text: #dcff73;
+    --_btn-soft-border: rgba(200, 255, 0, 0.3);
+  }
+
+  .ui-btn--secondary {
+    --_btn-soft-bg: rgba(56, 139, 210, 0.14);
+    --_btn-soft-text: #a9d6ff;
+    --_btn-soft-border: rgba(98, 174, 238, 0.3);
+  }
+
+  .ui-btn--info {
+    --_btn-soft-bg: rgba(8, 166, 203, 0.14);
+    --_btn-soft-text: #7ee7ff;
+    --_btn-soft-border: rgba(8, 166, 203, 0.34);
+  }
+
+  .ui-btn--success {
+    --_btn-soft-bg: rgba(34, 197, 94, 0.12);
+    --_btn-soft-text: #86efac;
+    --_btn-soft-border: rgba(74, 222, 128, 0.3);
+  }
+
+  .ui-btn--neutral {
+    --_btn-soft-bg: rgba(148, 163, 184, 0.12);
+    --_btn-soft-text: #e2e8f0;
+    --_btn-soft-border: rgba(148, 163, 184, 0.28);
+  }
+
+  .ui-btn--warning {
+    --_btn-soft-bg: rgba(245, 158, 11, 0.12);
+    --_btn-soft-text: #fdba74;
+    --_btn-soft-border: rgba(245, 158, 11, 0.3);
+  }
+
+  .ui-btn--danger {
+    --_btn-soft-bg: rgba(239, 68, 68, 0.12);
+    --_btn-soft-text: #fca5a5;
+    --_btn-soft-border: rgba(248, 113, 113, 0.3);
   }
 }

@@ -50,6 +50,145 @@
   font-weight: 600;
 }
 
+.ui-table-inline-shell {
+  position: relative;
+  display: grid;
+  width: 32px;
+  height: 34px;
+  place-items: center;
+}
+
+.ui-table-inline-trigger {
+  display: inline-grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  outline: 0;
+  background: transparent;
+  color: #344256;
+  cursor: pointer;
+  transition:
+    border-color 140ms ease,
+    background-color 140ms ease,
+    color 140ms ease,
+    opacity 120ms ease;
+}
+
+.ui-table-inline-trigger:hover,
+.ui-table-inline-trigger:focus-visible {
+  border-color: rgba(31, 78, 121, 0.16);
+  background: rgba(31, 78, 121, 0.07);
+  color: var(--policia-medio, #1f4e79);
+}
+
+.ui-table-inline-trigger:focus-visible {
+  outline: 2px solid var(--policia-cielo, #08a6cb);
+  outline-offset: 1px;
+}
+
+.ui-table-inline-actions {
+  position: absolute;
+  top: 50%;
+  right: auto;
+  left: 0;
+  z-index: 12;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 5px;
+  width: max-content;
+  min-height: 40px;
+  padding: 4px 5px;
+  border: 1px solid #d6dee9;
+  border-radius: 7px;
+  background: #ffffff;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.16);
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-7px, -50%);
+  transition:
+    opacity 140ms ease,
+    transform 160ms ease;
+}
+
+.ui-table-inline-shell--right .ui-table-inline-actions {
+  right: 0;
+  left: auto;
+  justify-content: flex-end;
+  transform: translate(7px, -50%);
+}
+
+:host-context(.ui-table--hover-actions tbody tr:hover) .ui-table-inline-actions,
+:host-context(.ui-table--hover-actions tbody tr:focus-within) .ui-table-inline-actions,
+.ui-table-inline-shell.is-open .ui-table-inline-actions {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translate(0, -50%);
+}
+
+:host-context(.ui-table--hover-actions tbody tr:hover) .ui-table-inline-trigger,
+:host-context(.ui-table--hover-actions tbody tr:focus-within) .ui-table-inline-trigger,
+.ui-table-inline-shell.is-open .ui-table-inline-trigger {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.ui-table-inline-action {
+  display: inline-grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  padding: 0;
+  border: 1px solid #d4dbe5;
+  border-radius: 6px;
+  outline: 0;
+  background: #f2f5f9;
+  color: #344256;
+  cursor: pointer;
+  transition:
+    border-color 140ms ease,
+    background-color 140ms ease,
+    color 140ms ease,
+    transform 140ms ease;
+}
+
+.ui-table-inline-action:hover:not(:disabled),
+.ui-table-inline-action:focus-visible {
+  border-color: #a9b9cd;
+  background: #e6ecf4;
+  color: var(--policia-medio, #1f4e79);
+  transform: translateY(-1px);
+}
+
+.ui-table-inline-action:focus-visible {
+  outline: 2px solid var(--policia-cielo, #08a6cb);
+  outline-offset: 1px;
+}
+
+.ui-table-inline-action--primary,
+.ui-table-inline-action--info {
+  color: #1557a6;
+}
+
+.ui-table-inline-action--warning {
+  color: #9a5708;
+}
+
+.ui-table-inline-action--danger {
+  border-color: #f0d0cc;
+  background: #fff1ef;
+  color: #b42318;
+}
+
+.ui-table-inline-action:disabled {
+  cursor: not-allowed;
+  opacity: 0.42;
+  transform: none;
+}
+
 .ui-table-action-menu {
   width: min(230px, calc(100vw - 16px));
   overflow: hidden;
@@ -163,7 +302,10 @@
 @media (prefers-reduced-motion: reduce) {
   .ui-table-action-trigger,
   .ui-table-action-menu,
-  .ui-table-action-menu__item {
+  .ui-table-action-menu__item,
+  .ui-table-inline-action,
+  .ui-table-inline-actions,
+  .ui-table-inline-trigger {
     animation: none;
     transition: none;
   }
@@ -186,5 +328,29 @@ html.dark-mode .ui-table-action-menu__item:focus-visible,
 html.dark-mode .ui-table-action-trigger:hover,
 html.dark-mode .ui-table-action-trigger[aria-expanded='true'] {
   background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+}
+
+html.dark-mode .ui-table-inline-action {
+  border-color: rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.07);
+  color: var(--ui-text);
+}
+
+html.dark-mode .ui-table-inline-trigger {
+  border-color: transparent;
+  background: transparent;
+  color: var(--ui-text);
+}
+
+html.dark-mode .ui-table-inline-actions {
+  border-color: rgba(255, 255, 255, 0.16);
+  background: var(--ui-surface, #1e2840);
+  box-shadow: 0 9px 22px rgba(0, 0, 0, 0.3);
+}
+
+html.dark-mode .ui-table-inline-action:hover:not(:disabled),
+html.dark-mode .ui-table-inline-action:focus-visible {
+  background: rgba(255, 255, 255, 0.13);
   color: #ffffff;
 }

@@ -13,7 +13,12 @@ import {
   viewChildren,
 } from '@angular/core';
 
-import { UiTableAction, UiTableActionEvent } from '../../interfaces/ui-table.interface';
+import {
+  UiTableAction,
+  UiTableActionDisplay,
+  UiTableActionEvent,
+  UiTableActionsPosition,
+} from '../../interfaces/ui-table.interface';
 
 let nextMenuId = 0;
 
@@ -31,13 +36,22 @@ export class UiTableActionsComponent<
   readonly actions = input.required<UiTableAction<T>[]>();
   readonly row = input.required<T>();
   readonly ariaLabel = input('Acciones disponibles');
+  readonly displayMode = input<UiTableActionDisplay>('menu');
+  /** Extremo de la tabla donde vive la columna de acciones. */
+  readonly position = input<UiTableActionsPosition>('left');
 
   readonly actionClick = output<UiTableActionEvent<T>>();
 
   readonly isOpen = signal(false);
+  readonly inlineActionsOpen = signal(false);
   readonly visibleActions = computed(() =>
     this.actions().filter((action) => this.isActionVisible(action)),
   );
+  readonly resolvedPosition = computed<'left' | 'right'>(() => {
+    const position = this.position();
+
+    return position === 'right' || position === 'end' ? 'right' : 'left';
+  });
 
   readonly menuId = `ui-table-actions-menu-${nextMenuId++}`;
   readonly positions: ConnectedPosition[] = [
@@ -76,6 +90,15 @@ export class UiTableActionsComponent<
       offsetX: -4,
     },
   ];
+  /**
+   * El menú también abre hacia el interior: desde la izquierda se proyecta
+   * a la derecha y desde la derecha se proyecta a la izquierda.
+   */
+  readonly overlayPositions = computed<ConnectedPosition[]>(() =>
+    this.resolvedPosition() === 'right'
+      ? [this.positions[2], this.positions[3], this.positions[0], this.positions[1]]
+      : this.positions,
+  );
 
   private readonly trigger = viewChild<ElementRef<HTMLButtonElement>>('trigger');
   private readonly menuItems = viewChildren<ElementRef<HTMLButtonElement>>('menuItem');
@@ -172,7 +195,22 @@ export class UiTableActionsComponent<
     }
 
     this.actionClick.emit({ actionId: action.id, row: this.row() });
+    this.inlineActionsOpen.set(false);
     this.close();
+  }
+
+  toggleInlineActions(event: Event): void {
+    event.stopPropagation();
+    this.inlineActionsOpen.update((open) => !open);
+  }
+
+  closeInlineActions(event: FocusEvent): void {
+    const currentTarget = event.currentTarget as HTMLElement;
+    const nextTarget = event.relatedTarget as Node | null;
+
+    if (!nextTarget || !currentTarget.contains(nextTarget)) {
+      this.inlineActionsOpen.set(false);
+    }
   }
 
   close(restoreFocus = false): void {
@@ -194,6 +232,10 @@ export class UiTableActionsComponent<
     return `ui-table-action-menu__item ui-table-action-menu__item--${
       action.variant ?? 'secondary'
     }`;
+  }
+
+  getInlineActionClass(action: UiTableAction<T>): string {
+    return `ui-table-inline-action ui-table-inline-action--${action.variant ?? 'secondary'}`;
   }
 
   private isActionVisible(action: UiTableAction<T>): boolean {

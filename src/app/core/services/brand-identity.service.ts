@@ -1,17 +1,25 @@
 import { Injectable, signal } from '@angular/core';
 
-import { BrandingService } from './branding.service';
+import {
+  BrandingService,
+  DEFAULT_MENU_BRAND_PREFERENCES,
+  MenuBrandLayout,
+} from './branding.service';
 
 export interface BrandIdentity {
   readonly systemName: string;
   readonly shortName: string;
   readonly logoUrl: string;
+  readonly menuTextSizePx: number;
+  readonly menuShowAcronym: boolean;
+  readonly menuBrandLayout: MenuBrandLayout;
 }
 
 const DEFAULT_IDENTITY: BrandIdentity = {
   systemName: 'OFTIC',
   shortName: 'OFTIC',
   logoUrl: '/imagenes/oftic-logo-app.png',
+  ...DEFAULT_MENU_BRAND_PREFERENCES,
 };
 
 /**
@@ -29,8 +37,8 @@ export class BrandIdentityService {
 
   constructor(private readonly brandingService: BrandingService) {}
 
-  load(): void {
-    if (this.loaded) {
+  load(forceRefresh = false): void {
+    if (this.loaded && !forceRefresh) {
       return;
     }
 
@@ -49,10 +57,26 @@ export class BrandIdentityService {
           systemName: systemName || DEFAULT_IDENTITY.systemName,
           shortName: shortName || DEFAULT_IDENTITY.shortName,
           logoUrl: logoUrl || DEFAULT_IDENTITY.logoUrl,
+          menuTextSizePx: config?.menuTextSizePx ?? DEFAULT_MENU_BRAND_PREFERENCES.menuTextSizePx,
+          menuShowAcronym:
+            config?.menuShowAcronym ?? DEFAULT_MENU_BRAND_PREFERENCES.menuShowAcronym,
+          menuBrandLayout:
+            config?.menuBrandLayout ?? DEFAULT_MENU_BRAND_PREFERENCES.menuBrandLayout,
         });
       },
-      error: () => this.identityState.set(DEFAULT_IDENTITY),
+      error: () => {
+        if (!forceRefresh) {
+          this.identityState.set(DEFAULT_IDENTITY);
+        }
+      },
     });
+  }
+
+  /**
+   * Recarga la identidad después de guardar Configuración del sistema.
+   */
+  refresh(): void {
+    this.load(true);
   }
 
   private firstText(...values: Array<string | null | undefined>): string {

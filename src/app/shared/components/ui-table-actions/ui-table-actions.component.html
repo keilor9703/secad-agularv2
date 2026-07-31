@@ -1,71 +1,112 @@
 @if (visibleActions().length > 0) {
-  <span
-    class="ui-table-action-trigger-wrap"
-    (mouseenter)="openFromPointer()"
-    (mouseleave)="scheduleClose()"
-  >
-    <button
-      #trigger
-      cdkOverlayOrigin
-      #origin="cdkOverlayOrigin"
-      class="ui-table-action-trigger"
-      type="button"
-      aria-haspopup="menu"
-      [attr.aria-label]="ariaLabel()"
-      [attr.aria-controls]="isOpen() ? menuId : null"
-      [attr.aria-expanded]="isOpen()"
-      (click)="toggleFromTrigger()"
-      (keydown.enter)="openFromKeyboard($event)"
-      (keydown.space)="openFromKeyboard($event)"
-      (keydown.arrowdown)="openFromKeyboard($event)"
-    >
-      <i class="fa-solid fa-ellipsis-vertical" aria-hidden="true"></i>
-    </button>
-  </span>
-
-  <ng-template
-    cdkConnectedOverlay
-    [cdkConnectedOverlayOrigin]="origin"
-    [cdkConnectedOverlayOpen]="isOpen()"
-    [cdkConnectedOverlayPositions]="positions"
-    [cdkConnectedOverlayPush]="true"
-    [cdkConnectedOverlayViewportMargin]="12"
-    [cdkConnectedOverlayMinWidth]="210"
-    (attach)="onOverlayAttached()"
-    (detach)="close()"
-    (overlayKeydown)="onOverlayKeydown($event)"
-    (overlayOutsideClick)="onOutsidePointer($event)"
-  >
+  @if (displayMode() === 'row-hover') {
+    <!--
+      Variante compacta: permanece accesible por teclado y aparece visualmente
+      cuando la fila recibe hover o focus-within.
+    -->
     <div
-      cdkMenu
-      class="ui-table-action-menu"
-      [id]="menuId"
-      [attr.aria-label]="ariaLabel()"
-      (mouseenter)="cancelClose()"
-      (mouseleave)="scheduleClose()"
-      (closed)="close()"
+      class="ui-table-inline-shell"
+      [class.ui-table-inline-shell--left]="resolvedPosition() === 'left'"
+      [class.ui-table-inline-shell--right]="resolvedPosition() === 'right'"
+      [class.is-open]="inlineActionsOpen()"
+      (focusout)="closeInlineActions($event)"
     >
-      <div class="ui-table-action-menu__list">
+      <!-- Estado contraído: mantiene visible el indicador sin ensanchar la columna. -->
+      <button
+        class="ui-table-inline-trigger"
+        type="button"
+        [attr.aria-label]="ariaLabel()"
+        [attr.aria-expanded]="inlineActionsOpen()"
+        (click)="toggleInlineActions($event)"
+      >
+        <i class="fa-solid fa-ellipsis" aria-hidden="true"></i>
+      </button>
+
+      <!-- Abre hacia el interior de la tabla y no modifica el ancho de la columna. -->
+      <div class="ui-table-inline-actions" role="group" [attr.aria-label]="ariaLabel()">
         @for (action of visibleActions(); track action.id) {
           <button
-            #menuItem
-            cdkMenuItem
             type="button"
-            [class]="getActionClass(action)"
-            [cdkMenuItemDisabled]="isActionDisabled(action)"
+            [class]="getInlineActionClass(action)"
             [disabled]="isActionDisabled(action)"
-            (cdkMenuItemTriggered)="selectAction(action)"
+            [attr.aria-label]="action.label"
+            [attr.title]="action.title || action.label"
+            (click)="$event.stopPropagation(); selectAction(action)"
           >
-            <span class="ui-table-action-menu__icon" aria-hidden="true">
-              <i [class]="action.icon"></i>
-            </span>
-
-            <span class="ui-table-action-menu__label">{{ action.label }}</span>
+            <i [class]="action.icon" aria-hidden="true"></i>
           </button>
         }
       </div>
     </div>
-  </ng-template>
+  } @else {
+    <span
+      class="ui-table-action-trigger-wrap"
+      (mouseenter)="openFromPointer()"
+      (mouseleave)="scheduleClose()"
+    >
+      <button
+        #trigger
+        cdkOverlayOrigin
+        #origin="cdkOverlayOrigin"
+        class="ui-table-action-trigger"
+        type="button"
+        aria-haspopup="menu"
+        [attr.aria-label]="ariaLabel()"
+        [attr.aria-controls]="isOpen() ? menuId : null"
+        [attr.aria-expanded]="isOpen()"
+        (click)="toggleFromTrigger()"
+        (keydown.enter)="openFromKeyboard($event)"
+        (keydown.space)="openFromKeyboard($event)"
+        (keydown.arrowdown)="openFromKeyboard($event)"
+      >
+        <i class="fa-solid fa-ellipsis-vertical" aria-hidden="true"></i>
+      </button>
+    </span>
+
+    <ng-template
+      cdkConnectedOverlay
+      [cdkConnectedOverlayOrigin]="origin"
+      [cdkConnectedOverlayOpen]="isOpen()"
+      [cdkConnectedOverlayPositions]="overlayPositions()"
+      [cdkConnectedOverlayPush]="true"
+      [cdkConnectedOverlayViewportMargin]="12"
+      [cdkConnectedOverlayMinWidth]="210"
+      (attach)="onOverlayAttached()"
+      (detach)="close()"
+      (overlayKeydown)="onOverlayKeydown($event)"
+      (overlayOutsideClick)="onOutsidePointer($event)"
+    >
+      <div
+        cdkMenu
+        class="ui-table-action-menu"
+        [id]="menuId"
+        [attr.aria-label]="ariaLabel()"
+        (mouseenter)="cancelClose()"
+        (mouseleave)="scheduleClose()"
+        (closed)="close()"
+      >
+        <div class="ui-table-action-menu__list">
+          @for (action of visibleActions(); track action.id) {
+            <button
+              #menuItem
+              cdkMenuItem
+              type="button"
+              [class]="getActionClass(action)"
+              [cdkMenuItemDisabled]="isActionDisabled(action)"
+              [disabled]="isActionDisabled(action)"
+              (cdkMenuItemTriggered)="selectAction(action)"
+            >
+              <span class="ui-table-action-menu__icon" aria-hidden="true">
+                <i [class]="action.icon"></i>
+              </span>
+
+              <span class="ui-table-action-menu__label">{{ action.label }}</span>
+            </button>
+          }
+        </div>
+      </div>
+    </ng-template>
+  }
 } @else {
   <span class="ui-table-action-empty" aria-label="Sin acciones disponibles">—</span>
 }

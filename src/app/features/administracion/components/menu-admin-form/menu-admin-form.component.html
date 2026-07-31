@@ -1,0 +1,141 @@
+<article class="menu-form-card">
+  <header class="menu-form-card__header">
+    <span class="menu-form-card__icon" aria-hidden="true">
+      <i class="fa-solid fa-pen-to-square"></i>
+    </span>
+
+    <div>
+      <h2>{{ title() }}</h2>
+      <p>{{ description() }}</p>
+    </div>
+  </header>
+
+  <form class="menu-form" [formGroup]="form" (ngSubmit)="submit()">
+    <div class="menu-form__grid">
+      <div class="menu-form__field menu-form__field--full">
+        <app-ui-input
+          formControlName="descripcion"
+          label="Descripción"
+          placeholder="Nombre visible en la navegación"
+          icon="fa-solid fa-font"
+          [required]="true"
+          [maxlength]="255"
+          [error]="errorFor('descripcion')"
+        />
+      </div>
+
+      @if (isCreating()) {
+        <div class="menu-form__field">
+          <div class="menu-form__root-context">
+            <span aria-hidden="true">
+              <i class="fa-solid fa-turn-up"></i>
+            </span>
+            <div>
+              <small>Ubicación protegida</small>
+              <strong>{{ createParent()?.descripcion || 'RAÍZ' }}</strong>
+            </div>
+            <i class="fa-solid fa-lock" aria-hidden="true"></i>
+          </div>
+        </div>
+      } @else {
+        <div class="menu-form__field">
+          <app-ui-select
+            formControlName="idPadre"
+            label="Menú padre"
+            placeholder="Seleccione la ubicación"
+            [options]="parentSelectOptions()"
+            [required]="true"
+            [clearable]="false"
+            [searchable]="true"
+            [error]="errorFor('idPadre')"
+          />
+        </div>
+      }
+
+      <div class="menu-form__field">
+        <app-ui-input
+          formControlName="posicion"
+          label="Posición"
+          type="number"
+          placeholder="0"
+          icon="fa-solid fa-arrow-down-1-9"
+          hint="Orden dentro del menú padre."
+          [required]="true"
+          [error]="errorFor('posicion')"
+        />
+      </div>
+
+      <div class="menu-form__field">
+        <app-ui-select
+          formControlName="tipo"
+          label="Tipo de destino"
+          placeholder="Seleccione el tipo"
+          [options]="typeOptions"
+          [required]="true"
+          [clearable]="false"
+          [searchable]="false"
+          [error]="errorFor('tipo')"
+        />
+      </div>
+
+      <div class="menu-form__field">
+        <app-ui-select
+          formControlName="vigente"
+          label="Estado"
+          placeholder="Seleccione el estado"
+          [options]="statusOptions"
+          [required]="true"
+          [clearable]="false"
+          [searchable]="false"
+          [error]="errorFor('vigente')"
+        />
+      </div>
+
+      <div class="menu-form__field menu-form__field--full">
+        <app-ui-icon-picker
+          formControlName="icono"
+          label="Icono"
+          placeholder="Seleccione el icono visible en el menú"
+          hint="La vista previa corresponde al icono que verá el usuario."
+          [error]="errorFor('icono')"
+        />
+      </div>
+
+      <div class="menu-form__field menu-form__field--full">
+        <app-ui-input
+          formControlName="detalle"
+          label="Ruta o recurso"
+          placeholder="/administracion/menu"
+          icon="fa-solid fa-link"
+          hint="Ruta interna, URL externa o ubicación del documento."
+          [maxlength]="500"
+          [error]="errorFor('detalle')"
+        />
+      </div>
+    </div>
+
+    <footer class="menu-form__footer">
+      <app-ui-button
+        type="button"
+        size="sm"
+        variant="outline"
+        icon="fa-solid fa-xmark"
+        [disabled]="saving()"
+        (buttonClick)="reset()"
+      >
+        Cancelar
+      </app-ui-button>
+
+      <app-ui-button
+        type="submit"
+        size="sm"
+        variant="primary"
+        icon="fa-solid fa-floppy-disk"
+        [loading]="saving()"
+        [disabled]="form.invalid"
+      >
+        {{ submitLabel() }}
+      </app-ui-button>
+    </footer>
+  </form>
+</article>

@@ -52,6 +52,10 @@ export class UiTimePickerComponent implements ControlValueAccessor {
   readonly maxTime = input<string | null>(null);
   readonly minuteStep = input(30);
   readonly required = input(false, { transform: booleanAttribute });
+  /**
+   * Controla el marcador visual; el estado requerido del formulario no cambia.
+   */
+  readonly showRequiredMarker = input(true, { transform: booleanAttribute });
   readonly disabled = input(false, { transform: booleanAttribute });
   readonly clearable = input(true, { transform: booleanAttribute });
 

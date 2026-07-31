@@ -1,0 +1,53 @@
+<section class="component-demo ui-panel">
+  <header class="component-demo__header">
+    <div class="component-demo__number">06</div>
+    <div>
+      <h2 id="clean-table-demo-title">Tabla limpia y paginación numerada</h2>
+      <p>Encabezado sin relleno · acciones al pasar por la fila · paginación intercambiable.</p>
+    </div>
+
+    <app-ui-badge
+      label="Nueva variante"
+      variant="primary"
+      appearance="outline"
+      size="sm"
+      icon="fa-solid fa-table-list"
+      iconPosition="start"
+    />
+  </header>
+
+  <div class="component-demo__body">
+    <app-ui-table
+      variant="plain"
+      paginationVariant="numbered"
+      actionDisplay="row-hover"
+      actionsPosition="right"
+      emptyMessage="No hay órdenes para mostrar."
+      [embedded]="true"
+      [columns]="columns"
+      [rows]="pagedOrders()"
+      [actions]="actions"
+      [total]="orders.length"
+      [page]="page()"
+      [pageSize]="pageSize()"
+      [pageSizeOptions]="pageSizeOptions"
+      [paginationShowPageSize]="false"
+      [paginationShowSummary]="false"
+      [paginationMaxVisiblePages]="5"
+      labelledBy="clean-table-demo-title"
+      [showRecordBadge]="false"
+      [bodyFontSize]="12"
+      bodyFontWeight="normal"
+      [rowPadding]="10"
+      headerTextColor="#263247"
+      (actionClick)="onActionClick($event)"
+      (pageChange)="onPageChange($event)"
+      (pageSizeChange)="onPageSizeChange($event)"
+    />
+
+    <details class="component-demo__code">
+      <summary>Ver implementación comentada</summary>
+      <pre><code>{{ usageExample }}</code></pre>
+    </details>
+  </div>
+</section>

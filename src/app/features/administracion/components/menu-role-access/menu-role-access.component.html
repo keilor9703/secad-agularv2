@@ -1,0 +1,94 @@
+<article class="menu-role-card">
+  <header class="menu-role-card__header">
+    <div class="menu-role-card__heading">
+      <span class="menu-role-card__icon" aria-hidden="true">
+        <i class="fa-solid fa-user-shield"></i>
+      </span>
+
+      <div>
+        <h2>Permisos por rol</h2>
+        <p>{{ menu().descripcion }} · ID {{ menu().idMenu }}</p>
+      </div>
+    </div>
+
+    <app-ui-button
+      size="sm"
+      variant="ghost"
+      icon="fa-solid fa-xmark"
+      [iconOnly]="true"
+      ariaLabel="Cerrar gestión de roles"
+      (buttonClick)="closeRequested.emit()"
+    />
+  </header>
+
+  <div class="menu-role-card__assignment">
+    <div class="menu-role-card__select">
+      <app-ui-select
+        [formControl]="roleControl"
+        label="Rol disponible"
+        placeholder="Seleccione un rol"
+        [options]="roleOptions()"
+        [required]="true"
+        [clearable]="true"
+        [searchable]="true"
+        [disabled]="saving() || roleOptions().length === 0"
+        [error]="roleError()"
+      />
+    </div>
+
+    <app-ui-button
+      size="sm"
+      variant="primary"
+      icon="fa-solid fa-plus"
+      [loading]="saving()"
+      [disabled]="roleControl.invalid || roleOptions().length === 0"
+      (buttonClick)="assign()"
+    >
+      Asignar rol
+    </app-ui-button>
+  </div>
+
+  <section class="menu-role-card__assigned" aria-labelledby="assigned-roles-title">
+    <div class="menu-role-card__subheading">
+      <div>
+        <h3 id="assigned-roles-title">Roles asignados</h3>
+        <p>Accesos vigentes para este ítem de navegación.</p>
+      </div>
+
+      <app-ui-chip
+        [label]="assignedRoles().length.toString()"
+        variant="primary"
+        appearance="soft"
+        size="sm"
+      />
+    </div>
+
+    <!-- Tabla limpia: densidad, ancho mínimo y acciones se controlan desde ui-table. -->
+    <app-ui-table
+      variant="plain"
+      actionDisplay="row-hover"
+      actionsPosition="right"
+      emptyMessage="Este menú todavía no tiene roles asignados."
+      loadingMessage="Consultando roles asignados..."
+      loadingSpinnerSize="sm"
+      [embedded]="true"
+      [columns]="roleColumns"
+      [rows]="assignedRoleRows()"
+      [actions]="roleActions"
+      [loading]="loading()"
+      [total]="assignedRoleRows().length"
+      [showPagination]="false"
+      [showRecordBadge]="false"
+      [stickyHeader]="false"
+      [stickyActions]="false"
+      [tableMinWidth]="320"
+      [bodyFontSize]="11"
+      bodyFontWeight="normal"
+      [rowHeight]="36"
+      [rowPadding]="5"
+      labelledBy="assigned-roles-title"
+      actionMenuLabel="Acciones del rol asignado"
+      (actionClick)="handleRoleAction($event)"
+    />
+  </section>
+</article>

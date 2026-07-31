@@ -1,5 +1,5 @@
-﻿import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+﻿import { HttpClient } from '@angular/common/http';
+import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
@@ -52,18 +52,28 @@ export class LoginVisualService {
     return this.http.get<LoginVisualAdminConfig>(`${this.baseUrl}/admin-config`);
   }
 
+  getImageUrl(fileName: string): string {
+    return `${this.baseUrl}/image/${encodeURIComponent(fileName)}`;
+  }
+
   upload(file: File): Observable<LoginVisualUploadResponse> {
     const formData = new FormData();
     formData.append('File', file);
     return this.http.post<LoginVisualUploadResponse>(`${this.baseUrl}/upload`, formData);
   }
 
-  saveConfig(payload: LoginVisualAdminConfig): Observable<{ success: boolean; message: string; detail?: string }> {
-    return this.http.post<{ success: boolean; message: string; detail?: string }>(`${this.baseUrl}/save-config`, payload);
+  saveConfig(
+    payload: LoginVisualAdminConfig,
+  ): Observable<{ success: boolean; message: string; detail?: string }> {
+    return this.http.post<{ success: boolean; message: string; detail?: string }>(
+      `${this.baseUrl}/save-config`,
+      payload,
+    );
   }
 
   delete(fileName: string): Observable<{ success: boolean; message: string; detail?: string }> {
-    return this.http.delete<{ success: boolean; message: string; detail?: string }>(`${this.baseUrl}/${encodeURIComponent(fileName)}`);
+    return this.http.delete<{ success: boolean; message: string; detail?: string }>(
+      `${this.baseUrl}/${encodeURIComponent(fileName)}`,
+    );
   }
 }
-

@@ -2,15 +2,19 @@
   <section
     class="ui-panel ui-table-panel"
     [class.ui-table-panel--embedded]="embedded()"
+    [class.ui-table-panel--plain]="variant() === 'plain'"
     [style.--ui-table-header-color]="headerColor()"
+    [style.--ui-table-header-color-middle]="headerColorMiddle() || null"
     [style.--ui-table-header-color-end]="headerColorEnd() || headerColor()"
-    [style.--ui-table-header-text-color]="headerTextColor()"
-    [style.--ui-table-body-text-color]="bodyTextColor() || null"
+    [style.--ui-table-header-text-color]="resolvedHeaderTextColor()"
+    [style.--ui-table-body-text-color-light]="bodyTextColor() || null"
+    [style.--ui-table-body-text-color-dark]="darkBodyTextColor() || null"
     [style.--ui-table-body-font-size]="bodyFontSizeCss()"
     [style.--ui-table-body-font-weight]="bodyFontWeightCss()"
     [style.--ui-table-body-text-transform]="bodyTextTransform()"
     [style.--ui-table-row-height]="rowHeightCss()"
     [style.--ui-table-row-padding-block]="rowPaddingCss()"
+    [style.--ui-table-min-width]="tableMinWidthCss()"
   >
     @if (title()) {
       <div class="ui-panel__head">
@@ -21,7 +25,12 @@
 
         @if (showRecordBadge()) {
           <div class="ui-panel__actions">
-            <span class="ui-badge info">Registros: {{ totalRecords() }}</span>
+            <app-ui-badge
+              [label]="'Registros: ' + totalRecords()"
+              variant="info"
+              appearance="outline"
+              size="xs"
+            />
           </div>
         }
       </div>
@@ -54,13 +63,26 @@
             class="ui-table"
             [class.ui-table--sticky-header]="stickyHeader()"
             [class.ui-table--sticky-actions]="stickyActions()"
+            [class.ui-table--actions-start]="resolvedActionsPosition() === 'left'"
+            [class.ui-table--actions-end]="resolvedActionsPosition() === 'right'"
+            [class.ui-table--hover-actions]="actionDisplay() === 'row-hover'"
             [attr.aria-labelledby]="labelledBy() || titleId"
             [attr.aria-busy]="loading()"
           >
             <thead>
               <tr>
-                @if (actions().length > 0) {
-                  <th class="align-center ui-table-actions-header" scope="col">Acciones</th>
+                @if (actionsAtStart()) {
+                  <th
+                    class="align-center ui-table-actions-header"
+                    scope="col"
+                    [attr.aria-label]="actionDisplay() === 'row-hover' ? 'Acciones' : null"
+                  >
+                    @if (actionDisplay() === 'row-hover') {
+                      <i class="fa-solid fa-ellipsis" aria-hidden="true"></i>
+                    } @else {
+                      Acciones
+                    }
+                  </th>
                 }
 
                 @for (column of columns(); track trackColumn($index, column)) {
@@ -85,6 +107,20 @@
                     }
                   </th>
                 }
+
+                @if (actionsAtEnd()) {
+                  <th
+                    class="align-center ui-table-actions-header"
+                    scope="col"
+                    [attr.aria-label]="actionDisplay() === 'row-hover' ? 'Acciones' : null"
+                  >
+                    @if (actionDisplay() === 'row-hover') {
+                      <i class="fa-solid fa-ellipsis" aria-hidden="true"></i>
+                    } @else {
+                      Acciones
+                    }
+                  </th>
+                }
               </tr>
             </thead>
 
@@ -102,7 +138,8 @@
                   @let appearance = getRowAppearance(row, $index);
 
                   <tr
-                    [style.--ui-table-row-text-color]="appearance?.textColor || null"
+                    [style.--ui-table-row-text-color-light]="appearance?.textColor || null"
+                    [style.--ui-table-row-text-color-dark]="appearance?.darkTextColor || null"
                     [style.--ui-table-row-font-size]="resolveCssSize(appearance?.fontSize)"
                     [style.--ui-table-row-font-weight]="resolveFontWeight(appearance?.fontWeight)"
                     [style.--ui-table-current-row-height]="resolveCssSize(appearance?.height)"
@@ -110,12 +147,14 @@
                       resolveCssSize(appearance?.paddingBlock)
                     "
                   >
-                    @if (actions().length > 0) {
+                    @if (actionsAtStart()) {
                       <td class="ui-table-actions-cell">
                         <app-ui-table-actions
                           [actions]="actions()"
                           [row]="row"
                           [ariaLabel]="actionMenuLabel()"
+                          [displayMode]="actionDisplay()"
+                          [position]="resolvedActionsPosition()"
                           (actionClick)="emitAction($event)"
                         ></app-ui-table-actions>
                       </td>
@@ -124,7 +163,8 @@
                     @for (column of columns(); track trackColumn($index, column)) {
                       <td
                         [class]="getCellClass(column)"
-                        [style.--ui-table-cell-text-color]="column.textColor || null"
+                        [style.--ui-table-cell-text-color-light]="column.textColor || null"
+                        [style.--ui-table-cell-text-color-dark]="column.darkTextColor || null"
                         [style.--ui-table-cell-font-size]="resolveCssSize(column.fontSize)"
                         [style.--ui-table-cell-font-weight]="resolveFontWeight(column.fontWeight)"
                         [style.--ui-table-cell-text-transform]="column.textTransform || null"
@@ -135,16 +175,30 @@
                             [ngTemplateOutletContext]="getCellContext(row, column)"
                           ></ng-container>
                         } @else if (getBadge(row, column); as badge) {
-                          <span [class]="getBadgeClass(badge)">
-                            {{ badge.text }}
-
-                            @if (badge.icon) {
-                              <i [class]="badge.icon"></i>
-                            }
-                          </span>
+                          <app-ui-badge
+                            [label]="badge.text"
+                            [variant]="badge.variant ?? 'neutral'"
+                            [appearance]="badge.appearance ?? 'soft'"
+                            [size]="badge.size ?? 'sm'"
+                            [icon]="badge.icon ?? ''"
+                            [uppercase]="badge.uppercase ?? false"
+                          />
                         } @else {
                           {{ getCellValue(row, column) }}
                         }
+                      </td>
+                    }
+
+                    @if (actionsAtEnd()) {
+                      <td class="ui-table-actions-cell">
+                        <app-ui-table-actions
+                          [actions]="actions()"
+                          [row]="row"
+                          [ariaLabel]="actionMenuLabel()"
+                          [displayMode]="actionDisplay()"
+                          [position]="resolvedActionsPosition()"
+                          (actionClick)="emitAction($event)"
+                        ></app-ui-table-actions>
                       </td>
                     }
                   </tr>
@@ -181,67 +235,19 @@
       }
 
       @if (!loading() && showPagination() && totalRecords() > 0) {
-        <nav class="ui-table-pagination" aria-label="Paginación de tabla">
-          <label class="ui-table-page-size">
-            <span class="ui-table-page-size__label">Registros por página:</span>
-
-            <span class="ui-table-page-size__select">
-              <select [value]="normalizedPageSize()" (change)="changePageSize($event)">
-                @for (size of pageSizeOptionsList(); track size) {
-                  <option [value]="size">{{ size }}</option>
-                }
-              </select>
-
-              <i class="fa-solid fa-caret-down" aria-hidden="true"></i>
-            </span>
-          </label>
-
-          <span class="ui-table-pagination__range">
-            {{ startItem() }} - {{ endItem() }} de {{ totalRecords() }}
-          </span>
-
-          <div class="ui-table-pagination__actions">
-            <button
-              class="ui-table-page-icon"
-              type="button"
-              aria-label="Primera página"
-              [disabled]="isFirstPage()"
-              (click)="goToPage(1)"
-            >
-              <i class="fa-solid fa-backward-step"></i>
-            </button>
-
-            <button
-              class="ui-table-page-icon"
-              type="button"
-              aria-label="Página anterior"
-              [disabled]="isFirstPage()"
-              (click)="goToPage(page() - 1)"
-            >
-              <i class="fa-solid fa-chevron-left"></i>
-            </button>
-
-            <button
-              class="ui-table-page-icon"
-              type="button"
-              aria-label="Página siguiente"
-              [disabled]="isLastPage()"
-              (click)="goToPage(page() + 1)"
-            >
-              <i class="fa-solid fa-chevron-right"></i>
-            </button>
-
-            <button
-              class="ui-table-page-icon"
-              type="button"
-              aria-label="Última página"
-              [disabled]="isLastPage()"
-              (click)="goToPage(totalPages())"
-            >
-              <i class="fa-solid fa-forward-step"></i>
-            </button>
-          </div>
-        </nav>
+        <app-ui-pagination
+          ariaLabel="Paginación de tabla"
+          [total]="totalRecords()"
+          [page]="page()"
+          [pageSize]="normalizedPageSize()"
+          [pageSizeOptions]="pageSizeOptionsList()"
+          [variant]="paginationVariant()"
+          [showSummary]="paginationShowSummary()"
+          [showPageSize]="paginationShowPageSize()"
+          [maxVisiblePages]="paginationMaxVisiblePages()"
+          (pageChange)="goToPage($event)"
+          (pageSizeChange)="pageSizeChange.emit($event)"
+        />
       }
     </div>
   </section>
