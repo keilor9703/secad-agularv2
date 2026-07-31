@@ -11,14 +11,14 @@ import { UiSelectComponent } from '../../../../shared/components/ui-select/ui-se
 import { UiTimePickerComponent } from '../../../../shared/components/ui-time-picker/ui-time-picker.component';
 import { UiSelectOption } from '../../../../shared/interfaces/ui-select-option.interface';
 import { getFormErrorMessage } from '../../../../shared/utils/form-error.util';
-import { ButtonSearchDemoComponent } from '../../components/button-search-demo/button-search-demo.component';
-import { FormControlSizingDemoComponent } from '../../components/form-control-sizing-demo/form-control-sizing-demo.component';
-import { FuncionariosTableDemoComponent } from '../../components/funcionarios-table-demo/funcionarios-table-demo.component';
-import { NotificacionesDemoComponent } from '../../components/notificaciones-demo/notificaciones-demo.component';
-import { SpinnerDemoComponent } from '../../components/spinner-demo/spinner-demo.component';
-import { StatusComponentsDemoComponent } from '../../components/status-components-demo/status-components-demo.component';
-import { TableVariantsDemoComponent } from '../../components/table-variants-demo/table-variants-demo.component';
-import { TabsDemoComponent } from '../../components/tabs-demo/tabs-demo.component';
+import { ButtonSearchDemoComponent } from '../../components/formularios/button-search-demo/button-search-demo.component';
+import { FormControlSizingDemoComponent } from '../../components/formularios/form-control-sizing-demo/form-control-sizing-demo.component';
+import { FuncionariosTableDemoComponent } from '../../components/formularios/funcionarios-table-demo/funcionarios-table-demo.component';
+import { NotificacionesDemoComponent } from '../../components/formularios/notificaciones-demo/notificaciones-demo.component';
+import { SpinnerDemoComponent } from '../../components/formularios/spinner-demo/spinner-demo.component';
+import { StatusComponentsDemoComponent } from '../../components/formularios/status-components-demo/status-components-demo.component';
+import { TableVariantsDemoComponent } from '../../components/formularios/table-variants-demo/table-variants-demo.component';
+import { TabsDemoComponent } from '../../components/formularios/tabs-demo/tabs-demo.component';
 
 interface FormulariosDemoForm {
   nombres: FormControl<string>;

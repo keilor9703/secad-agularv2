@@ -18,8 +18,8 @@ import { getApiErrorMessage } from '../../../../shared/utils/api-error-message.u
 import {
   DominioAdminFormComponent,
   DominioEditorMode,
-} from '../../components/dominio-admin-form/dominio-admin-form.component';
-import { DominioAdminTreeComponent } from '../../components/dominio-admin-tree/dominio-admin-tree.component';
+} from '../../components/dominio/dominio-admin-form/dominio-admin-form.component';
+import { DominioAdminTreeComponent } from '../../components/dominio/dominio-admin-tree/dominio-admin-tree.component';
 import { DominioService, DtoDominio, DtoDominioRequest } from '../../services/dominio.service';
 
 @Component({

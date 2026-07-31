@@ -1,4 +1,4 @@
-﻿import {
+import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
@@ -21,8 +21,8 @@ import { ToastService } from '../../../../core/services/toast.service';
 import { UiButtonComponent } from '../../../../shared/components/ui-button/ui-button.component';
 import { AlertService } from '../../../../shared/services/alert.service';
 import { getApiErrorMessage } from '../../../../shared/utils/api-error-message.util';
-import { MenuAdminFormComponent } from '../../components/menu-admin-form/menu-admin-form.component';
-import { MenuAdminTreeComponent } from '../../components/menu-admin-tree/menu-admin-tree.component';
+import { MenuAdminFormComponent } from '../../components/menu/menu-admin-form/menu-admin-form.component';
+import { MenuAdminTreeComponent } from '../../components/menu/menu-admin-tree/menu-admin-tree.component';
 
 @Component({
   selector: 'app-menu-admin',

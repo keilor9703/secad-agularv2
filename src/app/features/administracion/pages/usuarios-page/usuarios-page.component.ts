@@ -5,10 +5,10 @@ import { Router } from '@angular/router';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { AlertService } from '../../../../shared/services/alert.service';
-import { UsuarioDeleteModalComponent } from '../../components/usuario-delete-modal/usuario-delete-modal.component';
-import { UsuarioFormComponent } from '../../components/usuario-form/usuario-form.component';
+import { UsuarioDeleteModalComponent } from '../../components/usuarios/usuario-delete-modal/usuario-delete-modal.component';
+import { UsuarioFormComponent } from '../../components/usuarios/usuario-form/usuario-form.component';
 
-import { UsuariosTableComponent } from '../../components/usuarios-table/usuarios-table.component';
+import { UsuariosTableComponent } from '../../components/usuarios/usuarios-table/usuarios-table.component';
 import {
   NewRoleForm,
   RawAssignedRole,
