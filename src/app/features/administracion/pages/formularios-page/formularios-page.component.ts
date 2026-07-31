@@ -1,5 +1,5 @@
 import { JsonPipe } from '@angular/common';
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ToastService } from '../../../../core/services/toast.service';
 import { UiButtonComponent } from '../../../../shared/components/ui-button/ui-button.component';
@@ -65,6 +65,7 @@ interface ModalActividadForm {
     TabsDemoComponent,
   ],
   templateUrl: './formularios-page.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './formularios-page.component.scss',
 })
 export class FormulariosPageComponent {

@@ -4,15 +4,17 @@
   [class.form-select--filled]="value !== null"
   [class.form-select--invalid]="error"
   [class.form-select--disabled]="isDisabled"
->
-  <span class="form-select__label" *ngIf="label">
-    {{ label }}
-    @if (required && showRequiredMarker()) {
-      <strong class="form-select__required-marker" [class.is-invalid]="!!error" aria-hidden="true">
-        *
-      </strong>
-    }
-  </span>
+  >
+  @if (label) {
+    <span class="form-select__label">
+      {{ label }}
+      @if (required && showRequiredMarker()) {
+        <strong class="form-select__required-marker" [class.is-invalid]="!!error" aria-hidden="true">
+          *
+        </strong>
+      }
+    </span>
+  }
 
   <button
     class="form-select__control"
@@ -25,58 +27,67 @@
     [attr.aria-invalid]="!!error"
     (click)="toggle()"
     (keydown)="handleKeydown($event)"
-  >
+    >
     <span
       class="form-select__value"
       [class.is-placeholder]="!selectedLabel"
       [title]="selectedLabel || placeholder"
-    >
+      >
       {{ selectedLabel || placeholder }}
     </span>
 
-    <span class="form-select__clear" *ngIf="clearable && value !== null" (click)="clear($event)">
-      ×
-    </span>
+    @if (clearable && value !== null) {
+      <span class="form-select__clear" (click)="clear($event)">
+        ×
+      </span>
+    }
 
     <span class="form-select__arrow"></span>
   </button>
 
-  <div
-    class="form-select__panel"
-    *ngIf="opened"
-    [class.form-select__panel--above]="panelPlacement() === 'above'"
-    [class.is-positioned]="panelPositioned()"
-    [ngStyle]="panelStyles()"
-  >
-    <input
-      *ngIf="searchable"
-      class="form-select__search"
-      type="text"
-      [placeholder]="searchPlaceholder"
-      [value]="searchTerm"
-      (input)="onSearch($event)"
-    />
+  @if (opened) {
+    <div
+      class="form-select__panel"
+      [class.form-select__panel--above]="panelPlacement() === 'above'"
+      [class.is-positioned]="panelPositioned()"
+      [ngStyle]="panelStyles()"
+      >
+      @if (searchable) {
+        <input
+          class="form-select__search"
+          type="text"
+          [placeholder]="searchPlaceholder"
+          [value]="searchTerm"
+          (input)="onSearch($event)"
+          />
+      }
+      @for (option of filteredOptions; track trackOption($index, option)) {
+        <button
+          class="form-select__option"
+          type="button"
+          [disabled]="option.disabled"
+          [class.is-selected]="isSelected(option)"
+          (click)="selectOption(option)"
+          >
+          <!-- El espacio del icono siempre existe para que el texto use la columna correcta. -->
+          <i
+            class="fa-solid fa-check form-select__option-check"
+            [class.is-visible]="isSelected(option)"
+            aria-hidden="true"
+          ></i>
+          <span class="form-select__option-label" [title]="option.label">{{ option.label }}</span>
+        </button>
+      }
+      @if (filteredOptions.length === 0) {
+        <div class="form-select__empty">Sin resultados.</div>
+      }
+    </div>
+  }
 
-    <button
-      class="form-select__option"
-      type="button"
-      *ngFor="let option of filteredOptions; trackBy: trackOption"
-      [disabled]="option.disabled"
-      [class.is-selected]="isSelected(option)"
-      (click)="selectOption(option)"
-    >
-      <!-- El espacio del icono siempre existe para que el texto use la columna correcta. -->
-      <i
-        class="fa-solid fa-check form-select__option-check"
-        [class.is-visible]="isSelected(option)"
-        aria-hidden="true"
-      ></i>
-      <span class="form-select__option-label" [title]="option.label">{{ option.label }}</span>
-    </button>
-
-    <div class="form-select__empty" *ngIf="filteredOptions.length === 0">Sin resultados.</div>
-  </div>
-
-  <small class="form-select__error" *ngIf="error">{{ error }}</small>
-  <small class="form-select__hint" *ngIf="hint && !error">{{ hint }}</small>
+  @if (error) {
+    <small class="form-select__error">{{ error }}</small>
+  }
+  @if (hint && !error) {
+    <small class="form-select__hint">{{ hint }}</small>
+  }
 </div>

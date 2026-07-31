@@ -3,15 +3,17 @@
   [class.search-field--focused]="focused"
   [class.search-field--invalid]="error"
   [class.search-field--disabled]="isDisabled"
->
-  <span class="search-field__label" *ngIf="label">
-    {{ label }}
-    @if (required && showRequiredMarker()) {
-      <strong class="search-field__required-marker" [class.is-invalid]="!!error" aria-hidden="true">
-        *
-      </strong>
-    }
-  </span>
+  >
+  @if (label) {
+    <span class="search-field__label">
+      {{ label }}
+      @if (required && showRequiredMarker()) {
+        <strong class="search-field__required-marker" [class.is-invalid]="!!error" aria-hidden="true">
+          *
+        </strong>
+      }
+    </span>
+  }
 
   <div
     class="search-field__control"
@@ -19,14 +21,15 @@
     [class.search-field__control--detached]="showButton() && buttonLayout() === 'detached'"
     [class.search-field__control--without-button]="!showButton()"
     [style.--search-button-gap]="buttonGapCss()"
-  >
+    >
     <div class="search-field__shell" [class.search-field__shell--without-button]="!showButton()">
-      <i
-        *ngIf="!showButton() && icon"
-        [class]="'search-field__leading-icon ' + icon"
-        [style.color]="leadingIconColor() || null"
-        aria-hidden="true"
-      ></i>
+      @if (!showButton() && icon) {
+        <i
+          [class]="'search-field__leading-icon ' + icon"
+          [style.color]="leadingIconColor() || null"
+          aria-hidden="true"
+        ></i>
+      }
 
       <input
         class="search-field__input"
@@ -44,45 +47,51 @@
         (focus)="handleFocus()"
         (blur)="handleBlur()"
         (keydown.enter)="emitSearch()"
-      />
+        />
 
-      <button
-        class="search-field__clear"
-        type="button"
-        *ngIf="clearable && value"
-        [disabled]="isDisabled"
-        (click)="clear()"
-        title="Limpiar"
-        aria-label="Limpiar búsqueda"
-      >
-        ×
-      </button>
+        @if (clearable && value) {
+          <button
+            class="search-field__clear"
+            type="button"
+            [disabled]="isDisabled"
+            (click)="clear()"
+            title="Limpiar"
+            aria-label="Limpiar búsqueda"
+            >
+            ×
+          </button>
+        }
+      </div>
+
+      @if (showButton()) {
+        <app-ui-button
+          class="search-field__button"
+          type="button"
+          [variant]="buttonVariant()"
+          [appearance]="buttonAppearance()"
+          [icon]="icon"
+          [iconOnly]="iconOnly"
+          [hideTextOnMobile]="hideButtonTextOnMobile()"
+          [backgroundColor]="buttonBackgroundColor()"
+          [textColor]="buttonTextColor()"
+          [borderColor]="buttonBorderColor()"
+          [iconColor]="buttonIconColor()"
+          [disabled]="isDisabled"
+          [title]="searchLabel"
+          [ariaLabel]="searchLabel"
+          (buttonClick)="emitSearch()"
+          >
+          {{ buttonText }}
+        </app-ui-button>
+      }
     </div>
 
-    <app-ui-button
-      *ngIf="showButton()"
-      class="search-field__button"
-      type="button"
-      [variant]="buttonVariant()"
-      [appearance]="buttonAppearance()"
-      [icon]="icon"
-      [iconOnly]="iconOnly"
-      [hideTextOnMobile]="hideButtonTextOnMobile()"
-      [backgroundColor]="buttonBackgroundColor()"
-      [textColor]="buttonTextColor()"
-      [borderColor]="buttonBorderColor()"
-      [iconColor]="buttonIconColor()"
-      [disabled]="isDisabled"
-      [title]="searchLabel"
-      [ariaLabel]="searchLabel"
-      (buttonClick)="emitSearch()"
-    >
-      {{ buttonText }}
-    </app-ui-button>
+    @if (error) {
+      <small class="search-field__error" [id]="inputId + '-error'">{{ error }}</small>
+    }
+    @if (hint && !error) {
+      <small class="search-field__hint" [id]="inputId + '-hint'">
+        {{ hint }}
+      </small>
+    }
   </div>
-
-  <small class="search-field__error" *ngIf="error" [id]="inputId + '-error'">{{ error }}</small>
-  <small class="search-field__hint" *ngIf="hint && !error" [id]="inputId + '-hint'">
-    {{ hint }}
-  </small>
-</div>

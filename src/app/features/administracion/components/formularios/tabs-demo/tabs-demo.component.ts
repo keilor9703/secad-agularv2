@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { UiButtonComponent } from '../../../../../shared/components/ui-button/ui-button.component';
 import { UiInputComponent } from '../../../../../shared/components/ui-input/ui-input.component';
@@ -31,6 +31,7 @@ interface TabsProfileForm {
     UiTimePickerComponent,
   ],
   templateUrl: './tabs-demo.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './tabs-demo.component.scss',
 })
 export class TabsDemoComponent {

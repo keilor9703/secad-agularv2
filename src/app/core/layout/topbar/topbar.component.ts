@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TopbarNotificationsComponent } from './topbar-notifications/topbar-notifications.component';
 import { TopbarUserMenuComponent } from './topbar-user-menu/topbar-user-menu.component';
@@ -9,6 +9,7 @@ import { SidebarService } from '../../services/sidebar.service';
   standalone: true,
   imports: [FormsModule, TopbarNotificationsComponent, TopbarUserMenuComponent],
   templateUrl: './topbar.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./topbar.component.scss'],
 })
 export class TopbarComponent {

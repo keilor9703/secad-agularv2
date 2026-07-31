@@ -12,16 +12,18 @@
 
     <div class="ui-panel__body">
       <div class="ui-card-grid ui-card-grid--cards">
-        <article class="ui-feature-card" *ngFor="let item of sites">
-          <div class="ui-feature-card__icon">
-            <i [class]="item.icon"></i>
-          </div>
-          <h3 class="ui-feature-card__title">{{ item.title }}</h3>
-          <p class="ui-feature-card__text">{{ item.description }}</p>
-          <a class="ui-feature-card__link" [routerLink]="item.route">
-            Acceder <span class="ui-feature-card__arrow">-></span>
-          </a>
-        </article>
+        @for (item of sites; track item) {
+          <article class="ui-feature-card">
+            <div class="ui-feature-card__icon">
+              <i [class]="item.icon"></i>
+            </div>
+            <h3 class="ui-feature-card__title">{{ item.title }}</h3>
+            <p class="ui-feature-card__text">{{ item.description }}</p>
+            <a class="ui-feature-card__link" [routerLink]="item.route">
+              Acceder <span class="ui-feature-card__arrow">-></span>
+            </a>
+          </article>
+        }
       </div>
     </div>
   </div>

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NoticiaService, DtoNoticia } from '../../../../core/services/noticia.service';
 import { environment } from '../../../../../environments/environment';
@@ -8,6 +8,7 @@ import { environment } from '../../../../../environments/environment';
   standalone: true,
   imports: [CommonModule],
   templateUrl: './noticias-page.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './noticias-page.component.scss'
 })
 export class NoticiasPageComponent implements OnInit {

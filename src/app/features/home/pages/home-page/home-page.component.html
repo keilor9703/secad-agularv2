@@ -26,21 +26,21 @@
           <h3 class="title-cards"><i class="fa-solid fa-play-circle"></i> Video de la Unidad</h3>
           <hr />
           <div class="video-institutional-wrapper">
-            <video
-              class="video-iframe"
-              controls
-              preload="metadata"
-              *ngIf="videoUnidadUrl; else noVideoUnidadTpl"
-            >
-              <source [src]="videoUnidadUrl" type="video/mp4" />
-              Tu navegador no soporta reproduccion de video.
-            </video>
-            <ng-template #noVideoUnidadTpl>
+            @if (videoUnidadUrl) {
+              <video
+                class="video-iframe"
+                controls
+                preload="metadata"
+                >
+                <source [src]="videoUnidadUrl" type="video/mp4" />
+                Tu navegador no soporta reproduccion de video.
+              </video>
+            } @else {
               <div class="video-placeholder">
                 <i class="fa-solid fa-video-slash"></i>
                 <p>No hay video de la unidad configurado</p>
               </div>
-            </ng-template>
+            }
           </div>
         </div>
 
@@ -51,11 +51,11 @@
             <h3 class="title-cards"><i class="fa-solid fa-video"></i> Video Institucional</h3>
             <hr />
             <div class="video-box">
-              <iframe
-                *ngIf="videoInstitucionalUrl; else noVideoInstTpl"
-                [src]="videoInstitucionalUrl | safeUrl"
-                class="video-frame"
-                frameborder="0"
+              @if (videoInstitucionalUrl) {
+                <iframe
+                  [src]="videoInstitucionalUrl | safeUrl"
+                  class="video-frame"
+                  frameborder="0"
                 allow="
                   accelerometer;
                   autoplay;
@@ -64,16 +64,16 @@
                   gyroscope;
                   picture-in-picture;
                 "
-                allowfullscreen
-                sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
-              >
-              </iframe>
-              <ng-template #noVideoInstTpl>
+                  allowfullscreen
+                  sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
+                  >
+                </iframe>
+              } @else {
                 <div class="video-placeholder small">
                   <i class="fa-solid fa-video-slash"></i>
                   <p>No hay video institucional</p>
                 </div>
-              </ng-template>
+              }
             </div>
           </div>
 
@@ -82,17 +82,18 @@
             <h3 class="title-cards"><i class="fa-solid fa-share-nodes"></i> Redes Sociales</h3>
             <hr />
             <div class="social-hub">
-              <a
-                *ngFor="let social of socialLinks"
-                [href]="social.url"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="social-btn"
-                [style.--social-color]="social.color"
-              >
-                <i [class]="'fa-brands ' + social.icon"></i>
-                <span>{{ social.name }}</span>
-              </a>
+              @for (social of socialLinks; track social) {
+                <a
+                  [href]="social.url"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="social-btn"
+                  [style.--social-color]="social.color"
+                  >
+                  <i [class]="'fa-brands ' + social.icon"></i>
+                  <span>{{ social.name }}</span>
+                </a>
+              }
             </div>
           </div>
         </div>
@@ -111,35 +112,37 @@
           </div>
           <hr />
           <div class="news-list">
-            <article class="news-card" *ngFor="let item of news" (click)="openNews(item)">
-              <div
-                class="news-card__img"
-                [style.background-image]="'url(' + item.image + ')'"
-              ></div>
-              <div class="news-card__content">
-                <div class="news-meta">
-                  <span class="news-date">
-                    <i class="fa-regular fa-calendar"></i> {{ item.date }}
-                  </span>
-                  <span class="news-tag" [class]="item.tag.toLowerCase()">{{ item.tag }}</span>
+            @for (item of news; track item) {
+              <article class="news-card" (click)="openNews(item)">
+                <div
+                  class="news-card__img"
+                  [style.background-image]="'url(' + item.image + ')'"
+                ></div>
+                <div class="news-card__content">
+                  <div class="news-meta">
+                    <span class="news-date">
+                      <i class="fa-regular fa-calendar"></i> {{ item.date }}
+                    </span>
+                    <span class="news-tag" [class]="item.tag.toLowerCase()">{{ item.tag }}</span>
+                  </div>
+                  <h4 class="news-title">{{ item.title }}</h4>
+                  <p class="news-lead">{{ item.lead }}</p>
+                  <div class="news-footer">
+                    <button
+                      class="news-like"
+                      type="button"
+                      (click)="likeNoticia(item, $event)"
+                      [disabled]="hasLiked(item.id)"
+                      title="Me gusta"
+                      >
+                      <i class="fa-solid fa-heart" [class.liked]="hasLiked(item.id)"></i>
+                      {{ item.megusta }}
+                    </button>
+                    <span class="news-link">Leer mÃ¡s <i class="fa-solid fa-arrow-right"></i></span>
+                  </div>
                 </div>
-                <h4 class="news-title">{{ item.title }}</h4>
-                <p class="news-lead">{{ item.lead }}</p>
-                <div class="news-footer">
-                  <button
-                    class="news-like"
-                    type="button"
-                    (click)="likeNoticia(item, $event)"
-                    [disabled]="hasLiked(item.id)"
-                    title="Me gusta"
-                  >
-                    <i class="fa-solid fa-heart" [class.liked]="hasLiked(item.id)"></i>
-                    {{ item.megusta }}
-                  </button>
-                  <span class="news-link">Leer mÃ¡s <i class="fa-solid fa-arrow-right"></i></span>
-                </div>
-              </div>
-            </article>
+              </article>
+            }
           </div>
         </div>
       </div>
@@ -175,178 +178,189 @@
                   class="spotlight-avatar"
                   src="imagenes/of-personaje-mes.jpeg"
                   alt="Foto personaje"
-                />
-                <div class="spotlight-person__info">
-                  <div class="spotlight-name">My. Yesid Alexander Ahumada Torres</div>
-                  <div class="spotlight-role">Coordinador de Turnos</div>
-                  <div class="spotlight-group">Grupo: Gestion Radios</div>
+                  />
+                  <div class="spotlight-person__info">
+                    <div class="spotlight-name">My. Yesid Alexander Ahumada Torres</div>
+                    <div class="spotlight-role">Coordinador de Turnos</div>
+                    <div class="spotlight-group">Grupo: Gestion Radios</div>
+                  </div>
+                </div>
+              </article>
+              <article class="spotlight-card">
+                <div class="spotlight-card__top">
+                  <span class="spotlight-tag">Mando Ejecutivo</span>
+                  <span class="spotlight-mini"> <i class="fa-solid fa-users"></i> Grupo: GUTIC </span>
+                </div>
+                <div class="spotlight-person">
+                  <img
+                    class="spotlight-avatar"
+                    src="imagenes/me-peronaje-mes.png"
+                    alt="Foto personaje"
+                    />
+                    <div class="spotlight-person__info">
+                      <div class="spotlight-name">Ij. Fabio Elias Munoz Saldana</div>
+                      <div class="spotlight-role">Analista de Calidad</div>
+                      <div class="spotlight-group">Grupo: Mejora Continua</div>
+                    </div>
+                  </div>
+                </article>
+                <article class="spotlight-card">
+                  <div class="spotlight-card__top">
+                    <span class="spotlight-tag">Patrullero</span>
+                    <span class="spotlight-mini">
+                      <i class="fa-solid fa-headset"></i> Grupo: Atencion
+                    </span>
+                  </div>
+                  <div class="spotlight-person">
+                    <img
+                      class="spotlight-avatar"
+                      src="imagenes/pt-personaje-mes.png"
+                      alt="Foto personaje"
+                      />
+                      <div class="spotlight-person__info">
+                        <div class="spotlight-name">Pt. Luis Rojas</div>
+                        <div class="spotlight-role">Soporte Operativo</div>
+                        <div class="spotlight-group">Grupo: Mesa de Ayuda</div>
+                      </div>
+                    </div>
+                  </article>
+                  <article class="spotlight-card">
+                    <div class="spotlight-card__top">
+                      <span class="spotlight-tag">No Uniformado</span>
+                      <span class="spotlight-mini">
+                        <i class="fa-solid fa-lightbulb"></i> Grupo: Desarrollo
+                      </span>
+                    </div>
+                    <div class="spotlight-person">
+                      <img class="spotlight-avatar" src="imagenes/policia.jpg" alt="Foto personaje" />
+                      <div class="spotlight-person__info">
+                        <div class="spotlight-name">Ing. Carlos Diaz</div>
+                        <div class="spotlight-role">Desarrollador Front</div>
+                        <div class="spotlight-group">Grupo: UI/UX</div>
+                      </div>
+                    </div>
+                  </article>
                 </div>
               </div>
-            </article>
-            <article class="spotlight-card">
-              <div class="spotlight-card__top">
-                <span class="spotlight-tag">Mando Ejecutivo</span>
-                <span class="spotlight-mini"> <i class="fa-solid fa-users"></i> Grupo: GUTIC </span>
-              </div>
-              <div class="spotlight-person">
-                <img
-                  class="spotlight-avatar"
-                  src="imagenes/me-peronaje-mes.png"
-                  alt="Foto personaje"
-                />
-                <div class="spotlight-person__info">
-                  <div class="spotlight-name">Ij. Fabio Elias Munoz Saldana</div>
-                  <div class="spotlight-role">Analista de Calidad</div>
-                  <div class="spotlight-group">Grupo: Mejora Continua</div>
-                </div>
-              </div>
-            </article>
-            <article class="spotlight-card">
-              <div class="spotlight-card__top">
-                <span class="spotlight-tag">Patrullero</span>
-                <span class="spotlight-mini">
-                  <i class="fa-solid fa-headset"></i> Grupo: Atencion
-                </span>
-              </div>
-              <div class="spotlight-person">
-                <img
-                  class="spotlight-avatar"
-                  src="imagenes/pt-personaje-mes.png"
-                  alt="Foto personaje"
-                />
-                <div class="spotlight-person__info">
-                  <div class="spotlight-name">Pt. Luis Rojas</div>
-                  <div class="spotlight-role">Soporte Operativo</div>
-                  <div class="spotlight-group">Grupo: Mesa de Ayuda</div>
-                </div>
-              </div>
-            </article>
-            <article class="spotlight-card">
-              <div class="spotlight-card__top">
-                <span class="spotlight-tag">No Uniformado</span>
-                <span class="spotlight-mini">
-                  <i class="fa-solid fa-lightbulb"></i> Grupo: Desarrollo
-                </span>
-              </div>
-              <div class="spotlight-person">
-                <img class="spotlight-avatar" src="imagenes/policia.jpg" alt="Foto personaje" />
-                <div class="spotlight-person__info">
-                  <div class="spotlight-name">Ing. Carlos Diaz</div>
-                  <div class="spotlight-role">Desarrollador Front</div>
-                  <div class="spotlight-group">Grupo: UI/UX</div>
-                </div>
-              </div>
-            </article>
-          </div>
-        </div>
-      </div>
+            </div>
 
-      <div class="card-view rounded-xl shadow-subtle">
-        <div class="card-head card-head--dark">
-          <div class="card-title">
-            <i class="fa-solid fa-user-group"></i>
-            <span>Linea de mando</span>
-          </div>
-        </div>
-        <div class="card-body">
-          <div class="cmd-row" *ngIf="lineaMando.length > 0; else emptyLineaMandoTpl">
-            <article class="cmd-item" *ngFor="let item of lineaMando">
-              <button
-                class="cmd-photo-btn"
-                type="button"
-                (click)="openLineaMandoLightbox(item)"
-                [attr.aria-label]="'Ampliar foto de ' + getLineaMandoNombre(item)"
+            <div class="card-view rounded-xl shadow-subtle">
+              <div class="card-head card-head--dark">
+                <div class="card-title">
+                  <i class="fa-solid fa-user-group"></i>
+                  <span>Linea de mando</span>
+                </div>
+              </div>
+              <div class="card-body">
+                @if (lineaMando.length > 0) {
+                  <div class="cmd-row">
+                    @for (item of lineaMando; track item) {
+                      <article class="cmd-item">
+                        <button
+                          class="cmd-photo-btn"
+                          type="button"
+                          (click)="openLineaMandoLightbox(item)"
+                          [attr.aria-label]="'Ampliar foto de ' + getLineaMandoNombre(item)"
+                          >
+                          <img
+                            class="cmd-photo-lg"
+                            [src]="getLineaMandoFotoUrl(item)"
+                            [alt]="getLineaMandoNombre(item)"
+                            />
+                          </button>
+                          <div class="cmd-grade">{{ item.grado || 'Sin grado' }}</div>
+                          <div class="cmd-name">{{ getLineaMandoNombre(item) || 'Sin nombre' }}</div>
+                          <div class="cmd-role">{{ getLineaMandoCargoDisplay(item) }}</div>
+                        </article>
+                      }
+                    </div>
+                  } @else {
+                    <div class="news-state">No hay registros activos en la linea de mando.</div>
+                  }
+                </div>
+              </div>
+            </section>
+          </section>
+        </main>
+
+        <!-- News Modal -->
+        @if (newsModalOpen) {
+          <div class="ui-modal" (click)="closeNews()">
+            <div
+              class="ui-modal__dialog ui-modal__dialog--news"
+              (click)="$event.stopPropagation()"
+              role="dialog"
+              aria-modal="true"
               >
-                <img
-                  class="cmd-photo-lg"
-                  [src]="getLineaMandoFotoUrl(item)"
-                  [alt]="getLineaMandoNombre(item)"
-                />
-              </button>
-              <div class="cmd-grade">{{ item.grado || 'Sin grado' }}</div>
-              <div class="cmd-name">{{ getLineaMandoNombre(item) || 'Sin nombre' }}</div>
-              <div class="cmd-role">{{ getLineaMandoCargoDisplay(item) }}</div>
-            </article>
+              <div class="ui-modal__head">
+                <div class="ui-modal__title">
+                  <i class="fa-solid fa-newspaper"></i>
+                  Noticia
+                </div>
+                <button class="ui-icon-btn" type="button" (click)="closeNews()" aria-label="Cerrar">
+                  <i class="fa-solid fa-xmark"></i>
+                </button>
+              </div>
+              <div class="ui-modal__body">
+                @if (selectedNews) {
+                  <div class="news-modal">
+                    <img class="news-modal__img" [src]="selectedNews.image" [alt]="selectedNews.title" />
+                    <div class="news-modal__meta">
+                      <span class="news-modal__date">
+                        <i class="fa-regular fa-calendar"></i> {{ selectedNews.date }}
+                      </span>
+                    </div>
+                    <h3 class="news-modal__title">{{ selectedNews.title }}</h3>
+                    <p class="news-modal__text">{{ selectedNews.content }}</p>
+                  </div>
+                }
+              </div>
+              <div class="ui-modal__foot">
+                <button class="ui-btn outline" type="button" (click)="closeNews()">Cerrar</button>
+              </div>
+            </div>
           </div>
-          <ng-template #emptyLineaMandoTpl>
-            <div class="news-state">No hay registros activos en la linea de mando.</div>
-          </ng-template>
-        </div>
-      </div>
-    </section>
-  </section>
-</main>
+        }
 
-<!-- News Modal -->
-<div class="ui-modal" *ngIf="newsModalOpen" (click)="closeNews()">
-  <div
-    class="ui-modal__dialog ui-modal__dialog--news"
-    (click)="$event.stopPropagation()"
-    role="dialog"
-    aria-modal="true"
-  >
-    <div class="ui-modal__head">
-      <div class="ui-modal__title">
-        <i class="fa-solid fa-newspaper"></i>
-        Noticia
-      </div>
-      <button class="ui-icon-btn" type="button" (click)="closeNews()" aria-label="Cerrar">
-        <i class="fa-solid fa-xmark"></i>
-      </button>
-    </div>
-    <div class="ui-modal__body">
-      <div class="news-modal" *ngIf="selectedNews">
-        <img class="news-modal__img" [src]="selectedNews.image" [alt]="selectedNews.title" />
-        <div class="news-modal__meta">
-          <span class="news-modal__date">
-            <i class="fa-regular fa-calendar"></i> {{ selectedNews.date }}
-          </span>
-        </div>
-        <h3 class="news-modal__title">{{ selectedNews.title }}</h3>
-        <p class="news-modal__text">{{ selectedNews.content }}</p>
-      </div>
-    </div>
-    <div class="ui-modal__foot">
-      <button class="ui-btn outline" type="button" (click)="closeNews()">Cerrar</button>
-    </div>
-  </div>
-</div>
-
-<!-- Linea Mando Lightbox -->
-<div class="ui-modal" *ngIf="lineaMandoLightboxOpen" (click)="closeLineaMandoLightbox()">
-  <div
-    class="ui-modal__dialog ui-modal__dialog--lightbox"
-    (click)="$event.stopPropagation()"
-    role="dialog"
-    aria-modal="true"
-  >
-    <div class="ui-modal__head">
-      <div class="ui-modal__title">
-        <i class="fa-solid fa-image"></i>
-        Linea de mando
-      </div>
-      <button
-        class="ui-icon-btn"
-        type="button"
-        (click)="closeLineaMandoLightbox()"
-        aria-label="Cerrar imagen"
-      >
-        <i class="fa-solid fa-xmark"></i>
-      </button>
-    </div>
-    <div class="ui-modal__body" *ngIf="lineaMandoLightboxItem as current">
-      <div class="cmd-lightbox">
-        <img
-          class="cmd-lightbox__img"
-          [src]="getLineaMandoFotoUrl(current)"
-          [alt]="getLineaMandoNombre(current)"
-        />
-        <div class="cmd-lightbox__meta">
-          <div class="cmd-lightbox__grade">{{ current.grado || 'Sin grado' }}</div>
-          <div class="cmd-lightbox__name">{{ getLineaMandoNombre(current) || 'Sin nombre' }}</div>
-          <div class="cmd-lightbox__role">{{ getLineaMandoCargoDisplay(current) }}</div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
+        <!-- Linea Mando Lightbox -->
+        @if (lineaMandoLightboxOpen) {
+          <div class="ui-modal" (click)="closeLineaMandoLightbox()">
+            <div
+              class="ui-modal__dialog ui-modal__dialog--lightbox"
+              (click)="$event.stopPropagation()"
+              role="dialog"
+              aria-modal="true"
+              >
+              <div class="ui-modal__head">
+                <div class="ui-modal__title">
+                  <i class="fa-solid fa-image"></i>
+                  Linea de mando
+                </div>
+                <button
+                  class="ui-icon-btn"
+                  type="button"
+                  (click)="closeLineaMandoLightbox()"
+                  aria-label="Cerrar imagen"
+                  >
+                  <i class="fa-solid fa-xmark"></i>
+                </button>
+              </div>
+              @if (lineaMandoLightboxItem; as current) {
+                <div class="ui-modal__body">
+                  <div class="cmd-lightbox">
+                    <img
+                      class="cmd-lightbox__img"
+                      [src]="getLineaMandoFotoUrl(current)"
+                      [alt]="getLineaMandoNombre(current)"
+                      />
+                      <div class="cmd-lightbox__meta">
+                        <div class="cmd-lightbox__grade">{{ current.grado || 'Sin grado' }}</div>
+                        <div class="cmd-lightbox__name">{{ getLineaMandoNombre(current) || 'Sin nombre' }}</div>
+                        <div class="cmd-lightbox__role">{{ getLineaMandoCargoDisplay(current) }}</div>
+                      </div>
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+          }

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Editor, Toolbar, schema, NgxEditorModule } from 'ngx-editor';
 import { ToastService } from '../../../../core/services/toast.service';
@@ -11,6 +11,7 @@ import { GestionCorreoService } from '../../services/gestion-correo.service';
   standalone: true,
   imports: [CommonModule, FormsModule, NgxEditorModule],
   templateUrl: './gestion-correos-electronicos-page.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./gestion-correos-electronicos-page.component.scss'],
 })
 export class GestionCorreosElectronicosPageComponent implements OnInit, OnDestroy {

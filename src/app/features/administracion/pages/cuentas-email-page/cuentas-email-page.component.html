@@ -6,8 +6,12 @@
         Administración de Cuentas SMTP
       </div>
       <div class="ui-panel__actions ui-window-controls">
-        <span class="ui-badge info" *ngIf="!editingId">Nueva Configuración</span>
-        <span class="ui-badge warning" *ngIf="editingId">Editando: {{ form.NombreCuenta }}</span>
+        @if (!editingId) {
+          <span class="ui-badge info">Nueva Configuración</span>
+        }
+        @if (editingId) {
+          <span class="ui-badge warning">Editando: {{ form.NombreCuenta }}</span>
+        }
       </div>
     </div>
 
@@ -22,7 +26,9 @@
               <label class="ui-label">Grupo Dueño (Organigrama COEST) *</label>
               <select class="ui-control" [(ngModel)]="form.IdDominioGrupo">
                 <option [ngValue]="0">-- Seleccione el grupo --</option>
-                <option *ngFor="let g of gruposCOEST" [ngValue]="g.idDominio">{{ g.descripcion }}</option>
+                @for (g of gruposCOEST; track g) {
+                  <option [ngValue]="g.idDominio">{{ g.descripcion }}</option>
+                }
               </select>
             </div>
 
@@ -52,22 +58,22 @@
             <div class="ui-field ui-col-12">
               <label class="ui-label">Imagen de Encabezado del Correo</label>
               <div class="encabezado-upload-area">
-                <ng-container *ngIf="!imagenEncabezadoPreview">
+                @if (!imagenEncabezadoPreview) {
                   <label class="encabezado-upload-btn" [class.loading]="subiendoImagenEncabezado">
                     <input type="file" accept=".jpg,.jpeg,.png,.webp" (change)="onChangeImagenEncabezado($event)" style="display:none">
                     <i class="fa-solid" [class.fa-image]="!subiendoImagenEncabezado" [class.fa-spinner]="subiendoImagenEncabezado" [class.fa-spin]="subiendoImagenEncabezado"></i>
                     {{ subiendoImagenEncabezado ? 'Subiendo...' : 'Seleccionar imagen' }}
                   </label>
                   <span class="encabezado-hint">JPG, PNG o WEBP · máx. 3 MB · Se mostrará en la parte superior de cada correo enviado.</span>
-                </ng-container>
-                <ng-container *ngIf="imagenEncabezadoPreview">
+                }
+                @if (imagenEncabezadoPreview) {
                   <div class="encabezado-preview">
                     <img [src]="imagenEncabezadoPreview" alt="Encabezado" />
                     <button class="ui-btn icon-only danger" type="button" title="Quitar imagen" (click)="quitarImagenEncabezado()">
                       <i class="fa-solid fa-trash"></i>
                     </button>
                   </div>
-                </ng-container>
+                }
               </div>
             </div>
           </div>
@@ -85,164 +91,185 @@
         <article class="tab-card list-card">
           <h3>Cuentas Configuradas</h3>
 
-          <div class="list-loading" *ngIf="loading">Cargando cuentas...</div>
+          @if (loading) {
+            <div class="list-loading">Cargando cuentas...</div>
+          }
 
-          <div class="ui-table-wrap" *ngIf="!loading">
-            <table class="ui-table">
-              <thead>
-                <tr>
-                  <th>Grupo</th>
-                  <th>Nombre Cuenta</th>
-                  <th>Email</th>
-                  <th>Servidor</th>
-                  <th>Estado</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr *ngFor="let item of listaCuentas">
-                  <td><strong>{{ getNombreGrupo(item.idDominioGrupo) }}</strong></td>
-                  <td>{{ item.nombreCuenta }}</td>
-                  <td>{{ item.email }}</td>
-                  <td>{{ item.servidorSmtp }}:{{ item.puerto }}</td>
-                  <td>
-                    <span class="ui-badge" [class.success]="item.vigente === 1" [class.neutral]="item.vigente === 0">
-                      {{ item.vigente === 1 ? 'Activa' : 'Inactiva' }}
-                    </span>
-                  </td>
-                  <td>
-                    <div class="ui-table-actions">
-                      <button class="ui-btn-icon" title="Autorizaciones" (click)="abrirAutorizaciones(item)">
-                        <i class="fa-solid fa-user-shield"></i>
-                      </button>
-                      <button class="ui-btn-icon" title="Editar" (click)="editar(item)">
-                        <i class="fa-solid fa-pen-to-square"></i>
-                      </button>
-                      <button class="ui-btn-icon danger" title="Eliminar" (click)="eliminar(item)">
-                        <i class="fa-solid fa-trash"></i>
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-                <tr *ngIf="listaCuentas.length === 0">
-                  <td colspan="6" class="text-center">No hay cuentas SMTP registradas.</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+          @if (!loading) {
+            <div class="ui-table-wrap">
+              <table class="ui-table">
+                <thead>
+                  <tr>
+                    <th>Grupo</th>
+                    <th>Nombre Cuenta</th>
+                    <th>Email</th>
+                    <th>Servidor</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (item of listaCuentas; track item) {
+                    <tr>
+                      <td><strong>{{ getNombreGrupo(item.idDominioGrupo) }}</strong></td>
+                      <td>{{ item.nombreCuenta }}</td>
+                      <td>{{ item.email }}</td>
+                      <td>{{ item.servidorSmtp }}:{{ item.puerto }}</td>
+                      <td>
+                        <span class="ui-badge" [class.success]="item.vigente === 1" [class.neutral]="item.vigente === 0">
+                          {{ item.vigente === 1 ? 'Activa' : 'Inactiva' }}
+                        </span>
+                      </td>
+                      <td>
+                        <div class="ui-table-actions">
+                          <button class="ui-btn-icon" title="Autorizaciones" (click)="abrirAutorizaciones(item)">
+                            <i class="fa-solid fa-user-shield"></i>
+                          </button>
+                          <button class="ui-btn-icon" title="Editar" (click)="editar(item)">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                          </button>
+                          <button class="ui-btn-icon danger" title="Eliminar" (click)="eliminar(item)">
+                            <i class="fa-solid fa-trash"></i>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  }
+                  @if (listaCuentas.length === 0) {
+                    <tr>
+                      <td colspan="6" class="text-center">No hay cuentas SMTP registradas.</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
         </article>
       </div>
 
-      <article class="tab-card mt-3" *ngIf="cuentaSeleccionadaAutorizacion">
-        <div class="roles-head cuentas-head">
-          <h3>Usuarios autorizados - {{ cuentaSeleccionadaAutorizacion.nombreCuenta }}</h3>
-          <button class="ui-btn secondary" type="button" (click)="cerrarAutorizaciones()">Cerrar</button>
-        </div>
-
-        <div class="ui-grid">
-          <div class="ui-field ui-col-12">
-            <label class="ui-label search-label">Buscar usuario (username, identificación o nombre)</label>
-            <div class="search-input-wrap">
-              <input
-                class="ui-control search-input"
-                type="text"
-                [(ngModel)]="buscadorUsuarios"
-                (keyup.enter)="buscarUsuarios()"
-                placeholder="Ej: jlopez o 12345678"
-              >
-              <button
-                class="search-icon-btn"
-                type="button"
-                title="Buscar"
-                (click)="buscarUsuarios()"
-                [disabled]="loadingBusquedaUsuarios || savingAutorizacion">
-                <i class="fa-solid" [class.fa-spinner]="loadingBusquedaUsuarios" [class.fa-spin]="loadingBusquedaUsuarios" [class.fa-magnifying-glass]="!loadingBusquedaUsuarios"></i>
-              </button>
-            </div>
+      @if (cuentaSeleccionadaAutorizacion) {
+        <article class="tab-card mt-3">
+          <div class="roles-head cuentas-head">
+            <h3>Usuarios autorizados - {{ cuentaSeleccionadaAutorizacion.nombreCuenta }}</h3>
+            <button class="ui-btn secondary" type="button" (click)="cerrarAutorizaciones()">Cerrar</button>
           </div>
-        </div>
-
-        <div class="ui-table-wrap" *ngIf="resultadosUsuarios.length > 0">
-          <table class="ui-table">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Usuario</th>
-                <th>Identificación</th>
-                <th>Nombre</th>
-                <th>Rol</th>
-                <th>Acción</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let u of resultadosUsuarios">
-                <td>{{ u.idUsuario }}</td>
-                <td>{{ u.username }}</td>
-                <td>{{ u.identificacion }}</td>
-                <td>{{ u.nombreCompleto }}</td>
-                <td>{{ u.rol }}</td>
-                <td>
-                  <button class="ui-btn-icon" title="Autorizar" (click)="agregarAutorizado(u)" [disabled]="savingAutorizacion">
-                    <i class="fa-solid fa-user-plus"></i>
+          <div class="ui-grid">
+            <div class="ui-field ui-col-12">
+              <label class="ui-label search-label">Buscar usuario (username, identificación o nombre)</label>
+              <div class="search-input-wrap">
+                <input
+                  class="ui-control search-input"
+                  type="text"
+                  [(ngModel)]="buscadorUsuarios"
+                  (keyup.enter)="buscarUsuarios()"
+                  placeholder="Ej: jlopez o 12345678"
+                  >
+                  <button
+                    class="search-icon-btn"
+                    type="button"
+                    title="Buscar"
+                    (click)="buscarUsuarios()"
+                    [disabled]="loadingBusquedaUsuarios || savingAutorizacion">
+                    <i class="fa-solid" [class.fa-spinner]="loadingBusquedaUsuarios" [class.fa-spin]="loadingBusquedaUsuarios" [class.fa-magnifying-glass]="!loadingBusquedaUsuarios"></i>
                   </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+                </div>
+              </div>
+            </div>
+            @if (resultadosUsuarios.length > 0) {
+              <div class="ui-table-wrap">
+                <table class="ui-table">
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>Usuario</th>
+                      <th>Identificación</th>
+                      <th>Nombre</th>
+                      <th>Rol</th>
+                      <th>Acción</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (u of resultadosUsuarios; track u) {
+                      <tr>
+                        <td>{{ u.idUsuario }}</td>
+                        <td>{{ u.username }}</td>
+                        <td>{{ u.identificacion }}</td>
+                        <td>{{ u.nombreCompleto }}</td>
+                        <td>{{ u.rol }}</td>
+                        <td>
+                          <button class="ui-btn-icon" title="Autorizar" (click)="agregarAutorizado(u)" [disabled]="savingAutorizacion">
+                            <i class="fa-solid fa-user-plus"></i>
+                          </button>
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            }
+            <h4 class="mt-3">Autorizados actuales</h4>
+            @if (loadingAutorizados) {
+              <div class="list-loading">Cargando autorizados...</div>
+            }
+            @if (!loadingAutorizados) {
+              <div class="ui-table-wrap">
+                <table class="ui-table">
+                  <thead>
+                    <tr>
+                      <th>Usuario</th>
+                      <th>Identificación</th>
+                      <th>Nombre</th>
+                      <th>Estado</th>
+                      <th>Acción</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (a of listaAutorizados; track a) {
+                      <tr>
+                        <td>{{ a.usuarioLogin }}</td>
+                        <td>{{ a.identificacion }}</td>
+                        <td>{{ a.nombreCompleto }}</td>
+                        <td>
+                          <span class="ui-badge success">Activo</span>
+                        </td>
+                        <td>
+                          <button class="ui-btn-icon danger" title="Quitar" (click)="solicitarQuitarAutorizado(a)" [disabled]="savingAutorizacion">
+                            <i class="fa-solid fa-user-minus"></i>
+                          </button>
+                        </td>
+                      </tr>
+                    }
+                    @if (listaAutorizados.length === 0) {
+                      <tr>
+                        <td colspan="5" class="text-center">No hay usuarios autorizados para esta cuenta.</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            }
+          </article>
+        }
+      </div>
+    </div>
+  </section>
 
-        <h4 class="mt-3">Autorizados actuales</h4>
-        <div class="list-loading" *ngIf="loadingAutorizados">Cargando autorizados...</div>
-        <div class="ui-table-wrap" *ngIf="!loadingAutorizados">
-          <table class="ui-table">
-            <thead>
-              <tr>
-                <th>Usuario</th>
-                <th>Identificación</th>
-                <th>Nombre</th>
-                <th>Estado</th>
-                <th>Acción</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let a of listaAutorizados">
-                <td>{{ a.usuarioLogin }}</td>
-                <td>{{ a.identificacion }}</td>
-                <td>{{ a.nombreCompleto }}</td>
-                <td>
-                  <span class="ui-badge success">Activo</span>
-                </td>
-                <td>
-                  <button class="ui-btn-icon danger" title="Quitar" (click)="solicitarQuitarAutorizado(a)" [disabled]="savingAutorizacion">
-                    <i class="fa-solid fa-user-minus"></i>
-                  </button>
-                </td>
-              </tr>
-              <tr *ngIf="listaAutorizados.length === 0">
-                <td colspan="5" class="text-center">No hay usuarios autorizados para esta cuenta.</td>
-              </tr>
-            </tbody>
-          </table>
+  @if (autorizadoPendienteEliminar) {
+    <div class="ui-alert">
+      <div class="ui-alert__dialog">
+        <div class="ui-alert__icon warning">
+          <i class="fa-solid fa-triangle-exclamation"></i>
         </div>
-      </article>
+        <h3 class="ui-alert__title">¿Quitar autorización?</h3>
+        <p class="ui-alert__text">
+          Se quitará el acceso de <strong>{{ autorizadoPendienteEliminar.usuarioLogin }}</strong> a esta cuenta de correo.
+        </p>
+        <div class="ui-alert__foot warning">
+          <button class="ui-btn secondary" type="button" (click)="cancelarQuitarAutorizado()" [disabled]="savingAutorizacion">Cancelar</button>
+          <button class="ui-btn danger" type="button" (click)="confirmarQuitarAutorizado()" [disabled]="savingAutorizacion">
+            {{ savingAutorizacion ? 'Procesando...' : 'Sí, quitar autorización' }}
+          </button>
+        </div>
+      </div>
     </div>
-  </div>
-</section>
-
-<div class="ui-alert" *ngIf="autorizadoPendienteEliminar">
-  <div class="ui-alert__dialog">
-    <div class="ui-alert__icon warning">
-      <i class="fa-solid fa-triangle-exclamation"></i>
-    </div>
-    <h3 class="ui-alert__title">¿Quitar autorización?</h3>
-    <p class="ui-alert__text">
-      Se quitará el acceso de <strong>{{ autorizadoPendienteEliminar.usuarioLogin }}</strong> a esta cuenta de correo.
-    </p>
-    <div class="ui-alert__foot warning">
-      <button class="ui-btn secondary" type="button" (click)="cancelarQuitarAutorizado()" [disabled]="savingAutorizacion">Cancelar</button>
-      <button class="ui-btn danger" type="button" (click)="confirmarQuitarAutorizado()" [disabled]="savingAutorizacion">
-        {{ savingAutorizacion ? 'Procesando...' : 'Sí, quitar autorización' }}
-      </button>
-    </div>
-  </div>
-</div>
+  }

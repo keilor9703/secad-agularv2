@@ -1,5 +1,5 @@
-import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, inject } from '@angular/core';
+
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, inject, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { UiButtonComponent } from '../../../../../shared/components/ui-button/ui-button.component';
@@ -10,8 +10,9 @@ import { UsuarioListadoItem } from '../../../services/usuario-admin.service';
 @Component({
   selector: 'app-usuario-delete-modal',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, UiButtonComponent, UiInputComponent, UiModalComponent],
+  imports: [ReactiveFormsModule, UiButtonComponent, UiInputComponent, UiModalComponent],
   templateUrl: './usuario-delete-modal.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./usuario-delete-modal.component.scss'],
 })
 export class UsuarioDeleteModalComponent implements OnChanges {

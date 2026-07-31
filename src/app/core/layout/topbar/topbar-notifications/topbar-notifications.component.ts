@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, HostListener, OnInit } from '@angular/core';
+import { Component, HostListener, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { environment } from '../../../../../environments/environment';
 import { HeaderNotification } from '../../../interfaces/topbar.interface';
 import { DtoEvento, EventoService } from '../../../services/evento.service';
@@ -9,6 +9,7 @@ import { DtoEvento, EventoService } from '../../../services/evento.service';
   standalone: true,
   imports: [CommonModule],
   templateUrl: './topbar-notifications.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './topbar-notifications.component.scss',
 })
 export class TopbarNotificationsComponent implements OnInit {

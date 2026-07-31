@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+
 import {
   Component,
   EventEmitter,
@@ -7,6 +7,7 @@ import {
   Output,
   SimpleChanges,
   inject,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import { AbstractControl, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { UiButtonComponent } from '../../../../../shared/components/ui-button/ui-button.component';
@@ -29,16 +30,16 @@ import { DtoRolCatalogo } from '../../../services/usuario-admin.service';
   selector: 'app-usuario-form',
   standalone: true,
   imports: [
-    CommonModule,
     ReactiveFormsModule,
     UiButtonComponent,
     UiInputComponent,
     UiSearchInputComponent,
     UiTabComponent,
     UiTabsComponent,
-    UsuarioRolesPanelComponent,
-  ],
+    UsuarioRolesPanelComponent
+],
   templateUrl: './usuario-form.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./usuario-form.component.scss'],
 })
 export class UsuarioFormComponent implements OnChanges {

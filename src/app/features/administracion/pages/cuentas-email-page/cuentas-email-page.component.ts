@@ -1,5 +1,5 @@
-import { Component, HostListener, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, HostListener, OnInit, ChangeDetectionStrategy } from '@angular/core';
+
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { ToastService } from '../../../../core/services/toast.service';
@@ -17,8 +17,9 @@ interface DominioApiItem extends Partial<DtoDominio> {
 @Component({
   selector: 'app-cuentas-email',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [FormsModule, RouterModule],
   templateUrl: './cuentas-email-page.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./cuentas-email-page.component.scss']
 })
 export class CuentasEmailPageComponent implements OnInit {

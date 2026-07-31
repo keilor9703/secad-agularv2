@@ -1,5 +1,5 @@
-﻿import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+﻿import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
+
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { ToastService } from '../../../../core/services/toast.service';
@@ -14,8 +14,9 @@ interface CargoOpcion {
 @Component({
   selector: 'app-linea-mando',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [FormsModule, RouterModule],
   templateUrl: './linea-mando-page.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./linea-mando-page.component.scss']
 })
 export class LineaMandoPageComponent implements OnInit {

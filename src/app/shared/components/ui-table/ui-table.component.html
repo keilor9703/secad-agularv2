@@ -140,11 +140,11 @@
                   <tr
                     [style.--ui-table-row-text-color-light]="appearance?.textColor || null"
                     [style.--ui-table-row-text-color-dark]="appearance?.darkTextColor || null"
-                    [style.--ui-table-row-font-size]="resolveCssSize(appearance?.fontSize)"
-                    [style.--ui-table-row-font-weight]="resolveFontWeight(appearance?.fontWeight)"
-                    [style.--ui-table-current-row-height]="resolveCssSize(appearance?.height)"
+                    [style.--ui-table-row-font-size]="resolveCssSize($safeNavigationMigration(appearance?.fontSize))"
+                    [style.--ui-table-row-font-weight]="resolveFontWeight($safeNavigationMigration(appearance?.fontWeight))"
+                    [style.--ui-table-current-row-height]="resolveCssSize($safeNavigationMigration(appearance?.height))"
                     [style.--ui-table-current-row-padding-block]="
-                      resolveCssSize(appearance?.paddingBlock)
+                      resolveCssSize($safeNavigationMigration(appearance?.paddingBlock))
                     "
                   >
                     @if (actionsAtStart()) {

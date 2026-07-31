@@ -1,5 +1,5 @@
-import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+
+import { Component, OnDestroy, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { Router } from '@angular/router';
 
 import { AuthService } from '../../../../core/auth/auth.service';
@@ -26,12 +26,12 @@ import {
   selector: 'app-usuarios',
   standalone: true,
   imports: [
-    CommonModule,
     UsuarioDeleteModalComponent,
     UsuarioFormComponent,
-    UsuariosTableComponent,
-  ],
+    UsuariosTableComponent
+],
   templateUrl: './usuarios-page.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./usuarios-page.component.scss'],
 })
 export class UsuariosPageComponent implements OnInit, OnDestroy {

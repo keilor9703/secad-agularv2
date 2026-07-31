@@ -10,6 +10,7 @@ import {
   input,
   OnDestroy,
   signal,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
@@ -32,6 +33,7 @@ type UiSelectPanelPlacement = 'above' | 'below';
   ],
   templateUrl: './ui-select.component.html',
   styleUrls: ['./ui-select.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -202,7 +204,7 @@ export class UiSelectComponent<T = string | number | boolean | null>
     return Object.is(option.value, this.value);
   }
 
-  trackOption(index: number): number {
+  trackOption(index: number, _option: UiSelectOption<T>): number {
     return index;
   }
 

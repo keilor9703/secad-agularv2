@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+
 import {
   booleanAttribute,
   Component,
@@ -8,6 +8,7 @@ import {
   input,
   numberAttribute,
   Output,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
@@ -18,7 +19,7 @@ let nextUiInputId = 0;
 @Component({
   selector: 'app-ui-input',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   hostDirectives: [
     {
       directive: UiFormControlSizeDirective,
@@ -27,6 +28,7 @@ let nextUiInputId = 0;
   ],
   templateUrl: './ui-input.component.html',
   styleUrls: ['./ui-input.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,

@@ -1,5 +1,5 @@
-import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
+
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { DbMenuItem, MenuService, RoleMenuItem } from '../../../../core/services/menu.service';
@@ -30,8 +30,9 @@ interface RolMenuForm {
 @Component({
   selector: 'app-roles-admin',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, UiButtonComponent, UiInputComponent, UiSelectComponent],
+  imports: [ReactiveFormsModule, UiButtonComponent, UiInputComponent, UiSelectComponent],
   templateUrl: './roles-admin-page.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./roles-admin-page.component.scss']
 })
 export class RolesAdminPageComponent implements OnInit {

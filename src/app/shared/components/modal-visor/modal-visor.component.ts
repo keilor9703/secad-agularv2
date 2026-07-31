@@ -1,5 +1,5 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
+
 import { NavigationEnd, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
@@ -10,8 +10,9 @@ import { SafeUrlPipe } from '../../pipes/safe-url.pipe';
 @Component({
   selector: 'app-modal-visor',
   standalone: true,
-  imports: [CommonModule, SafeUrlPipe],
+  imports: [SafeUrlPipe],
   templateUrl: './modal-visor.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./modal-visor.component.scss'],
 })
 export class ModalVisorComponent implements OnInit, OnDestroy {

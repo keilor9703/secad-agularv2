@@ -1,13 +1,14 @@
-import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { AdminSite } from '../../interfaces/admin-site.interface';
 
 @Component({
   selector: 'app-administracion-inicio',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [RouterModule],
   templateUrl: './administracion-inicio-page.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./administracion-inicio-page.component.scss']
 })
 export class AdministracionInicioPageComponent {

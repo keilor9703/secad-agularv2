@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+
 import {
   booleanAttribute,
   Component,
@@ -9,6 +9,7 @@ import {
   input,
   numberAttribute,
   Output,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
@@ -25,7 +26,7 @@ export type UiSearchButtonLayout = 'attached' | 'detached';
 @Component({
   selector: 'app-ui-search-input',
   standalone: true,
-  imports: [CommonModule, UiButtonComponent],
+  imports: [UiButtonComponent],
   hostDirectives: [
     {
       directive: UiFormControlSizeDirective,
@@ -34,6 +35,7 @@ export type UiSearchButtonLayout = 'attached' | 'detached';
   ],
   templateUrl: './ui-search-input.component.html',
   styleUrls: ['./ui-search-input.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,

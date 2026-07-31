@@ -1,5 +1,5 @@
-import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, Output, signal } from '@angular/core';
+
+import { Component, EventEmitter, Input, Output, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormGroup, ReactiveFormsModule } from '@angular/forms';
 
 import { UiButtonComponent } from '../../../../../shared/components/ui-button/ui-button.component';
@@ -25,15 +25,15 @@ import { DtoRolCatalogo } from '../../../services/usuario-admin.service';
   selector: 'app-usuario-roles-panel',
   standalone: true,
   imports: [
-    CommonModule,
     ReactiveFormsModule,
     UiButtonComponent,
     UiInputComponent,
     UiModalComponent,
     UiSelectComponent,
-    UiTableComponent,
-  ],
+    UiTableComponent
+],
   templateUrl: './usuario-roles-panel.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./usuario-roles-panel.component.scss'],
 })
 export class UsuarioRolesPanelComponent {

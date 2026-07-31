@@ -1,6 +1,6 @@
-import { CommonModule } from '@angular/common';
+
 import { HttpClient } from '@angular/common/http';
-import { Component, HostListener, OnInit, computed, inject } from '@angular/core';
+import { Component, HostListener, OnInit, computed, inject, ChangeDetectionStrategy } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { Router, RouterModule } from '@angular/router';
 import { environment } from '../../../../../environments/environment';
@@ -12,8 +12,9 @@ import { BrandingService } from '../../../services/branding.service';
 @Component({
   selector: 'app-topbar-user-menu',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [RouterModule],
   templateUrl: './topbar-user-menu.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './topbar-user-menu.component.scss',
 })
 export class TopbarUserMenuComponent implements OnInit {

@@ -1,5 +1,5 @@
 import { BreakpointObserver } from '@angular/cdk/layout';
-import { CommonModule } from '@angular/common';
+
 import {
   ChangeDetectorRef,
   Component,
@@ -7,6 +7,7 @@ import {
   inject,
   OnDestroy,
   OnInit,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
@@ -30,14 +31,14 @@ import { HomeService, HomeStats } from '../../services/home.service';
   selector: 'app-home',
   standalone: true,
   imports: [
-    CommonModule,
     SafeUrlPipe,
     RouterLink,
     RadioPlayerComponent,
     HomeBannerSliderComponent,
-    HomeStatsComponent,
-  ],
+    HomeStatsComponent
+],
   templateUrl: './home-page.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./home-page.component.scss'],
 })
 export class HomePageComponent implements OnInit, OnDestroy {

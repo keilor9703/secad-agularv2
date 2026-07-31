@@ -8,7 +8,7 @@
     [attr.aria-label]="isDarkMode() ? 'Activar modo claro' : 'Activar modo oscuro'"
     [title]="isDarkMode() ? 'Activar modo claro' : 'Activar modo oscuro'"
     (click)="toggleTheme($event)"
-  >
+    >
     <span class="mobile-theme-toggle__disc" aria-hidden="true">
       <i [class]="isDarkMode() ? 'fa-solid fa-sun' : 'fa-solid fa-moon'"></i>
     </span>
@@ -22,112 +22,120 @@
     [attr.aria-busy]="profileSummaryLoading"
     aria-haspopup="menu"
     (click)="toggleDropdown($event)"
-  >
-    <span class="user-avatar" *ngIf="hasProfileSummary; else avatarSkeletonTpl">
-      <img
-        *ngIf="userPhotoUrl; else userIconTpl"
-        [src]="userPhotoUrl"
-        alt=""
-        class="user-avatar-img"
-      />
-      <ng-template #userIconTpl>
-        <i class="fa-solid fa-user" aria-hidden="true"></i>
-      </ng-template>
-    </span>
-    <ng-template #avatarSkeletonTpl>
-      <span class="user-avatar user-avatar--skeleton" aria-hidden="true"></span>
-    </ng-template>
-
-    <span class="user-details" *ngIf="hasProfileSummary; else summarySkeletonTpl">
-      <span class="user-name">{{ userName }}</span>
-      <span class="user-role" [class.user-role--scroll]="shouldScrollUserRole">
-        <span class="user-role__track" *ngIf="shouldScrollUserRole; else fixedRoleTpl">
-          <span>{{ userRole }}</span>
-          <span aria-hidden="true">{{ userRole }}</span>
-        </span>
-        <ng-template #fixedRoleTpl>
-          <span class="user-role__text">{{ userRole }}</span>
-        </ng-template>
+    >
+    @if (hasProfileSummary) {
+      <span class="user-avatar">
+        @if (userPhotoUrl) {
+          <img
+            [src]="userPhotoUrl"
+            alt=""
+            class="user-avatar-img"
+            />
+        } @else {
+          <i class="fa-solid fa-user" aria-hidden="true"></i>
+        }
       </span>
-    </span>
-    <ng-template #summarySkeletonTpl>
+    } @else {
+      <span class="user-avatar user-avatar--skeleton" aria-hidden="true"></span>
+    }
+
+    @if (hasProfileSummary) {
+      <span class="user-details">
+        <span class="user-name">{{ userName }}</span>
+        <span class="user-role" [class.user-role--scroll]="shouldScrollUserRole">
+          @if (shouldScrollUserRole) {
+            <span class="user-role__track">
+              <span>{{ userRole }}</span>
+              <span aria-hidden="true">{{ userRole }}</span>
+            </span>
+          } @else {
+            <span class="user-role__text">{{ userRole }}</span>
+          }
+        </span>
+      </span>
+    } @else {
       <span class="user-details user-details--skeleton" aria-hidden="true">
         <span class="profile-skeleton profile-skeleton--name"></span>
         <span class="profile-skeleton profile-skeleton--role"></span>
       </span>
-    </ng-template>
+    }
 
     <i class="fa-solid fa-chevron-down profile-chevron" aria-hidden="true"></i>
   </button>
 
-  <div class="user-dropdown" *ngIf="dropdownOpen" role="menu">
-    <button type="button" class="dropdown-item" role="menuitem" (click)="openProfileModal()">
-      <i class="fa-solid fa-user-circle" aria-hidden="true"></i>
-      Mi Perfil
-    </button>
-    <a
-      routerLink="/administracion"
-      class="dropdown-item"
-      role="menuitem"
-      (click)="dropdownOpen = false"
-    >
-      <i class="fa-solid fa-cog" aria-hidden="true"></i>
-      Configuración
-    </a>
-    <span class="dropdown-divider" aria-hidden="true"></span>
-    <button type="button" class="dropdown-item logout" role="menuitem" (click)="onLogout()">
-      <i class="fa-solid fa-sign-out-alt" aria-hidden="true"></i>
-      Cerrar Sesión
-    </button>
-  </div>
-</div>
-
-<div class="profile-modal-backdrop" *ngIf="profileModalOpen" (click)="closeProfileModal()">
-  <section class="profile-modal" (click)="$event.stopPropagation()" role="dialog" aria-modal="true">
-    <header class="profile-modal__head">
-      <h3>Mi Perfil</h3>
-      <button type="button" class="close-btn" (click)="closeProfileModal()" aria-label="Cerrar">
-        <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+  @if (dropdownOpen) {
+    <div class="user-dropdown" role="menu">
+      <button type="button" class="dropdown-item" role="menuitem" (click)="openProfileModal()">
+        <i class="fa-solid fa-user-circle" aria-hidden="true"></i>
+        Mi Perfil
       </button>
-    </header>
-
-    <div class="profile-modal__body" *ngIf="!profileLoading; else loadingTpl">
-      <div class="profile-photo">
-        <img *ngIf="userPhotoUrl; else profileIconTpl" [src]="userPhotoUrl" alt="Foto de perfil" />
-        <ng-template #profileIconTpl>
-          <i class="fa-solid fa-user" aria-hidden="true"></i>
-        </ng-template>
-      </div>
-
-      <dl class="profile-fields">
-        <div>
-          <dt>Grado</dt>
-          <dd>{{ perfilGrado || 'Sin información' }}</dd>
-        </div>
-        <div>
-          <dt>Funcionario</dt>
-          <dd>{{ perfil?.nombreCompleto || userName }}</dd>
-        </div>
-        <div>
-          <dt>Cargo</dt>
-          <dd>{{ perfil?.cargo || 'Sin información' }}</dd>
-        </div>
-        <div>
-          <dt>Situación laboral</dt>
-          <dd>{{ perfil?.situacionLaboral || 'Sin información' }}</dd>
-        </div>
-        <div>
-          <dt>Tiempo servicio</dt>
-          <dd>{{ perfil?.tiempoServicio || 'Sin información' }}</dd>
-        </div>
-      </dl>
+      <a
+        routerLink="/administracion"
+        class="dropdown-item"
+        role="menuitem"
+        (click)="dropdownOpen = false"
+        >
+        <i class="fa-solid fa-cog" aria-hidden="true"></i>
+        Configuración
+      </a>
+      <span class="dropdown-divider" aria-hidden="true"></span>
+      <button type="button" class="dropdown-item logout" role="menuitem" (click)="onLogout()">
+        <i class="fa-solid fa-sign-out-alt" aria-hidden="true"></i>
+        Cerrar Sesión
+      </button>
     </div>
-
-    <ng-template #loadingTpl>
-      <div class="profile-modal__loading" aria-hidden="true">
-        <span class="profile-modal__photo-skeleton"></span>
-        <span class="profile-modal__field-skeleton" *ngFor="let item of [1, 2, 3, 4, 5]"></span>
-      </div>
-    </ng-template>
-  </section>
+  }
 </div>
+
+@if (profileModalOpen) {
+  <div class="profile-modal-backdrop" (click)="closeProfileModal()">
+    <section class="profile-modal" (click)="$event.stopPropagation()" role="dialog" aria-modal="true">
+      <header class="profile-modal__head">
+        <h3>Mi Perfil</h3>
+        <button type="button" class="close-btn" (click)="closeProfileModal()" aria-label="Cerrar">
+          <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+        </button>
+      </header>
+      @if (!profileLoading) {
+        <div class="profile-modal__body">
+          <div class="profile-photo">
+            @if (userPhotoUrl) {
+              <img [src]="userPhotoUrl" alt="Foto de perfil" />
+            } @else {
+              <i class="fa-solid fa-user" aria-hidden="true"></i>
+            }
+          </div>
+          <dl class="profile-fields">
+            <div>
+              <dt>Grado</dt>
+              <dd>{{ perfilGrado || 'Sin información' }}</dd>
+            </div>
+            <div>
+              <dt>Funcionario</dt>
+              <dd>{{ perfil?.nombreCompleto || userName }}</dd>
+            </div>
+            <div>
+              <dt>Cargo</dt>
+              <dd>{{ perfil?.cargo || 'Sin información' }}</dd>
+            </div>
+            <div>
+              <dt>Situación laboral</dt>
+              <dd>{{ perfil?.situacionLaboral || 'Sin información' }}</dd>
+            </div>
+            <div>
+              <dt>Tiempo servicio</dt>
+              <dd>{{ perfil?.tiempoServicio || 'Sin información' }}</dd>
+            </div>
+          </dl>
+        </div>
+      } @else {
+        <div class="profile-modal__loading" aria-hidden="true">
+          <span class="profile-modal__photo-skeleton"></span>
+          @for (item of [1, 2, 3, 4, 5]; track item) {
+            <span class="profile-modal__field-skeleton"></span>
+          }
+        </div>
+      }
+    </section>
+  </div>
+}

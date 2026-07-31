@@ -1,38 +1,41 @@
-<div class="mv-overlay" *ngIf="visible && modal" (click)="cerrar()">
-  <div class="mv-panel" (click)="$event.stopPropagation()">
-
-    <button class="mv-close" type="button" (click)="cerrar()" aria-label="Cerrar">
-      <i class="fa-solid fa-xmark"></i>
-    </button>
-
-
-    <!-- Recurso: imagen -->
-    <div class="mv-recurso" *ngIf="esImagen">
-      <img [src]="resourceUrl" [alt]="modal!.titulo">
-    </div>
-
-    <!-- Recurso: video -->
-    <div class="mv-recurso" *ngIf="esVideo">
-      <video controls muted preload="auto" (error)="onVideoError($event)">
-        <source [src]="resourceUrl | safeUrl" [type]="videoMimeType">
-      </video>
-    </div>
-
-    <!-- Contenido -->
-    <div class="mv-body">
-      <!--<h2 class="mv-titulo">{{ modal!.titulo }}</h2> -->
-      <p class="mv-descripcion" *ngIf="modal!.descripcion">{{ modal!.descripcion }}</p>
-    </div>
-
-    <!-- Acciones -->
-    <div class="mv-actions">
-      <button class="mv-btn secondary" type="button" (click)="cerrar()">
-        Cerrar
+@if (visible && modal) {
+  <div class="mv-overlay" (click)="cerrar()">
+    <div class="mv-panel" (click)="$event.stopPropagation()">
+      <button class="mv-close" type="button" (click)="cerrar()" aria-label="Cerrar">
+        <i class="fa-solid fa-xmark"></i>
       </button>
-      <button class="mv-btn primary" type="button" *ngIf="requiereAceptar" (click)="aceptar()">
-        <i class="fa-solid fa-check"></i> Aceptar
-      </button>
+      <!-- Recurso: imagen -->
+      @if (esImagen) {
+        <div class="mv-recurso">
+          <img [src]="resourceUrl" [alt]="modal!.titulo">
+        </div>
+      }
+      <!-- Recurso: video -->
+      @if (esVideo) {
+        <div class="mv-recurso">
+          <video controls muted preload="auto" (error)="onVideoError($event)">
+            <source [src]="resourceUrl | safeUrl" [type]="videoMimeType">
+          </video>
+        </div>
+      }
+      <!-- Contenido -->
+      <div class="mv-body">
+        <!--<h2 class="mv-titulo">{{ modal!.titulo }}</h2> -->
+        @if (modal!.descripcion) {
+          <p class="mv-descripcion">{{ modal!.descripcion }}</p>
+        }
+      </div>
+      <!-- Acciones -->
+      <div class="mv-actions">
+        <button class="mv-btn secondary" type="button" (click)="cerrar()">
+          Cerrar
+        </button>
+        @if (requiereAceptar) {
+          <button class="mv-btn primary" type="button" (click)="aceptar()">
+            <i class="fa-solid fa-check"></i> Aceptar
+          </button>
+        }
+      </div>
     </div>
-
   </div>
-</div>
+}

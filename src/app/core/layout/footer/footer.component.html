@@ -19,278 +19,252 @@
 </footer>
 
 <!-- MODAL SOPORTE (una sola vez, global) -->
-<div class="ui-modal" *ngIf="supportOpen" (click)="closeSupport()">
-  <div class="ui-modal__dialog" (click)="$event.stopPropagation()" role="dialog" aria-modal="true">
-    <div class="ui-modal__head">
-      <div class="ui-modal__title">
-        <i class="fa-solid fa-headset"></i>
-        Crear caso de soporte
+@if (supportOpen) {
+  <div class="ui-modal" (click)="closeSupport()">
+    <div class="ui-modal__dialog" (click)="$event.stopPropagation()" role="dialog" aria-modal="true">
+      <div class="ui-modal__head">
+        <div class="ui-modal__title">
+          <i class="fa-solid fa-headset"></i>
+          Crear caso de soporte
+        </div>
+        <button class="ui-icon-btn" type="button" (click)="closeSupport()" aria-label="Cerrar">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
       </div>
-
-      <button class="ui-icon-btn" type="button" (click)="closeSupport()" aria-label="Cerrar">
-        <i class="fa-solid fa-xmark"></i>
-      </button>
-    </div>
-
-    <div class="ui-modal__body">
-      <div class="ui-grid">
-        <div class="ui-field ui-col-6">
-          <label class="ui-label">Tipo</label>
-          <select class="ui-control" [(ngModel)]="supportForm.tipo">
-            <option>Incidente (error)</option>
-            <option>Solicitud</option>
-            <option>Acceso / permisos</option>
-            <option>Mejora</option>
-          </select>
-        </div>
-
-        <div class="ui-field ui-col-6">
-          <label class="ui-label">Prioridad</label>
-          <select class="ui-control" [(ngModel)]="supportForm.prioridad">
-            <option>Baja</option>
-            <option>Media</option>
-            <option>Alta</option>
-            <option>Crítica</option>
-          </select>
-        </div>
-
-        <div class="ui-field ui-col-12">
-          <label class="ui-label">Asunto</label>
-          <input
-            class="ui-control"
-            type="text"
-            [(ngModel)]="supportForm.asunto"
-            placeholder="Ej: Error al guardar formulario"
-          />
-        </div>
-
-        <div class="ui-field ui-col-12">
-          <label class="ui-label">Descripción</label>
-          <textarea
-            class="ui-control"
-            rows="5"
-            [(ngModel)]="supportForm.descripcion"
-            placeholder="Describe el problema, pasos para reproducirlo, qué esperabas que pasara..."
-          ></textarea>
-        </div>
-
-        <div class="ui-field ui-col-12">
-          <label class="ui-label">Adjuntos (UI)</label>
-          <div class="ui-upload">
-            <input type="file" multiple (change)="onFilesSelected($event)" />
-            <div class="ui-upload__hint">Puedes adjuntar capturas. (Por ahora solo diseño)</div>
-
-            <!-- opcional: muestra cuántos adjuntos -->
-            <div class="ui-upload__hint" *ngIf="supportForm.adjuntos.length">
-              Adjuntos seleccionados: <b>{{ supportForm.adjuntos.length }}</b>
+      <div class="ui-modal__body">
+        <div class="ui-grid">
+          <div class="ui-field ui-col-6">
+            <label class="ui-label">Tipo</label>
+            <select class="ui-control" [(ngModel)]="supportForm.tipo">
+              <option>Incidente (error)</option>
+              <option>Solicitud</option>
+              <option>Acceso / permisos</option>
+              <option>Mejora</option>
+            </select>
+          </div>
+          <div class="ui-field ui-col-6">
+            <label class="ui-label">Prioridad</label>
+            <select class="ui-control" [(ngModel)]="supportForm.prioridad">
+              <option>Baja</option>
+              <option>Media</option>
+              <option>Alta</option>
+              <option>Crítica</option>
+            </select>
+          </div>
+          <div class="ui-field ui-col-12">
+            <label class="ui-label">Asunto</label>
+            <input
+              class="ui-control"
+              type="text"
+              [(ngModel)]="supportForm.asunto"
+              placeholder="Ej: Error al guardar formulario"
+              />
+            </div>
+            <div class="ui-field ui-col-12">
+              <label class="ui-label">Descripción</label>
+              <textarea
+                class="ui-control"
+                rows="5"
+                [(ngModel)]="supportForm.descripcion"
+                placeholder="Describe el problema, pasos para reproducirlo, qué esperabas que pasara..."
+              ></textarea>
+            </div>
+            <div class="ui-field ui-col-12">
+              <label class="ui-label">Adjuntos (UI)</label>
+              <div class="ui-upload">
+                <input type="file" multiple (change)="onFilesSelected($event)" />
+                <div class="ui-upload__hint">Puedes adjuntar capturas. (Por ahora solo diseño)</div>
+                <!-- opcional: muestra cuántos adjuntos -->
+                @if (supportForm.adjuntos.length) {
+                  <div class="ui-upload__hint">
+                    Adjuntos seleccionados: <b>{{ supportForm.adjuntos.length }}</b>
+                  </div>
+                }
+              </div>
+            </div>
+            <div class="ui-field ui-col-12">
+              <label class="ui-check">
+                <input type="checkbox" [(ngModel)]="supportForm.incluirDatosTecnicos" />
+                <span class="ui-check__box"></span>
+                <span class="ui-check__text">Incluir datos técnicos (URL / módulo / hora)</span>
+              </label>
             </div>
           </div>
         </div>
-
-        <div class="ui-field ui-col-12">
-          <label class="ui-check">
-            <input type="checkbox" [(ngModel)]="supportForm.incluirDatosTecnicos" />
-            <span class="ui-check__box"></span>
-            <span class="ui-check__text">Incluir datos técnicos (URL / módulo / hora)</span>
-          </label>
+        <div class="ui-modal__foot">
+          <button class="ui-btn outline" type="button" (click)="closeSupport()">Cancelar</button>
+          <button class="ui-btn primary ui-btn--fx" type="button" (click)="submitSupport()">
+            <i class="fa-solid fa-paper-plane"></i> Enviar caso
+          </button>
         </div>
       </div>
     </div>
+  }
 
-    <div class="ui-modal__foot">
-      <button class="ui-btn outline" type="button" (click)="closeSupport()">Cancelar</button>
-      <button class="ui-btn primary ui-btn--fx" type="button" (click)="submitSupport()">
-        <i class="fa-solid fa-paper-plane"></i> Enviar caso
-      </button>
-    </div>
-  </div>
-</div>
-
-<!-- MODAL POLÍTICA DE DATOS -->
-<div class="ui-modal" *ngIf="policyOpen" (click)="closePolicy()">
-  <div class="ui-modal__dialog" (click)="$event.stopPropagation()" role="dialog" aria-modal="true">
-    <div class="ui-modal__head">
-      <div class="ui-modal__title">
-        <i class="fa-solid fa-shield-halved"></i>
-        Política de Seguridad de la Información
-      </div>
-
-      <button class="ui-icon-btn" type="button" (click)="closePolicy()" aria-label="Cerrar">
-        <i class="fa-solid fa-xmark"></i>
-      </button>
-    </div>
-
-    <div class="ui-modal__body">
-      <!-- Aquí va tu texto -->
-      <div class="ui-policy">
-        <p>
-          La Policía Nacional, se permite informar que: En cumplimiento a lo estipulado en la
-          <b>Ley Estatutaria 1581 de 2012</b>, consecuentemente con lo previsto en el
-          <b>Decreto 1377 de 2013</b>, y demás normatividad legal vigente para el tratamiento de
-          datos personales, da a conocer a todas las personas cuyos datos personales se encuentran
-          administrados en nuestras bases de datos, que estos serán utilizados con los siguientes
-          fines:
-        </p>
-
-        <ul>
-          <li>
-            Adelantar los trámites y servicios que tiene a cargo, en ejercicio de sus funciones la
-            Policía Nacional.
-          </li>
-          <li>Dar a conocer los servicios ofrecidos por la Policía Nacional.</li>
-          <li>Participar en eventos organizados por la Policía Nacional.</li>
-          <li>Invitar a eventos de participación ciudadana.</li>
-          <li>Evaluar la calidad de los servicios ofertados por la Policía Nacional.</li>
-        </ul>
-
-        <p>
-          El uso y manejo de los mismos, se efectúa bajo estrictos estándares de responsabilidad,
-          dentro de los cuales está el respeto al debido proceso y a la protección de la
-          información.
-        </p>
-
-        <p>
-          En todo caso, en cualquier momento el titular de la información podrá revocar su
-          consentimiento y ejercer su derecho a la supresión de datos personales consagrado en la
-          Ley Estatutaria 1581 de 2012.
-        </p>
-
-        <p>
-          Es importante indicar que la solicitud de supresión de información personal y la
-          revocatoria de la autorización para el tratamiento de datos personales no procederán
-          cuando el titular de dichos datos tenga un deber legal o contractual de permanecer en la
-          base de datos y/o archivos de la Policía Nacional, ni mientras se encuentre vigente la
-          relación entre el titular y la referida Institución Policial, en virtud de la cual fueron
-          recolectados los datos.
-        </p>
-
-        <hr class="ui-policy__hr" />
-
-        <h4>Política de Privacidad para el Tratamiento de Datos Personales</h4>
-        <p>
-          La Policía Nacional de Colombia se compromete a proteger la privacidad de los usuarios que
-          utilizan nuestra aplicación móvil. Esta política de privacidad describe cómo recolectamos,
-          utilizamos, almacenamos y protegemos los datos personales de los usuarios en cumplimiento
-          de la Ley 1581 de 2012 y el Decreto 1377 de 2013, que regulan la protección de datos
-          personales en Colombia.
-        </p>
-
-        <h4>1. Recolección de Datos Personales</h4>
-        <p>
-          La aplicación de la Policía Nacional de Colombia recolecta datos personales necesarios
-          para la prestación de los servicios ofrecidos. Estos datos pueden incluir, entre otros,
-          nombre, cédula, número de contacto, correo electrónico, ubicación geográfica, y cualquier
-          otra información que el usuario proporcione voluntariamente.
-        </p>
-
-        <h4>2. Finalidad del Tratamiento de Datos</h4>
-        <p>Los datos personales recolectados serán utilizados exclusivamente para:</p>
-        <ul>
-          <li>Garantizar la seguridad ciudadana y la protección del orden público.</li>
-          <li>Facilitar la atención de emergencias y reportes por parte de la ciudadanía.</li>
-          <li>Mejorar la prestación de los servicios policiales.</li>
-          <li>Cumplir con obligaciones legales y regulatorias.</li>
-          <li>
-            Mantener la comunicación con el usuario para la gestión de consultas, solicitudes o
-            alertas.
-          </li>
-        </ul>
-
-        <h4>3. Almacenamiento y Seguridad de la Información</h4>
-        <p>
-          La Policía Nacional de Colombia implementa medidas técnicas, administrativas y
-          organizativas para garantizar la seguridad de los datos personales recolectados,
-          protegiéndolos contra pérdida, acceso no autorizado, alteración o divulgación indebida.
-          Los datos serán almacenados únicamente durante el tiempo necesario para cumplir con las
-          finalidades descritas y en conformidad con la normativa vigente.
-        </p>
-
-        <h4>4. Derechos del Titular de los Datos</h4>
-        <p>El titular de los datos tiene derecho a:</p>
-        <ul>
-          <li>Conocer, actualizar y rectificar sus datos personales.</li>
-          <li>Solicitar la prueba de la autorización otorgada para el tratamiento de sus datos.</li>
-          <li>Presentar consultas y reclamos relacionados con el uso de sus datos.</li>
-          <li>
-            Revocar la autorización y solicitar la eliminación de los datos cuando no se respeten
-            los principios, derechos y garantías legales.
-          </li>
-        </ul>
-
-        <h4>5. Transferencia y Cesión de Datos</h4>
-        <p>
-          Los datos personales recolectados no serán transferidos ni cedidos a terceros, salvo que
-          exista autorización expresa del titular o por requerimiento legal.
-        </p>
-
-        <h4>6. Uso de Geolocalización</h4>
-        <p>
-          La aplicación puede utilizar la ubicación geográfica del usuario para fines de seguridad y
-          atención de emergencias. Esta información será tratada con estricta confidencialidad y
-          únicamente en los casos necesarios para cumplir con las finalidades de la aplicación.
-        </p>
-
-        <h4>7. Modificaciones a la Política de Privacidad</h4>
-        <p>
-          La Policía Nacional de Colombia se reserva el derecho de modificar esta política de
-          privacidad en cualquier momento. Cualquier cambio será informado oportunamente a través de
-          la aplicación y otros medios de comunicación.
-        </p>
-
-        <h4>8. Contacto para Ejercicio de Derechos</h4>
-        <p>
-          Los usuarios podrán ejercer sus derechos de acceso, rectificación, cancelación o
-          revocación a través de los canales dispuestos por la Policía Nacional de Colombia. Para
-          más información o para presentar cualquier solicitud relacionada con la privacidad de los
-          datos personales, comuníquese con nosotros a través del correo electrónico
-          <b>líneadirecta@policia.gov.co</b> o visite nuestras instalaciones.
-        </p>
-
-        <h4>Atención administrativa</h4>
-        <ul>
-          <li>Carrera 59 26-21 CAN, Bogotá - Colombia</li>
-          <li>Lunes a viernes de 08:00 a.m – 12:00 p.m y 02:00 p.m – 05:00 p.m</li>
-          <li>Conmutador o PBX: +57 6015159000</li>
-        </ul>
-
-        <h4>Notificaciones judiciales</h4>
-        <p>
-          <code>https://www.policia.gov.co/normatividad-juridica/notificaciones-electronicas</code>
-        </p>
-
-        <h4>PQRS</h4>
-        <p>
-          Peticiones, Quejas, Reclamos, Reconocimientos del Servicio Policial y Sugerencias:
-          <code>/pqrs</code>
-        </p>
-
-        <p>
-          El uso y manejo de estos datos se realiza bajo estrictos estándares de responsabilidad,
-          respetando el debido proceso y la protección de la información. En todo caso, el titular
-          de la información puede, en cualquier momento, revocar su consentimiento y ejercer su
-          derecho a la supresión de datos personales conforme a la Ley 1581 de 2012. Sin embargo, es
-          importante señalar que la solicitud de supresión de datos personales y la revocatoria de
-          la autorización no procederán cuando el titular tenga un deber legal o contractual de
-          permanecer en las bases de datos de la Policía Nacional, o mientras esté vigente la
-          relación que dio lugar a la recolección de los datos.
-        </p>
-
-        <p>
-          Para mayor información sobre la política de tratamiento de datos personales de la Policía
-          Nacional, consulte la
-          <b>Resolución 02229 del 25 de septiembre de 2020</b>.
-        </p>
-
-        <p>
-          <b>Para mayor información consulta las Políticas de privacidad y condiciones de uso.</b>
-        </p>
+  <!-- MODAL POLÍTICA DE DATOS -->
+  @if (policyOpen) {
+    <div class="ui-modal" (click)="closePolicy()">
+      <div class="ui-modal__dialog" (click)="$event.stopPropagation()" role="dialog" aria-modal="true">
+        <div class="ui-modal__head">
+          <div class="ui-modal__title">
+            <i class="fa-solid fa-shield-halved"></i>
+            Política de Seguridad de la Información
+          </div>
+          <button class="ui-icon-btn" type="button" (click)="closePolicy()" aria-label="Cerrar">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+        <div class="ui-modal__body">
+          <!-- Aquí va tu texto -->
+          <div class="ui-policy">
+            <p>
+              La Policía Nacional, se permite informar que: En cumplimiento a lo estipulado en la
+              <b>Ley Estatutaria 1581 de 2012</b>, consecuentemente con lo previsto en el
+              <b>Decreto 1377 de 2013</b>, y demás normatividad legal vigente para el tratamiento de
+              datos personales, da a conocer a todas las personas cuyos datos personales se encuentran
+              administrados en nuestras bases de datos, que estos serán utilizados con los siguientes
+              fines:
+            </p>
+            <ul>
+              <li>
+                Adelantar los trámites y servicios que tiene a cargo, en ejercicio de sus funciones la
+                Policía Nacional.
+              </li>
+              <li>Dar a conocer los servicios ofrecidos por la Policía Nacional.</li>
+              <li>Participar en eventos organizados por la Policía Nacional.</li>
+              <li>Invitar a eventos de participación ciudadana.</li>
+              <li>Evaluar la calidad de los servicios ofertados por la Policía Nacional.</li>
+            </ul>
+            <p>
+              El uso y manejo de los mismos, se efectúa bajo estrictos estándares de responsabilidad,
+              dentro de los cuales está el respeto al debido proceso y a la protección de la
+              información.
+            </p>
+            <p>
+              En todo caso, en cualquier momento el titular de la información podrá revocar su
+              consentimiento y ejercer su derecho a la supresión de datos personales consagrado en la
+              Ley Estatutaria 1581 de 2012.
+            </p>
+            <p>
+              Es importante indicar que la solicitud de supresión de información personal y la
+              revocatoria de la autorización para el tratamiento de datos personales no procederán
+              cuando el titular de dichos datos tenga un deber legal o contractual de permanecer en la
+              base de datos y/o archivos de la Policía Nacional, ni mientras se encuentre vigente la
+              relación entre el titular y la referida Institución Policial, en virtud de la cual fueron
+              recolectados los datos.
+            </p>
+            <hr class="ui-policy__hr" />
+            <h4>Política de Privacidad para el Tratamiento de Datos Personales</h4>
+            <p>
+              La Policía Nacional de Colombia se compromete a proteger la privacidad de los usuarios que
+              utilizan nuestra aplicación móvil. Esta política de privacidad describe cómo recolectamos,
+              utilizamos, almacenamos y protegemos los datos personales de los usuarios en cumplimiento
+              de la Ley 1581 de 2012 y el Decreto 1377 de 2013, que regulan la protección de datos
+              personales en Colombia.
+            </p>
+            <h4>1. Recolección de Datos Personales</h4>
+            <p>
+              La aplicación de la Policía Nacional de Colombia recolecta datos personales necesarios
+              para la prestación de los servicios ofrecidos. Estos datos pueden incluir, entre otros,
+              nombre, cédula, número de contacto, correo electrónico, ubicación geográfica, y cualquier
+              otra información que el usuario proporcione voluntariamente.
+            </p>
+            <h4>2. Finalidad del Tratamiento de Datos</h4>
+            <p>Los datos personales recolectados serán utilizados exclusivamente para:</p>
+            <ul>
+              <li>Garantizar la seguridad ciudadana y la protección del orden público.</li>
+              <li>Facilitar la atención de emergencias y reportes por parte de la ciudadanía.</li>
+              <li>Mejorar la prestación de los servicios policiales.</li>
+              <li>Cumplir con obligaciones legales y regulatorias.</li>
+              <li>
+                Mantener la comunicación con el usuario para la gestión de consultas, solicitudes o
+                alertas.
+              </li>
+            </ul>
+            <h4>3. Almacenamiento y Seguridad de la Información</h4>
+            <p>
+              La Policía Nacional de Colombia implementa medidas técnicas, administrativas y
+              organizativas para garantizar la seguridad de los datos personales recolectados,
+              protegiéndolos contra pérdida, acceso no autorizado, alteración o divulgación indebida.
+              Los datos serán almacenados únicamente durante el tiempo necesario para cumplir con las
+              finalidades descritas y en conformidad con la normativa vigente.
+            </p>
+            <h4>4. Derechos del Titular de los Datos</h4>
+            <p>El titular de los datos tiene derecho a:</p>
+            <ul>
+              <li>Conocer, actualizar y rectificar sus datos personales.</li>
+              <li>Solicitar la prueba de la autorización otorgada para el tratamiento de sus datos.</li>
+              <li>Presentar consultas y reclamos relacionados con el uso de sus datos.</li>
+              <li>
+                Revocar la autorización y solicitar la eliminación de los datos cuando no se respeten
+                los principios, derechos y garantías legales.
+              </li>
+            </ul>
+            <h4>5. Transferencia y Cesión de Datos</h4>
+            <p>
+              Los datos personales recolectados no serán transferidos ni cedidos a terceros, salvo que
+              exista autorización expresa del titular o por requerimiento legal.
+            </p>
+            <h4>6. Uso de Geolocalización</h4>
+            <p>
+              La aplicación puede utilizar la ubicación geográfica del usuario para fines de seguridad y
+              atención de emergencias. Esta información será tratada con estricta confidencialidad y
+              únicamente en los casos necesarios para cumplir con las finalidades de la aplicación.
+            </p>
+            <h4>7. Modificaciones a la Política de Privacidad</h4>
+            <p>
+              La Policía Nacional de Colombia se reserva el derecho de modificar esta política de
+              privacidad en cualquier momento. Cualquier cambio será informado oportunamente a través de
+              la aplicación y otros medios de comunicación.
+            </p>
+            <h4>8. Contacto para Ejercicio de Derechos</h4>
+            <p>
+              Los usuarios podrán ejercer sus derechos de acceso, rectificación, cancelación o
+              revocación a través de los canales dispuestos por la Policía Nacional de Colombia. Para
+              más información o para presentar cualquier solicitud relacionada con la privacidad de los
+              datos personales, comuníquese con nosotros a través del correo electrónico
+              <b>líneadirecta@policia.gov.co</b> o visite nuestras instalaciones.
+            </p>
+            <h4>Atención administrativa</h4>
+            <ul>
+              <li>Carrera 59 26-21 CAN, Bogotá - Colombia</li>
+              <li>Lunes a viernes de 08:00 a.m – 12:00 p.m y 02:00 p.m – 05:00 p.m</li>
+              <li>Conmutador o PBX: +57 6015159000</li>
+            </ul>
+            <h4>Notificaciones judiciales</h4>
+            <p>
+              <code>https://www.policia.gov.co/normatividad-juridica/notificaciones-electronicas</code>
+            </p>
+            <h4>PQRS</h4>
+            <p>
+              Peticiones, Quejas, Reclamos, Reconocimientos del Servicio Policial y Sugerencias:
+              <code>/pqrs</code>
+            </p>
+            <p>
+              El uso y manejo de estos datos se realiza bajo estrictos estándares de responsabilidad,
+              respetando el debido proceso y la protección de la información. En todo caso, el titular
+              de la información puede, en cualquier momento, revocar su consentimiento y ejercer su
+              derecho a la supresión de datos personales conforme a la Ley 1581 de 2012. Sin embargo, es
+              importante señalar que la solicitud de supresión de datos personales y la revocatoria de
+              la autorización no procederán cuando el titular tenga un deber legal o contractual de
+              permanecer en las bases de datos de la Policía Nacional, o mientras esté vigente la
+              relación que dio lugar a la recolección de los datos.
+            </p>
+            <p>
+              Para mayor información sobre la política de tratamiento de datos personales de la Policía
+              Nacional, consulte la
+              <b>Resolución 02229 del 25 de septiembre de 2020</b>.
+            </p>
+            <p>
+              <b>Para mayor información consulta las Políticas de privacidad y condiciones de uso.</b>
+            </p>
+          </div>
+        </div>
+        <div class="ui-modal__foot">
+          <button class="ui-btn primary ui-btn--fx" type="button" (click)="closePolicy()">
+            Entendido
+          </button>
+        </div>
       </div>
     </div>
-
-    <div class="ui-modal__foot">
-      <button class="ui-btn primary ui-btn--fx" type="button" (click)="closePolicy()">
-        Entendido
-      </button>
-    </div>
-  </div>
-</div>
+  }

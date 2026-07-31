@@ -1,70 +1,69 @@
-<section class="user-admin-page" *ngIf="visible">
-  <div class="ui-panel">
-    <div class="ui-panel__head">
-      <div class="ui-panel__title">
-        <i class="fa-solid fa-id-card"></i>
-        Administración de Usuarios
+@if (visible) {
+  <section class="user-admin-page">
+    <div class="ui-panel">
+      <div class="ui-panel__head">
+        <div class="ui-panel__title">
+          <i class="fa-solid fa-id-card"></i>
+          Administración de Usuarios
+        </div>
+        <div class="ui-panel__actions ui-window-controls">
+          <button
+            class="ui-icon-btn ui-win-btn is-min"
+            type="button"
+            title="Minimizar"
+            (click)="toggleMinimize()"
+            >
+            <i class="fa-solid fa-minus"></i>
+          </button>
+          <button
+            class="ui-icon-btn ui-win-btn is-close"
+            type="button"
+            title="Cerrar"
+            (click)="closePanel()"
+            >
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
       </div>
-
-      <div class="ui-panel__actions ui-window-controls">
-        <button
-          class="ui-icon-btn ui-win-btn is-min"
-          type="button"
-          title="Minimizar"
-          (click)="toggleMinimize()"
-        >
-          <i class="fa-solid fa-minus"></i>
-        </button>
-
-        <button
-          class="ui-icon-btn ui-win-btn is-close"
-          type="button"
-          title="Cerrar"
-          (click)="closePanel()"
-        >
-          <i class="fa-solid fa-xmark"></i>
-        </button>
-      </div>
+      @if (!minimized) {
+        <div class="ui-panel__body">
+          <app-usuario-form
+            [user]="user"
+            [rolesCatalogo]="rolesCatalogo"
+            [loading]="loading"
+            [savingRole]="savingRole"
+            [deletingRoleId]="deletingRoleId"
+            [superAdministradorRolId]="superAdministradorRolId"
+            (consultar)="consultarUsuario($event)"
+            (guardarDatos)="guardarDatosUsuario($event)"
+            (nuevoUsuario)="prepararNuevoUsuario()"
+            (guardarRol)="guardarRoles($event)"
+            (eliminarRol)="eliminarRol($event)"
+          ></app-usuario-form>
+        </div>
+      }
     </div>
-
-    <div class="ui-panel__body" *ngIf="!minimized">
-      <app-usuario-form
-        [user]="user"
-        [rolesCatalogo]="rolesCatalogo"
-        [loading]="loading"
-        [savingRole]="savingRole"
-        [deletingRoleId]="deletingRoleId"
-        [superAdministradorRolId]="superAdministradorRolId"
-        (consultar)="consultarUsuario($event)"
-        (guardarDatos)="guardarDatosUsuario($event)"
-        (nuevoUsuario)="prepararNuevoUsuario()"
-        (guardarRol)="guardarRoles($event)"
-        (eliminarRol)="eliminarRol($event)"
-      ></app-usuario-form>
-    </div>
-  </div>
-
-  <app-usuarios-existentes
-    [usuarios]="usuariosListadoPaginado"
-    [loading]="loadingListado"
-    [isSearchMode]="isSearchMode"
-    [minSearchChars]="minSearchChars"
-    [currentPage]="currentPage"
-    [totalUsuarios]="totalUsuariosListado"
-    [pageSize]="pageSize"
-    [searchTerm]="searchNombreListado"
-    (buscar)="onSearchNombreListadoChange($event)"
-    (cambiarPagina)="setPaginaListado($event)"
-    (cambiarTamanoPagina)="setTamanoPaginaListado($event)"
-    (editar)="editarDesdeListado($event)"
-    (eliminar)="abrirModalEliminarUsuario($event)"
-  ></app-usuarios-existentes>
-
-  <app-usuario-delete-modal
-    [open]="showDeleteUserModal"
-    [user]="deletingTarget"
-    [loading]="deletingUser"
-    (close)="cerrarModalEliminarUsuario()"
-    (confirm)="confirmarEliminarUsuario()"
-  ></app-usuario-delete-modal>
-</section>
+    <app-usuarios-existentes
+      [usuarios]="usuariosListadoPaginado"
+      [loading]="loadingListado"
+      [isSearchMode]="isSearchMode"
+      [minSearchChars]="minSearchChars"
+      [currentPage]="currentPage"
+      [totalUsuarios]="totalUsuariosListado"
+      [pageSize]="pageSize"
+      [searchTerm]="searchNombreListado"
+      (buscar)="onSearchNombreListadoChange($event)"
+      (cambiarPagina)="setPaginaListado($event)"
+      (cambiarTamanoPagina)="setTamanoPaginaListado($event)"
+      (editar)="editarDesdeListado($event)"
+      (eliminar)="abrirModalEliminarUsuario($event)"
+    ></app-usuarios-existentes>
+    <app-usuario-delete-modal
+      [open]="showDeleteUserModal"
+      [user]="deletingTarget"
+      [loading]="deletingUser"
+      (close)="cerrarModalEliminarUsuario()"
+      (confirm)="confirmarEliminarUsuario()"
+    ></app-usuario-delete-modal>
+  </section>
+}

@@ -1,4 +1,4 @@
-﻿import { Component, DestroyRef, inject, signal } from '@angular/core';
+﻿import { Component, DestroyRef, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterOutlet } from '@angular/router';
 
@@ -18,6 +18,7 @@ interface AppToastState {
   standalone: true,
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [RouterOutlet, ModalVisorComponent],
 })
 export class AppComponent {

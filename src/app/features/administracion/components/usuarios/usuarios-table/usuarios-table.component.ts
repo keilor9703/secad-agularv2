@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+
 import {
   Component,
   DestroyRef,
@@ -12,6 +12,7 @@ import {
   ViewChild,
   inject,
   signal,
+  ChangeDetectionStrategy
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
@@ -31,13 +32,13 @@ import { UsuarioRolesDropdownComponent } from '../usuario-roles-dropdown/usuario
   selector: 'app-usuarios-existentes',
   standalone: true,
   imports: [
-    CommonModule,
     ReactiveFormsModule,
     UiSearchInputComponent,
     UiTableComponent,
-    UsuarioRolesDropdownComponent,
-  ],
+    UsuarioRolesDropdownComponent
+],
   templateUrl: './usuarios-table.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./usuarios-table.component.scss'],
 })
 export class UsuariosTableComponent implements OnChanges, OnInit {
