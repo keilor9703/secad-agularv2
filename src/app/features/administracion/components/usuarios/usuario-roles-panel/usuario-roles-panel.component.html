@@ -1,49 +1,67 @@
 <article class="access-section">
-  <header class="access-section__header">
-    <div>
-      <h3 id="usuarios-roles-title">Control de acceso</h3>
-      <p>Roles vigentes asociados al usuario consultado.</p>
+  <app-ui-section-header
+    eyebrow="ROLES Y PERMISOS"
+    title="Control de acceso"
+    description="Roles vigentes asociados al usuario consultado."
+    icon="fa-solid fa-key"
+    headingId="usuarios-roles-title"
+    [compact]="true"
+  >
+    <div header-actions class="access-section__actions">
+      <app-ui-chip
+        class="access-section__status"
+        [value]="roles.length"
+        label="vigentes"
+        variant="success"
+        appearance="outline"
+        size="xs"
+        [dot]="true"
+      />
+
+      <app-ui-button
+        variant="primary"
+        size="sm"
+        icon="fa-solid fa-plus"
+        [hideTextOnMobile]="true"
+        ariaLabel="Agregar un rol al usuario"
+        (buttonClick)="agregarRol.emit()"
+      >
+        Agregar rol
+      </app-ui-button>
     </div>
+  </app-ui-section-header>
 
-    <app-ui-button
-      variant="secondary"
-      size="sm"
-      icon="fa-solid fa-plus"
-      (buttonClick)="agregarRol.emit()"
-    >
-      Agregar rol
-    </app-ui-button>
-  </header>
-
-  <!-- Esta sección ya aporta su propio contenedor; la tabla no debe dibujar otra tarjeta. -->
-  <app-ui-table
-    variant="plain"
-    paginationVariant="numbered"
-    actionDisplay="row-hover"
-    actionsPosition="right"
-    embedded
-    emptyMessage="El usuario no tiene roles asignados actualmente."
-    [variant]="roleTableVariant()"
-    [actionDisplay]="roleActionDisplay()"
-    [actionsPosition]="roleActionsPosition()"
-    [columns]="roleColumns"
-    [rows]="roles"
-    [actions]="roleActions"
-    [total]="roles.length"
-    [paginationShowPageSize]="false"
-    [paginationShowSummary]="false"
-    [showPagination]="true"
-    [paginationMaxVisiblePages]="5"
-    labelledBy="usuarios-roles-title"
-    [showRecordBadge]="false"
-    [pageSize]="5"
-    [bodyFontSize]="12"
-    bodyFontWeight="normal"
-    [rowPadding]="7"
-    headerTextColor="#263247"
-    actionMenuLabel="Acciones del rol asignado"
-    (actionClick)="handleRoleAction($event)"
-  ></app-ui-table>
+  <div class="access-section__content">
+    <!-- La sección aporta la tarjeta exterior; ui-table permanece embebida. -->
+    <app-ui-table
+      variant="plain"
+      paginationVariant="numbered"
+      actionDisplay="row-hover"
+      actionsPosition="right"
+      embedded
+      emptyMessage="El usuario no tiene roles asignados actualmente."
+      [variant]="roleTableVariant()"
+      [actionDisplay]="roleActionDisplay()"
+      [actionsPosition]="roleActionsPosition()"
+      [columns]="roleColumns"
+      [rows]="roles"
+      [actions]="roleActions"
+      [total]="roles.length"
+      [paginationShowPageSize]="false"
+      [paginationShowSummary]="false"
+      [showPagination]="true"
+      [paginationMaxVisiblePages]="5"
+      labelledBy="usuarios-roles-title"
+      [showRecordBadge]="false"
+      [pageSize]="5"
+      [bodyFontSize]="12"
+      bodyFontWeight="normal"
+      [rowPadding]="7"
+      headerTextColor="#263247"
+      actionMenuLabel="Acciones del rol asignado"
+      (actionClick)="handleRoleAction($event)"
+    ></app-ui-table>
+  </div>
 </article>
 
 <app-ui-modal

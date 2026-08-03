@@ -1,72 +1,101 @@
 :host {
   display: block;
+  min-width: 0;
 }
 
 .users-existing {
   display: block;
+  min-width: 0;
   margin-top: 14px;
 }
 
-.users-existing__toolbar {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(220px, 350px);
-  align-items: center;
-  gap: 24px;
-  padding: 2px 0 0px;
-  border-bottom: 1px solid rgba(var(--policia-oscuro-rgb), 0.11);
+/* Caja del patrÃ³n reutilizable “Cabecera suave con contenido”. */
+.users-existing__panel {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid rgba(8, 166, 203, 0.2);
+  border-left: 3px solid var(--policia-cielo, #08a6cb);
+  border-radius: 7px;
+  background: var(--ui-surface, #ffffff);
+  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.065);
 }
 
-.users-existing__intro {
+.users-existing__header {
+  display: block;
   min-width: 0;
 }
 
-.users-existing__intro h2 {
-  margin: 0;
-  color: var(--policia-oscuro, #151b3b);
-  font-size: calc(18px * var(--font-size-scale));
-  font-weight: 850;
-  line-height: 1.2;
+.users-existing__header-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  min-width: 0;
 }
 
-.users-existing__intro p {
-  margin: 4px 0 0;
-  color: var(--form-hint-color, #64748b);
-  font-size: calc(12px * var(--font-size-scale));
-  line-height: 1.35;
+.users-existing__count {
+  flex: 0 0 auto;
 }
 
 .users-existing__filters {
   display: block;
-  width: 100%;
-  max-width: 350px;
-  justify-self: end;
+  flex: 0 1 350px;
+  width: min(350px, 31vw);
+  min-width: 220px;
   margin: 0;
 }
 
-:host ::ng-deep .users-existing__table .ui-table-panel .ui-table {
-  min-width: 760px;
+.users-existing__content {
+  min-width: 0;
+  padding: 12px 14px 0;
 }
 
-@media (max-width: 680px) {
-  .users-existing__toolbar {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 13px;
-    padding-bottom: 14px;
+/*
+ * La cabecera cambia a dos filas antes de que el buscador pueda comprimir el
+ * tÃ­tulo. El ajuste queda limitado a esta implementaciÃ³n del componente UI.
+ */
+@media (max-width: 820px) {
+  :host ::ng-deep .users-existing__header .ui-panel-header {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  :host ::ng-deep .users-existing__header .ui-panel-header__actions {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
+  .users-existing__header-actions,
+  .users-existing__filters {
+    width: 100%;
+    max-width: none;
   }
 
   .users-existing__filters {
-    width: 100%;
-    max-width: 100%;
-    justify-self: stretch;
+    flex-basis: auto;
+    min-width: 0;
+  }
+}
+
+@media (max-width: 520px) {
+  .users-existing {
+    margin-top: 9px;
+  }
+
+  .users-existing__header-actions {
+    gap: 7px;
+  }
+
+  .users-existing__count {
+    display: none;
+  }
+
+  .users-existing__content {
+    padding: 8px 8px 0;
   }
 }
 
 :host-context(html.dark-mode) {
-  .users-existing__toolbar {
-    border-bottom-color: rgba(255, 255, 255, 0.13);
-  }
-
-  .users-existing__intro h2 {
-    color: var(--ui-text);
+  .users-existing__panel {
+    border-color: rgba(85, 200, 229, 0.24);
   }
 }

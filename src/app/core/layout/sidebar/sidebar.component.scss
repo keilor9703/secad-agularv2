@@ -175,6 +175,10 @@
   transform: scale(1.04);
 }
 
+.sidebar__brand--logo-right .sidebar__logo {
+  order: 2;
+}
+
 .sidebar__brand-copy {
   display: flex;
   min-width: 0;
@@ -183,48 +187,50 @@
   gap: 2px;
 }
 
-.sidebar__brand-name,
-.sidebar__brand-acronym {
+.sidebar__brand-copy--inline {
+  flex-flow: row wrap;
+  align-items: baseline;
+  gap: 2px 7px;
+}
+
+.sidebar__brand-copy--center {
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.sidebar__brand-copy--right {
+  align-items: flex-end;
+  justify-content: flex-end;
+  text-align: right;
+}
+
+.sidebar__brand-text {
+  display: block;
   min-width: 0;
+  max-width: 100%;
   overflow: hidden;
+  line-height: 1.05;
   text-overflow: ellipsis;
-}
-
-.sidebar__brand-name {
-  display: -webkit-box;
-  font-size: clamp(10px, var(--sidebar-brand-font-size, 14px), 18px);
-  font-weight: 800;
-  line-height: 1.12;
-  white-space: normal;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-}
-
-.sidebar__brand-acronym {
-  color: rgba(255, 255, 255, 0.72);
-  font-size: clamp(9px, calc(var(--sidebar-brand-font-size, 14px) - 3px), 13px);
-  font-weight: 700;
-  letter-spacing: 0.07em;
-  line-height: 1.1;
-  text-transform: uppercase;
   white-space: nowrap;
 }
 
-.sidebar__brand-copy--stacked-acronym-first .sidebar__brand-acronym,
-.sidebar__brand-copy--inline-acronym-first .sidebar__brand-acronym {
-  order: -1;
+.sidebar__brand-text--institution {
+  color: rgba(255, 255, 255, 0.72);
+  font-weight: 650;
+  letter-spacing: 0.015em;
 }
 
-.sidebar__brand-copy--inline-name-first,
-.sidebar__brand-copy--inline-acronym-first {
-  flex-direction: row;
-  align-items: baseline;
-  gap: 7px;
+.sidebar__brand-text--system {
+  color: #ffffff;
+  font-weight: 850;
+}
 
-  .sidebar__brand-name {
-    display: block;
-    white-space: nowrap;
-  }
+.sidebar__brand-text--acronym {
+  color: var(--policia-acento, #c8ff00);
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
 }
 
 .sidebar__collapse {

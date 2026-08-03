@@ -1,0 +1,113 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.permissions-card {
+  overflow: hidden;
+  min-width: 0;
+  border: 1px solid rgba(8, 166, 203, 0.24);
+  border-radius: 8px;
+  background: var(--ui-surface, #ffffff);
+  box-shadow: 0 9px 22px rgba(15, 23, 42, 0.055);
+}
+
+.permissions-card__count {
+  display: grid;
+  min-width: 29px;
+  height: 29px;
+  place-items: center;
+  border: 1px solid rgba(8, 166, 203, 0.24);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.74);
+  color: var(--policia-medio, #002a66);
+  font-size: calc(9px * var(--font-size-scale, 1));
+  font-weight: 900;
+}
+
+.permission-assignment {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 8px;
+  padding: 10px 11px;
+  border-bottom: 1px solid var(--ui-border, #d9e1ec);
+  background: var(--ui-surface-soft, #f8fafc);
+}
+
+.permissions-card__tree {
+  padding: 9px;
+}
+
+.permissions-card__complete {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 11px;
+  border-bottom: 1px solid rgba(16, 185, 129, 0.18);
+  background: rgba(16, 185, 129, 0.07);
+  color: #16734f;
+  font-size: calc(8.5px * var(--font-size-scale, 1));
+  font-weight: 700;
+}
+
+.permissions-card__empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 11px;
+  min-height: 155px;
+  padding: 20px;
+  color: var(--ui-muted, #687891);
+}
+
+.permissions-card__empty > span {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(8, 166, 203, 0.08);
+  color: var(--policia-medio, #002a66);
+}
+
+.permissions-card__empty strong,
+.permissions-card__empty p {
+  margin: 0;
+}
+
+.permissions-card__empty strong {
+  color: var(--ui-text, #111936);
+  font-size: calc(11px * var(--font-size-scale, 1));
+}
+
+.permissions-card__empty p {
+  margin-top: 2px;
+  font-size: calc(9px * var(--font-size-scale, 1));
+}
+
+@media (max-width: 560px) {
+  .permission-assignment {
+    padding: 9px;
+  }
+
+  .permissions-card__tree {
+    padding: 7px;
+  }
+}
+
+:host-context(html.dark-mode) {
+  .permissions-card__count {
+    border-color: rgba(85, 200, 229, 0.25);
+    background: rgba(8, 166, 203, 0.11);
+    color: #b9e7f3;
+  }
+
+  .permissions-card__complete {
+    color: #8ce0bb;
+  }
+
+  .permissions-card__empty > span {
+    color: #b9e7f3;
+  }
+}

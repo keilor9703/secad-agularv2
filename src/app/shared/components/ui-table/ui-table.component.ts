@@ -6,6 +6,7 @@ import {
   computed,
   effect,
   input,
+  model,
   output,
   signal,
 } from '@angular/core';
@@ -89,8 +90,9 @@ export class UiTableComponent<T extends object = Record<string, unknown>> {
    */
   readonly actionsPosition = input<UiTableActionsPosition>('left');
   readonly total = input(0);
-  readonly page = input(1);
-  readonly pageSize = input(10);
+  /** Modelos controlables: funcionan solos y conservan [(page)] / [(pageSize)]. */
+  readonly page = model(1);
+  readonly pageSize = model(10);
   readonly pageSizeOptions = input<number[]>([5, 10, 20, 50]);
   readonly actionMenuLabel = input('Acciones disponibles para el registro');
   readonly showRecordBadge = input(true);
@@ -194,9 +196,6 @@ export class UiTableComponent<T extends object = Record<string, unknown>> {
   readonly filterChange = output<Record<string, string>>();
   readonly sortChange = output<UiTableSortEvent<T>>();
   readonly actionClick = output<UiTableActionEvent<T>>();
-  readonly pageChange = output<number>();
-  readonly pageSizeChange = output<number>();
-
   readonly titleId = `ui-table-title-${Math.random().toString(36).slice(2)}`;
 
   readonly filterForm = new FormRecord<FormControl<string>>({});
@@ -249,11 +248,29 @@ export class UiTableComponent<T extends object = Record<string, unknown>> {
     () => this.columns().length + (this.actions().length > 0 ? 1 : 0),
   );
   readonly normalizedPageSize = computed(() => Math.max(Number(this.pageSize()) || 1, 1));
-  readonly totalRecords = computed(() => this.total() || this.rows().length);
+  readonly totalRecords = computed(() =>
+    this.dataMode() === 'external'
+      ? this.total() || this.rows().length
+      : this.displayedRows().length,
+  );
 
   readonly totalPages = computed(() =>
     Math.max(1, Math.ceil(this.totalRecords() / this.normalizedPageSize())),
   );
+  readonly currentPage = computed(() =>
+    Math.min(Math.max(Number(this.page()) || 1, 1), this.totalPages()),
+  );
+  /** En modo cliente la tabla recorta las filas; en modo externo la API ya las pagina. */
+  readonly visibleRows = computed(() => {
+    const rows = this.displayedRows();
+
+    if (this.dataMode() === 'external' || !this.showPagination()) {
+      return rows;
+    }
+
+    const start = (this.currentPage() - 1) * this.normalizedPageSize();
+    return rows.slice(start, start + this.normalizedPageSize());
+  });
 
   readonly pageSizeOptionsList = computed(() =>
     [...new Set([...this.pageSizeOptions(), this.normalizedPageSize()])]
@@ -291,8 +308,18 @@ export class UiTableComponent<T extends object = Record<string, unknown>> {
   goToPage(nextPage: number): void {
     const targetPage = Math.min(Math.max(nextPage, 1), this.totalPages());
 
-    if (targetPage !== this.page()) {
-      this.pageChange.emit(targetPage);
+    if (targetPage !== this.currentPage()) {
+      this.page.set(targetPage);
+    }
+  }
+
+  /** Actualiza el tamaño, vuelve a la primera página y emite ambos cambios. */
+  changePageSize(nextPageSize: number): void {
+    const normalizedSize = Math.max(Number(nextPageSize) || 1, 1);
+
+    if (normalizedSize !== this.normalizedPageSize()) {
+      this.pageSize.set(normalizedSize);
+      this.page.set(1);
     }
   }
 
@@ -426,6 +453,7 @@ export class UiTableComponent<T extends object = Record<string, unknown>> {
     const values = this.filterForm.getRawValue();
 
     this.activeFilters.set(values);
+    this.page.set(1);
     this.filterChange.emit(values);
   }
 

@@ -53,10 +53,18 @@ export interface UiTableBadge {
  * La columna tiene prioridad sobre la fila y la fila sobre la configuración general.
  */
 export interface UiTableRowAppearance {
+  /** Marca semánticamente la fila como seleccionada. */
+  selected?: boolean;
   /** Color de la fila en tema claro. */
   textColor?: string;
   /** Color opcional de la fila en tema oscuro. */
   darkTextColor?: string;
+  /** Fondo opcional para diferenciar una fila en tema claro. */
+  backgroundColor?: string;
+  /** Fondo equivalente en tema oscuro. */
+  darkBackgroundColor?: string;
+  /** Acento lateral usado principalmente por filas seleccionadas. */
+  accentColor?: string;
   fontSize?: UiTableCssSize;
   fontWeight?: UiTableFontWeight;
   height?: UiTableCssSize;

@@ -19,6 +19,8 @@ import {
 } from '../../../../core/services/menu.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { UiButtonComponent } from '../../../../shared/components/ui-button/ui-button.component';
+import { UiChipComponent } from '../../../../shared/components/ui-chip/ui-chip.component';
+import { UiPageHeaderComponent } from '../../../../shared/components/ui-page-header/ui-page-header.component';
 import { AlertService } from '../../../../shared/services/alert.service';
 import { getApiErrorMessage } from '../../../../shared/utils/api-error-message.util';
 import { MenuAdminFormComponent } from '../../components/menu/menu-admin-form/menu-admin-form.component';
@@ -27,7 +29,13 @@ import { MenuAdminTreeComponent } from '../../components/menu/menu-admin-tree/me
 @Component({
   selector: 'app-menu-admin',
   standalone: true,
-  imports: [UiButtonComponent, MenuAdminFormComponent, MenuAdminTreeComponent],
+  imports: [
+    UiButtonComponent,
+    UiChipComponent,
+    UiPageHeaderComponent,
+    MenuAdminFormComponent,
+    MenuAdminTreeComponent,
+  ],
   templateUrl: './menu-admin-page.component.html',
   styleUrl: './menu-admin-page.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -117,10 +125,6 @@ export class MenuAdminPageComponent implements OnInit {
     });
 
     this.loadMenu();
-  }
-
-  toggleMinimize(): void {
-    this.minimized.update((value) => !value);
   }
 
   loadMenu(focusMenuId: number | null = null, focusFallback: MenuSaveRequest | null = null): void {

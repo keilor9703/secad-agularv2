@@ -1,24 +1,20 @@
 <article class="domain-tree-card">
-  <header class="domain-tree-card__header">
-    <div class="domain-tree-card__heading">
-      <span class="domain-tree-card__icon" aria-hidden="true">
-        <i class="fa-solid fa-folder-tree"></i>
-      </span>
-
-      <div>
-        <h2>Estructura de dominios</h2>
-        <p>Explore niveles, valores asociados y disponibilidad.</p>
-      </div>
-    </div>
-
+  <app-ui-panel-header
+    title="Estructura de dominios"
+    description="Explore niveles, valores asociados y disponibilidad."
+    icon="fa-solid fa-folder-tree"
+    appearance="soft"
+    headingId="domain-tree-title"
+  >
     <app-ui-chip
+      panel-header-actions
       [label]="totalItems() + ' dominios'"
       variant="info"
       appearance="soft"
       size="sm"
       icon="fa-solid fa-layer-group"
     />
-  </header>
+  </app-ui-panel-header>
 
   <div class="domain-tree-card__toolbar">
     <app-ui-search-input

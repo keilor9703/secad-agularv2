@@ -1,0 +1,19 @@
+<header class="ui-section-header" [class.is-compact]="compact()">
+  <span class="ui-section-header__icon" aria-hidden="true">
+    <i [class]="icon()"></i>
+  </span>
+
+  <div class="ui-section-header__content">
+    @if (eyebrow()) {
+      <small>{{ eyebrow() }}</small>
+    }
+    <h2 [id]="headingId()">{{ title() }}</h2>
+    @if (description()) {
+      <p>{{ description() }}</p>
+    }
+  </div>
+
+  <div class="ui-section-header__actions">
+    <ng-content select="[header-actions]"></ng-content>
+  </div>
+</header>

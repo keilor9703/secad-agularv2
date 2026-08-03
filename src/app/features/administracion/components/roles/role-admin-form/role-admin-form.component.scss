@@ -1,0 +1,145 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.role-form-card {
+  overflow: hidden;
+  border: 1px solid var(--ui-border, #d9e1ec);
+  border-radius: 8px;
+  background: var(--ui-surface, #ffffff);
+  box-shadow: 0 9px 22px rgba(15, 23, 42, 0.06);
+}
+
+.role-form-card.is-embedded {
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.role-form-card__header {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  padding: 14px;
+  border-bottom: 1px solid var(--ui-border, #d9e1ec);
+  background: linear-gradient(110deg, rgba(8, 166, 203, 0.1), rgba(255, 255, 255, 0.78));
+}
+
+.role-form-card__icon {
+  display: grid;
+  flex: 0 0 42px;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border-radius: 7px;
+  background: var(--policia-medio, #002a66);
+  color: var(--policia-acento, #c8ff00);
+  box-shadow: 0 7px 16px rgba(0, 42, 102, 0.2);
+}
+
+.role-form-card__header small,
+.role-form-card__header h2,
+.role-form-card__header p {
+  margin: 0;
+}
+
+.role-form-card__header small {
+  color: var(--policia-medio, #002a66);
+  font-size: calc(8px * var(--font-size-scale, 1));
+  font-weight: 900;
+  letter-spacing: 0.08em;
+}
+
+.role-form-card__header h2 {
+  margin-top: 2px;
+  color: var(--ui-text, #111936);
+  font-size: calc(15px * var(--font-size-scale, 1));
+  font-weight: 900;
+}
+
+.role-form-card__header p {
+  margin-top: 3px;
+  color: var(--ui-muted, #687891);
+  font-size: calc(9.5px * var(--font-size-scale, 1));
+  line-height: 1.4;
+}
+
+.role-form {
+  display: grid;
+  gap: 13px;
+  padding: 15px;
+}
+
+.role-form__fields {
+  display: grid;
+  gap: 12px;
+}
+
+.role-form-card.is-embedded .role-form__fields {
+  grid-template-columns: minmax(0, 1.7fr) minmax(190px, 0.7fr);
+}
+
+.role-form__note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 9px 10px;
+  border-left: 3px solid var(--policia-cielo, #08a6cb);
+  border-radius: 5px;
+  background: rgba(8, 166, 203, 0.065);
+  color: var(--ui-muted, #64748b);
+  font-size: calc(9px * var(--font-size-scale, 1));
+  line-height: 1.4;
+}
+
+.role-form__note i {
+  margin-top: 2px;
+  color: var(--policia-medio, #002a66);
+}
+
+.role-form__footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin: 2px -15px -15px;
+  padding: 11px 15px;
+  border-top: 1px solid var(--ui-border, #d9e1ec);
+  background: var(--ui-surface-soft, #f7f9fc);
+}
+
+.role-form-card.is-embedded .role-form__footer {
+  border-radius: 0 0 7px 7px;
+}
+
+@media (max-width: 520px) {
+  .role-form-card__header,
+  .role-form {
+    padding: 11px;
+  }
+
+  .role-form__footer {
+    margin: 1px -11px -11px;
+    padding: 10px 11px;
+  }
+
+  .role-form-card.is-embedded .role-form__fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+:host-context(html.dark-mode) {
+  .role-form-card__header {
+    background: linear-gradient(110deg, rgba(8, 166, 203, 0.12), rgba(15, 23, 42, 0.35));
+  }
+
+  .role-form__note {
+    background: rgba(8, 166, 203, 0.08);
+  }
+
+  .role-form__note i {
+    color: var(--policia-cielo, #55c8e5);
+  }
+}

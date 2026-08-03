@@ -11,52 +11,6 @@
   box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
 }
 
-.menu-tree-card__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 14px 15px;
-  border-bottom: 1px solid var(--ui-border, #d8dee8);
-  background: linear-gradient(180deg, #fbfcfe, #f6f8fb);
-}
-
-.menu-tree-card__heading {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-width: 0;
-}
-
-.menu-tree-card__icon {
-  display: grid;
-  flex: 0 0 36px;
-  width: 36px;
-  height: 36px;
-  place-items: center;
-  border: 1px solid rgba(31, 78, 121, 0.16);
-  border-radius: 6px;
-  background: rgba(31, 78, 121, 0.08);
-  color: var(--policia-medio, #002a66);
-}
-
-.menu-tree-card__header h2,
-.menu-tree-card__header p {
-  margin: 0;
-}
-
-.menu-tree-card__header h2 {
-  color: var(--policia-oscuro, #151b3b);
-  font-size: calc(14px * var(--font-size-scale, 1));
-  font-weight: 850;
-}
-
-.menu-tree-card__header p {
-  margin-top: 2px;
-  color: var(--ui-muted, #64748b);
-  font-size: calc(10.5px * var(--font-size-scale, 1));
-}
-
 .menu-tree-card__toolbar {
   padding: 17px 15px 12px;
   border-bottom: 1px solid var(--ui-border, #d8dee8);
@@ -325,11 +279,6 @@
 }
 
 @media (max-width: 760px) {
-  .menu-tree-card__header {
-    align-items: flex-start;
-    padding: 12px;
-  }
-
   .menu-tree-card__toolbar {
     padding: 16px 11px 10px;
   }
@@ -388,11 +337,6 @@
 }
 
 :host-context(html.dark-mode) {
-  .menu-tree-card__header {
-    background: #182238;
-  }
-
-  .menu-tree-card__icon,
   .menu-tree-item__leading {
     color: var(--policia-cielo, #55c8e5);
   }

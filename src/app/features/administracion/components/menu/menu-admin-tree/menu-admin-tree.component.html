@@ -1,24 +1,20 @@
 <article class="menu-tree-card">
-  <header class="menu-tree-card__header">
-    <div class="menu-tree-card__heading">
-      <span class="menu-tree-card__icon" aria-hidden="true">
-        <i class="fa-solid fa-sitemap"></i>
-      </span>
-
-      <div>
-        <h2>Estructura del menú</h2>
-        <p>Explore la jerarquía y administre cada destino.</p>
-      </div>
-    </div>
-
+  <app-ui-panel-header
+    title="Estructura del menú"
+    description="Explore la jerarquía y administre cada destino."
+    icon="fa-solid fa-sitemap"
+    appearance="soft"
+    headingId="menu-tree-title"
+  >
     <app-ui-chip
+      panel-header-actions
       [label]="totalItems() + ' ítems'"
       variant="info"
       appearance="soft"
       size="sm"
       icon="fa-solid fa-layer-group"
     />
-  </header>
+  </app-ui-panel-header>
 
   <div class="menu-tree-card__toolbar">
     <app-ui-search-input

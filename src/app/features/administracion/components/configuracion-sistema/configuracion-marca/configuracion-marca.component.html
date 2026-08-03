@@ -21,12 +21,11 @@
 
   <div class="settings-layout">
     <article class="settings-surface">
-      <header class="settings-surface__head">
-        <div>
-          <h3>Información de marca</h3>
-          <p>Los cambios de texto se aplican al guardar la configuración.</p>
-        </div>
-      </header>
+      <app-ui-panel-header
+        title="Información de marca"
+        description="Los cambios de texto se aplican al guardar la configuración."
+        icon="fa-solid fa-shapes"
+      />
 
       @if (loading()) {
         <div class="settings-surface__body">
@@ -67,6 +66,19 @@
               />
             </div>
 
+            <div class="settings-form__field settings-form__field--full">
+              <app-ui-input
+                formControlName="nombreInstitucion"
+                label="Nombre de la institución"
+                placeholder="Ej.: Policía Nacional de Colombia"
+                icon="fa-solid fa-building-columns"
+                hint="Identifica a la entidad propietaria del sistema. Máximo 100 caracteres."
+                [required]="true"
+                [maxlength]="100"
+                [error]="error('nombreInstitucion')"
+              />
+            </div>
+
             <!-- Controles del encabezado de marca que aparece dentro del menú lateral. -->
             <div class="settings-form__subheading settings-form__field--full">
               <i class="fa-solid fa-bars" aria-hidden="true"></i>
@@ -78,10 +90,29 @@
 
             <div class="settings-form__field">
               <app-ui-select
-                formControlName="menuTextSizePx"
-                label="Tamaño del nombre"
-                hint="Se limita entre 10 y 18 px para conservar la legibilidad."
-                [options]="menuTextSizeOptions"
+                formControlName="menuShowLogo"
+                label="Logo"
+                [options]="visibilityOptions"
+                [searchable]="false"
+                [clearable]="false"
+              />
+            </div>
+
+            <div class="settings-form__field">
+              <app-ui-select
+                formControlName="menuShowInstitutionName"
+                label="Nombre de la institución"
+                [options]="visibilityOptions"
+                [searchable]="false"
+                [clearable]="false"
+              />
+            </div>
+
+            <div class="settings-form__field">
+              <app-ui-select
+                formControlName="menuShowSystemName"
+                label="Nombre del sistema"
+                [options]="visibilityOptions"
                 [searchable]="false"
                 [clearable]="false"
               />
@@ -90,8 +121,28 @@
             <div class="settings-form__field">
               <app-ui-select
                 formControlName="menuShowAcronym"
-                label="Visibilidad de la sigla"
-                [options]="menuAcronymVisibilityOptions"
+                label="Sigla del sistema"
+                [options]="visibilityOptions"
+                [searchable]="false"
+                [clearable]="false"
+              />
+            </div>
+
+            <div class="settings-form__field">
+              <app-ui-select
+                formControlName="menuLogoPosition"
+                label="Posición del logo"
+                [options]="menuLogoPositionOptions"
+                [searchable]="false"
+                [clearable]="false"
+              />
+            </div>
+
+            <div class="settings-form__field">
+              <app-ui-select
+                formControlName="menuTextLayout"
+                label="Distribución de los textos"
+                [options]="menuTextLayoutOptions"
                 [searchable]="false"
                 [clearable]="false"
               />
@@ -99,12 +150,200 @@
 
             <div class="settings-form__field settings-form__field--full">
               <app-ui-select
-                formControlName="menuBrandLayout"
-                label="Posición del nombre y la sigla"
-                hint="La distribución vertical permite que el nombre use hasta dos líneas."
-                [options]="menuBrandLayoutOptions"
+                formControlName="menuBrandTextOrder"
+                label="Orden de entidad, sistema y sigla"
+                hint="Los elementos ocultos se omiten sin modificar el orden elegido."
+                [options]="menuTextOrderOptions"
                 [searchable]="false"
                 [clearable]="false"
+              />
+            </div>
+
+            <div class="settings-form__field settings-form__field--full">
+              <app-ui-select
+                formControlName="menuTextAlign"
+                label="Alineación de los textos"
+                [options]="menuTextAlignOptions"
+                [searchable]="false"
+                [clearable]="false"
+              />
+            </div>
+
+            <div class="settings-form__field">
+              <app-ui-select
+                formControlName="menuLogoSizePx"
+                label="Tamaño del logo"
+                [options]="menuLogoSizeOptions"
+                [searchable]="false"
+                [clearable]="false"
+                [error]="error('menuLogoSizePx')"
+              />
+            </div>
+
+            <div class="settings-form__field">
+              <app-ui-select
+                formControlName="menuInstitutionTextSizePx"
+                label="Tamaño de la institución"
+                [options]="menuInstitutionTextSizeOptions"
+                [searchable]="false"
+                [clearable]="false"
+                [error]="error('menuInstitutionTextSizePx')"
+              />
+            </div>
+
+            <div class="settings-form__field">
+              <app-ui-select
+                formControlName="menuSystemTextSizePx"
+                label="Tamaño del nombre del sistema"
+                [options]="menuSystemTextSizeOptions"
+                [searchable]="false"
+                [clearable]="false"
+                [error]="error('menuSystemTextSizePx')"
+              />
+            </div>
+
+            <div class="settings-form__field">
+              <app-ui-select
+                formControlName="menuAcronymTextSizePx"
+                label="Tamaño de la sigla"
+                [options]="menuAcronymTextSizeOptions"
+                [searchable]="false"
+                [clearable]="false"
+                [error]="error('menuAcronymTextSizePx')"
+              />
+            </div>
+
+            <!-- Identidad independiente del login: permite combinar logo, entidad, sistema y sigla. -->
+            <div class="settings-form__subheading settings-form__field--full">
+              <i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i>
+              <div>
+                <h4>Presentación en el login</h4>
+                <p>Defina qué elementos aparecen, su orden, posición y escala visual.</p>
+              </div>
+            </div>
+
+            <div class="settings-form__field">
+              <app-ui-select
+                formControlName="loginShowLogo"
+                label="Logo"
+                [options]="visibilityOptions"
+                [searchable]="false"
+                [clearable]="false"
+              />
+            </div>
+
+            <div class="settings-form__field">
+              <app-ui-select
+                formControlName="loginShowInstitutionName"
+                label="Nombre de la institución"
+                [options]="visibilityOptions"
+                [searchable]="false"
+                [clearable]="false"
+              />
+            </div>
+
+            <div class="settings-form__field">
+              <app-ui-select
+                formControlName="loginShowSystemName"
+                label="Nombre del sistema"
+                [options]="visibilityOptions"
+                [searchable]="false"
+                [clearable]="false"
+              />
+            </div>
+
+            <div class="settings-form__field">
+              <app-ui-select
+                formControlName="loginShowAcronym"
+                label="Sigla del sistema"
+                [options]="visibilityOptions"
+                [searchable]="false"
+                [clearable]="false"
+              />
+            </div>
+
+            <div class="settings-form__field">
+              <app-ui-select
+                formControlName="loginLogoPosition"
+                label="Posición del logo"
+                [options]="loginLogoPositionOptions"
+                [searchable]="false"
+                [clearable]="false"
+              />
+            </div>
+
+            <div class="settings-form__field">
+              <app-ui-select
+                formControlName="loginTextLayout"
+                label="Distribución de los textos"
+                [options]="loginTextLayoutOptions"
+                [searchable]="false"
+                [clearable]="false"
+              />
+            </div>
+
+            <div class="settings-form__field settings-form__field--full">
+              <app-ui-select
+                formControlName="loginBrandTextOrder"
+                label="Orden del nombre, sistema y sigla"
+                hint="Los elementos ocultos se omiten sin alterar el orden configurado."
+                [options]="loginTextOrderOptions"
+                [searchable]="false"
+                [clearable]="false"
+              />
+            </div>
+
+            <div class="settings-form__field settings-form__field--full">
+              <app-ui-select
+                formControlName="loginTextAlign"
+                label="Alineación de los textos"
+                [options]="loginTextAlignOptions"
+                [searchable]="false"
+                [clearable]="false"
+              />
+            </div>
+
+            <div class="settings-form__field">
+              <app-ui-select
+                formControlName="loginLogoSizePx"
+                label="Tamaño del logo"
+                [options]="loginLogoSizeOptions"
+                [searchable]="false"
+                [clearable]="false"
+                [error]="error('loginLogoSizePx')"
+              />
+            </div>
+
+            <div class="settings-form__field">
+              <app-ui-select
+                formControlName="loginInstitutionTextSizePx"
+                label="Tamaño de la institución"
+                [options]="institutionTextSizeOptions"
+                [searchable]="false"
+                [clearable]="false"
+                [error]="error('loginInstitutionTextSizePx')"
+              />
+            </div>
+
+            <div class="settings-form__field">
+              <app-ui-select
+                formControlName="loginSystemTextSizePx"
+                label="Tamaño del nombre del sistema"
+                [options]="systemTextSizeOptions"
+                [searchable]="false"
+                [clearable]="false"
+                [error]="error('loginSystemTextSizePx')"
+              />
+            </div>
+
+            <div class="settings-form__field">
+              <app-ui-select
+                formControlName="loginAcronymTextSizePx"
+                label="Tamaño de la sigla"
+                [options]="acronymTextSizeOptions"
+                [searchable]="false"
+                [clearable]="false"
+                [error]="error('loginAcronymTextSizePx')"
               />
             </div>
 
@@ -174,12 +413,10 @@
     </article>
 
     <article class="settings-surface">
-      <header class="settings-surface__head">
-        <div>
-          <h3>Vista previa</h3>
-          <p>Representación aproximada de la identidad configurada.</p>
-        </div>
-      </header>
+      <app-ui-panel-header
+        title="Vista previa"
+        description="Representación aproximada de la identidad configurada."
+      />
 
       @if (loading()) {
         <div class="settings-surface__body">
@@ -193,37 +430,109 @@
         </div>
       } @else {
         <div class="branding-preview">
-          <div class="branding-preview__header">
-            <div class="branding-preview__logo">
-              @if (logoUrl()) {
-                <img [src]="logoUrl()" alt="Logo configurado del sistema" />
-              } @else {
-                <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
-              }
-            </div>
+          <div class="branding-preview__label">
+            <i class="fa-solid fa-bars" aria-hidden="true"></i>
+            <span>Menú lateral</span>
+          </div>
 
-            <div
-              class="branding-preview__name"
-              [class.branding-preview__name--stacked-acronym-first]="
-                previewValue().menuBrandLayout === 'stacked-acronym-first'
-              "
-              [class.branding-preview__name--inline-name-first]="
-                previewValue().menuBrandLayout === 'inline-name-first'
-              "
-              [class.branding-preview__name--inline-acronym-first]="
-                previewValue().menuBrandLayout === 'inline-acronym-first'
-              "
-              [style.--preview-menu-text-size]="(previewValue().menuTextSizePx || 14) + 'px'"
-            >
-              <strong class="branding-preview__system-name">
-                {{ previewValue().nombreSistema || 'Nombre del sistema' }}
-              </strong>
-              @if (previewValue().menuShowAcronym) {
-                <span class="branding-preview__acronym">
-                  {{ previewValue().sistema || 'SIGLA' }}
-                </span>
-              }
-            </div>
+          <div
+            class="branding-preview__header"
+            [class.branding-preview__header--logo-right]="
+              previewValue().menuLogoPosition === 'right'
+            "
+          >
+            @if (previewValue().menuShowLogo) {
+              <div
+                class="branding-preview__logo"
+                [style.width.px]="previewValue().menuLogoSizePx"
+                [style.height.px]="previewValue().menuLogoSizePx"
+                [style.flex-basis.px]="previewValue().menuLogoSizePx"
+              >
+                @if (logoUrl()) {
+                  <img [src]="logoUrl()" alt="Logo configurado del sistema" />
+                } @else {
+                  <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
+                }
+              </div>
+            }
+
+            @if (menuPreviewTextItems().length > 0) {
+              <div
+                class="branding-preview__name"
+                [class.branding-preview__name--inline]="previewValue().menuTextLayout === 'inline'"
+                [class.branding-preview__name--center]="previewValue().menuTextAlign === 'center'"
+                [class.branding-preview__name--right]="previewValue().menuTextAlign === 'right'"
+              >
+                @for (item of menuPreviewTextItems(); track item.kind) {
+                  <span
+                    class="branding-preview__menu-text"
+                    [class.branding-preview__menu-text--institution]="item.kind === 'institution'"
+                    [class.branding-preview__menu-text--system]="item.kind === 'system'"
+                    [class.branding-preview__menu-text--acronym]="item.kind === 'acronym'"
+                    [style.font-size.px]="item.sizePx"
+                  >
+                    {{ item.text }}
+                  </span>
+                }
+              </div>
+            }
+          </div>
+
+          <div class="branding-preview__label branding-preview__label--login">
+            <i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i>
+            <span>Acceso al sistema</span>
+          </div>
+
+          <div
+            class="branding-preview__login"
+            [class.branding-preview__login--logo-left]="previewValue().loginLogoPosition === 'left'"
+            [class.branding-preview__login--logo-right]="
+              previewValue().loginLogoPosition === 'right'
+            "
+            [class.branding-preview__login--logo-bottom]="
+              previewValue().loginLogoPosition === 'bottom'
+            "
+          >
+            @if (previewValue().loginShowLogo) {
+              <div
+                class="branding-preview__login-logo"
+                [style.width.px]="previewValue().loginLogoSizePx"
+                [style.height.px]="previewValue().loginLogoSizePx"
+              >
+                @if (logoUrl()) {
+                  <img [src]="logoUrl()" alt="Logo del login" />
+                } @else {
+                  <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
+                }
+              </div>
+            }
+
+            @if (loginPreviewTextItems().length > 0) {
+              <div
+                class="branding-preview__login-texts"
+                [class.branding-preview__login-texts--inline]="
+                  previewValue().loginTextLayout === 'inline'
+                "
+                [class.branding-preview__login-texts--left]="
+                  previewValue().loginTextAlign === 'left'
+                "
+                [class.branding-preview__login-texts--right]="
+                  previewValue().loginTextAlign === 'right'
+                "
+              >
+                @for (item of loginPreviewTextItems(); track item.kind) {
+                  <span
+                    class="branding-preview__login-text"
+                    [class.branding-preview__login-text--institution]="item.kind === 'institution'"
+                    [class.branding-preview__login-text--system]="item.kind === 'system'"
+                    [class.branding-preview__login-text--acronym]="item.kind === 'acronym'"
+                    [style.font-size.px]="item.sizePx"
+                  >
+                    {{ item.text }}
+                  </span>
+                }
+              </div>
+            }
           </div>
 
           <div class="branding-preview__browser">

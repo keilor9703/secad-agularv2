@@ -1,140 +1,140 @@
-@if (visible) {
-  <section class="roles-admin-page">
-    <div class="ui-panel">
-      <div class="ui-panel__head">
-        <div class="ui-panel__title">
-          <i class="fa-solid fa-user-shield"></i>
-          Administraci&oacute;n de Roles
-        </div>
-        <div class="ui-panel__actions ui-window-controls">
-          <button class="ui-icon-btn ui-win-btn is-min" type="button" title="Minimizar" (click)="toggleMinimize()">
-            <i class="fa-solid fa-minus"></i>
-          </button>
-        </div>
-      </div>
-      @if (!minimized) {
-        <div class="ui-panel__body">
-          <div class="roles-grid">
-            <article class="tab-card form-card">
-              <form class="role-form" [formGroup]="roleForm" (ngSubmit)="guardar()">
-                <h3>{{ editingId ? 'Editar rol' : 'Nuevo rol' }}</h3>
-                <div class="ui-grid">
-                  <div class="ui-col-12">
-                    <app-ui-input
-                      formControlName="nombre"
-                      label="Descripci&oacute;n del rol"
-                      [maxlength]="255"
-                      [error]="roleNameError"
-                    ></app-ui-input>
-                  </div>
-                  <div class="ui-col-12">
-                    <app-ui-select
-                      formControlName="vigente"
-                      label="Vigente"
-                      [options]="vigenteOptions"
-                    ></app-ui-select>
-                  </div>
-                </div>
-                <div class="tab-actions">
-                  <app-ui-button variant="secondary" (buttonClick)="nuevo()">Limpiar</app-ui-button>
-                  <app-ui-button
-                    type="submit"
-                    variant="primary"
-                    icon="fa-solid fa-floppy-disk"
-                    [disabled]="saving"
-                    [loading]="saving"
-                    >
-                    {{ saving ? 'Guardando...' : 'Guardar' }}
-                  </app-ui-button>
-                </div>
-              </form>
-            </article>
-            <article class="tab-card list-card">
-              <h3>Roles registrados</h3>
-              @if (loading) {
-                <div class="list-loading">Cargando roles...</div>
-              }
-              @if (!loading && roles.length > 0) {
-                <div class="role-list">
-                  @for (item of roles; track item) {
-                    <div class="role-item">
-                      <div class="role-item__content">
-                        <strong>{{ item.nombre || ('Rol ' + item.id) }}</strong>
-                        <span class="meta">ID: {{ item.id }}</span>
-                        <span class="meta">Vigente: {{ item.vigente === 1 ? 'Si' : 'No' }}</span>
-                      </div>
-                      <div class="role-item__actions">
-                        <app-ui-button variant="secondary" (buttonClick)="editar(item)">Editar</app-ui-button>
-                        <app-ui-button variant="secondary" (buttonClick)="seleccionarRolPermisos(item)">
-                          Permisos
-                        </app-ui-button>
-                        <app-ui-button [variant]="getEstadoButtonVariant(item)" (buttonClick)="cambiarEstado(item)">
-                          {{ item.vigente === 1 ? 'Inactivar' : 'Activar' }}
-                        </app-ui-button>
-                      </div>
-                    </div>
-                  }
-                </div>
-              }
-              @if (!loading && roles.length === 0) {
-                <div class="news-state">
-                  No hay roles registrados.
-                </div>
-              }
-            </article>
-            <article class="tab-card permissions-card">
-              <h3>Permisos de men&uacute; por rol</h3>
-              <p class="meta">Rol seleccionado: <strong>{{ selectedRoleName }}</strong></p>
-              <form class="ui-grid role-menu-form" [formGroup]="permissionsForm" (ngSubmit)="asignarMenu()">
-                <div class="role-menu-select">
-                  <app-ui-select
-                    formControlName="selectedMenuId"
-                    label="Men&uacute; disponible"
-                    placeholder="Selecciona un men&uacute;..."
-                    [options]="availableMenuOptions"
-                    [disabled]="!selectedRoleId || availableMenus.length === 0"
-                  ></app-ui-select>
-                </div>
-                <div class="role-menu-action">
-                  <app-ui-button
-                    type="submit"
-                    variant="primary"
-                    icon="fa-solid fa-plus"
-                    [block]="true"
-                    [disabled]="savingRoleMenu || !selectedRoleId"
-                    [loading]="savingRoleMenu"
-                    >
-                    {{ savingRoleMenu ? 'Asignando...' : 'Asignar menu' }}
-                  </app-ui-button>
-                </div>
-              </form>
-              @if (loadingRoleMenus) {
-                <div class="list-loading">Consultando men&uacute;s del rol...</div>
-              }
-              @if (!loadingRoleMenus && roleMenus.length > 0) {
-                <div class="role-menu-list">
-                  @for (item of roleMenus; track item) {
-                    <div class="role-menu-item">
-                      <div class="role-menu-item__content">
-                        <strong>{{ item.descripcionMenu }}</strong>
-                        <span class="meta">ID menu: {{ item.idMenu }} &middot; Tipo: {{ item.tipo || 'N/A' }}</span>
-                      </div>
-                      <app-ui-button variant="secondary" (buttonClick)="quitarMenu(item)">
-                        Quitar
-                      </app-ui-button>
-                    </div>
-                  }
-                </div>
-              }
-              @if (!loadingRoleMenus && selectedRoleId && roleMenus.length === 0) {
-                <div class="news-state">
-                  El rol no tiene men&uacute;s asignados.
-                </div>
-              }
-            </article>
-          </div>
-        </div>
-      }
+<section class="roles-admin-page">
+  <app-ui-page-header
+    eyebrow="Administración central"
+    title="Administración de Roles"
+    description="Gestione perfiles de acceso y los menús habilitados para cada rol."
+    icon="fa-solid fa-user-shield"
+    headingId="roles-admin-title"
+    [minimized]="minimized()"
+    (minimizedChange)="minimized.set($event)"
+  >
+    <div page-header-actions class="roles-admin-summary" aria-label="Resumen de roles">
+      <app-ui-chip
+        appearance="glass"
+        size="xs"
+        icon="fa-solid fa-users-gear"
+        [value]="roleCount()"
+        label="roles"
+      />
+      <app-ui-chip
+        appearance="glass"
+        size="xs"
+        icon="fa-solid fa-circle-check"
+        [value]="activeRoleCount()"
+        label="activos"
+      />
     </div>
-  </section>
-}
+  </app-ui-page-header>
+
+  @if (!minimized()) {
+    <article class="roles-admin-content" aria-labelledby="roles-admin-title">
+      <app-ui-panel-header
+        appearance="soft"
+        title="Control de acceso centralizado"
+        description="Seleccione un rol para consultar sus permisos y administre por separado su definición y navegación."
+        icon="fa-solid fa-key"
+        headingId="roles-access-title"
+      >
+        <app-ui-button
+          panel-header-actions
+          class="roles-admin-create"
+          size="sm"
+          variant="primary"
+          icon="fa-solid fa-plus"
+          [hideTextOnMobile]="true"
+          backgroundColor="var(--policia-acento, #c8ff00)"
+          textColor="#102342"
+          borderColor="rgba(149, 191, 0, 0.72)"
+          iconColor="#102342"
+          [disabled]="loadingRoles()"
+          ariaLabel="Crear un rol"
+          (buttonClick)="startCreate()"
+        >
+          Nuevo rol
+        </app-ui-button>
+      </app-ui-panel-header>
+
+      <div class="roles-admin-content__body">
+        @if (editorVisible()) {
+          <section class="role-editor-window">
+            <app-ui-section-header
+              [eyebrow]="editingRole() ? 'EDICIÓN DE PERFIL' : 'NUEVO PERFIL'"
+              [title]="editingRole() ? 'Editar rol' : 'Crear rol'"
+              [description]="
+                editingRole()
+                  ? 'Actualice el rol seleccionado y revise su estructura de navegación.'
+                  : 'Registre la identidad y disponibilidad del nuevo perfil de acceso.'
+              "
+              [icon]="editingRole() ? 'fa-solid fa-user-pen' : 'fa-solid fa-user-plus'"
+              headingId="role-editor-title"
+            >
+              <app-ui-button
+                header-actions
+                size="sm"
+                variant="ghost"
+                icon="fa-solid fa-xmark"
+                [iconOnly]="true"
+                ariaLabel="Cerrar editor de rol"
+                title="Cerrar editor"
+                backgroundColor="rgba(255, 255, 255, 0.72)"
+                borderColor="rgba(8, 166, 203, 0.24)"
+                iconColor="#174f77"
+                [disabled]="savingRole()"
+                (buttonClick)="closeEditor()"
+              />
+            </app-ui-section-header>
+
+            <div class="role-editor-window__body" [class.is-create]="editingRole() === null">
+              <div class="role-editor-window__form">
+                <app-role-admin-form
+                  [editingRole]="editingRole()"
+                  [embedded]="true"
+                  [saving]="savingRole()"
+                  [resetVersion]="formResetVersion()"
+                  (saveRequested)="saveRole($event)"
+                  (cancelRequested)="closeEditor()"
+                />
+              </div>
+
+              @if (editingRole()) {
+                <app-role-menu-tree
+                  [menus]="roleMenus()"
+                  [loading]="loadingRoleMenus()"
+                  [removingMenuId]="removingMenuId()"
+                  (removeRequested)="removeMenu($event)"
+                />
+              } @else {
+                <app-role-access-summary [roles]="roles()" [menus]="allMenus()" />
+              }
+            </div>
+          </section>
+        } @else {
+          <div class="roles-admin-workspace">
+            <app-role-admin-list
+              [roles]="roles()"
+              [loading]="loadingRoles()"
+              [selectedRoleId]="selectedRoleId()"
+              [editingRoleId]="editingRole()?.id ?? null"
+              [processingRoleId]="processingRoleId()"
+              (editRequested)="editRole($event)"
+              (permissionsRequested)="selectRole($event)"
+              (stateRequested)="changeRoleState($event)"
+            />
+
+            <app-role-menu-permissions
+              [selectedRole]="selectedRole()"
+              [assignedMenus]="roleMenus()"
+              [availableMenuOptions]="availableMenuOptions()"
+              [loading]="loadingRoleMenus()"
+              [loadingCatalog]="loadingMenus()"
+              [saving]="savingRoleMenu()"
+              [removingMenuId]="removingMenuId()"
+              (assignRequested)="assignMenu($event)"
+              (removeRequested)="removeMenu($event)"
+            />
+          </div>
+        }
+      </div>
+    </article>
+  }
+</section>

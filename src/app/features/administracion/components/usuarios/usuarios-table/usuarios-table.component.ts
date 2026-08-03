@@ -1,5 +1,5 @@
-
 import {
+  ChangeDetectionStrategy,
   Component,
   DestroyRef,
   EventEmitter,
@@ -12,11 +12,12 @@ import {
   ViewChild,
   inject,
   signal,
-  ChangeDetectionStrategy
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 
+import { UiChipComponent } from '../../../../../shared/components/ui-chip/ui-chip.component';
+import { UiPanelHeaderComponent } from '../../../../../shared/components/ui-panel-header/ui-panel-header.component';
 import { UiSearchInputComponent } from '../../../../../shared/components/ui-search-input/ui-search-input.component';
 import { UiTableComponent } from '../../../../../shared/components/ui-table/ui-table.component';
 import {
@@ -33,10 +34,12 @@ import { UsuarioRolesDropdownComponent } from '../usuario-roles-dropdown/usuario
   standalone: true,
   imports: [
     ReactiveFormsModule,
+    UiChipComponent,
+    UiPanelHeaderComponent,
     UiSearchInputComponent,
     UiTableComponent,
-    UsuarioRolesDropdownComponent
-],
+    UsuarioRolesDropdownComponent,
+  ],
   templateUrl: './usuarios-table.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./usuarios-table.component.scss'],
@@ -44,9 +47,14 @@ import { UsuarioRolesDropdownComponent } from '../usuario-roles-dropdown/usuario
 export class UsuariosTableComponent implements OnChanges, OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly destroyRef = inject(DestroyRef);
-  readonly tableHeaderColor = signal('#3E82B3');
-  readonly tableHeaderColorMiddle = signal('#2A6694');
-  readonly tableHeaderColorEnd = signal('#174E78');
+
+  /**
+   * Paleta institucional del encabezado de ui-table. Los tres signals permiten
+   * ajustar el inicio, la transiciÃ³n y el cierre del degradado sin tocar SCSS.
+   */
+  readonly tableHeaderColor = signal('#102342');
+  readonly tableHeaderColorMiddle = signal('#004a73');
+  readonly tableHeaderColorEnd = signal('#087ea0');
   readonly tableTitleId = 'usuarios-existentes-title';
 
   @Input() usuarios: UsuarioListadoItem[] = [];

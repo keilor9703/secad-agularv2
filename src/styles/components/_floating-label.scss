@@ -22,3 +22,41 @@
     transparent 100%
   );
 }
+
+/* Estado inicial de la variante animada: la etiqueta reemplaza visualmente al placeholder. */
+@mixin animated-idle {
+  top: 50%;
+  left: 12px;
+  padding: 0;
+  background: transparent;
+  color: var(--form-placeholder-color, #64748b);
+  font-size: calc(13px * var(--font-size-scale, 1));
+  font-weight: 500;
+  transform: translateY(-50%);
+  transform-origin: left center;
+  pointer-events: none;
+}
+
+/* Estado elevado de la variante animada: abre visualmente el borde del control. */
+@mixin animated-active {
+  @include surface;
+
+  top: 0;
+  left: 11px;
+  padding: 0 9px;
+  color: var(--form-focus-color, #1f4e79);
+  font-size: calc(11px * var(--font-size-scale, 1));
+  font-weight: 700;
+  transform: translateY(-50%);
+}
+
+@mixin animated-transition {
+  transition:
+    top 180ms cubic-bezier(0.2, 0, 0, 1),
+    left 180ms cubic-bezier(0.2, 0, 0, 1),
+    color 160ms ease,
+    font-size 180ms cubic-bezier(0.2, 0, 0, 1),
+    font-weight 180ms ease,
+    padding 180ms ease,
+    transform 180ms cubic-bezier(0.2, 0, 0, 1);
+}

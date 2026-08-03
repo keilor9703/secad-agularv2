@@ -1,0 +1,65 @@
+<section class="role-menu-tree" aria-labelledby="role-menu-tree-title">
+  <header class="role-menu-tree__header">
+    <div>
+      <h3 id="role-menu-tree-title">Menús asignados</h3>
+      <p>Estructura de navegación disponible para el rol.</p>
+    </div>
+    <span>{{ menus().length }}</span>
+  </header>
+
+  @if (loading()) {
+    <div class="role-menu-tree__state">
+      <app-ui-spinner
+        type="ring"
+        size="sm"
+        variant="info"
+        label="Consultando menús..."
+        [speed]="760"
+        [thickness]="3"
+      />
+    </div>
+  } @else if (nodes().length === 0) {
+    <div class="role-menu-tree__state is-empty">
+      <i class="fa-solid fa-folder-open" aria-hidden="true"></i>
+      <div>
+        <strong>Sin menús asignados</strong>
+        <p>El rol todavía no tiene permisos de navegación.</p>
+      </div>
+    </div>
+  } @else {
+    <ul class="role-menu-tree__list">
+      @for (node of nodes(); track trackNode($index, node)) {
+        <li
+          class="role-menu-tree__node"
+          [class.is-root]="node.depth === 0"
+          [class.is-child]="node.depth > 0"
+          [style.--tree-depth]="node.depth"
+        >
+          <span class="role-menu-tree__branch" aria-hidden="true"></span>
+          <span class="role-menu-tree__node-icon" aria-hidden="true">
+            <i [class]="iconFor(node)"></i>
+          </span>
+
+          <div class="role-menu-tree__content">
+            <strong>{{ node.item.descripcionMenu }}</strong>
+            <small>
+              {{ node.item.tipo || 'Menú' }} · posición {{ node.item.posicion }}
+            </small>
+          </div>
+
+          <app-ui-button
+            size="sm"
+            variant="ghost"
+            icon="fa-solid fa-user-minus"
+            [iconOnly]="true"
+            [loading]="removingMenuId() === node.item.idMenu"
+            [disabled]="removingMenuId() !== null"
+            [ariaLabel]="'Retirar ' + node.item.descripcionMenu + ' del rol'"
+            title="Retirar permiso"
+            (buttonClick)="removeRequested.emit(node.item)"
+          />
+        </li>
+      }
+    </ul>
+  }
+</section>

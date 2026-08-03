@@ -6,6 +6,8 @@ import {
   UiStatusVariant,
 } from '../../interfaces/ui-status.interface';
 
+export type UiChipAppearance = UiStatusAppearance | 'glass';
+
 @Component({
   selector: 'app-ui-chip',
   standalone: true,
@@ -15,8 +17,9 @@ import {
 })
 export class UiChipComponent {
   readonly label = input('');
+  readonly value = input<string | number | null>(null);
   readonly variant = input<UiStatusVariant>('neutral');
-  readonly appearance = input<UiStatusAppearance>('outline');
+  readonly appearance = input<UiChipAppearance>('outline');
   readonly size = input<UiStatusSize>('sm');
   readonly icon = input('');
   readonly dot = input(false, { transform: booleanAttribute });

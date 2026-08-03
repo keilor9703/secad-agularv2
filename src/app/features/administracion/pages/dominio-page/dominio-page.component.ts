@@ -12,6 +12,8 @@ import { finalize } from 'rxjs';
 
 import { ToastService } from '../../../../core/services/toast.service';
 import { UiButtonComponent } from '../../../../shared/components/ui-button/ui-button.component';
+import { UiChipComponent } from '../../../../shared/components/ui-chip/ui-chip.component';
+import { UiPageHeaderComponent } from '../../../../shared/components/ui-page-header/ui-page-header.component';
 import { UiSelectOption } from '../../../../shared/interfaces/ui-select-option.interface';
 import { AlertService } from '../../../../shared/services/alert.service';
 import { getApiErrorMessage } from '../../../../shared/utils/api-error-message.util';
@@ -25,7 +27,13 @@ import { DominioService, DtoDominio, DtoDominioRequest } from '../../services/do
 @Component({
   selector: 'app-dominio',
   standalone: true,
-  imports: [UiButtonComponent, DominioAdminFormComponent, DominioAdminTreeComponent],
+  imports: [
+    UiButtonComponent,
+    UiChipComponent,
+    UiPageHeaderComponent,
+    DominioAdminFormComponent,
+    DominioAdminTreeComponent,
+  ],
   templateUrl: './dominio-page.component.html',
   styleUrl: './dominio-page.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -106,10 +114,6 @@ export class DominioPageComponent implements OnInit {
     });
 
     this.loadDomains();
-  }
-
-  toggleMinimize(): void {
-    this.minimized.update((value) => !value);
   }
 
   startCreateRoot(): void {

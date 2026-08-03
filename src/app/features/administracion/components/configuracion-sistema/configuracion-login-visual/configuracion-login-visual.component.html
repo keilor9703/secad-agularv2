@@ -21,12 +21,11 @@
 
   <div class="settings-layout">
     <article class="settings-surface">
-      <header class="settings-surface__head">
-        <div>
-          <h3>Parámetros de rotación</h3>
-          <p>El intervalo permitido está entre 1.500 y 60.000 milisegundos.</p>
-        </div>
-      </header>
+      <app-ui-panel-header
+        title="Parámetros de rotación"
+        description="El intervalo permitido está entre 1.500 y 60.000 milisegundos."
+        icon="fa-solid fa-rotate"
+      />
 
       <form class="settings-form" [formGroup]="form" (ngSubmit)="saveConfiguration()">
         <app-ui-input
@@ -74,12 +73,10 @@
     </article>
 
     <article class="settings-surface">
-      <header class="settings-surface__head">
-        <div>
-          <h3>Contenido configurado</h3>
-          <p>Edite el orden, la visibilidad y los textos complementarios.</p>
-        </div>
-      </header>
+      <app-ui-panel-header
+        title="Contenido configurado"
+        description="Edite el orden, la visibilidad y los textos complementarios."
+      />
 
       @if (loading()) {
         <div class="settings-surface__body">

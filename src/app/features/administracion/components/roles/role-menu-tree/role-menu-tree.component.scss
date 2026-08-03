@@ -1,0 +1,245 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.role-menu-tree {
+  overflow: hidden;
+  border: 1px solid rgba(8, 166, 203, 0.22);
+  border-radius: 7px;
+  background: var(--ui-surface, #ffffff);
+}
+
+.role-menu-tree__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 11px;
+  border-bottom: 1px solid rgba(8, 166, 203, 0.18);
+  background: #eaf7fb;
+}
+
+.role-menu-tree__header h3,
+.role-menu-tree__header p {
+  margin: 0;
+}
+
+.role-menu-tree__header h3 {
+  color: var(--ui-text, #111936);
+  font-size: calc(12px * var(--font-size-scale, 1));
+  font-weight: 900;
+}
+
+.role-menu-tree__header p {
+  margin-top: 2px;
+  color: var(--ui-muted, #687891);
+  font-size: calc(8.5px * var(--font-size-scale, 1));
+}
+
+.role-menu-tree__header > span {
+  display: grid;
+  min-width: 28px;
+  height: 28px;
+  place-items: center;
+  border: 1px solid rgba(8, 166, 203, 0.25);
+  border-radius: 50%;
+  color: var(--policia-medio, #002a66);
+  font-size: calc(9px * var(--font-size-scale, 1));
+  font-weight: 900;
+}
+
+.role-menu-tree__list {
+  max-height: min(430px, 54vh);
+  margin: 0;
+  padding: 8px;
+  overflow: auto;
+  list-style: none;
+  scrollbar-gutter: stable;
+}
+
+.role-menu-tree__node {
+  --node-indent: calc(var(--tree-depth) * 22px);
+
+  position: relative;
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr) 34px;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  margin: 4px 0 4px var(--node-indent);
+  padding: 6px 7px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: var(--ui-surface, #ffffff);
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+.role-menu-tree__node.is-root {
+  border-color: rgba(0, 42, 102, 0.12);
+  background: linear-gradient(90deg, rgba(0, 42, 102, 0.065), rgba(8, 166, 203, 0.035));
+}
+
+.role-menu-tree__node.is-child {
+  border-color: rgba(148, 163, 184, 0.2);
+  box-shadow: inset 3px 0 0 rgba(8, 166, 203, 0.28);
+}
+
+.role-menu-tree__node:hover,
+.role-menu-tree__node:focus-within {
+  z-index: 1;
+  border-color: rgba(8, 166, 203, 0.48);
+  background: #edf8fb;
+  box-shadow:
+    inset 3px 0 0 var(--policia-cielo, #08a6cb),
+    0 6px 14px rgba(15, 23, 42, 0.08);
+  transform: translateX(2px);
+}
+
+.role-menu-tree__branch {
+  position: absolute;
+  top: -1px;
+  bottom: 50%;
+  left: -12px;
+  width: 12px;
+  border-bottom: 1px solid #9bb5c7;
+  border-left: 1px solid #9bb5c7;
+  border-radius: 0 0 0 7px;
+}
+
+.role-menu-tree__node.is-root .role-menu-tree__branch {
+  display: none;
+}
+
+.role-menu-tree__node-icon {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border-radius: 6px;
+  background: rgba(8, 166, 203, 0.085);
+  color: var(--policia-medio, #002a66);
+  font-size: 12px;
+}
+
+.role-menu-tree__node.is-root .role-menu-tree__node-icon {
+  background: var(--policia-medio, #002a66);
+  color: var(--policia-acento, #c8ff00);
+  box-shadow: 0 5px 11px rgba(0, 42, 102, 0.16);
+}
+
+.role-menu-tree__node.is-child .role-menu-tree__node-icon {
+  background: rgba(8, 166, 203, 0.11);
+  color: #075985;
+}
+
+.role-menu-tree__content {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.role-menu-tree__content strong,
+.role-menu-tree__content small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.role-menu-tree__content strong {
+  color: var(--ui-text, #111936);
+  font-size: calc(10px * var(--font-size-scale, 1));
+}
+
+.role-menu-tree__content small {
+  color: var(--ui-muted, #687891);
+  font-size: calc(8px * var(--font-size-scale, 1));
+}
+
+.role-menu-tree__state {
+  display: grid;
+  min-height: 160px;
+  place-items: center;
+  padding: 18px;
+}
+
+.role-menu-tree__state.is-empty {
+  grid-template-columns: auto minmax(0, auto);
+  align-content: center;
+  justify-content: center;
+  gap: 10px;
+  color: var(--ui-muted, #687891);
+}
+
+.role-menu-tree__state.is-empty > i {
+  color: var(--policia-cielo, #08a6cb);
+  font-size: 24px;
+}
+
+.role-menu-tree__state strong,
+.role-menu-tree__state p {
+  margin: 0;
+}
+
+.role-menu-tree__state strong {
+  color: var(--ui-text, #111936);
+  font-size: calc(10px * var(--font-size-scale, 1));
+}
+
+.role-menu-tree__state p {
+  margin-top: 2px;
+  font-size: calc(8.5px * var(--font-size-scale, 1));
+}
+
+@media (max-width: 600px) {
+  .role-menu-tree__list {
+    max-height: min(360px, 45vh);
+  }
+
+  .role-menu-tree__node {
+    --node-indent: calc(var(--tree-depth) * 14px);
+  }
+
+  .role-menu-tree__node:hover,
+  .role-menu-tree__node:focus-within {
+    transform: none;
+  }
+}
+
+:host-context(html.dark-mode) {
+  .role-menu-tree__header {
+    background: rgba(8, 166, 203, 0.12);
+  }
+
+  .role-menu-tree__header > span,
+  .role-menu-tree__node-icon {
+    color: #b9e7f3;
+  }
+
+  .role-menu-tree__node {
+    background: rgba(15, 23, 42, 0.42);
+  }
+
+  .role-menu-tree__node.is-root {
+    border-color: rgba(85, 200, 229, 0.2);
+    background: linear-gradient(90deg, rgba(8, 166, 203, 0.15), rgba(15, 23, 42, 0.34));
+  }
+
+  .role-menu-tree__node.is-root .role-menu-tree__node-icon {
+    color: var(--policia-acento, #c8ff00);
+  }
+
+  .role-menu-tree__node.is-child .role-menu-tree__node-icon {
+    color: #9ddff0;
+  }
+
+  .role-menu-tree__node:hover,
+  .role-menu-tree__node:focus-within {
+    border-color: rgba(85, 200, 229, 0.52);
+    background: rgba(8, 166, 203, 0.17);
+  }
+}

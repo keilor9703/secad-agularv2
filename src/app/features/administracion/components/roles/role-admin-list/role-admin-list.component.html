@@ -1,0 +1,69 @@
+<article class="role-list-card">
+  <app-ui-table
+    class="role-list-card__table"
+    embedded
+    labelledBy="roles-catalog-title"
+    emptyMessage="No hay roles que coincidan con la búsqueda."
+    loadingMessage="Consultando catálogo de roles..."
+    variant="institutional"
+    actionDisplay="row-hover"
+    actionsPosition="right"
+    paginationVariant="numbered"
+    actionMenuLabel="Acciones disponibles para el rol"
+    headerColor="#093f73"
+    headerColorMiddle="#0b6487"
+    headerColorEnd="#1185a0"
+    headerTextColor="#ffffff"
+    [columns]="columns"
+    [rows]="tableRows()"
+    [actions]="actions"
+    [loading]="loading()"
+    [total]="tableRows().length"
+    [showRecordBadge]="false"
+    [stickyActions]="true"
+    [stickyHeader]="true"
+    [showPagination]="tableRows().length > 8"
+    [paginationShowPageSize]="false"
+    [paginationShowSummary]="false"
+    [pageSize]="8"
+    [tableMinWidth]="460"
+    [bodyFontSize]="11.5"
+    bodyFontWeight="normal"
+    [rowPadding]="7"
+    [rowAppearance]="rowAppearance"
+    (actionClick)="handleAction($event)"
+  >
+    <div table-toolbar class="role-list-card__toolbar">
+      <app-ui-section-header
+        eyebrow="CATÁLOGO DE ACCESO"
+        title="Roles registrados"
+        description="Seleccione un rol para editarlo o consultar sus permisos."
+        icon="fa-solid fa-users-gear"
+        headingId="roles-catalog-title"
+      >
+        <div header-actions class="role-list-card__header-actions">
+          <span class="role-list-card__count" aria-label="Cantidad de roles">
+            {{ roles().length }}
+          </span>
+
+          <form
+            class="role-list-card__search"
+            role="search"
+            aria-label="Buscar roles"
+            [formGroup]="searchForm"
+          >
+            <app-ui-search-input
+              formControlName="search"
+              ariaLabel="Buscar por nombre o identificador del rol"
+              placeholder="Buscar rol..."
+              icon="fa-solid fa-magnifying-glass"
+              [showButton]="false"
+              [clearable]="true"
+              [controlSize]="compactSearchSize"
+            />
+          </form>
+        </div>
+      </app-ui-section-header>
+    </div>
+  </app-ui-table>
+</article>

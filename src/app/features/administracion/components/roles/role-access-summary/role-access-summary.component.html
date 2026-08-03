@@ -1,0 +1,78 @@
+<aside class="role-access-summary" aria-labelledby="role-access-summary-title">
+  <app-ui-section-header
+    eyebrow="RESUMEN DE ACCESO"
+    title="Contexto del nuevo rol"
+    description="Revise los perfiles y grupos de navegación existentes antes de crear uno nuevo."
+    icon="fa-solid fa-diagram-project"
+    headingId="role-access-summary-title"
+  />
+
+  <div class="role-access-summary__body">
+    <div class="role-access-summary__stats" aria-label="Resumen del catálogo">
+      <article>
+        <i class="fa-solid fa-users-gear" aria-hidden="true"></i>
+        <span><strong>{{ roles().length }}</strong> roles</span>
+      </article>
+      <article>
+        <i class="fa-solid fa-circle-check" aria-hidden="true"></i>
+        <span><strong>{{ activeRoles() }}</strong> activos</span>
+      </article>
+      <article>
+        <i class="fa-solid fa-sitemap" aria-hidden="true"></i>
+        <span><strong>{{ menus().length }}</strong> menús</span>
+      </article>
+    </div>
+
+    <section class="role-access-summary__section">
+      <header>
+        <div>
+          <strong>Roles actuales</strong>
+          <small>Evite nombres duplicados o perfiles equivalentes.</small>
+        </div>
+        <i class="fa-solid fa-address-card" aria-hidden="true"></i>
+      </header>
+
+      @if (rolePreview().length > 0) {
+        <ul class="role-access-summary__roles">
+          @for (role of rolePreview(); track role.id) {
+            <li [class.is-inactive]="role.vigente !== 1" [title]="role.nombre || 'Rol sin nombre'">
+              <span aria-hidden="true"></span>
+              {{ role.nombre || 'Rol sin nombre' }}
+            </li>
+          }
+          @if (hiddenRoleCount() > 0) {
+            <li class="is-more">+{{ hiddenRoleCount() }} adicionales</li>
+          }
+        </ul>
+      } @else {
+        <p class="role-access-summary__empty">Todavía no hay roles registrados.</p>
+      }
+    </section>
+
+    <section class="role-access-summary__section">
+      <header>
+        <div>
+          <strong>Mapa de navegación</strong>
+          <small>Los permisos se asignan después de crear el rol.</small>
+        </div>
+        <i class="fa-solid fa-route" aria-hidden="true"></i>
+      </header>
+
+      @if (menuGroups().length > 0) {
+        <ul class="role-access-summary__menus">
+          @for (group of menuGroups(); track group.id) {
+            <li [title]="group.name">
+              <span class="role-access-summary__menu-icon" aria-hidden="true">
+                <i [class]="group.icon"></i>
+              </span>
+              <strong>{{ group.name }}</strong>
+              <small>{{ group.descendants }} {{ group.descendants === 1 ? 'elemento' : 'elementos' }}</small>
+            </li>
+          }
+        </ul>
+      } @else {
+        <p class="role-access-summary__empty">No hay menús disponibles para resumir.</p>
+      }
+    </section>
+  </div>
+</aside>

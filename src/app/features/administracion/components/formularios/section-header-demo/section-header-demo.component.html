@@ -1,0 +1,327 @@
+<section class="header-demo ui-panel">
+  <header class="header-demo__catalog-header">
+    <span class="header-demo__number" aria-hidden="true">08</span>
+    <div>
+      <h2>Encabezados administrativos reutilizables</h2>
+      <p>Cabecera institucional con icono, jerarquía textual y acciones proyectables.</p>
+    </div>
+  </header>
+
+  <div class="header-demo__body">
+    <article class="header-demo__example header-demo__example--wide">
+      <header>
+        <h3>Cabecera principal minimizable</h3>
+        <p>Incluye las variantes blanca e integrada para comparar cuál conviene en cada módulo.</p>
+      </header>
+
+      <div class="header-demo__preview header-demo__preview--module">
+        <app-ui-page-header
+          eyebrow="ADMINISTRACIÓN CENTRAL"
+          title="Configuración del sistema"
+          description="Gestione contenido institucional e identidad visual desde secciones independientes."
+          icon="fa-solid fa-sliders"
+          headingId="demo-page-header"
+          [minimized]="pageHeaderMinimized()"
+          (minimizedChange)="pageHeaderMinimized.set($event)"
+        >
+          <div page-header-actions class="header-demo__actions">
+            <app-ui-chip
+              label="secciones"
+              [value]="3"
+              variant="primary"
+              appearance="outline"
+              size="sm"
+            />
+            <app-ui-chip
+              label="activos"
+              [value]="14"
+              variant="success"
+              appearance="glass"
+              size="sm"
+            />
+          </div>
+        </app-ui-page-header>
+
+        @if (!pageHeaderMinimized()) {
+          <div class="header-demo__sample-content">
+            <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+            <div>
+              <strong>El encabezado no controla datos de negocio</strong>
+              <p>La página conserva la signal y decide si oculta tabs, formularios o tablas.</p>
+            </div>
+          </div>
+        }
+      </div>
+    </article>
+
+    <article class="header-demo__example header-demo__example--wide">
+      <header>
+        <h3>Cabeceras internas institucionales</h3>
+        <p>La misma UI admite icono opcional y siempre acompaña contenido del panel.</p>
+      </header>
+
+      <div class="header-demo__panel-grid">
+        <section class="header-demo__preview">
+          <app-ui-panel-header
+            title="Publicar un video"
+            description="El nuevo archivo reemplazará el video actualmente activo."
+            icon="fa-solid fa-cloud-arrow-up"
+          />
+          <div class="header-demo__sample-content is-compact">
+            <span>Ejemplo con icono para una acción principal.</span>
+          </div>
+        </section>
+
+        <section class="header-demo__preview">
+          <app-ui-panel-header
+            title="Vista previa"
+            description="Contenido actualmente publicado."
+          />
+          <div class="header-demo__sample-content is-compact">
+            <span>Ejemplo sin icono para paneles secundarios.</span>
+          </div>
+        </section>
+      </div>
+    </article>
+
+    <article class="header-demo__example header-demo__example--wide">
+      <header>
+        <h3>Cabecera suave con contenido</h3>
+        <p>Recomendada para estructuras, resúmenes y paneles que no requieren fondo oscuro.</p>
+      </header>
+
+      <div class="header-demo__preview">
+        <app-ui-panel-header
+          title="Estructura del menú"
+          description="Explore la jerarquía y administre cada destino."
+          icon="fa-solid fa-sitemap"
+          appearance="soft"
+        >
+          <app-ui-chip
+            panel-header-actions
+            label="23 ítems"
+            variant="info"
+            appearance="soft"
+            size="xs"
+            icon="fa-solid fa-layer-group"
+          />
+        </app-ui-panel-header>
+        <div class="header-demo__sample-content">
+          <i class="fa-solid fa-folder-tree" aria-hidden="true"></i>
+          <div>
+            <strong>Contenido de orientación</strong>
+            <p>Coloque aquí el árbol, tabla o formulario relacionado con el encabezado.</p>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <article class="header-demo__example header-demo__example--wide">
+      <header>
+        <h3>Encabezado compacto recomendado</h3>
+        <p>La caja es azul institucional y el icono utiliza el verde de acento.</p>
+      </header>
+
+      <div class="header-demo__preview">
+        <app-ui-section-header
+          eyebrow="CATÁLOGO DE ACCESO"
+          title="Roles registrados"
+          description="Seleccione un rol para editarlo o consultar sus permisos."
+          icon="fa-solid fa-users-gear"
+          headingId="demo-header-roles"
+        />
+      </div>
+    </article>
+
+    <article class="header-demo__example">
+      <header>
+        <h3>Sin texto complementario</h3>
+        <p>Útil cuando el contexto de la sección ya es evidente.</p>
+      </header>
+
+      <div class="header-demo__preview">
+        <app-ui-section-header
+          eyebrow="NAVEGACIÓN"
+          title="Menús asignados"
+          icon="fa-solid fa-folder-tree"
+          headingId="demo-header-minimal"
+        />
+      </div>
+    </article>
+
+    <article class="header-demo__example">
+      <header>
+        <h3>Altura extendida</h3>
+        <p>Desactive <code>compact</code> cuando la descripción necesite mayor presencia.</p>
+      </header>
+
+      <div class="header-demo__preview">
+        <app-ui-section-header
+          eyebrow="ADMINISTRACIÓN CENTRAL"
+          title="Configuración del sistema"
+          description="Gestione la identidad, los recursos visuales y el contenido institucional."
+          icon="fa-solid fa-sliders"
+          headingId="demo-header-expanded"
+          [compact]="false"
+        />
+      </div>
+    </article>
+
+    <article class="header-demo__example header-demo__example--wide">
+      <header>
+        <h3>Estado y acciones proyectadas</h3>
+        <p>Los botones y cápsulas siguen siendo componentes independientes.</p>
+      </header>
+
+      <div class="header-demo__preview">
+        <app-ui-section-header
+          eyebrow="GESTIÓN DE CATÁLOGO"
+          title="Dominios institucionales"
+          description="Administre niveles y valores reutilizables."
+          icon="fa-solid fa-tags"
+          headingId="demo-header-actions"
+        >
+          <div header-actions class="header-demo__actions">
+            <app-ui-chip label="12 activos" variant="success" appearance="outline" [dot]="true" />
+            <app-ui-button
+              size="sm"
+              variant="primary"
+              icon="fa-solid fa-plus"
+              [hideTextOnMobile]="true"
+              (buttonClick)="handleDemoAction()"
+            >
+              Nuevo dominio
+            </app-ui-button>
+          </div>
+        </app-ui-section-header>
+      </div>
+
+      <p class="header-demo__feedback" aria-live="polite">{{ actionFeedback() }}</p>
+    </article>
+
+    <div class="header-demo__code-grid">
+      <article>
+        <h3>Cabecera principal</h3>
+        <pre><code>{{ pageHeaderUsage }}</code></pre>
+      </article>
+
+      <article>
+        <h3>Cabecera interna</h3>
+        <pre><code>{{ panelHeaderUsage }}</code></pre>
+      </article>
+
+      <article>
+        <h3>Código básico</h3>
+        <pre><code>{{ basicUsage }}</code></pre>
+      </article>
+
+      <article>
+        <h3>Código con acciones</h3>
+        <pre><code>{{ actionsUsage }}</code></pre>
+      </article>
+    </div>
+
+    <article class="header-demo__api">
+      <h3>API de los encabezados</h3>
+      <div class="header-demo__api-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Componente</th>
+              <th>Entrada</th>
+              <th>Tipo</th>
+              <th>Predeterminado</th>
+              <th>Uso</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>ui-page-header</code></td>
+              <td><code>title</code></td>
+              <td>string</td>
+              <td>Requerido</td>
+              <td>Título principal del módulo.</td>
+            </tr>
+            <tr>
+              <td><code>ui-page-header</code></td>
+              <td><code>minimized</code></td>
+              <td>model&lt;boolean&gt;</td>
+              <td>false</td>
+              <td>Estado bidireccional de minimización.</td>
+            </tr>
+            <tr>
+              <td><code>ui-page-header</code></td>
+              <td><code>minimizable</code></td>
+              <td>boolean</td>
+              <td>true</td>
+              <td>Muestra u oculta el control menos/expandir.</td>
+            </tr>
+            <tr>
+              <td><code>ui-page-header</code></td>
+              <td><code>page-header-actions</code></td>
+              <td>slot</td>
+              <td>Vacío</td>
+              <td>Badges y acciones del módulo.</td>
+            </tr>
+            <tr>
+              <td><code>ui-chip</code></td>
+              <td><code>appearance</code></td>
+              <td>outline | glass</td>
+              <td>outline</td>
+              <td>Indicador blanco o integrado en cabeceras oscuras.</td>
+            </tr>
+            <tr>
+              <td><code>ui-chip</code></td>
+              <td><code>value</code></td>
+              <td>string | number</td>
+              <td>null</td>
+              <td>Valor numérico destacado antes de la etiqueta.</td>
+            </tr>
+            <tr>
+              <td><code>ui-panel-header</code></td>
+              <td><code>appearance</code></td>
+              <td>institutional | soft</td>
+              <td>institutional</td>
+              <td>Fondo oscuro o cabecera clara.</td>
+            </tr>
+            <tr>
+              <td><code>ui-panel-header</code></td>
+              <td><code>icon</code></td>
+              <td>string</td>
+              <td>Vacío</td>
+              <td>El icono es completamente opcional.</td>
+            </tr>
+            <tr>
+              <td><code>ui-panel-header</code></td>
+              <td><code>panel-header-actions</code></td>
+              <td>slot</td>
+              <td>Vacío</td>
+              <td>Indicadores del panel.</td>
+            </tr>
+            <tr>
+              <td><code>ui-section-header</code></td>
+              <td><code>eyebrow</code></td>
+              <td>string</td>
+              <td>Vacío</td>
+              <td>Categoría superior.</td>
+            </tr>
+            <tr>
+              <td><code>ui-section-header</code></td>
+              <td><code>compact</code></td>
+              <td>boolean</td>
+              <td>true</td>
+              <td>Controla la altura de la sección.</td>
+            </tr>
+            <tr>
+              <td><code>Todos</code></td>
+              <td><code>headingId</code></td>
+              <td>string</td>
+              <td>Automático</td>
+              <td>Referencia accesible del título.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </article>
+  </div>
+</section>

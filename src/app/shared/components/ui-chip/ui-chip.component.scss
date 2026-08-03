@@ -56,6 +56,19 @@
   color: #ffffff;
 }
 
+/* Variante integrada para cabeceras oscuras: conserva contraste sin crear una pastilla blanca. */
+.ui-status-chip--glass {
+  --chip-color: #ffffff;
+  --chip-border: rgba(255, 255, 255, 0.22);
+  border-color: var(--chip-border);
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 5px 13px rgba(2, 15, 35, 0.08);
+  backdrop-filter: blur(6px);
+}
+
 .ui-status-chip--primary {
   --chip-color: #1557c0;
   --chip-bg: #e9f0ff;
@@ -123,6 +136,16 @@
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.ui-status-chip__value {
+  margin-right: 3px;
+  font-size: 1.12em;
+  font-weight: 900;
+}
+
+.ui-status-chip--glass .ui-status-chip__label {
+  font-weight: 500;
 }
 
 .ui-status-chip__remove {

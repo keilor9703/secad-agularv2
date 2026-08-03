@@ -1,10 +1,45 @@
-﻿import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+﻿import { CommonModule } from '@angular/common';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  OnDestroy,
+  OnInit,
+  signal,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../../../core/auth/auth.service';
-import { LoginVisualPublicItem, LoginVisualService } from '../../../../core/services/login-visual.service';
-import { BrandingService } from '../../../../core/services/branding.service';
+import {
+  BrandingService,
+  DEFAULT_LOGIN_BRAND_PREFERENCES,
+  LoginBrandPreferences,
+} from '../../../../core/services/branding.service';
+import {
+  LoginVisualPublicItem,
+  LoginVisualService,
+} from '../../../../core/services/login-visual.service';
+
+type LoginBrandTextKind = 'institution' | 'system' | 'acronym';
+
+interface LoginBrandTextItem {
+  readonly kind: LoginBrandTextKind;
+  readonly text: string;
+  readonly sizePx: number;
+}
+
+interface LoginBrandViewModel extends LoginBrandPreferences {
+  readonly acronym: string;
+  readonly systemName: string;
+  readonly logoUrl: string;
+}
+
+const DEFAULT_LOGIN_BRAND: LoginBrandViewModel = {
+  ...DEFAULT_LOGIN_BRAND_PREFERENCES,
+  acronym: 'SISGE',
+  systemName: 'SISGE',
+  logoUrl: '/escudo.png',
+};
 
 @Component({
   selector: 'app-login',
@@ -12,11 +47,41 @@ import { BrandingService } from '../../../../core/services/branding.service';
   imports: [CommonModule, RouterModule, FormsModule],
   templateUrl: './login-page.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
-  styleUrls: ['./login-page.component.scss']
+  styleUrls: ['./login-page.component.scss'],
 })
 export class LoginPageComponent implements OnInit, OnDestroy {
-  systemName = 'OFTIC';
-  logoUrl = '/escudo.png';
+  readonly loginBrand = signal<LoginBrandViewModel>(DEFAULT_LOGIN_BRAND);
+  readonly loginBrandTextItems = computed<LoginBrandTextItem[]>(() => {
+    const brand = this.loginBrand();
+    const items: Record<LoginBrandTextKind, LoginBrandTextItem | null> = {
+      institution: brand.loginShowInstitutionName
+        ? {
+            kind: 'institution',
+            text: brand.nombreInstitucion,
+            sizePx: brand.loginInstitutionTextSizePx,
+          }
+        : null,
+      system: brand.loginShowSystemName
+        ? {
+            kind: 'system',
+            text: brand.systemName,
+            sizePx: brand.loginSystemTextSizePx,
+          }
+        : null,
+      acronym: brand.loginShowAcronym
+        ? {
+            kind: 'acronym',
+            text: brand.acronym,
+            sizePx: brand.loginAcronymTextSizePx,
+          }
+        : null,
+    };
+
+    return brand.loginBrandTextOrder
+      .split('-')
+      .map((key) => items[key as LoginBrandTextKind])
+      .filter((item): item is LoginBrandTextItem => item !== null);
+  });
   usuario = '';
   contrasena = '';
   showPassword = false;
@@ -31,7 +96,7 @@ export class LoginPageComponent implements OnInit, OnDestroy {
     private authService: AuthService,
     private router: Router,
     private loginVisualService: LoginVisualService,
-    private brandingService: BrandingService
+    private brandingService: BrandingService,
   ) {}
 
   ngOnInit(): void {
@@ -66,21 +131,38 @@ export class LoginPageComponent implements OnInit, OnDestroy {
       },
       error: () => {
         this.applyFallbackSlides();
-      }
+      },
     });
   }
 
   private loadBranding(): void {
     this.brandingService.getPublicConfig().subscribe({
       next: (cfg) => {
-        const sigla = (cfg?.sistema ?? cfg?.systemName ?? '').trim();
-        this.systemName = sigla || 'SISGE';
-        this.logoUrl = (cfg?.logoUrl ?? '').trim() || '/escudo.png';
+        const defaults = DEFAULT_LOGIN_BRAND_PREFERENCES;
+        this.loginBrand.set({
+          acronym: (cfg?.sistema ?? '').trim() || 'SISGE',
+          systemName: (cfg?.nombreSistema ?? cfg?.systemName ?? '').trim() || 'SISGE',
+          nombreInstitucion: (cfg?.nombreInstitucion ?? '').trim() || defaults.nombreInstitucion,
+          logoUrl: (cfg?.logoUrl ?? '').trim() || '/escudo.png',
+          loginShowLogo: cfg?.loginShowLogo ?? defaults.loginShowLogo,
+          loginShowInstitutionName:
+            cfg?.loginShowInstitutionName ?? defaults.loginShowInstitutionName,
+          loginShowSystemName: cfg?.loginShowSystemName ?? defaults.loginShowSystemName,
+          loginShowAcronym: cfg?.loginShowAcronym ?? defaults.loginShowAcronym,
+          loginLogoPosition: cfg?.loginLogoPosition ?? defaults.loginLogoPosition,
+          loginTextLayout: cfg?.loginTextLayout ?? defaults.loginTextLayout,
+          loginBrandTextOrder: cfg?.loginBrandTextOrder ?? defaults.loginBrandTextOrder,
+          loginTextAlign: cfg?.loginTextAlign ?? defaults.loginTextAlign,
+          loginLogoSizePx: cfg?.loginLogoSizePx ?? defaults.loginLogoSizePx,
+          loginInstitutionTextSizePx:
+            cfg?.loginInstitutionTextSizePx ?? defaults.loginInstitutionTextSizePx,
+          loginSystemTextSizePx: cfg?.loginSystemTextSizePx ?? defaults.loginSystemTextSizePx,
+          loginAcronymTextSizePx: cfg?.loginAcronymTextSizePx ?? defaults.loginAcronymTextSizePx,
+        });
       },
       error: () => {
-        this.systemName = 'SISGE';
-        this.logoUrl = '/escudo.png';
-      }
+        this.loginBrand.set(DEFAULT_LOGIN_BRAND);
+      },
     });
   }
 
@@ -88,7 +170,7 @@ export class LoginPageComponent implements OnInit, OnDestroy {
     this.slides = [
       { fileName: 'banner1.jpg', url: '/background/banner1.jpg', order: 1 },
       { fileName: 'banner2.jpg', url: '/background/banner2.jpg', order: 2 },
-      { fileName: 'banner3.jpg', url: '/background/banner3.jpg', order: 3 }
+      { fileName: 'banner3.jpg', url: '/background/banner3.jpg', order: 3 },
     ];
     this.currentSlideIndex = 0;
     this.startSlideRotation(6000);
@@ -142,8 +224,11 @@ export class LoginPageComponent implements OnInit, OnDestroy {
       error: (err) => {
         this.clearLoginTimeout();
         this.isLoading = false;
-        this.errorMessage = err?.error?.mensaje ?? err?.error?.message ?? 'Error de conexión con el servicio de autenticación.';
-      }
+        this.errorMessage =
+          err?.error?.mensaje ??
+          err?.error?.message ??
+          'Error de conexión con el servicio de autenticación.';
+      },
     });
   }
 
@@ -158,4 +243,3 @@ export class LoginPageComponent implements OnInit, OnDestroy {
     }
   }
 }
-

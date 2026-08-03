@@ -1,0 +1,77 @@
+<article class="role-form-card" [class.is-embedded]="embedded()">
+  @if (!embedded()) {
+    <header class="role-form-card__header">
+      <span class="role-form-card__icon" aria-hidden="true">
+        <i [class]="editingRole() ? 'fa-solid fa-user-pen' : 'fa-solid fa-user-plus'"></i>
+      </span>
+
+      <div>
+        <small>{{ editingRole() ? 'EDICIÓN' : 'NUEVO PERFIL' }}</small>
+        <h2>{{ title }}</h2>
+        <p>{{ description }}</p>
+      </div>
+    </header>
+  }
+
+  <form class="role-form" [formGroup]="form" (ngSubmit)="submit()">
+    <div class="role-form__fields">
+      <app-ui-input
+        formControlName="nombre"
+        label="Nombre del rol"
+        placeholder="Ej.: Gestor de contenidos"
+        icon="fa-solid fa-id-badge"
+        [required]="true"
+        [maxlength]="255"
+        [controlSize]="compactControlSize"
+        [error]="errorFor('nombre')"
+      />
+
+      <app-ui-select
+        formControlName="vigente"
+        label="Estado"
+        placeholder="Seleccione"
+        [options]="statusOptions"
+        [required]="true"
+        [clearable]="false"
+        [searchable]="false"
+        [controlSize]="compactControlSize"
+        [error]="errorFor('vigente')"
+      />
+    </div>
+
+    <aside class="role-form__note">
+      <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
+      <span>
+        @if (editingRole()) {
+          Los menús asignados se muestran en el árbol lateral para conservar el contexto del rol.
+        } @else {
+          Después de crear el rol podrá asignarle permisos desde el panel de navegación.
+        }
+      </span>
+    </aside>
+
+    <footer class="role-form__footer">
+      <app-ui-button
+        type="button"
+        size="sm"
+        variant="outline"
+        icon="fa-solid fa-xmark"
+        [disabled]="saving()"
+        (buttonClick)="cancel()"
+      >
+        Cancelar
+      </app-ui-button>
+
+      <app-ui-button
+        type="submit"
+        size="sm"
+        variant="primary"
+        icon="fa-solid fa-floppy-disk"
+        [loading]="saving()"
+        [disabled]="form.invalid"
+      >
+        {{ submitLabel }}
+      </app-ui-button>
+    </footer>
+  </form>
+</article>

@@ -1,5 +1,5 @@
-﻿import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+﻿import { HttpClient } from '@angular/common/http';
+import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
@@ -37,9 +37,8 @@ export interface DtoLineaMandoResult {
 
 @Injectable({ providedIn: 'root' })
 export class LineaMandoService {
+  private readonly http = inject(HttpClient);
   private readonly baseUrl = `${environment.apiBaseUrl}/LineaMando`;
-
-  constructor(private http: HttpClient) {}
 
   getAll(): Observable<DtoLineaMando[]> {
     return this.http.get<DtoLineaMando[]>(this.baseUrl);
@@ -69,4 +68,3 @@ export class LineaMandoService {
     return this.http.put<DtoLineaMandoResult>(`${this.baseUrl}/${id}/vigente`, { vigente });
   }
 }
-

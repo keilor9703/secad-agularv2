@@ -1,112 +1,101 @@
 <section class="domain-admin-page">
-  <article class="domain-admin-shell">
-    <header class="domain-admin-shell__header">
-      <div class="domain-admin-shell__heading">
-        <span class="domain-admin-shell__icon" aria-hidden="true">
-          <i class="fa-solid fa-folder-tree"></i>
-        </span>
+  <app-ui-page-header
+    eyebrow="Administración central"
+    title="Administración de Dominios"
+    description="Configure catálogos jerárquicos y valores reutilizables del sistema."
+    icon="fa-solid fa-folder-tree"
+    headingId="domain-admin-title"
+    [minimized]="minimized()"
+    (minimizedChange)="minimized.set($event)"
+  >
+    <div page-header-actions class="domain-admin-summary" aria-label="Resumen de dominios">
+      <app-ui-chip
+        appearance="glass"
+        size="xs"
+        icon="fa-solid fa-layer-group"
+        [value]="totalCount()"
+        label="dominios"
+      />
+      <app-ui-chip
+        appearance="glass"
+        size="xs"
+        icon="fa-solid fa-circle-check"
+        [value]="activeCount()"
+        label="activos"
+      />
+      <app-ui-chip
+        appearance="glass"
+        size="xs"
+        icon="fa-solid fa-sitemap"
+        [value]="rootCount()"
+        label="principales"
+      />
+    </div>
+  </app-ui-page-header>
 
-        <div>
-          <h1>Administración de Dominios</h1>
-          <p>Configure catálogos jerárquicos y valores reutilizables del sistema.</p>
+  @if (!minimized()) {
+    <div class="domain-admin-content" aria-labelledby="domain-admin-title">
+      <aside class="domain-admin-guide">
+        <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+        <div class="domain-admin-guide__copy">
+          <strong>Catálogos jerárquicos</strong>
+          <span>
+            Cree dominios principales o valores hijos desde cualquier nivel. La estructura admite
+            profundidad dinámica y evita relaciones circulares.
+          </span>
         </div>
-      </div>
 
-      <div class="domain-admin-shell__summary" aria-label="Resumen de dominios">
         <app-ui-button
-          class="domain-admin-shell__create"
+          class="domain-admin-guide__create"
           size="sm"
           variant="primary"
           icon="fa-solid fa-plus"
           [hideTextOnMobile]="true"
           backgroundColor="var(--policia-acento, #c8ff00)"
           textColor="#102342"
-          borderColor="rgba(200, 255, 0, 0.72)"
+          borderColor="rgba(149, 191, 0, 0.72)"
           iconColor="#102342"
           [disabled]="loading()"
+          ariaLabel="Crear un dominio principal"
           (buttonClick)="startCreateRoot()"
         >
           Nuevo dominio
         </app-ui-button>
+      </aside>
 
-        <span>
-          <strong>{{ totalCount() }}</strong>
-          dominios
-        </span>
-        <span>
-          <strong>{{ activeCount() }}</strong>
-          activos
-        </span>
-        <span>
-          <strong>{{ rootCount() }}</strong>
-          principales
-        </span>
+      <div class="domain-admin-layout" [class.has-editor]="sideEditorVisible()">
+        @if (editorMode(); as mode) {
+          @if (!inlineChildEditorVisible()) {
+            <app-dominio-admin-form
+              [mode]="mode"
+              [editingItem]="editingItem()"
+              [createParent]="createParent()"
+              [parentOptions]="parentOptions()"
+              [saving]="saving()"
+              [resetVersion]="formResetVersion()"
+              (saveRequested)="save($event)"
+              (cancelRequested)="closeEditor()"
+            />
+          }
+        }
 
-        <app-ui-button
-          size="sm"
-          variant="ghost"
-          [icon]="minimized() ? 'fa-solid fa-chevron-down' : 'fa-solid fa-minus'"
-          [iconOnly]="true"
-          [ariaLabel]="
-            minimized()
-              ? 'Expandir Administración de Dominios'
-              : 'Minimizar Administración de Dominios'
-          "
-          backgroundColor="rgba(255, 255, 255, 0.1)"
-          borderColor="rgba(255, 255, 255, 0.2)"
-          iconColor="#ffffff"
-          (buttonClick)="toggleMinimize()"
+        <app-dominio-admin-tree
+          [items]="domainItems()"
+          [loading]="loading()"
+          [processingId]="processingDomainId()"
+          [selectedId]="selectedDomainId()"
+          [focusedId]="focusedDomainId()"
+          [inlineCreateParent]="inlineChildEditorVisible() ? createParent() : null"
+          [inlineCreateResetVersion]="formResetVersion()"
+          [savingChild]="saving()"
+          (createChildRequested)="startCreateChild($event)"
+          (editRequested)="edit($event)"
+          (stateRequested)="changeState($event)"
+          (deleteRequested)="delete($event)"
+          (saveChildRequested)="save($event)"
+          (closeChildRequested)="closeEditor()"
         />
       </div>
-    </header>
-
-    @if (!minimized()) {
-      <div class="domain-admin-shell__body">
-        <aside class="domain-admin-shell__guide">
-          <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
-          <div>
-            <strong>Catálogos jerárquicos centralizados</strong>
-            <span>
-              Cree dominios principales desde la cabecera o valores hijos desde cualquier nivel. La
-              estructura admite profundidad dinámica y evita relaciones circulares.
-            </span>
-          </div>
-        </aside>
-
-        <div class="domain-admin-layout" [class.has-editor]="sideEditorVisible()">
-          @if (editorMode(); as mode) {
-            @if (!inlineChildEditorVisible()) {
-              <app-dominio-admin-form
-                [mode]="mode"
-                [editingItem]="editingItem()"
-                [createParent]="createParent()"
-                [parentOptions]="parentOptions()"
-                [saving]="saving()"
-                [resetVersion]="formResetVersion()"
-                (saveRequested)="save($event)"
-                (cancelRequested)="closeEditor()"
-              />
-            }
-          }
-
-          <app-dominio-admin-tree
-            [items]="domainItems()"
-            [loading]="loading()"
-            [processingId]="processingDomainId()"
-            [selectedId]="selectedDomainId()"
-            [focusedId]="focusedDomainId()"
-            [inlineCreateParent]="inlineChildEditorVisible() ? createParent() : null"
-            [inlineCreateResetVersion]="formResetVersion()"
-            [savingChild]="saving()"
-            (createChildRequested)="startCreateChild($event)"
-            (editRequested)="edit($event)"
-            (stateRequested)="changeState($event)"
-            (deleteRequested)="delete($event)"
-            (saveChildRequested)="save($event)"
-            (closeChildRequested)="closeEditor()"
-          />
-        </div>
-      </div>
-    }
-  </article>
+    </div>
+  }
 </section>

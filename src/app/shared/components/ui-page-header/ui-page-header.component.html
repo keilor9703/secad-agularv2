@@ -1,0 +1,36 @@
+<header class="ui-page-header" [class.is-minimized]="minimized()">
+  @if (showIcon() && icon()) {
+    <span class="ui-page-header__icon" aria-hidden="true">
+      <i [class]="icon()"></i>
+    </span>
+  }
+
+  <div class="ui-page-header__content">
+    @if (eyebrow()) {
+      <small>{{ eyebrow() }}</small>
+    }
+    <h1 [id]="headingId()">{{ title() }}</h1>
+    @if (description()) {
+      <p>{{ description() }}</p>
+    }
+  </div>
+
+  <div class="ui-page-header__actions">
+    <ng-content select="[page-header-actions]"></ng-content>
+
+    @if (minimizable()) {
+      <app-ui-button
+        size="sm"
+        variant="ghost"
+        [icon]="minimized() ? 'fa-solid fa-chevron-down' : 'fa-solid fa-minus'"
+        [iconOnly]="true"
+        [ariaLabel]="minimized() ? 'Expandir ' + title() : 'Minimizar ' + title()"
+        [title]="minimized() ? 'Expandir' : 'Minimizar'"
+        backgroundColor="rgba(255, 255, 255, 0.1)"
+        borderColor="rgba(255, 255, 255, 0.22)"
+        iconColor="#ffffff"
+        (buttonClick)="toggleMinimized()"
+      />
+    }
+  </div>
+</header>

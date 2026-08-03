@@ -1,0 +1,129 @@
+<section class="command-structure" aria-labelledby="linea-mando-list-title">
+  <app-ui-panel-header
+    headingId="linea-mando-list-title"
+    title="Estructura configurada"
+    description="Orden jerárquico y disponibilidad de los integrantes registrados."
+    icon="fa-solid fa-sitemap"
+    appearance="soft"
+  >
+    <app-ui-chip
+      panel-header-actions
+      size="sm"
+      label="activos"
+      [value]="activeCount()"
+      variant="info"
+      appearance="outline"
+      icon="fa-solid fa-user-shield"
+    />
+  </app-ui-panel-header>
+
+  <div class="command-structure__body">
+    @if (loading()) {
+      <div class="command-structure__state">
+        <app-ui-spinner
+          type="bars"
+          size="sm"
+          variant="info"
+          label="Cargando estructura..."
+          [contained]="true"
+        />
+      </div>
+    } @else if (orderedRows().length === 0) {
+      <div class="command-structure__empty">
+        <span aria-hidden="true"><i class="fa-solid fa-people-arrows"></i></span>
+        <strong>Aún no hay integrantes configurados</strong>
+        <p>Consulte un funcionario y asígnele una posición para construir la línea de mando.</p>
+      </div>
+    } @else {
+      <ol class="command-structure__list" aria-label="Integrantes de la línea de mando">
+        @for (item of orderedRows(); track item.idLineaMando; let index = $index) {
+          <li
+            class="command-card"
+            [class.is-selected]="selectedId() === item.idLineaMando"
+            [class.is-inactive]="item.vigente !== 1"
+          >
+            <div class="command-card__order" [attr.aria-label]="'Orden ' + item.orden">
+              <span>{{ item.orden }}</span>
+              @if (index < orderedRows().length - 1) {
+                <i aria-hidden="true"></i>
+              }
+            </div>
+
+            <img class="command-card__photo" [src]="photoUrl(item)" [alt]="fullName(item)" />
+
+            <div class="command-card__content">
+              <div class="command-card__title-row">
+                <div class="command-card__identity">
+                  <strong>{{ fullName(item) }}</strong>
+                  <span>{{ item.identificacion }}</span>
+                </div>
+              </div>
+
+              <div class="command-card__position">
+                <app-ui-badge
+                  size="sm"
+                  [label]="item.peso || 'Posición sin definir'"
+                  variant="primary"
+                  appearance="soft"
+                  icon="fa-solid fa-ranking-star"
+                  iconPosition="start"
+                />
+              </div>
+
+              <dl class="command-card__metadata">
+                <div>
+                  <dt><i class="fa-solid fa-briefcase" aria-hidden="true"></i> Cargo</dt>
+                  <dd>{{ item.cargo || 'No registrado' }}</dd>
+                </div>
+                <div>
+                  <dt><i class="fa-solid fa-building-shield" aria-hidden="true"></i> Unidad</dt>
+                  <dd>{{ item.unidad || 'No registrada' }}</dd>
+                </div>
+                <div class="command-card__metadata-status">
+                  <dd>
+                    <app-ui-badge
+                      class="command-card__status"
+                      size="xs"
+                      appearance="soft"
+                      [label]="item.vigente === 1 ? 'Activo' : 'Inactivo'"
+                      [variant]="item.vigente === 1 ? 'success' : 'neutral'"
+                      [icon]="item.vigente === 1 ? 'fa-solid fa-check' : 'fa-solid fa-pause'"
+                      [uppercase]="true"
+                    />
+                  </dd>
+                </div>
+              </dl>
+            </div>
+
+            @if (item.vigente === 1) {
+              <div class="command-card__actions" aria-label="Acciones del integrante">
+                <div class="command-card__action-buttons">
+                  <app-ui-button
+                    size="sm"
+                    variant="info"
+                    appearance="soft"
+                    icon="fa-solid fa-pen"
+                    [iconOnly]="true"
+                    tooltip="Editar integrante"
+                    ariaLabel="Editar integrante"
+                    (buttonClick)="editRequested.emit(item)"
+                  />
+                  <app-ui-button
+                    size="sm"
+                    variant="danger"
+                    appearance="soft"
+                    icon="fa-solid fa-user-minus"
+                    [iconOnly]="true"
+                    tooltip="Retirar integrante"
+                    ariaLabel="Retirar integrante"
+                    (buttonClick)="removeRequested.emit(item)"
+                  />
+                </div>
+              </div>
+            }
+          </li>
+        }
+      </ol>
+    }
+  </div>
+</section>

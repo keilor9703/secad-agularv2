@@ -22,6 +22,7 @@ import { UiButtonComponent } from '../../../../../shared/components/ui-button/ui
 import { UiChipComponent } from '../../../../../shared/components/ui-chip/ui-chip.component';
 import { UiFileUploadComponent } from '../../../../../shared/components/ui-file-upload/ui-file-upload.component';
 import { UiInputComponent } from '../../../../../shared/components/ui-input/ui-input.component';
+import { UiPanelHeaderComponent } from '../../../../../shared/components/ui-panel-header/ui-panel-header.component';
 import { UiSpinnerComponent } from '../../../../../shared/components/ui-spinner/ui-spinner.component';
 import { getApiErrorMessage } from '../../../../../shared/utils/api-error-message.util';
 import { getFormErrorMessage } from '../../../../../shared/utils/form-error.util';
@@ -44,6 +45,7 @@ const VIDEO_MAX_SIZE_BYTES = 100 * 1024 * 1024;
     UiChipComponent,
     UiFileUploadComponent,
     UiInputComponent,
+    UiPanelHeaderComponent,
     UiSpinnerComponent,
   ],
   templateUrl: './configuracion-video.component.html',

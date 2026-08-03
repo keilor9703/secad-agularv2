@@ -8,6 +8,21 @@
   padding: 16px;
 }
 
+.branding-preview__label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--ui-muted, #64748b);
+  font-size: calc(9.5px * var(--font-size-scale, 1));
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.branding-preview__label--login {
+  margin-top: 3px;
+}
+
 .branding-preview__header {
   display: flex;
   align-items: center;
@@ -19,6 +34,10 @@
   border-radius: 6px;
   background: linear-gradient(125deg, #061a38, #0b5276);
   box-shadow: 0 10px 25px rgba(0, 42, 102, 0.16);
+}
+
+.branding-preview__header--logo-right .branding-preview__logo {
+  order: 2;
 }
 
 .branding-preview__logo {
@@ -94,6 +113,152 @@
   }
 }
 
+.branding-preview__name--inline {
+  flex-flow: row wrap;
+  align-items: baseline;
+  gap: 2px 8px;
+}
+
+.branding-preview__name--center {
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.branding-preview__name--right {
+  align-items: flex-end;
+  justify-content: flex-end;
+  text-align: right;
+}
+
+.branding-preview__menu-text {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  line-height: 1.05;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.branding-preview__menu-text--institution {
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 650;
+}
+
+.branding-preview__menu-text--system {
+  color: #ffffff;
+  font-weight: 850;
+}
+
+.branding-preview__menu-text--acronym {
+  color: var(--policia-acento, #cdff00);
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.branding-preview__login {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  min-height: 210px;
+  padding: 22px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.26);
+  border-radius: 10px;
+  background:
+    linear-gradient(150deg, rgba(5, 25, 58, 0.82), rgba(9, 82, 118, 0.72)),
+    radial-gradient(circle at 25% 18%, rgba(8, 166, 203, 0.26), transparent 48%);
+  box-shadow: 0 13px 30px rgba(0, 42, 102, 0.18);
+  color: #ffffff;
+  flex-direction: column;
+}
+
+.branding-preview__login--logo-left,
+.branding-preview__login--logo-right {
+  flex-direction: row;
+}
+
+.branding-preview__login--logo-right .branding-preview__login-logo,
+.branding-preview__login--logo-bottom .branding-preview__login-logo {
+  order: 2;
+}
+
+.branding-preview__login-logo {
+  display: grid;
+  flex: 0 0 auto;
+  max-width: 160px;
+  max-height: 160px;
+  place-items: center;
+}
+
+.branding-preview__login-logo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.34));
+}
+
+.branding-preview__login-logo i {
+  font-size: clamp(34px, 55%, 78px);
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.25));
+}
+
+.branding-preview__login-texts {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  max-width: 100%;
+  text-align: center;
+}
+
+.branding-preview__login-texts--inline {
+  flex-flow: row wrap;
+  justify-content: center;
+  gap: 5px 10px;
+}
+
+.branding-preview__login-texts--left {
+  align-items: flex-start;
+  justify-content: flex-start;
+  text-align: left;
+}
+
+.branding-preview__login-texts--right {
+  align-items: flex-end;
+  justify-content: flex-end;
+  text-align: right;
+}
+
+.branding-preview__login-text {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  line-height: 1.08;
+}
+
+.branding-preview__login-text--institution {
+  color: rgba(255, 255, 255, 0.78);
+  font-weight: 650;
+  letter-spacing: 0.025em;
+}
+
+.branding-preview__login-text--system {
+  color: #ffffff;
+  font-weight: 900;
+  text-wrap: balance;
+}
+
+.branding-preview__login-text--acronym {
+  color: var(--policia-acento, #cdff00);
+  font-weight: 850;
+  letter-spacing: 0.09em;
+}
+
 .settings-form__subheading {
   display: flex;
   align-items: center;
@@ -164,6 +329,18 @@
 @media (max-width: 640px) {
   .branding-preview {
     padding: 11px;
+  }
+
+  .branding-preview__login,
+  .branding-preview__login--logo-left,
+  .branding-preview__login--logo-right {
+    flex-direction: column;
+    min-height: 190px;
+    padding: 17px;
+  }
+
+  .branding-preview__login--logo-right .branding-preview__login-logo {
+    order: initial;
   }
 }
 

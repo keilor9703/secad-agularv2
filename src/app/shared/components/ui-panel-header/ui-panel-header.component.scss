@@ -1,0 +1,112 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.ui-panel-header {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 9px;
+  min-height: 54px;
+  padding: 10px 13px;
+  border-bottom: 1px solid rgba(21, 27, 59, 0.12);
+}
+
+.ui-panel-header.is-institutional {
+  border-bottom-color: rgba(255, 255, 255, 0.14);
+  background: linear-gradient(
+    135deg,
+    var(--policia-oscuro, #151b3b),
+    var(--policia-medio, #002a66)
+  );
+  color: #ffffff;
+  box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.08);
+}
+
+.ui-panel-header.is-soft {
+  background: linear-gradient(100deg, #f7f9fc, #ffffff);
+}
+
+.ui-panel-header__icon {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+.is-institutional .ui-panel-header__icon {
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--policia-acento, #c8ff00);
+}
+
+.is-soft .ui-panel-header__icon {
+  border: 1px solid rgba(31, 78, 121, 0.16);
+  background: #eaf3f8;
+  color: var(--policia-medio, #002a66);
+}
+
+.ui-panel-header__content {
+  min-width: 0;
+}
+
+.ui-panel-header__content h3,
+.ui-panel-header__content p {
+  margin: 0;
+}
+
+.ui-panel-header__content h3 {
+  overflow: hidden;
+  font-size: calc(11px * var(--font-size-scale, 1));
+  font-weight: 850;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ui-panel-header__content p {
+  overflow: hidden;
+  margin-top: 2px;
+  font-size: calc(8.5px * var(--font-size-scale, 1));
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.is-institutional .ui-panel-header__content h3 {
+  color: #ffffff;
+}
+
+.is-institutional .ui-panel-header__content p {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.is-soft .ui-panel-header__content h3 {
+  color: var(--ui-text, #111936);
+}
+
+.is-soft .ui-panel-header__content p {
+  color: var(--ui-muted, #687891);
+}
+
+.ui-panel-header__actions:empty {
+  display: none;
+}
+
+@media (max-width: 560px) {
+  .ui-panel-header {
+    min-height: 50px;
+    padding: 9px 10px;
+  }
+
+  .ui-panel-header__content p {
+    white-space: normal;
+  }
+}
+
+:host-context(html.dark-mode) .ui-panel-header.is-soft {
+  background: rgba(8, 166, 203, 0.08);
+}

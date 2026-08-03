@@ -21,6 +21,7 @@ import {
 } from '../../../../../core/services/menu.service';
 import { UiButtonComponent } from '../../../../../shared/components/ui-button/ui-button.component';
 import { UiChipComponent } from '../../../../../shared/components/ui-chip/ui-chip.component';
+import { UiPanelHeaderComponent } from '../../../../../shared/components/ui-panel-header/ui-panel-header.component';
 import { UiSearchInputComponent } from '../../../../../shared/components/ui-search-input/ui-search-input.component';
 import { UiSpinnerComponent } from '../../../../../shared/components/ui-spinner/ui-spinner.component';
 import { MenuAdminSubmenuFormComponent } from '../menu-admin-submenu-form/menu-admin-submenu-form.component';
@@ -41,6 +42,7 @@ interface MenuTreeRow {
     ReactiveFormsModule,
     UiButtonComponent,
     UiChipComponent,
+    UiPanelHeaderComponent,
     UiSearchInputComponent,
     UiSpinnerComponent,
     MenuAdminSubmenuFormComponent,

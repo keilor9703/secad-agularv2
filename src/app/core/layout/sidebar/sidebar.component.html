@@ -7,30 +7,43 @@
   <header class="sidebar__header">
     @if (isOpen()) {
       <!-- El PNG ocupa el lugar principal del encabezado, sin marcos ni cápsulas. -->
-      <a class="sidebar__brand" routerLink="/home" (click)="onNavigate()">
-        <img
-          class="sidebar__logo"
-          [src]="identity().logoUrl"
-          [alt]="'Logo de ' + identity().systemName"
-        />
-        <span
-          class="sidebar__brand-copy"
-          [class.sidebar__brand-copy--stacked-acronym-first]="
-            identity().menuBrandLayout === 'stacked-acronym-first'
-          "
-          [class.sidebar__brand-copy--inline-name-first]="
-            identity().menuBrandLayout === 'inline-name-first'
-          "
-          [class.sidebar__brand-copy--inline-acronym-first]="
-            identity().menuBrandLayout === 'inline-acronym-first'
-          "
-          [style.--sidebar-brand-font-size]="identity().menuTextSizePx + 'px'"
-        >
-          <strong class="sidebar__brand-name">{{ identity().systemName }}</strong>
-          @if (identity().menuShowAcronym && identity().shortName) {
-            <small class="sidebar__brand-acronym">{{ identity().shortName }}</small>
-          }
-        </span>
+      <a
+        class="sidebar__brand"
+        [class.sidebar__brand--logo-right]="identity().menuLogoPosition === 'right'"
+        routerLink="/home"
+        (click)="onNavigate()"
+      >
+        @if (identity().menuShowLogo) {
+          <img
+            class="sidebar__logo"
+            [src]="identity().logoUrl"
+            [alt]="'Logo de ' + identity().institutionName"
+            [style.width.px]="identity().menuLogoSizePx"
+            [style.height.px]="identity().menuLogoSizePx"
+            [style.flex-basis.px]="identity().menuLogoSizePx"
+          />
+        }
+
+        @if (brandTextItems().length > 0) {
+          <span
+            class="sidebar__brand-copy"
+            [class.sidebar__brand-copy--inline]="identity().menuTextLayout === 'inline'"
+            [class.sidebar__brand-copy--center]="identity().menuTextAlign === 'center'"
+            [class.sidebar__brand-copy--right]="identity().menuTextAlign === 'right'"
+          >
+            @for (item of brandTextItems(); track item.kind) {
+              <span
+                class="sidebar__brand-text"
+                [class.sidebar__brand-text--institution]="item.kind === 'institution'"
+                [class.sidebar__brand-text--system]="item.kind === 'system'"
+                [class.sidebar__brand-text--acronym]="item.kind === 'acronym'"
+                [style.font-size.px]="item.sizePx"
+              >
+                {{ item.text }}
+              </span>
+            }
+          </span>
+        }
       </a>
 
       <button

@@ -11,9 +11,12 @@
   --_tab-padding-x: 14px;
   --_tab-primary: var(--policia-oscuro, #151b3b);
   --_tab-accent: var(--policia-cielo, #0870cb);
+  display: block;
   width: 100%;
   max-width: 100%;
   min-width: 0;
+  /* Neutraliza la implementación legacy global de tabs basada en flex-wrap. */
+  gap: 0;
 }
 
 .ui-tabs__list {
@@ -288,7 +291,9 @@
 
 @media (max-width: 640px) {
   .ui-tabs {
-    --_tab-padding-x: 8px;
+    --_tab-height: 30px;
+    --_tab-font-size: calc(10.5px * var(--font-size-scale, 1));
+    --_tab-padding-x: 5px;
   }
 
   .ui-tabs.is-stretched .ui-tabs__list {
@@ -301,7 +306,25 @@
   }
 
   .ui-tabs__panel {
-    padding: 12px;
+    padding: 8px 7px;
+  }
+
+  .ui-tabs__tab {
+    gap: 4px;
+  }
+
+  .ui-tabs__tab i {
+    font-size: 0.82em;
+  }
+
+  .ui-tabs--underline .ui-tabs__tab::after {
+    height: 2px;
+  }
+}
+
+@media (max-width: 430px) {
+  .ui-tabs__tab i {
+    display: none;
   }
 }
 

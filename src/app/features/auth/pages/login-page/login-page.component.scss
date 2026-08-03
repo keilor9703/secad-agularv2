@@ -70,17 +70,89 @@ span {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
 }
 
-/* Textos e Imagen */
-.system-title {
+/* La marca del login admite combinaciones sin alterar el formulario de acceso. */
+.login-brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  margin-bottom: 18px;
   color: #ffffff;
-  font-size: 4rem;
-  font-weight: 900;
-  margin-bottom: 10px;
 }
 
-.logo-institucional {
-  width: 120px;
-  margin-bottom: 15px;
+.login-brand--logo-left,
+.login-brand--logo-right {
+  flex-direction: row;
+  gap: 16px;
+}
+
+.login-brand--logo-right .login-brand__logo,
+.login-brand--logo-bottom .login-brand__logo {
+  order: 2;
+}
+
+.login-brand__logo {
+  display: block;
+  flex: 0 0 auto;
+  max-width: min(160px, 42vw);
+  max-height: min(160px, 42vw);
+  object-fit: contain;
+  filter: drop-shadow(0 7px 14px rgba(0, 0, 0, 0.34));
+}
+
+.login-brand__texts {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  max-width: 100%;
+  text-align: center;
+}
+
+.login-brand__texts--inline {
+  flex-flow: row wrap;
+  justify-content: center;
+  gap: 4px 10px;
+}
+
+.login-brand__texts--left {
+  align-items: flex-start;
+  justify-content: flex-start;
+  text-align: left;
+}
+
+.login-brand__texts--right {
+  align-items: flex-end;
+  justify-content: flex-end;
+  text-align: right;
+}
+
+.login-brand__text {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  line-height: 1.08;
+  text-shadow: 0 3px 10px rgba(0, 0, 0, 0.35);
+}
+
+.login-brand__text--institution {
+  color: rgba(255, 255, 255, 0.82);
+  font-weight: 650;
+  letter-spacing: 0.025em;
+}
+
+.login-brand__text--system {
+  color: #ffffff;
+  font-weight: 900;
+  text-wrap: balance;
+}
+
+.login-brand__text--acronym {
+  color: var(--policia-acento, #cdff00);
+  font-weight: 850;
+  letter-spacing: 0.09em;
 }
 
 .security-text {
@@ -213,4 +285,26 @@ span {
 .forgot-password:hover {
   color: #1cb5e0;
   text-decoration: underline;
+}
+
+@media (max-width: 560px) {
+  .glass-card {
+    padding: 28px 22px;
+  }
+
+  .login-brand,
+  .login-brand--logo-left,
+  .login-brand--logo-right {
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 15px;
+  }
+
+  .login-brand--logo-right .login-brand__logo {
+    order: initial;
+  }
+
+  .login-brand__text--system {
+    font-size: min(var(--login-system-size, 30px), 36px);
+  }
 }

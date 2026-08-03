@@ -18,6 +18,9 @@
   }
 
   <span class="ui-status-chip__label">
+    @if (value() !== null && value() !== '') {
+      <strong class="ui-status-chip__value">{{ value() }}</strong>
+    }
     @if (label()) {
       {{ label() }}
     } @else {

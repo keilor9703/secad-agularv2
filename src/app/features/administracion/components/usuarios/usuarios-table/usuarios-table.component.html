@@ -1,59 +1,95 @@
-<section class="users-existing">
-  <app-ui-table
-    class="users-existing__table"
-    [labelledBy]="tableTitleId"
-    actionMenuLabel="Acciones del usuario"
-    [headerColor]="tableHeaderColor()"
-    [headerColorMiddle]="tableHeaderColorMiddle()"
-    [headerColorEnd]="tableHeaderColorEnd()"
-    headerTextColor="#ffffff"
-    [columns]="columns"
-    [rows]="usuarios"
-    [bodyFontSize]="12"
-    bodyFontWeight="regular"
-    bodyTextColor="#292929"
-    darkBodyTextColor="#e6edf7"
-    [rowHeight]="44"
-    [rowPadding]="8"
-    [actions]="actions"
-    [total]="totalUsuarios"
-    [page]="currentPage"
-    [pageSize]="pageSize"
-    [pageSizeOptions]="[5, 10, 20, 50]"
-    [emptyMessage]="tableEmptyMessage"
-    [loading]="loading"
-    loadingMessage="Consultando usuarios..."
-    loadingSpinnerSize="lg"
-    loadingSpinnerVariant="info"
-    [stickyActions]="true"
-    (pageChange)="cambiarPagina.emit($event)"
-    (pageSizeChange)="cambiarTamanoPagina.emit($event)"
-    (actionClick)="handleAction($event)"
-  >
-    <div table-toolbar class="users-existing__toolbar">
-      <header class="users-existing__intro">
-        <h2 [id]="tableTitleId">Usuarios existentes</h2>
-        <p>Consulta y administra los usuarios registrados en el sistema.</p>
-      </header>
-
-      <form
-        class="users-existing__filters"
-        role="search"
-        aria-label="Buscar usuarios"
-        [formGroup]="searchForm"
+<section class="users-existing" [attr.aria-labelledby]="tableTitleId">
+  <!--
+    Patrón “Cabecera suave con contenido”: la cabecera describe y controla la
+    sección; ui-table se embebe debajo para evitar una segunda tarjeta visual.
+  -->
+  <article class="users-existing__panel">
+    <app-ui-panel-header
+      class="users-existing__header"
+      title="Usuarios existentes"
+      description="Consulte y administre los usuarios registrados en el sistema."
+      icon="fa-solid fa-users-gear"
+      appearance="soft"
+      [headingId]="tableTitleId"
+    >
+      <div
+        panel-header-actions
+        class="users-existing__header-actions"
+        aria-label="Resumen y búsqueda de usuarios"
       >
-        <app-ui-search-input
-          formControlName="nombre"
-          ariaLabel="Buscar por nombre o usuario empresarial"
-          placeholder="Buscar usuario..."
-          icon="fa-solid fa-magnifying-glass"
-          [showButton]="false"
-          [clearable]="true"
-          [controlSize]="alturaCompacta"
-        ></app-ui-search-input>
-      </form>
+        <app-ui-chip
+          class="users-existing__count"
+          [value]="totalUsuarios"
+          label="usuarios"
+          variant="info"
+          appearance="soft"
+          size="xs"
+          icon="fa-solid fa-user-group"
+        />
+
+        <form
+          class="users-existing__filters"
+          role="search"
+          aria-label="Buscar usuarios"
+          [formGroup]="searchForm"
+        >
+          <app-ui-search-input
+            formControlName="nombre"
+            ariaLabel="Buscar por nombre o usuario empresarial"
+            placeholder="Buscar usuario..."
+            icon="fa-solid fa-magnifying-glass"
+            [showButton]="false"
+            [clearable]="true"
+            [controlSize]="alturaCompacta"
+          ></app-ui-search-input>
+        </form>
+      </div>
+    </app-ui-panel-header>
+
+    <div class="users-existing__content">
+      <app-ui-table
+        class="users-existing__table"
+        [embedded]="true"
+        [labelledBy]="tableTitleId"
+        actionMenuLabel="Acciones del usuario"
+        dataMode="external"
+        variant="institutional"
+        actionDisplay="row-hover"
+        actionsPosition="right"
+        [headerColor]="tableHeaderColor()"
+        [headerColorMiddle]="tableHeaderColorMiddle()"
+        [headerColorEnd]="tableHeaderColorEnd()"
+        headerTextColor="#ffffff"
+        paginationVariant="numbered"
+        [paginationMaxVisiblePages]="4"
+        [paginationShowSummary]="true"
+        [paginationShowPageSize]="true"
+        [columns]="columns"
+        [rows]="usuarios"
+        [bodyFontSize]="12"
+        bodyFontWeight="regular"
+        bodyTextColor="#536b85"
+        darkBodyTextColor="#e6edf7"
+        [rowHeight]="44"
+        [rowPadding]="8"
+        [tableMinWidth]="720"
+        [actions]="actions"
+        [total]="totalUsuarios"
+        [page]="currentPage"
+        [pageSize]="pageSize"
+        [pageSizeOptions]="[5, 10, 20, 50]"
+        [emptyMessage]="tableEmptyMessage"
+        [loading]="loading"
+        loadingMessage="Consultando usuarios..."
+        loadingSpinnerSize="lg"
+        loadingSpinnerVariant="info"
+        [stickyActions]="true"
+        (pageChange)="cambiarPagina.emit($event)"
+        (pageSizeChange)="cambiarTamanoPagina.emit($event)"
+        (actionClick)="handleAction($event)"
+      />
     </div>
-  </app-ui-table>
+  </article>
 
   <ng-template #rolesCell let-row="row">
     <app-usuario-roles-dropdown

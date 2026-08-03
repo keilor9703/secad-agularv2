@@ -267,6 +267,11 @@
 
 .ui-table-panel .ui-table tbody tr:not(.ui-table-loading-row) {
   height: var(--ui-table-current-row-height, var(--ui-table-row-height));
+  background: var(--ui-table-row-background-light, transparent);
+}
+
+.ui-table-panel .ui-table tbody tr.is-selected {
+  box-shadow: inset 3px 0 0 var(--ui-table-row-accent-color, var(--policia-cielo, #08a6cb));
 }
 
 .ui-table-panel .ui-table tbody td {
@@ -295,6 +300,10 @@
 
 .ui-table-panel .ui-table tbody tr:hover {
   background: rgba(241, 245, 249, 0.7);
+}
+
+.ui-table-panel .ui-table tbody tr.is-selected:hover {
+  background: var(--ui-table-row-background-light, rgba(225, 244, 249, 0.88));
 }
 
 .ui-table-panel .ui-table tbody .ui-table-loading-cell {
@@ -383,6 +392,11 @@
 
 .ui-table-panel .ui-table tbody tr:hover .ui-table-actions-cell {
   background: #f6f9fc;
+}
+
+.ui-table-panel .ui-table tbody tr.is-selected .ui-table-actions-cell,
+.ui-table-panel .ui-table tbody tr.is-selected:hover .ui-table-actions-cell {
+  background: var(--ui-table-row-background-light, #eaf7fb);
 }
 
 .ui-table-actions-cell app-ui-table-actions {
@@ -517,6 +531,14 @@ app-ui-pagination {
     );
   }
 
+  .ui-table-panel .ui-table tbody tr:not(.ui-table-loading-row) {
+    background: var(--ui-table-row-background-dark, transparent);
+  }
+
+  .ui-table-panel .ui-table tbody tr.is-selected:hover {
+    background: var(--ui-table-row-background-dark, rgba(8, 166, 203, 0.14));
+  }
+
   .ui-table-panel .ui-table .ui-table-actions-cell {
     background: var(--ui-surface);
   }
@@ -531,5 +553,10 @@ app-ui-pagination {
 
   .ui-table-panel .ui-table tbody tr:hover .ui-table-actions-cell {
     background: #26324c;
+  }
+
+  .ui-table-panel .ui-table tbody tr.is-selected .ui-table-actions-cell,
+  .ui-table-panel .ui-table tbody tr.is-selected:hover .ui-table-actions-cell {
+    background: var(--ui-table-row-background-dark, #22384a);
   }
 }

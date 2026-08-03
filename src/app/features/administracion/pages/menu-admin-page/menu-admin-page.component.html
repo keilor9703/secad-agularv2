@@ -1,116 +1,105 @@
 <section class="menu-admin-page">
-  <article class="menu-admin-shell">
-    <header class="menu-admin-shell__header">
-      <div class="menu-admin-shell__heading">
-        <span class="menu-admin-shell__icon" aria-hidden="true">
-          <i class="fa-solid fa-bars-staggered"></i>
-        </span>
+  <app-ui-page-header
+    eyebrow="Administración central"
+    title="Administración de Menú"
+    description="Configure la navegación, su jerarquía y los permisos asociados."
+    icon="fa-solid fa-bars-staggered"
+    headingId="menu-admin-title"
+    [minimized]="minimized()"
+    (minimizedChange)="minimized.set($event)"
+  >
+    <div page-header-actions class="menu-admin-summary" aria-label="Resumen del menú">
+      <app-ui-chip
+        appearance="glass"
+        size="xs"
+        icon="fa-solid fa-layer-group"
+        [value]="menuCount()"
+        label="ítems"
+      />
+      <app-ui-chip
+        appearance="glass"
+        size="xs"
+        icon="fa-solid fa-circle-check"
+        [value]="activeMenuCount()"
+        label="activos"
+      />
+    </div>
+  </app-ui-page-header>
 
-        <div>
-          <h1>Administración de Menú</h1>
-          <p>Configure la navegación, su jerarquía y los permisos asociados.</p>
+  @if (!minimized()) {
+    <div class="menu-admin-content" aria-labelledby="menu-admin-title">
+      <aside class="menu-admin-guide">
+        <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+
+        <div class="menu-admin-guide__copy">
+          <strong>Gestión centralizada de navegación</strong>
+          <span>
+            Cree menús principales o submenús debajo de su elemento padre. También puede editar,
+            cambiar el estado y administrar los roles asociados.
+          </span>
         </div>
-      </div>
 
-      <div class="menu-admin-shell__summary" aria-label="Resumen del menú">
         <app-ui-button
-          class="menu-admin-shell__create"
+          class="menu-admin-guide__create"
           size="sm"
           variant="primary"
           icon="fa-solid fa-plus"
           [hideTextOnMobile]="true"
           backgroundColor="var(--policia-acento, #c8ff00)"
           textColor="#102342"
-          borderColor="rgba(200, 255, 0, 0.72)"
+          borderColor="rgba(149, 191, 0, 0.72)"
           iconColor="#102342"
           [disabled]="loading() || rootMenu() === null"
+          ariaLabel="Crear un menú principal"
           (buttonClick)="startRootMenu()"
         >
           Crear menú
         </app-ui-button>
+      </aside>
 
-        <span>
-          <strong>{{ menuCount() }}</strong>
-          ítems
-        </span>
-        <span>
-          <strong>{{ activeMenuCount() }}</strong>
-          activos
-        </span>
+      <div class="menu-admin-layout" [class.has-editor]="editorVisible()">
+        @if (editorVisible()) {
+          <app-menu-admin-form
+            [editingItem]="editingItem()"
+            [creating]="creatingMenu()"
+            [createParent]="rootMenu()"
+            [suggestedPosition]="rootMenuSuggestedPosition()"
+            [parentOptions]="parentOptions()"
+            [saving]="saving()"
+            [resetVersion]="formResetVersion()"
+            (saveRequested)="saveItem($event)"
+            (cancelRequested)="closeEditor()"
+          />
+        }
 
-        <app-ui-button
-          size="sm"
-          variant="ghost"
-          [icon]="minimized() ? 'fa-solid fa-chevron-down' : 'fa-solid fa-minus'"
-          [iconOnly]="true"
-          [ariaLabel]="
-            minimized() ? 'Expandir Administración de Menú' : 'Minimizar Administración de Menú'
-          "
-          backgroundColor="rgba(255, 255, 255, 0.1)"
-          borderColor="rgba(255, 255, 255, 0.2)"
-          iconColor="#ffffff"
-          (buttonClick)="toggleMinimize()"
-        />
-      </div>
-    </header>
-
-    @if (!minimized()) {
-      <div class="menu-admin-shell__body">
-        <aside class="menu-admin-shell__guide">
-          <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
-          <div>
-            <strong>Gestión centralizada de navegación</strong>
-            <span>
-              Cree menús principales desde la cabecera o submenús directamente debajo del elemento
-              padre. También puede editar, cambiar el estado y administrar sus roles.
-            </span>
-          </div>
-        </aside>
-
-        <div class="menu-admin-layout" [class.has-editor]="editorVisible()">
-          @if (editorVisible()) {
-            <app-menu-admin-form
-              [editingItem]="editingItem()"
-              [creating]="creatingMenu()"
-              [createParent]="rootMenu()"
-              [suggestedPosition]="rootMenuSuggestedPosition()"
-              [parentOptions]="parentOptions()"
-              [saving]="saving()"
-              [resetVersion]="formResetVersion()"
-              (saveRequested)="saveItem($event)"
-              (cancelRequested)="closeEditor()"
-            />
-          }
-
-          <div class="menu-admin-workspace">
-            <app-menu-admin-tree
-              [items]="menuItems()"
-              [loading]="loading()"
-              [processingMenuId]="processingMenuId()"
-              [editingMenuId]="editingItem()?.idMenu ?? null"
-              [selectedMenu]="selectedMenuForRoles()"
-              [selectedSubmenuParent]="selectedSubmenuParent()"
-              [submenuSuggestedPosition]="submenuSuggestedPosition()"
-              [savingSubmenu]="savingSubmenu()"
-              [focusedMenuId]="focusedMenuId()"
-              [rolesCatalog]="rolesCatalog()"
-              [assignedRoles]="assignedRoles()"
-              [loadingRoles]="loadingRoles() || loadingRoleCatalog()"
-              [savingRole]="savingRole()"
-              [removingRoleId]="removingRoleId()"
-              (editRequested)="editItem($event)"
-              (submenuRequested)="startSubmenu($event)"
-              (saveSubmenuRequested)="saveSubmenu($event)"
-              (closeSubmenuRequested)="closeSubmenu()"
-              (rolesRequested)="manageRoles($event)"
-              (stateRequested)="changeItemState($event)"
-              (assignRoleRequested)="assignRole($event)"
-              (removeRoleRequested)="removeRole($event)"
-              (closeRolesRequested)="closeRoles()"
-            />
-          </div>
+        <div class="menu-admin-workspace">
+          <app-menu-admin-tree
+            [items]="menuItems()"
+            [loading]="loading()"
+            [processingMenuId]="processingMenuId()"
+            [editingMenuId]="editingItem()?.idMenu ?? null"
+            [selectedMenu]="selectedMenuForRoles()"
+            [selectedSubmenuParent]="selectedSubmenuParent()"
+            [submenuSuggestedPosition]="submenuSuggestedPosition()"
+            [savingSubmenu]="savingSubmenu()"
+            [focusedMenuId]="focusedMenuId()"
+            [rolesCatalog]="rolesCatalog()"
+            [assignedRoles]="assignedRoles()"
+            [loadingRoles]="loadingRoles() || loadingRoleCatalog()"
+            [savingRole]="savingRole()"
+            [removingRoleId]="removingRoleId()"
+            (editRequested)="editItem($event)"
+            (submenuRequested)="startSubmenu($event)"
+            (saveSubmenuRequested)="saveSubmenu($event)"
+            (closeSubmenuRequested)="closeSubmenu()"
+            (rolesRequested)="manageRoles($event)"
+            (stateRequested)="changeItemState($event)"
+            (assignRoleRequested)="assignRole($event)"
+            (removeRoleRequested)="removeRole($event)"
+            (closeRolesRequested)="closeRoles()"
+          />
         </div>
       </div>
-    }
-  </article>
+    </div>
+  }
 </section>

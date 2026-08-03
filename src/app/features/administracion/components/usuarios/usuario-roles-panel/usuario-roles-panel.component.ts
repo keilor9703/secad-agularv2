@@ -1,10 +1,18 @@
-
-import { Component, EventEmitter, Input, Output, signal, ChangeDetectionStrategy } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  EventEmitter,
+  Input,
+  Output,
+  signal,
+} from '@angular/core';
 import { FormGroup, ReactiveFormsModule } from '@angular/forms';
 
 import { UiButtonComponent } from '../../../../../shared/components/ui-button/ui-button.component';
+import { UiChipComponent } from '../../../../../shared/components/ui-chip/ui-chip.component';
 import { UiInputComponent } from '../../../../../shared/components/ui-input/ui-input.component';
 import { UiModalComponent } from '../../../../../shared/components/ui-modal/ui-modal.component';
+import { UiSectionHeaderComponent } from '../../../../../shared/components/ui-section-header/ui-section-header.component';
 import { UiSelectComponent } from '../../../../../shared/components/ui-select/ui-select.component';
 import { UiTableComponent } from '../../../../../shared/components/ui-table/ui-table.component';
 import { UiSelectOption } from '../../../../../shared/interfaces/ui-select-option.interface';
@@ -27,11 +35,13 @@ import { DtoRolCatalogo } from '../../../services/usuario-admin.service';
   imports: [
     ReactiveFormsModule,
     UiButtonComponent,
+    UiChipComponent,
     UiInputComponent,
     UiModalComponent,
+    UiSectionHeaderComponent,
     UiSelectComponent,
-    UiTableComponent
-],
+    UiTableComponent,
+  ],
   templateUrl: './usuario-roles-panel.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./usuario-roles-panel.component.scss'],

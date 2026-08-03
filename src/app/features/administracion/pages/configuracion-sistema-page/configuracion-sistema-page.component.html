@@ -1,54 +1,46 @@
 <section class="settings-page">
-  <header class="settings-page__intro">
-    <span class="settings-page__intro-icon" aria-hidden="true">
-      <i class="fa-solid fa-sliders"></i>
-    </span>
-
-    <div class="settings-page__intro-copy">
-      <span class="settings-page__eyebrow">Administración central</span>
-      <h1>Configuración del sistema</h1>
-      <p>
-        Gestione el contenido institucional y la identidad visual desde secciones independientes.
-      </p>
-    </div>
-
-    <div class="settings-page__summary" aria-label="Resumen del módulo">
-      <app-ui-chip
-        label="3 secciones"
-        variant="primary"
-        appearance="outline"
-        size="xs"
-        icon="fa-solid fa-layer-group"
-      />
+  <app-ui-page-header
+    eyebrow="ADMINISTRACIÓN CENTRAL"
+    title="Configuración del sistema"
+    description="Gestione el contenido institucional y la identidad visual desde secciones independientes."
+    icon="fa-solid fa-sliders"
+    headingId="settings-page-title"
+    [minimized]="minimized()"
+    (minimizedChange)="minimized.set($event)"
+  >
+    <div page-header-actions class="settings-page__summary" aria-label="Resumen del módulo">
+      <app-ui-chip label="secciones" [value]="3" variant="primary" appearance="glass" size="sm" />
       <app-ui-chip
         label="Configuración protegida"
         variant="success"
-        appearance="outline"
-        size="xs"
+        appearance="glass"
+        size="sm"
         icon="fa-solid fa-shield-halved"
       />
     </div>
-  </header>
+  </app-ui-page-header>
 
-  <app-ui-tabs
-    variant="underline"
-    size="md"
-    ariaLabel="Secciones de configuración del sistema"
-    [stretch]="true"
-    [showPanelAccent]="false"
-    [activeTabId]="activeSectionId()"
-    (activeTabIdChange)="activeSectionId.set($event)"
-  >
-    <app-ui-tab id="video" label="Video institucional" icon="fa-solid fa-circle-play">
-      <app-configuracion-video />
-    </app-ui-tab>
+  @if (!minimized()) {
+    <app-ui-tabs
+      variant="underline"
+      size="md"
+      ariaLabel="Secciones de configuración del sistema"
+      [stretch]="true"
+      [showPanelAccent]="false"
+      [activeTabId]="activeSectionId()"
+      (activeTabIdChange)="activeSectionId.set($event)"
+    >
+      <app-ui-tab id="video" label="Video institucional" icon="fa-solid fa-circle-play">
+        <app-configuracion-video />
+      </app-ui-tab>
 
-    <app-ui-tab id="login" label="Imágenes de acceso" icon="fa-regular fa-images">
-      <app-configuracion-login-visual />
-    </app-ui-tab>
+      <app-ui-tab id="login" label="Imágenes de acceso" icon="fa-regular fa-images">
+        <app-configuracion-login-visual />
+      </app-ui-tab>
 
-    <app-ui-tab id="marca" label="Identidad del sistema" icon="fa-solid fa-signature">
-      <app-configuracion-marca />
-    </app-ui-tab>
-  </app-ui-tabs>
+      <app-ui-tab id="marca" label="Identidad del sistema" icon="fa-solid fa-signature">
+        <app-configuracion-marca />
+      </app-ui-tab>
+    </app-ui-tabs>
+  }
 </section>

@@ -1,0 +1,107 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.ui-section-header {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 11px;
+  min-height: 68px;
+  padding: 11px 13px;
+  border-bottom: 1px solid rgba(8, 166, 203, 0.22);
+  background: linear-gradient(105deg, #e5f6fa, #f7fcfd 76%);
+}
+
+.ui-section-header.is-compact {
+  min-height: 58px;
+  padding: 8px 10px;
+  gap: 9px;
+}
+
+.ui-section-header__icon {
+  display: grid;
+  flex: 0 0 auto;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border-radius: 7px;
+  background: var(--policia-medio, #002a66);
+  color: var(--policia-acento, #c8ff00);
+  font-size: 15px;
+  box-shadow: 0 6px 13px rgba(0, 42, 102, 0.18);
+}
+
+.is-compact .ui-section-header__icon {
+  width: 38px;
+  height: 38px;
+  font-size: 13px;
+}
+
+.ui-section-header__content {
+  min-width: 0;
+}
+
+.ui-section-header__content small,
+.ui-section-header__content h2,
+.ui-section-header__content p {
+  margin: 0;
+}
+
+.ui-section-header__content small {
+  display: block;
+  color: var(--policia-cielo, #078eae);
+  font-size: calc(7.5px * var(--font-size-scale, 1));
+  font-weight: 900;
+  letter-spacing: 0.08em;
+}
+
+.ui-section-header__content h2 {
+  margin-top: 1px;
+  overflow: hidden;
+  color: var(--ui-text, #111936);
+  font-size: calc(14px * var(--font-size-scale, 1));
+  font-weight: 900;
+  line-height: 1.15;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ui-section-header__content p {
+  margin-top: 2px;
+  overflow: hidden;
+  color: var(--ui-muted, #687891);
+  font-size: calc(9px * var(--font-size-scale, 1));
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ui-section-header__actions:empty {
+  display: none;
+}
+
+@media (max-width: 680px) {
+  .ui-section-header,
+  .ui-section-header.is-compact {
+    min-height: 54px;
+    padding: 8px;
+  }
+
+  .ui-section-header__icon,
+  .is-compact .ui-section-header__icon {
+    width: 36px;
+    height: 36px;
+  }
+
+  .ui-section-header__content p {
+    display: none;
+  }
+}
+
+:host-context(html.dark-mode) {
+  .ui-section-header {
+    background: linear-gradient(105deg, rgba(8, 166, 203, 0.15), rgba(15, 23, 42, 0.2));
+  }
+}

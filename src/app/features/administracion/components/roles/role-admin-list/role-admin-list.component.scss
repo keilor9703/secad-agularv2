@@ -1,0 +1,86 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.role-list-card {
+  overflow: hidden;
+  min-width: 0;
+  border: 1px solid rgba(8, 166, 203, 0.24);
+  border-radius: 8px;
+  background: var(--ui-surface, #ffffff);
+  box-shadow: 0 9px 22px rgba(15, 23, 42, 0.055);
+}
+
+.role-list-card__toolbar {
+  display: block;
+}
+
+.role-list-card__header-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 9px;
+}
+
+.role-list-card__count {
+  display: grid;
+  flex: 0 0 auto;
+  min-width: 29px;
+  height: 29px;
+  place-items: center;
+  border: 1px solid rgba(8, 166, 203, 0.24);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.74);
+  color: var(--policia-medio, #002a66);
+  font-size: calc(9px * var(--font-size-scale, 1));
+  font-weight: 900;
+}
+
+.role-list-card__search {
+  width: 280px;
+  max-width: 100%;
+  margin: 0;
+}
+
+/* ui-table reserva margen bajo su toolbar; aquí el encabezado pertenece a la grilla. */
+:host ::ng-deep .role-list-card__table .ui-table-toolbar {
+  margin-bottom: 0;
+}
+
+/* El catálogo se desplaza dentro de su panel y no alarga toda la página. */
+:host ::ng-deep .role-list-card__table .ui-table-panel .ui-table-wrap {
+  max-height: 330px;
+}
+
+@media (max-width: 680px) {
+  .role-list-card__header-actions {
+    gap: 6px;
+  }
+
+  .role-list-card__search {
+    width: min(210px, 58vw);
+  }
+
+  :host ::ng-deep .role-list-card__table .ui-table-panel .ui-table-wrap {
+    max-height: min(340px, 46vh);
+  }
+}
+
+@media (max-width: 430px) {
+  .role-list-card__count {
+    display: none;
+  }
+
+  .role-list-card__search {
+    width: min(190px, 54vw);
+  }
+}
+
+:host-context(html.dark-mode) {
+  .role-list-card__count {
+    border-color: rgba(85, 200, 229, 0.25);
+    background: rgba(8, 166, 203, 0.11);
+    color: #b9e7f3;
+  }
+}

@@ -1,5 +1,5 @@
 import { JsonPipe } from '@angular/common';
-import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ToastService } from '../../../../core/services/toast.service';
 import { UiButtonComponent } from '../../../../shared/components/ui-button/ui-button.component';
@@ -15,6 +15,7 @@ import { ButtonSearchDemoComponent } from '../../components/formularios/button-s
 import { FormControlSizingDemoComponent } from '../../components/formularios/form-control-sizing-demo/form-control-sizing-demo.component';
 import { FuncionariosTableDemoComponent } from '../../components/formularios/funcionarios-table-demo/funcionarios-table-demo.component';
 import { NotificacionesDemoComponent } from '../../components/formularios/notificaciones-demo/notificaciones-demo.component';
+import { SectionHeaderDemoComponent } from '../../components/formularios/section-header-demo/section-header-demo.component';
 import { SpinnerDemoComponent } from '../../components/formularios/spinner-demo/spinner-demo.component';
 import { StatusComponentsDemoComponent } from '../../components/formularios/status-components-demo/status-components-demo.component';
 import { TableVariantsDemoComponent } from '../../components/formularios/table-variants-demo/table-variants-demo.component';
@@ -59,6 +60,7 @@ interface ModalActividadForm {
     FormControlSizingDemoComponent,
     FuncionariosTableDemoComponent,
     NotificacionesDemoComponent,
+    SectionHeaderDemoComponent,
     SpinnerDemoComponent,
     StatusComponentsDemoComponent,
     TableVariantsDemoComponent,

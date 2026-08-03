@@ -1,0 +1,175 @@
+<section class="command-editor" aria-labelledby="linea-mando-editor-title">
+  <app-ui-panel-header
+    headingId="linea-mando-editor-title"
+    [title]="title()"
+    [description]="description()"
+    [icon]="editing() ? 'fa-solid fa-user-pen' : 'fa-solid fa-user-plus'"
+    appearance="soft"
+  >
+    <app-ui-chip
+      panel-header-actions
+      size="sm"
+      [label]="editing() ? 'Edición' : 'Nuevo registro'"
+      [variant]="editing() ? 'warning' : 'info'"
+      [icon]="editing() ? 'fa-solid fa-pen' : 'fa-solid fa-plus'"
+    />
+  </app-ui-panel-header>
+
+  <div class="command-editor__body">
+    @if (!editing()) {
+      <div class="command-editor__search">
+        <app-ui-search-input
+          [formControl]="searchControl"
+          label="Consultar funcionario"
+          placeholder="Número de identificación"
+          buttonText="Consultar"
+          buttonVariant="primary"
+          buttonLayout="detached"
+          [buttonGap]="8"
+          [maxlength]="20"
+          [clearable]="true"
+          [disabled]="searching()"
+          [required]="true"
+          [iconOnly]="false"
+          [hideButtonTextOnMobile]="true"
+          (search)="searchEmployee($event)"
+        />
+      </div>
+    }
+
+    @if (!hasEmployee()) {
+      <div class="command-editor__empty">
+        <span class="command-editor__empty-icon" aria-hidden="true">
+          <i class="fa-solid fa-id-card-clip"></i>
+        </span>
+        <div>
+          <strong>Seleccione un funcionario</strong>
+          <p>La información institucional se completará automáticamente después de la consulta.</p>
+        </div>
+      </div>
+    } @else {
+      <form class="command-editor__form" [formGroup]="form" (ngSubmit)="submit()">
+        <div class="command-editor__profile">
+          <div class="command-editor__photo">
+            <img [src]="photoPreview()" [alt]="'Fotografía de ' + form.controls.nombre.value" />
+            <span class="command-editor__photo-status" aria-hidden="true">
+              <i class="fa-solid fa-shield-halved"></i>
+            </span>
+          </div>
+
+          <div class="command-editor__identity">
+            <small>{{ form.controls.grado.value || 'Funcionario' }}</small>
+            <strong>
+              {{ form.controls.nombre.value }} {{ form.controls.apellidos.value }}
+            </strong>
+            <span>
+              <i class="fa-regular fa-id-card" aria-hidden="true"></i>
+              {{ form.controls.identificacion.value }}
+            </span>
+          </div>
+        </div>
+
+        <div class="command-editor__grid">
+          <app-ui-input
+            formControlName="identificacion"
+            label="Identificación"
+            icon="fa-regular fa-id-card"
+            [readonly]="true"
+            [required]="true"
+            [error]="fieldError('identificacion')"
+          />
+
+          <app-ui-input
+            formControlName="grado"
+            label="Grado"
+            icon="fa-solid fa-medal"
+            [readonly]="true"
+          />
+
+          <app-ui-input
+            formControlName="nombre"
+            label="Nombres"
+            [readonly]="true"
+            [required]="true"
+            [error]="fieldError('nombre')"
+          />
+
+          <app-ui-input formControlName="apellidos" label="Apellidos" [readonly]="true" />
+
+          <app-ui-input
+            formControlName="cargo"
+            label="Cargo funcional"
+            placeholder="Cargo que desempeña"
+            icon="fa-solid fa-briefcase"
+          />
+
+          <app-ui-select
+            formControlName="peso"
+            label="Posición en la línea"
+            placeholder="Seleccione una posición"
+            [options]="positionOptions"
+            [searchable]="false"
+            [clearable]="false"
+            [required]="true"
+            [error]="fieldError('peso')"
+          />
+
+          <app-ui-input
+            formControlName="unidad"
+            label="Unidad"
+            icon="fa-solid fa-building-shield"
+            [readonly]="true"
+          />
+
+          <app-ui-input
+            formControlName="orden"
+            type="number"
+            label="Orden de presentación"
+            hint="Define la posición visual dentro de la estructura."
+            [required]="true"
+            [error]="fieldError('orden')"
+          />
+        </div>
+
+        <app-ui-file-upload
+          label="Fotografía institucional"
+          buttonText="Cambiar fotografía"
+          hint="JPG, PNG o WEBP. Tamaño máximo: 2 MB."
+          accept="image/jpeg,image/png,image/webp"
+          icon="fa-solid fa-image-portrait"
+          [fileName]="photoFileName()"
+          [allowedMimeTypes]="allowedPhotoTypes"
+          [allowedExtensions]="allowedPhotoExtensions"
+          [maxSizeBytes]="maximumPhotoSize"
+          [disabled]="saving()"
+          (fileSelected)="loadPhoto($event)"
+          (clearRequested)="clearPhoto()"
+          (validationError)="validationWarning.emit($event)"
+        />
+
+        <footer class="command-editor__footer">
+          <app-ui-button
+            type="button"
+            size="sm"
+            variant="outline"
+            icon="fa-solid fa-xmark"
+            [disabled]="saving()"
+            (buttonClick)="cancelRequested.emit()"
+          >
+            Cancelar
+          </app-ui-button>
+
+          <app-ui-button
+            type="submit"
+            size="sm"
+            variant="primary"
+            icon="fa-solid fa-floppy-disk"
+            [loading]="saving()"
+          >
+            {{ editing() ? 'Guardar cambios' : 'Agregar a la línea' }}
+          </app-ui-button>
+        </footer>
+      </form>
+    }
+  </div>
+</section>

@@ -1,213 +1,84 @@
-<section class="home-view">
-  <!-- PANEL: FORMULARIO -->
-  <div class="ui-panel">
-    <div class="ui-panel__head">
-      <div class="ui-panel__title">
-        <i class="fa-solid fa-user-gear"></i>
-        {{ modoEdicion ? 'Editar' : 'Agregar' }} Línea de Mando
+<section class="linea-mando-page">
+  <app-ui-page-header
+    eyebrow="Administración central"
+    title="Línea de mando"
+    description="Configure responsables, jerarquía y disponibilidad de la estructura institucional."
+    icon="fa-solid fa-people-arrows"
+    [minimized]="headerMinimized()"
+    (minimizedChange)="headerMinimized.set($event)"
+  >
+    <div class="linea-mando-page__header-chips" page-header-actions>
+      <app-ui-chip
+        size="sm"
+        label="activos"
+        [value]="activeCount()"
+        variant="info"
+        appearance="glass"
+        icon="fa-solid fa-user-shield"
+      />
+      @if (inactiveCount() > 0) {
+        <app-ui-chip
+          size="sm"
+          label="inactivos"
+          [value]="inactiveCount()"
+          variant="neutral"
+          appearance="glass"
+        />
+      }
+    </div>
+  </app-ui-page-header>
+
+  @if (!headerMinimized()) {
+    <div class="linea-mando-page__summary" aria-label="Resumen de la configuración">
+      <div>
+        <span class="summary-icon is-primary"><i class="fa-solid fa-ranking-star"></i></span>
+        <p>
+          <strong>{{ activeCount() }}</strong
+          ><small>posiciones activas</small>
+        </p>
+      </div>
+      <div>
+        <span class="summary-icon is-info"><i class="fa-solid fa-arrow-down-1-9"></i></span>
+        <p>
+          <strong>{{ nextOrder() }}</strong
+          ><small>próximo orden sugerido</small>
+        </p>
+      </div>
+      <div>
+        <span class="summary-icon is-accent"><i class="fa-solid fa-shield-halved"></i></span>
+        <p><strong>Controlada</strong><small>una persona por posición</small></p>
       </div>
     </div>
 
-    <div class="ui-panel__body">
-      <!-- Buscar por identificación -->
-      @if (!modoEdicion) {
-        <div class="ui-grid">
-          <div class="ui-field ui-col-6">
-            <label class="ui-label">Buscar Funcionario por Cédula</label>
-            <div style="display: flex; gap: 0;">
-              <input
-                class="ui-control"
-                type="text"
-                [(ngModel)]="searchIdentificacion"
-                placeholder="Ingrese número de identificación y presione Enter"
-                [disabled]="searchingFuncionario"
-                (keyup.enter)="onSearchEnter($event)"
-                style="border-radius: var(--ui-radius-sm) 0 0 var(--ui-radius-sm); flex: 1;"
-                >
-                <button
-                  class="ui-btn primary"
-                  type="button"
-                  (click)="buscarFuncionario()"
-                  [disabled]="searchingFuncionario"
-                  style="border-radius: 0 var(--ui-radius-sm) var(--ui-radius-sm) 0; white-space: nowrap;"
-                  >
-                  <i class="fa-solid fa-magnifying-glass"></i>
-                  {{ searchingFuncionario ? 'Buscando...' : 'Buscar' }}
-                </button>
-              </div>
-            </div>
-          </div>
-        }
-        <!-- Datos del funcionario encontrado -->
-        @if (hayFuncionario) {
-          <div class="funcionario-panel">
-            <div class="funcionario-foto">
-              <div class="foto-container">
-                <img [src]="fotoPreview || 'imagenes/policia.jpg'" alt="Foto">
-              </div>
-              <div style="margin-top: 10px;">
-                <input
-                  type="file"
-                  accept="image/*"
-                  (change)="onFileSelected($event)"
-                  style="display: none;"
-                  #fileInput
-                  >
-                  <button class="ui-btn outline sm" type="button" (click)="fileInput.click()">
-                    <i class="fa-solid fa-upload"></i> Cambiar
-                  </button>
-                </div>
-              </div>
-              <div class="funcionario-datos">
-                <div class="ui-grid">
-                  <div class="ui-field ui-col-4">
-                    <label class="ui-label">Identificación *</label>
-                    <input class="ui-control" type="text" [(ngModel)]="formData.identificacion" placeholder="Número de identificación"readonly>
-                  </div>
-                  <div class="ui-field ui-col-4">
-                    <label class="ui-label">Nombre(s) *</label>
-                    <input class="ui-control" type="text" [(ngModel)]="formData.nombre" placeholder="Nombre" readonly>
-                  </div>
-                  <div class="ui-field ui-col-4">
-                    <label class="ui-label">Apellido(s)</label>
-                    <input class="ui-control" type="text" [(ngModel)]="formData.apellidos" placeholder="Apellidos" readonly>
-                  </div>
-                  <div class="ui-field ui-col-4">
-                    <label class="ui-label">Grado</label>
-                    <input class="ui-control" type="text" [(ngModel)]="formData.grado" placeholder="Grado" readonly>
-                  </div>
-                  <div class="ui-field ui-col-4">
-                    <label class="ui-label">Cargo</label>
-                    <input class="ui-control" type="text" [(ngModel)]="formData.cargo" placeholder="Cargo">
-                  </div>
-                  <div class="ui-field ui-col-4">
-                    <label class="ui-label">Peso *</label>
-                    <select class="ui-control" [(ngModel)]="formData.peso">
-                      <option value="">Seleccione...</option>
-                      @for (peso of pesoOpciones; track peso) {
-                        <option [value]="peso.id">
-                          {{ peso.nombre }}
-                        </option>
-                      }
-                    </select>
-                  </div>
-                  <div class="ui-field ui-col-4">
-                    <label class="ui-label">Orden</label>
-                    <input class="ui-control" type="number" [(ngModel)]="formData.orden" min="1">
-                  </div>
-                  <div class="ui-field ui-col-4">
-                    <label class="ui-label">Unidad</label>
-                    <input class="ui-control" type="text" [(ngModel)]="formData.unidad" placeholder="Unidad" readonly>
-                  </div>
-                </div>
-              </div>
-            </div>
-          }
+    <app-ui-section-header
+      eyebrow="Gestión jerárquica"
+      title="Integrantes y posiciones"
+      description="Consulte funcionarios institucionales y organice visualmente la cadena de mando."
+      icon="fa-solid fa-sitemap"
+      [compact]="true"
+    />
 
-          <!-- Mensaje cuando no hay funcionario -->
-          @if (!hayFuncionario && !modoEdicion) {
-            <div class="no-funcionario">
-              <i class="fa-solid fa-user-plus"></i>
-              <p>Busque un funcionario por número de identificación para agregar a la línea de mando</p>
-            </div>
-          }
-
-          <!-- Botones -->
-          @if (hayFuncionario) {
-            <div class="ui-toolbar">
-              <button class="ui-btn primary" type="button" (click)="guardar()" [disabled]="saving">
-                <i class="fa-solid fa-floppy-disk"></i>
-                {{ saving ? 'Guardando...' : (modoEdicion ? 'Actualizar' : 'Guardar') }}
-              </button>
-              <button class="ui-btn outline" type="button" (click)="limpiarForm()">
-                <i class="fa-solid fa-xmark"></i> Cancelar
-              </button>
-            </div>
-          }
-        </div>
+    <div class="linea-mando-page__workspace">
+      <div id="linea-mando-editor" class="linea-mando-page__editor">
+        <app-linea-mando-form
+          [value]="editorValue()"
+          [editing]="isEditing()"
+          [searching]="searching()"
+          [saving]="saving()"
+          (searchRequested)="searchEmployee($event)"
+          (saveRequested)="saveRecord($event)"
+          (cancelRequested)="closeEditor()"
+          (validationWarning)="showFormWarning($event)"
+        />
       </div>
 
-      <!-- PANEL: LISTADO -->
-      <div class="ui-panel">
-        <div class="ui-panel__head">
-          <div class="ui-panel__title">
-            <i class="fa-solid fa-user-group"></i>
-            Línea de Mando Configurada
-          </div>
-          <div class="ui-panel__actions">
-            <span class="ui-badge info">Registros: {{ listaLineaMando.length }}</span>
-          </div>
-        </div>
-
-        <div class="ui-panel__body">
-          @if (loading) {
-            <div style="text-align: center; padding: 40px;">
-              <i class="fa-solid fa-spinner fa-spin"></i> Cargando...
-            </div>
-          }
-
-          @if (!loading && listaLineaMando.length === 0) {
-            <div style="text-align: center; padding: 40px; color: #666;">
-              No hay registros de línea de mando. Busque un funcionario y agréguelo.
-            </div>
-          }
-
-          <!-- Tabla de Línea de Mando -->
-          @if (!loading && listaLineaMando.length > 0) {
-            <div class="ui-table-wrap">
-              <table class="ui-table">
-                <thead>
-                  <tr>
-                    <th style="width: 60px;">Orden</th>
-                    <th>Funcionario</th>
-                    <th>Cargo</th>
-                    <th>Unidad</th>
-                    <th style="width: 100px;">Estado</th>
-                    <th style="width: 100px;">Acciones</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  @for (item of listaLineaMando; track item) {
-                    <tr>
-                      <td style="text-align: center;">
-                        <span class="ui-badge info">{{ item.orden }}</span>
-                      </td>
-                      <td>
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                          <img [src]="getFotoUrl(item)" alt="Foto" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid #ddd;">
-                          <div>
-                            <div style="font-weight: 600;">{{ item.grado }} {{ item.nombre }} {{ item.apellidos }}</div>
-                            <div style="font-size: 11px; color: #666;">{{ item.identificacion }}</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td>
-                        <span class="ui-badge primary">{{ item.peso }}</span>
-                      </td>
-                      <td>{{ item.unidad }}</td>
-                      <td style="text-align: center;">
-                        <span class="ui-badge" [class.success]="item.vigente === 1" [class.warning]="item.vigente !== 1">
-                          {{ item.vigente === 1 ? 'Activo' : 'Inactivo' }}
-                        </span>
-                      </td>
-                      <td style="text-align: center;">
-                        @if (item.vigente === 1) {
-                          <button class="ui-mini-btn" type="button" title="Editar" (click)="editar(item)">
-                            <i class="fa-solid fa-pen"></i>
-                          </button>
-                        }
-                        @if (item.vigente === 1) {
-                          <button class="ui-mini-btn danger" type="button" title="Eliminar" (click)="eliminar(item)">
-                            <i class="fa-solid fa-trash"></i>
-                          </button>
-                        }
-                      </td>
-                    </tr>
-                  }
-                </tbody>
-              </table>
-            </div>
-          }
-        </div>
-      </div>
-    </section>
+      <app-linea-mando-list
+        [rows]="records()"
+        [loading]="loading()"
+        [selectedId]="editingId()"
+        (editRequested)="editRecord($event)"
+        (removeRequested)="removeRecord($event)"
+      />
+    </div>
+  }
+</section>

@@ -1,48 +1,38 @@
 :host {
   display: block;
+  min-width: 0;
 }
 
 .access-section {
-  display: grid;
+  display: block;
   min-width: 0;
   max-width: 100%;
-  gap: 12px;
-  box-sizing: border-box;
-  padding: 14px;
-  border: 1px solid rgba(148, 163, 184, 0.22);
-  border-radius: 5px;
+  overflow: hidden;
+  border: 1px solid rgba(8, 166, 203, 0.2);
+  // border-left: 3px solid var(--policia-cielo, #08a6cb);
+  border-radius: 7px;
   background: var(--ui-surface, #ffffff);
-  box-shadow: 0 5px 14px rgba(21, 27, 59, 0.045);
+  box-shadow: 0 7px 18px rgba(21, 27, 59, 0.055);
 }
 
-.access-section__header {
+.access-section__actions {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 14px;
-}
-
-.access-section__header > div {
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
   min-width: 0;
 }
 
-.access-section__header h3 {
-  margin: 0;
-  color: var(--policia-oscuro, #163b63);
-  font-size: calc(13px * var(--font-size-scale, 1));
-  font-weight: 750;
-  line-height: 1.25;
+.access-section__status {
+  flex: 0 0 auto;
 }
 
-.access-section__header p {
-  margin: 3px 0 0;
-  color: var(--form-hint-color, #64748b);
-  font-size: calc(11px * var(--font-size-scale, 1));
-  font-weight: 500;
-  line-height: 1.4;
+.access-section__content {
+  min-width: 0;
+  padding: 10px 12px 0;
 }
 
-.access-section > app-ui-table {
+.access-section__content > app-ui-table {
   display: block;
   width: 100%;
   min-width: 0;
@@ -69,14 +59,8 @@
 }
 
 @media (max-width: 760px) {
-  .access-section {
-    gap: 11px;
-    padding: 12px;
-  }
-
-  .access-section__header {
-    align-items: stretch;
-    flex-direction: column;
+  .access-section__content {
+    padding: 8px 8px 0;
   }
 
   .role-modal-actions {
@@ -103,13 +87,14 @@
   }
 }
 
+@media (max-width: 520px) {
+  .access-section__status {
+    display: none;
+  }
+}
+
 :host-context(html.dark-mode) {
   .access-section {
-    border-color: var(--ui-border);
-    border-left-color: var(--policia-cielo, #08a6cb);
-  }
-
-  .access-section__header h3 {
-    color: var(--ui-text);
+    border-color: rgba(85, 200, 229, 0.24);
   }
 }

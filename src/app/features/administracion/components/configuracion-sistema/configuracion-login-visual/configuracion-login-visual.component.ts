@@ -20,6 +20,7 @@ import { UiButtonComponent } from '../../../../../shared/components/ui-button/ui
 import { UiChipComponent } from '../../../../../shared/components/ui-chip/ui-chip.component';
 import { UiFileUploadComponent } from '../../../../../shared/components/ui-file-upload/ui-file-upload.component';
 import { UiInputComponent } from '../../../../../shared/components/ui-input/ui-input.component';
+import { UiPanelHeaderComponent } from '../../../../../shared/components/ui-panel-header/ui-panel-header.component';
 import { UiSelectComponent } from '../../../../../shared/components/ui-select/ui-select.component';
 import { UiSpinnerComponent } from '../../../../../shared/components/ui-spinner/ui-spinner.component';
 import { UiSelectOption } from '../../../../../shared/interfaces/ui-select-option.interface';
@@ -52,6 +53,7 @@ const LOGIN_IMAGE_MAX_SIZE_BYTES = 10 * 1024 * 1024;
     UiChipComponent,
     UiFileUploadComponent,
     UiInputComponent,
+    UiPanelHeaderComponent,
     UiSelectComponent,
     UiSpinnerComponent,
   ],

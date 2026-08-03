@@ -16,6 +16,7 @@ import { startWith } from 'rxjs';
 
 import { UiButtonComponent } from '../../../../../shared/components/ui-button/ui-button.component';
 import { UiChipComponent } from '../../../../../shared/components/ui-chip/ui-chip.component';
+import { UiPanelHeaderComponent } from '../../../../../shared/components/ui-panel-header/ui-panel-header.component';
 import { UiSearchInputComponent } from '../../../../../shared/components/ui-search-input/ui-search-input.component';
 import { UiSpinnerComponent } from '../../../../../shared/components/ui-spinner/ui-spinner.component';
 import { DtoDominio, DtoDominioRequest } from '../../../services/dominio.service';
@@ -40,6 +41,7 @@ interface DominioTreeRow {
     ReactiveFormsModule,
     UiButtonComponent,
     UiChipComponent,
+    UiPanelHeaderComponent,
     UiSearchInputComponent,
     UiSpinnerComponent,
     DominioAdminFormComponent,

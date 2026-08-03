@@ -134,15 +134,26 @@
                   ></td>
                 </tr>
               } @else {
-                @for (row of displayedRows(); track trackRow($index, row)) {
+                @for (row of visibleRows(); track trackRow($index, row)) {
                   @let appearance = getRowAppearance(row, $index);
 
                   <tr
+                    [class.is-selected]="appearance?.selected === true"
+                    [attr.aria-selected]="appearance?.selected === true ? 'true' : null"
                     [style.--ui-table-row-text-color-light]="appearance?.textColor || null"
                     [style.--ui-table-row-text-color-dark]="appearance?.darkTextColor || null"
-                    [style.--ui-table-row-font-size]="resolveCssSize($safeNavigationMigration(appearance?.fontSize))"
-                    [style.--ui-table-row-font-weight]="resolveFontWeight($safeNavigationMigration(appearance?.fontWeight))"
-                    [style.--ui-table-current-row-height]="resolveCssSize($safeNavigationMigration(appearance?.height))"
+                    [style.--ui-table-row-background-light]="appearance?.backgroundColor || null"
+                    [style.--ui-table-row-background-dark]="appearance?.darkBackgroundColor || null"
+                    [style.--ui-table-row-accent-color]="appearance?.accentColor || null"
+                    [style.--ui-table-row-font-size]="
+                      resolveCssSize($safeNavigationMigration(appearance?.fontSize))
+                    "
+                    [style.--ui-table-row-font-weight]="
+                      resolveFontWeight($safeNavigationMigration(appearance?.fontWeight))
+                    "
+                    [style.--ui-table-current-row-height]="
+                      resolveCssSize($safeNavigationMigration(appearance?.height))
+                    "
                     [style.--ui-table-current-row-padding-block]="
                       resolveCssSize($safeNavigationMigration(appearance?.paddingBlock))
                     "
@@ -238,7 +249,7 @@
         <app-ui-pagination
           ariaLabel="Paginación de tabla"
           [total]="totalRecords()"
-          [page]="page()"
+          [page]="currentPage()"
           [pageSize]="normalizedPageSize()"
           [pageSizeOptions]="pageSizeOptionsList()"
           [variant]="paginationVariant()"
@@ -246,7 +257,7 @@
           [showPageSize]="paginationShowPageSize()"
           [maxVisiblePages]="paginationMaxVisiblePages()"
           (pageChange)="goToPage($event)"
-          (pageSizeChange)="pageSizeChange.emit($event)"
+          (pageSizeChange)="changePageSize($event)"
         />
       }
     </div>

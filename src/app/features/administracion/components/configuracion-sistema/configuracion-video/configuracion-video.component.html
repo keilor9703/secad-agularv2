@@ -21,12 +21,11 @@
 
   <div class="settings-layout">
     <article class="settings-surface">
-      <header class="settings-surface__head">
-        <div>
-          <h3>Publicar un video</h3>
-          <p>El nuevo archivo reemplazará el video actualmente activo.</p>
-        </div>
-      </header>
+      <app-ui-panel-header
+        title="Publicar un video"
+        description="El nuevo archivo reemplazará el video actualmente activo."
+        icon="fa-solid fa-cloud-arrow-up"
+      />
 
       <form class="settings-form" [formGroup]="form" (ngSubmit)="saveVideo()">
         <app-ui-file-upload
@@ -98,18 +97,14 @@
     </article>
 
     <article class="settings-surface">
-      <header class="settings-surface__head">
-        <div>
-          <h3>Vista previa</h3>
-          <p>
-            {{
-              previewIsDraft()
-                ? 'Archivo pendiente de publicación.'
-                : 'Contenido actualmente publicado.'
-            }}
-          </p>
-        </div>
-      </header>
+      <app-ui-panel-header
+        title="Vista previa"
+        [description]="
+          previewIsDraft()
+            ? 'Archivo pendiente de publicación.'
+            : 'Contenido actualmente publicado.'
+        "
+      />
 
       @if (loading()) {
         <div class="settings-surface__body">
