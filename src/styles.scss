@@ -75,7 +75,8 @@
   --form-field-height: var(--form-control-height);
   --form-border-radius: 4px;
   --form-gap: 14px;
-  --form-label-color: #334155;
+  /* Las etiquetas fijas comparten el azul institucional de la etiqueta flotante activa. */
+  --form-label-color: var(--form-focus-color, #1f4e79);
   --form-border-color: #cbd5e1;
   --form-focus-color: #1f4e79;
   --form-required-marker-color: #111827;
@@ -131,7 +132,8 @@ html.dark-mode {
    */
   --form-bg: #1e2840;
   --form-disabled-bg: #182238;
-  --form-label-color: #e7edf6;
+  /* En tema oscuro conserva el mismo cian de contraste usado por floating. */
+  --form-label-color: var(--form-focus-color, #25b9da);
   --form-border-color: rgba(203, 213, 225, 0.32);
   --form-focus-color: #25b9da;
   --form-hint-color: #aab8cc;

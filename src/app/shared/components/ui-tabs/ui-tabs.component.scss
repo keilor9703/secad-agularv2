@@ -82,6 +82,21 @@
   color: var(--_tab-accent);
 }
 
+.ui-tabs__badge {
+  display: grid;
+  flex: 0 0 auto;
+  min-width: 21px;
+  height: 21px;
+  padding: 0 5px;
+  place-items: center;
+  border-radius: 999px;
+  background: rgba(8, 166, 203, 0.1);
+  color: var(--_tab-primary);
+  font-size: 0.72em;
+  font-weight: 850;
+  line-height: 1;
+}
+
 .ui-tabs__panel {
   box-sizing: border-box;
   min-width: 0;
@@ -121,6 +136,64 @@
   white-space: nowrap;
 }
 
+/* Navegación modular: tarjeta compacta con borde y línea inferior activa. */
+.ui-tabs--navigation .ui-tabs__list {
+  gap: 5px;
+  padding: 4px;
+  border: 1px solid rgba(21, 27, 59, 0.14);
+  border-radius: 6px;
+  background: linear-gradient(180deg, #f7f9fc 0%, #eff4f8 100%);
+}
+
+.ui-tabs--navigation .ui-tabs__tab {
+  justify-content: flex-start;
+  border: 1px solid transparent;
+  border-radius: 5px;
+}
+
+/* En navegación modular el contador se ancla al borde final del segmento. */
+.ui-tabs--navigation .ui-tabs__badge {
+  margin-left: auto;
+}
+
+.ui-tabs--navigation .ui-tabs__tab::after {
+  position: absolute;
+  right: 7px;
+  bottom: 0;
+  left: 7px;
+  height: 2px;
+  border-radius: 999px;
+  background: var(--_tab-accent);
+  content: '';
+  opacity: 0;
+  transform: scaleX(0.25);
+  transition:
+    opacity 160ms ease,
+    transform 180ms ease;
+}
+
+.ui-tabs--navigation .ui-tabs__tab.is-active {
+  border-color: rgba(8, 166, 203, 0.32);
+  background: var(--ui-surface, #ffffff);
+  box-shadow: 0 3px 10px rgba(15, 23, 42, 0.08);
+  color: var(--_tab-primary);
+}
+
+.ui-tabs--navigation .ui-tabs__tab.is-active::after {
+  opacity: 1;
+  transform: scaleX(1);
+}
+
+.ui-tabs--navigation .ui-tabs__tab.is-active .ui-tabs__badge {
+  background: rgba(8, 166, 203, 0.14);
+  color: var(--_tab-primary);
+}
+
+.ui-tabs--navigation .ui-tabs__panel {
+  margin-top: 7px;
+  border-radius: var(--ui-tabs-navigation-panel-border-radius, 5px);
+}
+
 .ui-tabs--pills .ui-tabs__list {
   padding: 3px;
   border: 1px solid rgba(21, 27, 59, 0.12);
@@ -133,13 +206,13 @@
   border-radius: 3px;
 }
 
-/* Estado activo claro: degradado institucional sin oscurecer el contenido. */
+/* Estado activo institucional: azul profundo, cielo y acento verde. */
 .ui-tabs--pills .ui-tabs__tab.is-active {
-  background: linear-gradient(135deg, #dce8f3 0%, #c9dbea 52%, #b8cfe2 100%);
+  background: linear-gradient(135deg, #123f6b 0%, #075b83 58%, #087d99 100%);
   box-shadow:
-    inset 0 0 0 1px rgba(31, 78, 121, 0.42),
-    0 4px 11px rgba(0, 42, 102, 0.15);
-  color: #123a60;
+    inset 0 0 0 1px rgba(8, 166, 203, 0.48),
+    0 4px 11px rgba(0, 42, 102, 0.2);
+  color: #ffffff;
 }
 
 .ui-tabs--pills .ui-tabs__tab:hover:not(:disabled):not(.is-active) {
@@ -147,7 +220,12 @@
 }
 
 .ui-tabs--pills .ui-tabs__tab.is-active i {
-  color: #1f4e79;
+  color: var(--policia-acento, #c8ff00);
+}
+
+.ui-tabs--pills .ui-tabs__tab.is-active .ui-tabs__badge {
+  background: rgba(200, 255, 0, 0.14);
+  color: var(--policia-acento, #c8ff00);
 }
 
 .ui-tabs--pills .ui-tabs__panel {
@@ -317,6 +395,15 @@
     font-size: 0.82em;
   }
 
+  .ui-tabs--navigation .ui-tabs__list {
+    gap: 3px;
+    padding: 3px;
+  }
+
+  .ui-tabs--navigation .ui-tabs__tab {
+    justify-content: center;
+  }
+
   .ui-tabs--underline .ui-tabs__tab::after {
     height: 2px;
   }
@@ -357,11 +444,27 @@
   }
 
   .ui-tabs--pills .ui-tabs__tab.is-active i {
-    color: #bfdbfe;
+    color: var(--policia-acento, #c8ff00);
   }
 
   .ui-tabs--pills .ui-tabs__list {
     background: linear-gradient(180deg, #1d2940 0%, #182238 100%);
+  }
+
+  .ui-tabs--navigation .ui-tabs__list {
+    background: linear-gradient(180deg, #1d2940 0%, #182238 100%);
+  }
+
+  .ui-tabs--navigation .ui-tabs__tab.is-active {
+    border-color: rgba(8, 166, 203, 0.42);
+    background: var(--ui-surface, #1e2840);
+    color: #ffffff;
+  }
+
+  .ui-tabs--navigation .ui-tabs__badge,
+  .ui-tabs--navigation .ui-tabs__tab.is-active .ui-tabs__badge {
+    background: rgba(8, 166, 203, 0.16);
+    color: #d9f7ff;
   }
 
   .ui-tabs--contained .ui-tabs__list {
@@ -371,6 +474,7 @@
   .ui-tabs__panel,
   .ui-tabs--contained,
   .ui-tabs--contained .ui-tabs__list,
+  .ui-tabs--navigation .ui-tabs__list,
   .ui-tabs--underline .ui-tabs__list {
     border-color: rgba(255, 255, 255, 0.13);
   }

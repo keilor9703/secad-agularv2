@@ -1,0 +1,165 @@
+<section class="api-reference" aria-labelledby="ui-api-reference-title">
+  <app-ui-section-header
+    headingId="ui-api-reference-title"
+    eyebrow="Documentación técnica"
+    title="Referencia de componentes reutilizables"
+    description="API vigente, valores predeterminados, prioridades y ejemplos copiables."
+    icon="fa-solid fa-book-open-reader"
+    [compact]="false"
+  >
+    <app-ui-badge
+      header-actions
+      [label]="totalComponents + ' componentes'"
+      variant="info"
+      appearance="soft"
+      icon="fa-solid fa-code"
+    />
+  </app-ui-section-header>
+
+  <div class="api-reference__body">
+    <div class="api-reference__rules" aria-label="Reglas comunes de implementación">
+      <article>
+        <i class="fa-solid fa-diagram-project" aria-hidden="true"></i>
+        <div>
+          <strong>Reactive Forms</strong>
+          <p>
+            <code>formControlName</code> enlaza el valor mediante ControlValueAccessor; no es una
+            variable propia del componente.
+          </p>
+        </div>
+      </article>
+
+      <article>
+        <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
+        <div>
+          <strong>Validación separada</strong>
+          <p>
+            Los <code>Validators</code> pertenecen al formulario. <code>error</code> recibe el mensaje
+            y <code>required</code> expone la semántica visual.
+          </p>
+        </div>
+      </article>
+
+      <article>
+        <i class="fa-solid fa-mobile-screen-button" aria-hidden="true"></i>
+        <div>
+          <strong>Dimensiones responsive</strong>
+          <p>
+            Prioridad: <code>controlSize</code> → variables del contenedor → variables globales →
+            respaldo del componente.
+          </p>
+        </div>
+      </article>
+    </div>
+
+    <nav class="api-reference__categories" aria-label="Familias de componentes" role="tablist">
+      @for (category of categories; track category.id) {
+        <button
+          type="button"
+          role="tab"
+          [attr.aria-selected]="activeCategory() === category.id"
+          [class.is-active]="activeCategory() === category.id"
+          (click)="selectCategory(category.id)"
+        >
+          <i [class]="category.icon" aria-hidden="true"></i>
+          <span>{{ category.label }}</span>
+          <small>{{ categoryCount(category.id) }}</small>
+        </button>
+      }
+    </nav>
+
+    <div class="api-reference__category-summary">
+      <i [class]="activeCategoryDoc().icon" aria-hidden="true"></i>
+      <div>
+        <strong>{{ activeCategoryDoc().label }}</strong>
+        <p>{{ activeCategoryDoc().description }}</p>
+      </div>
+    </div>
+
+    <div class="api-reference__components" role="tabpanel">
+      @for (component of activeComponents(); track component.selector; let first = $first) {
+        <details class="api-reference__component" [open]="first">
+          <summary>
+            <span class="api-reference__selector">{{ component.selector }}</span>
+            <span class="api-reference__component-title">
+              <strong>{{ component.name }}</strong>
+              <small>{{ component.summary }}</small>
+            </span>
+            <span class="api-reference__summary-meta">
+              @if (component.controlValueAccessor) {
+                <em>CVA</em>
+              }
+              <b>{{ component.members.length }}</b>
+              <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
+            </span>
+          </summary>
+
+          <div class="api-reference__component-body">
+            @if (component.notes?.length) {
+              <aside class="api-reference__notes">
+                <strong>Comportamiento y buenas prácticas</strong>
+                <ul>
+                  @for (note of component.notes; track note) {
+                    <li>{{ note }}</li>
+                  }
+                </ul>
+              </aside>
+            }
+
+            <div class="api-reference__example">
+              <div>
+                <strong>Ejemplo mínimo recomendado</strong>
+                <button
+                  type="button"
+                  [attr.aria-label]="'Copiar ejemplo de ' + component.selector"
+                  (click)="copyExample(component)"
+                >
+                  <i
+                    [class]="
+                      copiedSelector() === component.selector
+                        ? 'fa-solid fa-check'
+                        : 'fa-regular fa-copy'
+                    "
+                    aria-hidden="true"
+                  ></i>
+                  {{ copiedSelector() === component.selector ? 'Copiado' : 'Copiar' }}
+                </button>
+              </div>
+              <pre><code>{{ component.example }}</code></pre>
+            </div>
+
+            <div class="api-reference__table-wrap">
+              <table>
+                <caption class="sr-only">
+                  API de {{ component.selector }}
+                </caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Variable</th>
+                    <th scope="col">Clase</th>
+                    <th scope="col">Tipo o valores</th>
+                    <th scope="col">Predeterminado</th>
+                    <th scope="col">Para qué sirve</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (member of component.members; track member.kind + member.name) {
+                    <tr>
+                      <td data-label="Variable"><code>{{ member.name }}</code></td>
+                      <td data-label="Clase">
+                        <span [class]="'api-kind is-' + member.kind">{{ member.kind }}</span>
+                      </td>
+                      <td data-label="Tipo"><code>{{ member.type }}</code></td>
+                      <td data-label="Predeterminado"><code>{{ member.defaultValue }}</code></td>
+                      <td data-label="Finalidad">{{ member.description }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </details>
+      }
+    </div>
+  </div>
+</section>

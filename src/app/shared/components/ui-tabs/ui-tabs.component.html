@@ -21,6 +21,10 @@
         }
 
         <span>{{ tab.label() }}</span>
+
+        @if (tab.badge() !== null && tab.badge() !== '') {
+          <small class="ui-tabs__badge">{{ tab.badge() }}</small>
+        }
       </button>
     }
   </div>

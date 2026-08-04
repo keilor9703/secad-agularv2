@@ -25,7 +25,8 @@
 
 /* Estado inicial de la variante animada: la etiqueta reemplaza visualmente al placeholder. */
 @mixin animated-idle {
-  top: 50%;
+  /* Se calcula contra la altura del control, no contra hint/error del contenedor. */
+  top: calc(var(--_form-control-height) / 2);
   left: 12px;
   padding: 0;
   background: transparent;

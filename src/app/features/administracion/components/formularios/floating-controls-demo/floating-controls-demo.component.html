@@ -1,0 +1,208 @@
+<section class="ui-panel floating-demo" aria-labelledby="floating-controls-title">
+  <header class="ui-panel__head">
+    <div class="ui-panel__title" id="floating-controls-title">
+      <i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i>
+      Controles con etiqueta animada
+    </div>
+  </header>
+
+  <div class="ui-panel__body floating-demo__body">
+    <div class="floating-demo__intro">
+      <span aria-hidden="true"><i class="fa-solid fa-i-cursor"></i></span>
+      <div>
+        <strong>Una API, dos presentaciones</strong>
+        <p>
+          Use <code>labelMode="floating"</code> para iniciar la etiqueta dentro del control. Al
+          enfocar o asignar un valor, sube suavemente y abre el borde sin alterar Reactive Forms.
+        </p>
+      </div>
+
+      <label class="floating-demo__marker-switch">
+        <input
+          type="checkbox"
+          [checked]="showRequiredMarkers()"
+          (change)="updateRequiredMarkerVisibility($event)"
+        />
+        <span class="floating-demo__marker-track" aria-hidden="true"></span>
+        <span>Mostrar asteriscos</span>
+      </label>
+    </div>
+
+    <form class="floating-demo__form" [formGroup]="demoForm" (ngSubmit)="validateExample()">
+      <article class="floating-demo__section">
+        <div class="floating-demo__heading">
+          <span>01</span>
+          <div>
+            <h3>Input, valor inicial, select y textarea</h3>
+            <p>Incluye estados vacío, lleno, enfocado, requerido, inválido y deshabilitado.</p>
+          </div>
+        </div>
+
+        <div class="floating-demo__grid">
+          <!-- La etiqueta ocupa el lugar del placeholder mientras el control está vacío. -->
+          <app-ui-input
+            formControlName="repositoryName"
+            label="Nombre del repositorio"
+            labelMode="floating"
+            icon="fa-solid fa-code-branch"
+            [required]="true"
+            [showRequiredMarker]="showRequiredMarkers()"
+            [maxlength]="80"
+            [error]="error('repositoryName')"
+          />
+
+          <!-- Un valor inicial eleva la etiqueta desde el primer render. -->
+          <app-ui-input
+            formControlName="owner"
+            label="Propietario"
+            labelMode="floating"
+            icon="fa-solid fa-building-shield"
+            [required]="true"
+            [showRequiredMarker]="showRequiredMarkers()"
+            [error]="error('owner')"
+          />
+
+          <app-ui-select
+            formControlName="environment"
+            label="Entorno de publicación"
+            labelMode="floating"
+            searchPlaceholder="Buscar entorno..."
+            [options]="environmentOptions"
+            [searchable]="false"
+            [required]="true"
+            [showRequiredMarker]="showRequiredMarkers()"
+            [error]="error('environment')"
+          />
+
+          <app-ui-input
+            class="floating-demo__wide"
+            formControlName="description"
+            label="Descripción técnica"
+            labelMode="floating"
+            [multiline]="true"
+            [rows]="4"
+            [maxlength]="300"
+            [required]="true"
+            [showRequiredMarker]="showRequiredMarkers()"
+            hint="Máximo 300 caracteres."
+            [error]="error('description')"
+          />
+        </div>
+      </article>
+
+      <article class="floating-demo__section">
+        <div class="floating-demo__heading">
+          <span>02</span>
+          <div>
+            <h3>Fecha, hora y fecha-hora</h3>
+            <p>La misma animación funciona con Flatpickr, fallback nativo y selector de horas.</p>
+          </div>
+        </div>
+
+        <div class="floating-demo__picker-grid">
+          <app-ui-date-time-picker
+            formControlName="releaseDate"
+            label="Fecha de publicación"
+            labelMode="floating"
+            mode="date"
+            [minDate]="today"
+            [required]="true"
+            [showRequiredMarker]="showRequiredMarkers()"
+            [error]="error('releaseDate')"
+          />
+
+          <app-ui-date-time-picker
+            formControlName="executionTime"
+            label="Hora de ejecución"
+            labelMode="floating"
+            mode="time"
+            [minuteStep]="5"
+            [required]="true"
+            [showRequiredMarker]="showRequiredMarkers()"
+            [error]="error('executionTime')"
+          />
+
+          <app-ui-time-picker
+            formControlName="meetingTime"
+            label="Hora AM/PM"
+            labelMode="floating"
+            hourFormat="12"
+            [minuteStep]="30"
+            [required]="true"
+            [showRequiredMarker]="showRequiredMarkers()"
+            [error]="error('meetingTime')"
+          />
+
+          <app-ui-date-time-picker
+            formControlName="deploymentDateTime"
+            label="Fecha y hora de despliegue"
+            labelMode="floating"
+            mode="datetime"
+            [minDate]="today"
+            [minuteStep]="5"
+            [required]="true"
+            [showRequiredMarker]="showRequiredMarkers()"
+            [error]="error('deploymentDateTime')"
+          />
+        </div>
+      </article>
+
+      <footer class="floating-demo__footer">
+        @if (validationMessage()) {
+          <p [class.is-valid]="demoForm.valid">
+            <i
+              [class]="
+                demoForm.valid ? 'fa-solid fa-circle-check' : 'fa-solid fa-circle-exclamation'
+              "
+              aria-hidden="true"
+            ></i>
+            {{ validationMessage() }}
+          </p>
+        }
+
+        <div>
+          <app-ui-button
+            type="button"
+            size="sm"
+            variant="outline"
+            icon="fa-solid fa-rotate-left"
+            (buttonClick)="resetExample()"
+          >
+            Restablecer
+          </app-ui-button>
+
+          <app-ui-button type="submit" size="sm" variant="primary" icon="fa-solid fa-check-double">
+            Probar validación
+          </app-ui-button>
+        </div>
+      </footer>
+    </form>
+
+    <article class="floating-demo__api" aria-labelledby="floating-api-title">
+      <div class="floating-demo__heading">
+        <span>03</span>
+        <div>
+          <h3 id="floating-api-title">Uso técnico</h3>
+          <p>Ejemplos copiables para controles básicos, select y pickers.</p>
+        </div>
+      </div>
+
+      <div class="floating-demo__code-grid">
+        <section>
+          <h4>Input y textarea</h4>
+          <pre><code>{{ basicUsage }}</code></pre>
+        </section>
+
+        <section>
+          <h4>Select y pickers</h4>
+          <pre><code>{{ selectionUsage }}</code></pre>
+        </section>
+
+        <section class="floating-demo__code-wide">
+          <h4>Contrato y compatibilidad</h4>
+          <pre><code>{{ behaviorUsage }}</code></pre>
+        </section>
+      </div>
+    </article>
+  </div>
+</section>

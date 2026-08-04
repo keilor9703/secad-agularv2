@@ -185,6 +185,7 @@
                 formControlName="menuInstitutionTextSizePx"
                 label="Tamaño de la institución"
                 [options]="menuInstitutionTextSizeOptions"
+                labelMode="floating"
                 [searchable]="false"
                 [clearable]="false"
                 [error]="error('menuInstitutionTextSizePx')"
@@ -320,7 +321,7 @@
                 label="Tamaño de la institución"
                 [options]="institutionTextSizeOptions"
                 [searchable]="false"
-                [clearable]="false"
+                [clearable]="true"
                 [error]="error('loginInstitutionTextSizePx')"
               />
             </div>
@@ -331,7 +332,7 @@
                 label="Tamaño del nombre del sistema"
                 [options]="systemTextSizeOptions"
                 [searchable]="false"
-                [clearable]="false"
+                [clearable]="true"
                 [error]="error('loginSystemTextSizePx')"
               />
             </div>

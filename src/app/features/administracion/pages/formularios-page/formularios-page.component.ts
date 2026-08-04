@@ -12,6 +12,7 @@ import { UiTimePickerComponent } from '../../../../shared/components/ui-time-pic
 import { UiSelectOption } from '../../../../shared/interfaces/ui-select-option.interface';
 import { getFormErrorMessage } from '../../../../shared/utils/form-error.util';
 import { ButtonSearchDemoComponent } from '../../components/formularios/button-search-demo/button-search-demo.component';
+import { FloatingControlsDemoComponent } from '../../components/formularios/floating-controls-demo/floating-controls-demo.component';
 import { FormControlSizingDemoComponent } from '../../components/formularios/form-control-sizing-demo/form-control-sizing-demo.component';
 import { FuncionariosTableDemoComponent } from '../../components/formularios/funcionarios-table-demo/funcionarios-table-demo.component';
 import { NotificacionesDemoComponent } from '../../components/formularios/notificaciones-demo/notificaciones-demo.component';
@@ -20,6 +21,7 @@ import { SpinnerDemoComponent } from '../../components/formularios/spinner-demo/
 import { StatusComponentsDemoComponent } from '../../components/formularios/status-components-demo/status-components-demo.component';
 import { TableVariantsDemoComponent } from '../../components/formularios/table-variants-demo/table-variants-demo.component';
 import { TabsDemoComponent } from '../../components/formularios/tabs-demo/tabs-demo.component';
+import { UiApiReferenceComponent } from '../../components/formularios/ui-api-reference/ui-api-reference.component';
 
 interface FormulariosDemoForm {
   nombres: FormControl<string>;
@@ -58,6 +60,7 @@ interface ModalActividadForm {
     UiTimePickerComponent,
     ButtonSearchDemoComponent,
     FormControlSizingDemoComponent,
+    FloatingControlsDemoComponent,
     FuncionariosTableDemoComponent,
     NotificacionesDemoComponent,
     SectionHeaderDemoComponent,
@@ -65,9 +68,10 @@ interface ModalActividadForm {
     StatusComponentsDemoComponent,
     TableVariantsDemoComponent,
     TabsDemoComponent,
+    UiApiReferenceComponent,
   ],
   templateUrl: './formularios-page.component.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './formularios-page.component.scss',
 })
 export class FormulariosPageComponent {

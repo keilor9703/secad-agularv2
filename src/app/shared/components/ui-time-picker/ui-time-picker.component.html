@@ -4,6 +4,9 @@
   [class.has-value]="hasValue()"
   [class.has-error]="hasError()"
   [class.is-disabled]="isDisabled()"
+  [class.has-leading-icon]="!!icon().trim()"
+  [class.is-label-floating]="labelMode() === 'floating'"
+  [class.is-label-active]="labelMode() === 'floating' && (opened() || hasValue())"
 >
   <label class="ui-time-picker__label" [for]="resolvedControlId()">
     {{ label() }}

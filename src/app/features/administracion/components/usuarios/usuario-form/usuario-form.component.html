@@ -2,266 +2,273 @@
   <div class="admin-grid">
     <aside class="left-column">
       <article class="profile-card">
-        <div class="profile-card__cover" [class.inactive]="!usuarioForm.controls.activo.value"></div>
+        <div
+          class="profile-card__cover"
+          [class.inactive]="!usuarioForm.controls.activo.value"
+        ></div>
         <div class="profile-card__body">
           <img
             class="profile-avatar"
-          [src]="
-            user.fotoUrl ||
-            'https://ui-avatars.com/api/?name=' +
-              user.nombreCompleto +
-              '&background=002a66&color=fff&size=160'
-          "
+            [src]="
+              user.fotoUrl ||
+              'https://ui-avatars.com/api/?name=' +
+                user.nombreCompleto +
+                '&background=002a66&color=fff&size=160'
+            "
             alt="Foto de usuario"
-            />
-            <h3 class="profile-name">{{ usuarioForm.controls.nombreCompleto.value }}</h3>
-            <p class="profile-role">
-              {{ usuarioForm.controls.usuarioEmpresarial.value || 'Usuario empresarial' }}
-            </p>
-            <div class="state-box">
-              <div>
-                <span class="state-box__label">Estado de usuario</span>
-                <span class="state-box__value" [class.inactive]="!usuarioForm.controls.activo.value">
-                  {{ usuarioForm.controls.activo.value ? 'ACTIVO' : 'INACTIVO' }}
-                </span>
-              </div>
-              <button
-                class="switch"
-                type="button"
-                [class.active]="usuarioForm.controls.activo.value"
-                [disabled]="loading"
-                aria-label="Cambiar estado del usuario"
-                (click)="toggleEstadoUsuario()"
-                >
-                <span></span>
-              </button>
+          />
+          <h3 class="profile-name">{{ usuarioForm.controls.nombreCompleto.value }}</h3>
+          <p class="profile-role">
+            {{ usuarioForm.controls.usuarioEmpresarial.value || 'Usuario empresarial' }}
+          </p>
+          <div class="state-box">
+            <div>
+              <span class="state-box__label">Estado de usuario</span>
+              <span class="state-box__value" [class.inactive]="!usuarioForm.controls.activo.value">
+                {{ usuarioForm.controls.activo.value ? 'ACTIVO' : 'INACTIVO' }}
+              </span>
             </div>
+            <button
+              class="switch"
+              type="button"
+              [class.active]="usuarioForm.controls.activo.value"
+              [disabled]="loading"
+              aria-label="Cambiar estado del usuario"
+              (click)="toggleEstadoUsuario()"
+            >
+              <span></span>
+            </button>
           </div>
-        </article>
-        <article class="access-summary">
-          <h4><i class="fa-solid fa-circle-info"></i> Resumen de acceso</h4>
-          <div class="summary-row">
-            <span>Roles activos</span>
-            <strong>{{ activeRolesCount }}</strong>
-          </div>
-          <div class="summary-row">
-            <span>Último ingreso</span>
-            <strong>{{ usuarioForm.controls.ultimoIngreso.value }}</strong>
-          </div>
-        </article>
-      </aside>
-      <section class="right-column">
-        <app-ui-tabs
-          [class.has-form-footer]="activeTab !== 'roles'"
-          variant="contained"
-          size="md"
-          ariaLabel="Administración del usuario"
-          [activeTabId]="activeTab"
-          [stretch]="true"
-          [showPanelAccent]="false"
-          (selectionChange)="setTab($event.id)"
-          >
-          <app-ui-tab id="datos" label="Datos personales">
-            <section class="tab-content">
-              <div class="ui-grid user-data-grid" [formGroup]="usuarioForm">
-                <div class="ui-col-6" [formGroup]="consultaForm">
-                  <app-ui-search-input
-                    formControlName="identificacion"
-                    label="Buscar usuario"
-                    placeholder="Identificación del funcionario"
-                    [buttonText]="loading ? 'Consultando usuario' : 'Buscar usuario'"
-                    [iconOnly]="true"
-                    [required]="true"
-                    [maxlength]="20"
-                    [disabled]="loading"
-                    [clearable]="false"
-                    [showRequiredMarker]="false"
-                    [error]="getFieldError('consulta', 'identificacion')"
-                    (search)="onConsultar($event)"
-                  ></app-ui-search-input>
-                </div>
-                <div class="ui-col-6">
-                  <app-ui-input
-                    formControlName="identificacion"
-                    label="Identificación"
-                    icon="fa-solid fa-id-card"
-                    [readonly]="true"
-                    [required]="true"
-                    [maxlength]="20"
-                    [showRequiredMarker]="false"
-                    [error]="getFieldError('usuario', 'identificacion')"
-                  ></app-ui-input>
-                </div>
-                <div class="ui-col-6">
-                  <app-ui-input
-                    formControlName="nombreCompleto"
-                    label="Nombre completo"
-                    icon="fa-solid fa-user"
-                    [readonly]="true"
-                    [required]="true"
-                    [maxlength]="200"
-                    [showRequiredMarker]="false"
-                    [error]="getFieldError('usuario', 'nombreCompleto')"
-                  ></app-ui-input>
-                </div>
-                <div class="ui-col-6">
-                  <app-ui-input
-                    formControlName="usuarioEmpresarial"
-                    label="Usuario empresarial"
-                    icon="fa-solid fa-user-tie"
-                    [readonly]="true"
-                    [required]="true"
-                    [maxlength]="100"
-                    [showRequiredMarker]="false"
-                    [error]="getFieldError('usuario', 'usuarioEmpresarial')"
-                  ></app-ui-input>
-                </div>
-                <div class="ui-col-6">
-                  <app-ui-input
-                    formControlName="grado"
-                    label="Grado"
-                    [readonly]="true"
-                    [maxlength]="100"
-                    [error]="getFieldError('usuario', 'grado')"
-                  ></app-ui-input>
-                </div>
-                <div class="ui-col-6">
-                  <app-ui-input
-                    formControlName="gradAlfabetico"
-                    label="Sigla grado"
-                    [readonly]="true"
-                    [maxlength]="100"
-                    [error]="getFieldError('usuario', 'gradAlfabetico')"
-                  ></app-ui-input>
-                </div>
-                <div class="ui-col-6">
-                  <app-ui-input
-                    formControlName="email"
-                    label="Correo institucional"
-                    type="email"
-                    icon="fa-solid fa-envelope"
-                    [readonly]="true"
-                    [required]="true"
-                    [maxlength]="150"
-                    [showRequiredMarker]="false"
-                    [error]="getFieldError('usuario', 'email')"
-                  ></app-ui-input>
-                </div>
-                <div class="ui-col-6">
-                  <app-ui-input
-                    formControlName="telefono"
-                    label="Teléfono"
-                    icon="fa-solid fa-phone"
-                    [readonly]="true"
-                    [maxlength]="30"
-                    [error]="getFieldError('usuario', 'telefono')"
-                  ></app-ui-input>
-                </div>
-                <div class="ui-col-6">
-                  <app-ui-input
-                    formControlName="situacionLaboral"
-                    label="Situación laboral"
-                    [readonly]="true"
-                    [maxlength]="100"
-                    [error]="getFieldError('usuario', 'situacionLaboral')"
-                  ></app-ui-input>
-                </div>
-                <div class="ui-col-6">
-                  <app-ui-input
-                    formControlName="cargo"
-                    label="Cargo"
-                    [readonly]="true"
-                    [maxlength]="150"
-                    [error]="getFieldError('usuario', 'cargo')"
-                  ></app-ui-input>
-                </div>
-                <div class="ui-col-6">
-                  <app-ui-input
-                    formControlName="unidadFisica"
-                    label="Unidad"
-                    [readonly]="true"
-                    [maxlength]="200"
-                    [error]="getFieldError('usuario', 'unidadFisica')"
-                  ></app-ui-input>
-                </div>
-                <div class="ui-col-6">
-                  <app-ui-input
-                    formControlName="unidad"
-                    label="Grupo donde labora"
-                    [readonly]="true"
-                    [maxlength]="200"
-                    [error]="getFieldError('usuario', 'unidad')"
-                  ></app-ui-input>
-                </div>
+        </div>
+      </article>
+      <article class="access-summary">
+        <h4><i class="fa-solid fa-circle-info"></i> Resumen de acceso</h4>
+        <div class="summary-row">
+          <span>Roles activos</span>
+          <strong>{{ activeRolesCount }}</strong>
+        </div>
+        <div class="summary-row">
+          <span>Último ingreso</span>
+          <strong>{{ usuarioForm.controls.ultimoIngreso.value }}</strong>
+        </div>
+      </article>
+    </aside>
+    <section class="right-column">
+      <app-ui-tabs
+        [class.has-form-footer]="activeTab !== 'roles'"
+        variant="navigation"
+        size="md"
+        ariaLabel="Administración del usuario"
+        [activeTabId]="activeTab"
+        [stretch]="true"
+        [showPanelAccent]="false"
+        (selectionChange)="setTab($event.id)"
+      >
+        <app-ui-tab id="datos" label="Datos personales" icon="fa-solid fa-address-card">
+          <section class="tab-content">
+            <div class="ui-grid user-data-grid" [formGroup]="usuarioForm">
+              <div class="ui-col-6" [formGroup]="consultaForm">
+                <app-ui-search-input
+                  formControlName="identificacion"
+                  label="Buscar usuario"
+                  placeholder="Identificación del funcionario"
+                  [buttonText]="loading ? 'Consultando usuario' : 'Buscar usuario'"
+                  [iconOnly]="true"
+                  [required]="true"
+                  [maxlength]="20"
+                  [disabled]="loading"
+                  [clearable]="false"
+                  [showRequiredMarker]="false"
+                  [error]="getFieldError('consulta', 'identificacion')"
+                  (search)="onConsultar($event)"
+                ></app-ui-search-input>
               </div>
-            </section>
-          </app-ui-tab>
-          <app-ui-tab id="roles" label="Roles y permisos">
-            <app-usuario-roles-panel
-              [roles]="rolesVigentes"
-              [rolesCatalogo]="rolesCatalogo"
-              [rolForm]="rolForm"
-              [showAddRoleForm]="showAddRoleForm"
-              [editingRole]="editingRole"
-              [savingRole]="savingRole"
-              [deletingRoleId]="deletingRoleId"
-              [superAdministradorRolId]="superAdministradorRolId"
-              (agregarRol)="agregarRol()"
-              (guardarRol)="onGuardarRol()"
-              (cancelarRol)="cancelarNuevoRol()"
-              (editarRol)="prepararEdicionRol($event)"
-              (eliminarRol)="eliminarRol.emit($event)"
-            ></app-usuario-roles-panel>
-          </app-ui-tab>
-        </app-ui-tabs>
-        @if (activeTab !== 'roles') {
-          <footer class="form-footer">
-            <app-ui-button
-              type="button"
-              variant="primary"
-              icon="fa-solid fa-floppy-disk"
-              [disabled]="loading || usuarioForm.invalid"
-              [loading]="loading"
-              (buttonClick)="onGuardarDatos()"
-              >
-              {{ loading ? 'Guardando...' : 'Guardar usuario' }}
-            </app-ui-button>
-            <app-ui-button
-              type="button"
-              variant="secondary"
-              icon="fa-solid fa-eraser"
-              (buttonClick)="onNuevoUsuario()"
-              >
-              Limpiar
-            </app-ui-button>
-          </footer>
-        }
-      </section>
-    </div>
-  } @else {
-    <div class="empty-state">
-      <i class="fa-solid fa-user-plus"></i>
-      <h3>Consulta un usuario para iniciar</h3>
-      <p>Ingresa la identificación y consulta para administrar datos y permisos.</p>
-      <form class="empty-search" [formGroup]="consultaForm" (ngSubmit)="onConsultar()">
-        <app-ui-search-input
-          formControlName="identificacion"
-          label="Buscar usuario"
-          placeholder="Identificación"
-          buttonText="Filtrar"
-          buttonLayout="detached"
-          buttonVariant="primary"
-          [buttonText]="loading ? 'Consultando usuario' : 'Buscar usuario'"
-          [iconOnly]="false"
-          [required]="true"
-          [maxlength]="20"
-          [disabled]="loading"
-          [clearable]="false"
-          [buttonGap]="10"
-          [error]="getFieldError('consulta', 'identificacion')"
-          (search)="onConsultar($event)"
-        ></app-ui-search-input>
-      </form>
-    </div>
-  }
-
+              <div class="ui-col-6">
+                <app-ui-input
+                  formControlName="identificacion"
+                  label="Identificación"
+                  icon="fa-solid fa-id-card"
+                  [readonly]="true"
+                  [required]="true"
+                  [maxlength]="20"
+                  [showRequiredMarker]="false"
+                  [error]="getFieldError('usuario', 'identificacion')"
+                ></app-ui-input>
+              </div>
+              <div class="ui-col-6">
+                <app-ui-input
+                  formControlName="nombreCompleto"
+                  label="Nombre completo"
+                  icon="fa-solid fa-user"
+                  [readonly]="true"
+                  [required]="true"
+                  [maxlength]="200"
+                  [showRequiredMarker]="false"
+                  [error]="getFieldError('usuario', 'nombreCompleto')"
+                ></app-ui-input>
+              </div>
+              <div class="ui-col-6">
+                <app-ui-input
+                  formControlName="usuarioEmpresarial"
+                  label="Usuario empresarial"
+                  icon="fa-solid fa-user-tie"
+                  [readonly]="true"
+                  [required]="true"
+                  [maxlength]="100"
+                  [showRequiredMarker]="false"
+                  [error]="getFieldError('usuario', 'usuarioEmpresarial')"
+                ></app-ui-input>
+              </div>
+              <div class="ui-col-6">
+                <app-ui-input
+                  formControlName="grado"
+                  label="Grado"
+                  [readonly]="true"
+                  [maxlength]="100"
+                  [error]="getFieldError('usuario', 'grado')"
+                ></app-ui-input>
+              </div>
+              <div class="ui-col-6">
+                <app-ui-input
+                  formControlName="gradAlfabetico"
+                  label="Sigla grado"
+                  [readonly]="true"
+                  [maxlength]="100"
+                  [error]="getFieldError('usuario', 'gradAlfabetico')"
+                ></app-ui-input>
+              </div>
+              <div class="ui-col-6">
+                <app-ui-input
+                  formControlName="email"
+                  label="Correo institucional"
+                  type="email"
+                  icon="fa-solid fa-envelope"
+                  [readonly]="true"
+                  [required]="true"
+                  [maxlength]="150"
+                  [showRequiredMarker]="false"
+                  [error]="getFieldError('usuario', 'email')"
+                ></app-ui-input>
+              </div>
+              <div class="ui-col-6">
+                <app-ui-input
+                  formControlName="telefono"
+                  label="Teléfono"
+                  icon="fa-solid fa-phone"
+                  [readonly]="true"
+                  [maxlength]="30"
+                  [error]="getFieldError('usuario', 'telefono')"
+                ></app-ui-input>
+              </div>
+              <div class="ui-col-6">
+                <app-ui-input
+                  formControlName="situacionLaboral"
+                  label="Situación laboral"
+                  [readonly]="true"
+                  [maxlength]="100"
+                  [error]="getFieldError('usuario', 'situacionLaboral')"
+                ></app-ui-input>
+              </div>
+              <div class="ui-col-6">
+                <app-ui-input
+                  formControlName="cargo"
+                  label="Cargo"
+                  [readonly]="true"
+                  [maxlength]="150"
+                  [error]="getFieldError('usuario', 'cargo')"
+                ></app-ui-input>
+              </div>
+              <div class="ui-col-6">
+                <app-ui-input
+                  formControlName="unidadFisica"
+                  label="Unidad"
+                  [readonly]="true"
+                  [maxlength]="200"
+                  [error]="getFieldError('usuario', 'unidadFisica')"
+                ></app-ui-input>
+              </div>
+              <div class="ui-col-6">
+                <app-ui-input
+                  formControlName="unidad"
+                  label="Grupo donde labora"
+                  [readonly]="true"
+                  [maxlength]="200"
+                  [error]="getFieldError('usuario', 'unidad')"
+                ></app-ui-input>
+              </div>
+            </div>
+          </section>
+        </app-ui-tab>
+        <app-ui-tab
+          id="roles"
+          label="Roles y permisos"
+          icon="fa-solid fa-key"
+          [badge]="activeRolesCount"
+        >
+          <app-usuario-roles-panel
+            [roles]="rolesVigentes"
+            [rolesCatalogo]="rolesCatalogo"
+            [rolForm]="rolForm"
+            [showAddRoleForm]="showAddRoleForm"
+            [editingRole]="editingRole"
+            [savingRole]="savingRole"
+            [deletingRoleId]="deletingRoleId"
+            [superAdministradorRolId]="superAdministradorRolId"
+            (agregarRol)="agregarRol()"
+            (guardarRol)="onGuardarRol()"
+            (cancelarRol)="cancelarNuevoRol()"
+            (editarRol)="prepararEdicionRol($event)"
+            (eliminarRol)="eliminarRol.emit($event)"
+          ></app-usuario-roles-panel>
+        </app-ui-tab>
+      </app-ui-tabs>
+      @if (activeTab !== 'roles') {
+        <footer class="form-footer">
+          <app-ui-button
+            type="button"
+            variant="primary"
+            icon="fa-solid fa-floppy-disk"
+            [disabled]="loading || usuarioForm.invalid"
+            [loading]="loading"
+            (buttonClick)="onGuardarDatos()"
+          >
+            {{ loading ? 'Guardando...' : 'Guardar usuario' }}
+          </app-ui-button>
+          <app-ui-button
+            type="button"
+            variant="secondary"
+            icon="fa-solid fa-eraser"
+            (buttonClick)="onNuevoUsuario()"
+          >
+            Limpiar
+          </app-ui-button>
+        </footer>
+      }
+    </section>
+  </div>
+} @else {
+  <div class="empty-state">
+    <i class="fa-solid fa-user-plus"></i>
+    <h3>Consulta un usuario para iniciar</h3>
+    <p>Ingresa la identificación y consulta para administrar datos y permisos.</p>
+    <form class="empty-search" [formGroup]="consultaForm" (ngSubmit)="onConsultar()">
+      <app-ui-search-input
+        formControlName="identificacion"
+        label="Buscar usuario"
+        placeholder="Identificación"
+        buttonText="Filtrar"
+        buttonLayout="detached"
+        buttonVariant="primary"
+        [buttonText]="loading ? 'Consultando usuario' : 'Buscar usuario'"
+        [iconOnly]="false"
+        [required]="true"
+        [maxlength]="20"
+        [disabled]="loading"
+        [clearable]="false"
+        [buttonGap]="10"
+        [error]="getFieldError('consulta', 'identificacion')"
+        (search)="onConsultar($event)"
+      ></app-ui-search-input>
+    </form>
+  </div>
+}

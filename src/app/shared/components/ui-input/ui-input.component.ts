@@ -13,6 +13,7 @@ import {
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
 import { UiFormControlSizeDirective } from '../../directives/ui-form-control-size.directive';
+import { UiFormLabelMode } from '../../interfaces/ui-form-label-mode.interface';
 
 let nextUiInputId = 0;
 
@@ -58,6 +59,8 @@ export class UiInputComponent implements ControlValueAccessor {
    * `required` y los validadores continúan activos aunque se oculte.
    */
   readonly showRequiredMarker = input(true, { transform: booleanAttribute });
+  /** Activa la etiqueta animada sin cambiar el comportamiento del FormControl. */
+  readonly labelMode = input<UiFormLabelMode>('fixed');
 
   @Output() enterPressed = new EventEmitter<void>();
 

@@ -14,6 +14,7 @@ import {
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { UiFormControlSizeDirective } from '../../directives/ui-form-control-size.directive';
+import { UiFormLabelMode } from '../../interfaces/ui-form-label-mode.interface';
 import { UiTimeFormat, UiTimeOption } from './ui-time-picker.types';
 import { buildTimeOptions, formatTimeLabel, normalizeTimeValue } from './ui-time-picker.utils';
 
@@ -56,6 +57,8 @@ export class UiTimePickerComponent implements ControlValueAccessor {
    * Controla el marcador visual; el estado requerido del formulario no cambia.
    */
   readonly showRequiredMarker = input(true, { transform: booleanAttribute });
+  /** Habilita el comportamiento animado manteniendo intacto el valor HH:mm. */
+  readonly labelMode = input<UiFormLabelMode>('fixed');
   readonly disabled = input(false, { transform: booleanAttribute });
   readonly clearable = input(true, { transform: booleanAttribute });
 

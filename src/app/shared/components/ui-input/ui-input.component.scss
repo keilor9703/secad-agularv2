@@ -44,6 +44,7 @@
   font-size: calc(11px * var(--font-size-scale));
   font-weight: 700;
   line-height: 1.2;
+  @include floating-label.animated-transition;
 }
 
 .form-field__required-marker {
@@ -82,6 +83,33 @@ textarea.form-field__native {
 
 .form-field__native::placeholder {
   color: #8a8f98;
+  transition: color 120ms ease;
+}
+
+.form-field--label-floating .form-field__label {
+  @include floating-label.animated-idle;
+}
+
+.form-field--label-floating:not(.form-field--label-active) .form-field__native::placeholder {
+  color: transparent;
+}
+
+.form-field--label-floating.form-field--multiline:not(.form-field--label-active)
+  .form-field__label {
+  top: 17px;
+  transform: none;
+}
+
+.form-field--label-floating.form-field--label-active .form-field__label {
+  @include floating-label.animated-active;
+}
+
+.form-field--invalid .form-field__label {
+  color: var(--form-error-color, #b42318);
+}
+
+.form-field--disabled .form-field__label {
+  color: var(--form-hint-color, #64748b);
 }
 
 .form-field__icon {
@@ -148,5 +176,12 @@ textarea.form-field__native {
 
   .form-field__native::placeholder {
     color: #9ca3af;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .form-field__label,
+  .form-field__native::placeholder {
+    transition: none;
   }
 }

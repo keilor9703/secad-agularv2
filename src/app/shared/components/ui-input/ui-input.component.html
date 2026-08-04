@@ -5,6 +5,8 @@
   [class.form-field--invalid]="error"
   [class.form-field--disabled]="isDisabled"
   [class.form-field--multiline]="multiline"
+  [class.form-field--label-floating]="labelMode() === 'floating'"
+  [class.form-field--label-active]="labelMode() === 'floating' && shouldFloat"
   >
   @if (label) {
     <span class="form-field__label">

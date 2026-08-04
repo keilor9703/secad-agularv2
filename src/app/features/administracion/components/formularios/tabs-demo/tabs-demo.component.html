@@ -6,15 +6,83 @@
     </div>
 
     <div class="ui-panel__actions">
-      <span class="ui-badge info">5 variantes</span>
+      <span class="ui-badge info">6 variantes</span>
     </div>
   </div>
 
   <div class="ui-panel__body tabs-demo__body">
-    <!-- Variante 1: navegación compacta tipo píldora, equivalente a la primera referencia. -->
+    <!-- Variante 1: navegación modular con iconos, contadores y línea inferior activa. -->
     <article class="tabs-demo__example">
       <header class="tabs-demo__example-head">
         <span class="tabs-demo__number">01</span>
+        <div>
+          <h3>Tabs de navegación modular</h3>
+          <p>Con iconos · contadores opcionales · selección compacta con línea institucional.</p>
+        </div>
+      </header>
+
+      <app-ui-tabs
+        variant="navigation"
+        size="sm"
+        activeTabId="datos-carga"
+        ariaLabel="Ejemplo de navegación modular"
+        [stretch]="true"
+        [showPanelAccent]="false"
+      >
+        <app-ui-tab
+          id="formularios"
+          label="Formularios normales"
+          icon="fa-solid fa-pen-to-square"
+          [badge]="7"
+        >
+          <div class="tabs-demo__content-card">
+            <strong>Controles de formulario</strong>
+            <p>Inputs, selects, buscadores, carga de archivos y selectores de fecha y hora.</p>
+          </div>
+        </app-ui-tab>
+
+        <app-ui-tab
+          id="datos-carga"
+          label="Datos y carga"
+          icon="fa-solid fa-table-list"
+          [badge]="4"
+        >
+          <div class="tabs-demo__content-card">
+            <strong>Datos y estados de carga</strong>
+            <p>Tablas, columnas configurables, paginación y spinners reutilizables.</p>
+          </div>
+        </app-ui-tab>
+
+        <app-ui-tab
+          id="acciones"
+          label="Acciones y estados"
+          icon="fa-solid fa-toggle-on"
+          [badge]="4"
+        >
+          <div class="tabs-demo__content-card">
+            <strong>Acciones y estados</strong>
+            <p>Botones, modales, badges y chips con semántica institucional.</p>
+          </div>
+        </app-ui-tab>
+
+        <app-ui-tab
+          id="estructura"
+          label="Estructura visual"
+          icon="fa-solid fa-object-group"
+          [badge]="4"
+        >
+          <div class="tabs-demo__content-card">
+            <strong>Estructura visual</strong>
+            <p>Encabezados, tabs y paneles para organizar pantallas administrativas.</p>
+          </div>
+        </app-ui-tab>
+      </app-ui-tabs>
+    </article>
+
+    <!-- Variante 2: navegación compacta tipo píldora con paleta institucional. -->
+    <article class="tabs-demo__example">
+      <header class="tabs-demo__example-head">
+        <span class="tabs-demo__number">02</span>
         <div>
           <h3>Tabs tipo píldora</h3>
           <p>Sin iconos · con contenido · distribuidos en todo el ancho.</p>
@@ -53,10 +121,10 @@
       </app-ui-tabs>
     </article>
 
-    <!-- Variante 2: tabs contenidos con un formulario repartido por responsabilidades. -->
+    <!-- Variante 3: tabs contenidos con un formulario repartido por responsabilidades. -->
     <article class="tabs-demo__example">
       <header class="tabs-demo__example-head">
-        <span class="tabs-demo__number">02</span>
+        <span class="tabs-demo__number">03</span>
         <div>
           <h3>Tabs contenidos con formulario</h3>
           <p>Sin iconos · con contenido de formulario · ancho completo.</p>
@@ -164,10 +232,10 @@
       </form>
     </article>
 
-    <!-- Variante 3: tabs con iconos para reforzar la identificación de cada módulo. -->
+    <!-- Variante 4: tabs con iconos para reforzar la identificación de cada módulo. -->
     <article class="tabs-demo__example">
       <header class="tabs-demo__example-head">
-        <span class="tabs-demo__number">03</span>
+        <span class="tabs-demo__number">04</span>
         <div>
           <h3>Tabs con iconos</h3>
           <p>Con iconos · con contenido informativo · ancho completo.</p>
@@ -215,10 +283,10 @@
       </app-ui-tabs>
     </article>
 
-    <!-- Variante 4: catálogo de los cinco tamaños soportados por el componente. -->
+    <!-- Variante 5: catálogo de los cinco tamaños soportados por el componente. -->
     <article class="tabs-demo__example">
       <header class="tabs-demo__example-head">
-        <span class="tabs-demo__number">04</span>
+        <span class="tabs-demo__number">05</span>
         <div>
           <h3>Tamaños disponibles</h3>
           <p>Sin iconos · sin panel de contenido · cinco escalas reutilizables.</p>
@@ -303,10 +371,10 @@
       </div>
     </article>
 
-    <!-- Variante 5: tabs distribuidos a todo el ancho con indicador inferior. -->
+    <!-- Variante 6: tabs distribuidos a todo el ancho con indicador inferior. -->
     <article class="tabs-demo__example">
       <header class="tabs-demo__example-head">
-        <span class="tabs-demo__number">05</span>
+        <span class="tabs-demo__number">06</span>
         <div>
           <h3>Tabs distribuidos con subrayado</h3>
           <p>Sin iconos · con contenido · indicador institucional azul cielo.</p>

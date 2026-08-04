@@ -28,6 +28,7 @@
   font-size: calc(11px * var(--font-size-scale, 1));
   font-weight: 700;
   line-height: 1.2;
+  @include floating-label.animated-transition;
 }
 
 .ui-date-time__required-marker {
@@ -100,6 +101,32 @@
 .ui-date-time__input::placeholder {
   color: #8a8f98;
   opacity: 1;
+  transition: color 120ms ease;
+}
+
+.ui-date-time.is-label-floating .ui-date-time__label {
+  @include floating-label.animated-idle;
+}
+
+.ui-date-time.is-label-floating:not(.is-label-active) .ui-date-time__input::placeholder {
+  color: transparent;
+}
+
+.ui-date-time.is-label-floating.is-label-active .ui-date-time__label,
+.ui-date-time.is-label-floating:focus-within .ui-date-time__label {
+  @include floating-label.animated-active;
+}
+
+.ui-date-time.is-label-floating:focus-within .ui-date-time__input::placeholder {
+  color: #8a8f98;
+}
+
+.ui-date-time.has-error .ui-date-time__label {
+  color: var(--form-error-color, #b42318);
+}
+
+.ui-date-time.is-disabled .ui-date-time__label {
+  color: var(--form-hint-color, #64748b);
 }
 
 .ui-date-time__input::-webkit-calendar-picker-indicator {
@@ -196,7 +223,9 @@
 
 @media (prefers-reduced-motion: reduce) {
   .ui-date-time__control,
-  .ui-date-time__trigger i {
+  .ui-date-time__trigger i,
+  .ui-date-time__label,
+  .ui-date-time__input::placeholder {
     transition: none;
   }
 }

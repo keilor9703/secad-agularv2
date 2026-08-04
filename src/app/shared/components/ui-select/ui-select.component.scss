@@ -31,6 +31,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  @include floating-label.animated-transition;
 }
 
 .form-select__required-marker {
@@ -82,6 +83,33 @@
 
 .form-select__value.is-placeholder {
   color: #8a8f98;
+  transition: color 120ms ease;
+}
+
+.form-select--label-floating .form-select__label {
+  @include floating-label.animated-idle;
+}
+
+.form-select--label-floating:not(.form-select--label-active)
+  .form-select__value.is-placeholder {
+  color: transparent;
+}
+
+.form-select--label-floating.form-select--label-active .form-select__label,
+.form-select--label-floating:focus-within .form-select__label {
+  @include floating-label.animated-active;
+}
+
+.form-select--label-floating:focus-within .form-select__value.is-placeholder {
+  color: #8a8f98;
+}
+
+.form-select--invalid .form-select__label {
+  color: var(--form-error-color, #b42318);
+}
+
+.form-select--disabled .form-select__label {
+  color: var(--form-hint-color, #64748b);
 }
 
 .form-select__clear {
@@ -298,5 +326,12 @@
   .form-select__search {
     background: #252f45;
     color: var(--ui-text);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .form-select__label,
+  .form-select__value.is-placeholder {
+    transition: none;
   }
 }

@@ -4,9 +4,11 @@
   [class.form-select--filled]="value !== null"
   [class.form-select--invalid]="error"
   [class.form-select--disabled]="isDisabled"
+  [class.form-select--label-floating]="labelMode() === 'floating'"
+  [class.form-select--label-active]="labelMode() === 'floating' && (opened || value !== null)"
   >
   @if (label) {
-    <span class="form-select__label">
+    <span class="form-select__label" [id]="inputId + '-label'">
       {{ label }}
       @if (required && showRequiredMarker()) {
         <strong class="form-select__required-marker" [class.is-invalid]="!!error" aria-hidden="true">
@@ -20,9 +22,14 @@
     class="form-select__control"
     [class.form-select__control--with-clear]="clearable && value !== null"
     type="button"
+    role="combobox"
+    aria-haspopup="listbox"
     [id]="inputId"
     [disabled]="isDisabled"
     [attr.aria-expanded]="opened"
+    [attr.aria-controls]="opened ? inputId + '-listbox' : null"
+    [attr.aria-labelledby]="label ? inputId + '-label' : null"
+    [attr.aria-describedby]="describedBy"
     [attr.aria-required]="required"
     [attr.aria-invalid]="!!error"
     (click)="toggle()"
@@ -48,6 +55,9 @@
   @if (opened) {
     <div
       class="form-select__panel"
+      role="listbox"
+      [id]="inputId + '-listbox'"
+      [attr.aria-label]="label || placeholder"
       [class.form-select__panel--above]="panelPlacement() === 'above'"
       [class.is-positioned]="panelPositioned()"
       [ngStyle]="panelStyles()"
@@ -65,8 +75,10 @@
         <button
           class="form-select__option"
           type="button"
+          role="option"
           [disabled]="option.disabled"
           [class.is-selected]="isSelected(option)"
+          [attr.aria-selected]="isSelected(option)"
           (click)="selectOption(option)"
           >
           <!-- El espacio del icono siempre existe para que el texto use la columna correcta. -->
@@ -85,9 +97,9 @@
   }
 
   @if (error) {
-    <small class="form-select__error">{{ error }}</small>
+    <small class="form-select__error" [id]="inputId + '-error'">{{ error }}</small>
   }
   @if (hint && !error) {
-    <small class="form-select__hint">{{ hint }}</small>
+    <small class="form-select__hint" [id]="inputId + '-hint'">{{ hint }}</small>
   }
 </div>

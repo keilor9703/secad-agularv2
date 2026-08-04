@@ -16,6 +16,7 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
 import { UiFormControlSizeDirective } from '../../directives/ui-form-control-size.directive';
 import { UiSelectOption } from '../../interfaces/ui-select-option.interface';
+import { UiFormLabelMode } from '../../interfaces/ui-form-label-mode.interface';
 
 let nextUiSelectId = 0;
 
@@ -64,6 +65,8 @@ export class UiSelectComponent<T = string | number | boolean | null>
    * Permite ocultar el asterisco sin alterar `required` ni Validators.required.
    */
   readonly showRequiredMarker = input(true, { transform: booleanAttribute });
+  /** Mantiene el modo histórico por defecto y habilita la variante animada por instancia. */
+  readonly labelMode = input<UiFormLabelMode>('fixed');
 
   value: T | null = null;
   opened = false;
@@ -224,6 +227,12 @@ export class UiSelectComponent<T = string | number | boolean | null>
 
   get isDisabled(): boolean {
     return this.disabled || this.controlDisabled;
+  }
+
+  get describedBy(): string | null {
+    if (this.error) return `${this.inputId}-error`;
+    if (this.hint) return `${this.inputId}-hint`;
+    return null;
   }
 
   private schedulePanelPosition(): void {

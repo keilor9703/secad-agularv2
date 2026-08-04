@@ -28,6 +28,7 @@
   font-size: calc(11px * var(--font-size-scale, 1));
   font-weight: 700;
   line-height: 1.2;
+  @include floating-label.animated-transition;
 }
 
 .ui-time-picker__required-marker {
@@ -120,6 +121,37 @@
 
 .ui-time-picker__value.is-placeholder {
   color: #8a8f98;
+  transition: color 120ms ease;
+}
+
+.ui-time-picker.is-label-floating .ui-time-picker__label {
+  @include floating-label.animated-idle;
+}
+
+.ui-time-picker.is-label-floating.has-leading-icon:not(.is-label-active):not(:focus-within)
+  .ui-time-picker__label {
+  left: 39px;
+}
+
+.ui-time-picker.is-label-floating:not(.is-label-active) .ui-time-picker__value.is-placeholder {
+  color: transparent;
+}
+
+.ui-time-picker.is-label-floating.is-label-active .ui-time-picker__label,
+.ui-time-picker.is-label-floating:focus-within .ui-time-picker__label {
+  @include floating-label.animated-active;
+}
+
+.ui-time-picker.is-label-floating:focus-within .ui-time-picker__value.is-placeholder {
+  color: #8a8f98;
+}
+
+.ui-time-picker.has-error .ui-time-picker__label {
+  color: var(--form-error-color, #b42318);
+}
+
+.ui-time-picker.is-disabled .ui-time-picker__label {
+  color: var(--form-hint-color, #64748b);
 }
 
 .ui-time-picker__chevron {
@@ -283,7 +315,9 @@
 @media (prefers-reduced-motion: reduce) {
   .ui-time-picker__chevron,
   .ui-time-picker__control,
-  .ui-time-picker__panel {
+  .ui-time-picker__panel,
+  .ui-time-picker__label,
+  .ui-time-picker__value.is-placeholder {
     animation: none;
     transition: none;
   }

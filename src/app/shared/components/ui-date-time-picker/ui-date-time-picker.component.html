@@ -4,6 +4,11 @@
   [class.is-focused]="focused()"
   [class.is-open]="opened()"
   [class.has-error]="hasError()"
+  [class.has-value]="hasValue()"
+  [class.is-label-floating]="labelMode() === 'floating'"
+  [class.is-label-active]="
+    labelMode() === 'floating' && (focused() || opened() || hasValue() || useNativeFallback())
+  "
 >
   <label
     class="ui-date-time__label"

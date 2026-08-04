@@ -1,4 +1,4 @@
-export type UiTabsVariant = 'pills' | 'contained' | 'underline';
+export type UiTabsVariant = 'navigation' | 'pills' | 'contained' | 'underline';
 export type UiTabsSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
 export interface UiTabSelectionChange {

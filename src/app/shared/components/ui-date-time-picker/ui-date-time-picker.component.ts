@@ -17,6 +17,7 @@ import flatpickr from 'flatpickr';
 import type { Instance } from 'flatpickr/dist/types/instance';
 import type { Options } from 'flatpickr/dist/types/options';
 import { UiFormControlSizeDirective } from '../../directives/ui-form-control-size.directive';
+import { UiFormLabelMode } from '../../interfaces/ui-form-label-mode.interface';
 import { UI_DATE_TIME_MODE_CONFIG } from './ui-date-time-picker.config';
 import { UI_DATE_TIME_SPANISH_LOCALE } from './ui-date-time-picker.locale';
 import { UiDateTimeMode } from './ui-date-time-picker.types';
@@ -61,6 +62,8 @@ export class UiDateTimePickerComponent implements AfterViewInit, OnDestroy, Cont
    * Oculta o muestra el asterisco sin modificar la validación requerida.
    */
   readonly showRequiredMarker = input(true, { transform: booleanAttribute });
+  /** Presenta la etiqueta dentro del control hasta que se enfoca o recibe un valor. */
+  readonly labelMode = input<UiFormLabelMode>('fixed');
   readonly disabled = input(false, { transform: booleanAttribute });
   readonly allowManualInput = input(false, { transform: booleanAttribute });
 
@@ -84,6 +87,7 @@ export class UiDateTimePickerComponent implements AfterViewInit, OnDestroy, Cont
   readonly resolvedIcon = computed(() => this.icon().trim() || this.modeConfig().icon);
   readonly isDisabled = computed(() => this.disabled() || this.disabledByForm());
   readonly hasError = computed(() => Boolean(this.error().trim()));
+  readonly hasValue = computed(() => Boolean(this.value().trim()));
   readonly nativeInputType = computed<'date' | 'time' | 'datetime-local'>(() => {
     if (this.mode() === 'time') {
       return 'time';

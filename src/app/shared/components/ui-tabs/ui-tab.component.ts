@@ -20,6 +20,8 @@ export class UiTabComponent {
   readonly id = input.required<string>();
   readonly label = input.required<string>();
   readonly icon = input('');
+  /** Contador o estado corto opcional situado al final del tab. */
+  readonly badge = input<string | number | null>(null);
   readonly disabled = input(false, { transform: booleanAttribute });
 
   readonly active = signal(false);
