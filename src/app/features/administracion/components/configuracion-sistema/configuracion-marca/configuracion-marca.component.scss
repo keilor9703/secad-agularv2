@@ -259,33 +259,13 @@
   letter-spacing: 0.09em;
 }
 
-.settings-form__subheading {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 11px 12px;
-  border-left: 3px solid var(--policia-cielo, #08a6cb);
-  background: rgba(8, 166, 203, 0.055);
-}
-
-.settings-form__subheading > i {
-  color: var(--form-focus-color, #1f4e79);
-}
-
-.settings-form__subheading h4,
-.settings-form__subheading p {
-  margin: 0;
-}
-
-.settings-form__subheading h4 {
-  color: var(--ui-heading, #151b3b);
-  font-size: calc(12px * var(--font-size-scale, 1));
-}
-
-.settings-form__subheading p {
-  margin-top: 2px;
-  color: var(--ui-muted, #718096);
-  font-size: calc(10px * var(--font-size-scale, 1));
+.settings-form__accordion-grid {
+  display: grid;
+  /* Auto-fit evita controles comprimidos cuando el acordeón vive en una columna angosta. */
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+  row-gap: var(--ui-expansion-content-row-gap, 18px);
+  column-gap: var(--ui-expansion-content-column-gap, 14px);
+  min-width: 0;
 }
 
 .branding-preview__browser {
@@ -327,6 +307,10 @@
 }
 
 @media (max-width: 640px) {
+  .settings-form__accordion-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   .branding-preview {
     padding: 11px;
   }

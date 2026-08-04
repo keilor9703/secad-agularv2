@@ -196,6 +196,58 @@ export const UI_API_COMPONENTS: readonly UiApiComponentDoc[] = [
     ],
   },
   {
+    selector: '[appUiFormSpacing]',
+    name: 'Separación responsive del formulario',
+    category: 'forms',
+    summary:
+      'Directiva de layout que controla de forma independiente filas y columnas en escritorio y móvil.',
+    notes: [
+      'Aplíquela al contenedor que ya utiliza display grid o flex; la directiva no decide la estructura.',
+      'Los valores se limitan entre 0 y 48 px para evitar separaciones negativas o desproporcionadas.',
+      'En pantallas de hasta 768 px se activan automáticamente las entradas mobile.',
+    ],
+    example: `<div
+  class="form-grid"
+  appUiFormSpacing
+  [formRowGap]="20"
+  [formColumnGap]="14"
+  [formMobileRowGap]="22"
+  [formMobileColumnGap]="0"
+>
+  <!-- Controles del formulario -->
+</div>`,
+    members: [
+      {
+        name: 'formRowGap',
+        kind: 'input',
+        type: 'number',
+        defaultValue: '18',
+        description: 'Separación vertical en escritorio.',
+      },
+      {
+        name: 'formColumnGap',
+        kind: 'input',
+        type: 'number',
+        defaultValue: '14',
+        description: 'Separación horizontal en escritorio.',
+      },
+      {
+        name: 'formMobileRowGap',
+        kind: 'input',
+        type: 'number',
+        defaultValue: '18',
+        description: 'Separación vertical hasta 768 px.',
+      },
+      {
+        name: 'formMobileColumnGap',
+        kind: 'input',
+        type: 'number',
+        defaultValue: '10',
+        description: 'Separación horizontal hasta 768 px.',
+      },
+    ],
+  },
+  {
     selector: 'app-ui-search-input',
     name: 'Buscador',
     category: 'forms',
@@ -414,6 +466,7 @@ export const UI_API_COMPONENTS: readonly UiApiComponentDoc[] = [
     notes: [
       'options usa UiSelectOption<T> con label, value y disabled opcional.',
       'El panel flota sobre el contenido, limita su altura y genera scroll sin ensanchar el formulario.',
+      'El overlay de Angular CDK evita recortes y desplazamientos dentro de modales, tabs y expansion panels.',
       'La selección se compara con Object.is; utilice valores primitivos o referencias estables.',
     ],
     example: `<app-ui-select
@@ -2387,11 +2440,188 @@ export const UI_API_COMPONENTS: readonly UiApiComponentDoc[] = [
         description: 'Reduce altura y espacios para pantallas densas.',
       },
       {
+        name: 'appearance',
+        kind: 'input',
+        type: "'boxed' | 'divider'",
+        defaultValue: "'boxed'",
+        description: 'Usa icono institucional en caja o separador liviano con línea lateral.',
+      },
+      {
+        name: 'showAccent',
+        kind: 'input',
+        type: 'boolean',
+        defaultValue: 'true',
+        description: 'Muestra u oculta la línea lateral en appearance divider.',
+      },
+      {
+        name: 'accentWidth',
+        kind: 'input',
+        type: 'number',
+        defaultValue: '4',
+        description: 'Grosor de la línea lateral, limitado entre 0 y 8 px.',
+      },
+      {
         name: 'header-actions',
         kind: 'slot',
         type: 'contenido proyectado',
         defaultValue: '—',
         description: 'Acciones o resumen en el extremo derecho.',
+      },
+    ],
+  },
+  {
+    selector: 'app-ui-expansion-panel',
+    name: 'Panel de expansión',
+    category: 'structure',
+    summary: 'Acordeón accesible con animación suave, estado signal y contenido persistente.',
+    notes: [
+      'El contenido permanece montado al cerrar; Reactive Forms conserva valores, errores y foco pendiente.',
+      'Use [(expanded)] con una signal cuando otro flujo necesite abrir o cerrar el panel.',
+      'showAccent y accentScope controlan la línea azul; frame controla por separado el marco neutro.',
+      'Respeta prefers-reduced-motion y bloquea el contenido cerrado mediante inert.',
+    ],
+    example: `<app-ui-expansion-panel
+  title="Presentación en el menú"
+  description="Ajuste nombres extensos sin modificar la identidad."
+  icon="fa-solid fa-bars"
+  appearance="divider"
+  density="compact"
+  indicator="plus-minus"
+  accentScope="header"
+  frame="header"
+  [accentWidth]="2"
+  [contentRowGap]="20"
+  [contentColumnGap]="14"
+  [(expanded)]="menuExpansionOpen"
+>
+  <form [formGroup]="form">...</form>
+</app-ui-expansion-panel>`,
+    members: [
+      {
+        name: 'title',
+        kind: 'input',
+        type: 'string',
+        defaultValue: 'requerido',
+        description: 'Título visible y accesible del panel.',
+      },
+      {
+        name: 'description',
+        kind: 'input',
+        type: 'string',
+        defaultValue: "''",
+        description: 'Resumen opcional de su contenido.',
+      },
+      {
+        name: 'icon',
+        kind: 'input',
+        type: 'string',
+        defaultValue: "''",
+        description: 'Icono inicial opcional.',
+      },
+      {
+        name: 'appearance',
+        kind: 'input',
+        type: "'card' | 'divider'",
+        defaultValue: "'divider'",
+        description: 'Tarjeta clásica o separador institucional liviano.',
+      },
+      {
+        name: 'density',
+        kind: 'input',
+        type: "'compact' | 'comfortable'",
+        defaultValue: "'compact'",
+        description: 'Altura y espaciado de cabecera y contenido.',
+      },
+      {
+        name: 'indicator',
+        kind: 'input',
+        type: "'plus-minus' | 'chevron' | 'custom'",
+        defaultValue: "'plus-minus'",
+        description: 'Indicador situado al extremo derecho.',
+      },
+      {
+        name: 'collapsedIcon',
+        kind: 'input',
+        type: 'string',
+        defaultValue: "'fa-solid fa-plus'",
+        description: 'Icono cerrado cuando indicator es custom.',
+      },
+      {
+        name: 'expandedIcon',
+        kind: 'input',
+        type: 'string',
+        defaultValue: "'fa-solid fa-minus'",
+        description: 'Icono abierto cuando indicator es custom.',
+      },
+      {
+        name: 'disabled',
+        kind: 'input',
+        type: 'boolean',
+        defaultValue: 'false',
+        description: 'Impide cambiar el estado del panel.',
+      },
+      {
+        name: 'showAccent',
+        kind: 'input',
+        type: 'boolean',
+        defaultValue: 'true',
+        description: 'Muestra u oculta la línea azul de la apariencia divider.',
+      },
+      {
+        name: 'accentWidth',
+        kind: 'input',
+        type: 'number',
+        defaultValue: '4',
+        description: 'Grosor lateral limitado entre 0 y 8 px; cero también elimina la línea.',
+      },
+      {
+        name: 'accentScope',
+        kind: 'input',
+        type: "'header' | 'panel'",
+        defaultValue: "'panel'",
+        description: 'Limita el acento a la cabecera o lo extiende por la cabecera y el contenido.',
+      },
+      {
+        name: 'frame',
+        kind: 'input',
+        type: "'panel' | 'header' | 'none'",
+        defaultValue: "'panel'",
+        description: 'Marco neutro completo, solo alrededor de la cabecera o totalmente ausente.',
+      },
+      {
+        name: 'contentRowGap',
+        kind: 'input',
+        type: 'number',
+        defaultValue: '18',
+        description: 'Separación vertical heredable, limitada entre 0 y 48 px.',
+      },
+      {
+        name: 'contentColumnGap',
+        kind: 'input',
+        type: 'number',
+        defaultValue: '14',
+        description: 'Separación horizontal heredable, limitada entre 0 y 48 px.',
+      },
+      {
+        name: 'panelId',
+        kind: 'input',
+        type: 'string',
+        defaultValue: 'autogenerado',
+        description: 'Prefijo estable para relaciones ARIA.',
+      },
+      {
+        name: 'expanded',
+        kind: 'model',
+        type: 'boolean',
+        defaultValue: 'false',
+        description: 'Estado abierto, compatible con [(expanded)].',
+      },
+      {
+        name: 'contenido',
+        kind: 'slot',
+        type: 'contenido proyectado',
+        defaultValue: '—',
+        description: 'Formulario, tabla o información mostrada dentro del panel.',
       },
     ],
   },

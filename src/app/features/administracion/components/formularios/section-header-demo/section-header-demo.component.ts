@@ -1,6 +1,8 @@
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+
 import { UiButtonComponent } from '../../../../../shared/components/ui-button/ui-button.component';
 import { UiChipComponent } from '../../../../../shared/components/ui-chip/ui-chip.component';
+import { UiExpansionPanelComponent } from '../../../../../shared/components/ui-expansion-panel/ui-expansion-panel.component';
 import { UiPageHeaderComponent } from '../../../../../shared/components/ui-page-header/ui-page-header.component';
 import { UiPanelHeaderComponent } from '../../../../../shared/components/ui-panel-header/ui-panel-header.component';
 import { UiSectionHeaderComponent } from '../../../../../shared/components/ui-section-header/ui-section-header.component';
@@ -11,6 +13,7 @@ import { UiSectionHeaderComponent } from '../../../../../shared/components/ui-se
   imports: [
     UiButtonComponent,
     UiChipComponent,
+    UiExpansionPanelComponent,
     UiPageHeaderComponent,
     UiPanelHeaderComponent,
     UiSectionHeaderComponent,
@@ -22,6 +25,8 @@ import { UiSectionHeaderComponent } from '../../../../../shared/components/ui-se
 export class SectionHeaderDemoComponent {
   readonly actionFeedback = signal('');
   readonly pageHeaderMinimized = signal(false);
+  readonly menuExpansionOpen = signal(true);
+  readonly classicExpansionOpen = signal(false);
 
   readonly pageHeaderUsage = `<app-ui-page-header
   eyebrow="ADMINISTRACIÓN CENTRAL"
@@ -86,6 +91,24 @@ export class SectionHeaderDemoComponent {
     </app-ui-button>
   </div>
 </app-ui-section-header>`;
+
+  readonly expansionUsage = `<app-ui-expansion-panel
+  title="Presentación en el menú"
+  description="Ajuste nombres extensos sin modificar la identidad."
+  icon="fa-solid fa-bars"
+  appearance="divider"
+  density="compact"
+  indicator="plus-minus"
+  [showAccent]="true"
+  [accentWidth]="2"
+  accentScope="header"
+  frame="header"
+  [contentRowGap]="20"
+  [contentColumnGap]="14"
+  [(expanded)]="menuExpansionOpen"
+>
+  <form [formGroup]="form">Contenido conservado al cerrar</form>
+</app-ui-expansion-panel>`;
 
   /** Simula una acción para demostrar que el contenido proyectado conserva sus eventos. */
   handleDemoAction(): void {

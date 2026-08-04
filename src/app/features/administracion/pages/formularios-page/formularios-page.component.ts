@@ -9,6 +9,7 @@ import { UiModalComponent } from '../../../../shared/components/ui-modal/ui-moda
 import { UiSearchInputComponent } from '../../../../shared/components/ui-search-input/ui-search-input.component';
 import { UiSelectComponent } from '../../../../shared/components/ui-select/ui-select.component';
 import { UiTimePickerComponent } from '../../../../shared/components/ui-time-picker/ui-time-picker.component';
+import { UiFormSpacingDirective } from '../../../../shared/directives/ui-form-spacing.directive';
 import { UiSelectOption } from '../../../../shared/interfaces/ui-select-option.interface';
 import { getFormErrorMessage } from '../../../../shared/utils/form-error.util';
 import { ButtonSearchDemoComponent } from '../../components/formularios/button-search-demo/button-search-demo.component';
@@ -58,6 +59,7 @@ interface ModalActividadForm {
     UiSearchInputComponent,
     UiSelectComponent,
     UiTimePickerComponent,
+    UiFormSpacingDirective,
     ButtonSearchDemoComponent,
     FormControlSizingDemoComponent,
     FloatingControlsDemoComponent,

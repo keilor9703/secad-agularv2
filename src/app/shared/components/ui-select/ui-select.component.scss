@@ -168,10 +168,10 @@
 }
 
 .form-select__panel {
-  position: fixed;
-  z-index: 1300;
-  top: 0;
-  left: 0;
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  min-width: 0;
   box-sizing: border-box;
   padding: 7px;
   border-radius: 10px;
@@ -180,7 +180,7 @@
   box-shadow: 0 14px 34px rgba(2, 6, 23, 0.16);
   display: grid;
   gap: 3px;
-  max-height: 260px;
+  max-height: min(280px, calc(100vh - 24px));
   overflow: auto;
   overscroll-behavior: contain;
   scrollbar-gutter: stable;

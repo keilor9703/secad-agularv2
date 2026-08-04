@@ -6,12 +6,16 @@
   [class.form-select--disabled]="isDisabled"
   [class.form-select--label-floating]="labelMode() === 'floating'"
   [class.form-select--label-active]="labelMode() === 'floating' && (opened || value !== null)"
-  >
+>
   @if (label) {
     <span class="form-select__label" [id]="inputId + '-label'">
       {{ label }}
       @if (required && showRequiredMarker()) {
-        <strong class="form-select__required-marker" [class.is-invalid]="!!error" aria-hidden="true">
+        <strong
+          class="form-select__required-marker"
+          [class.is-invalid]="!!error"
+          aria-hidden="true"
+        >
           *
         </strong>
       }
@@ -19,6 +23,9 @@
   }
 
   <button
+    #trigger
+    cdkOverlayOrigin
+    #origin="cdkOverlayOrigin"
     class="form-select__control"
     [class.form-select__control--with-clear]="clearable && value !== null"
     type="button"
@@ -34,25 +41,38 @@
     [attr.aria-invalid]="!!error"
     (click)="toggle()"
     (keydown)="handleKeydown($event)"
-    >
+  >
     <span
       class="form-select__value"
       [class.is-placeholder]="!selectedLabel"
       [title]="selectedLabel || placeholder"
-      >
+    >
       {{ selectedLabel || placeholder }}
     </span>
 
     @if (clearable && value !== null) {
-      <span class="form-select__clear" (click)="clear($event)">
-        ×
-      </span>
+      <span class="form-select__clear" (click)="clear($event)"> × </span>
     }
 
     <span class="form-select__arrow"></span>
   </button>
 
-  @if (opened) {
+  <ng-template
+    cdkConnectedOverlay
+    [cdkConnectedOverlayOrigin]="origin"
+    [cdkConnectedOverlayOpen]="opened"
+    [cdkConnectedOverlayPositions]="panelPositions"
+    [cdkConnectedOverlayWidth]="panelWidth()"
+    [cdkConnectedOverlayPush]="true"
+    [cdkConnectedOverlayFlexibleDimensions]="true"
+    [cdkConnectedOverlayViewportMargin]="8"
+    [cdkConnectedOverlayHasBackdrop]="true"
+    cdkConnectedOverlayBackdropClass="cdk-overlay-transparent-backdrop"
+    (attach)="onPanelAttached()"
+    (backdropClick)="close()"
+    (detach)="close()"
+    (positionChange)="onPanelPositionChange($event)"
+  >
     <div
       class="form-select__panel"
       role="listbox"
@@ -60,8 +80,7 @@
       [attr.aria-label]="label || placeholder"
       [class.form-select__panel--above]="panelPlacement() === 'above'"
       [class.is-positioned]="panelPositioned()"
-      [ngStyle]="panelStyles()"
-      >
+    >
       @if (searchable) {
         <input
           class="form-select__search"
@@ -69,7 +88,7 @@
           [placeholder]="searchPlaceholder"
           [value]="searchTerm"
           (input)="onSearch($event)"
-          />
+        />
       }
       @for (option of filteredOptions; track trackOption($index, option)) {
         <button
@@ -80,7 +99,7 @@
           [class.is-selected]="isSelected(option)"
           [attr.aria-selected]="isSelected(option)"
           (click)="selectOption(option)"
-          >
+        >
           <!-- El espacio del icono siempre existe para que el texto use la columna correcta. -->
           <i
             class="fa-solid fa-check form-select__option-check"
@@ -94,7 +113,7 @@
         <div class="form-select__empty">Sin resultados.</div>
       }
     </div>
-  }
+  </ng-template>
 
   @if (error) {
     <small class="form-select__error" [id]="inputId + '-error'">{{ error }}</small>

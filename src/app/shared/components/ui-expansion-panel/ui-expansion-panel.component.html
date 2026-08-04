@@ -1,0 +1,50 @@
+<section
+  [class]="classes()"
+  [style.--ui-expansion-accent-width.px]="resolvedAccentWidth()"
+  [style.--ui-expansion-content-row-gap.px]="resolvedContentRowGap()"
+  [style.--ui-expansion-content-column-gap.px]="resolvedContentColumnGap()"
+>
+  <h3 class="ui-expansion__heading" [id]="headingId()">
+    <button
+      class="ui-expansion__trigger"
+      type="button"
+      [class.has-leading-icon]="icon()"
+      [disabled]="disabled()"
+      [attr.aria-expanded]="expanded()"
+      [attr.aria-controls]="contentId()"
+      (click)="toggle()"
+    >
+      @if (icon()) {
+        <span class="ui-expansion__leading-icon" aria-hidden="true">
+          <i [class]="icon()"></i>
+        </span>
+      }
+
+      <span class="ui-expansion__summary">
+        <span class="ui-expansion__title">{{ title() }}</span>
+        @if (description()) {
+          <span class="ui-expansion__description">{{ description() }}</span>
+        }
+      </span>
+
+      <span class="ui-expansion__indicator" aria-hidden="true">
+        <i [class]="indicatorIcon()"></i>
+      </span>
+    </button>
+  </h3>
+
+  <div
+    class="ui-expansion__body"
+    [id]="contentId()"
+    role="region"
+    [attr.aria-labelledby]="headingId()"
+    [attr.aria-hidden]="!expanded()"
+    [attr.inert]="expanded() ? null : ''"
+  >
+    <div class="ui-expansion__clip">
+      <div class="ui-expansion__content">
+        <ng-content />
+      </div>
+    </div>
+  </div>
+</section>

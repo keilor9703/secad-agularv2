@@ -54,7 +54,14 @@
             <article class="form-section">
               <h3>Inputs básicos</h3>
 
-              <div class="form-grid">
+              <div
+                class="form-grid"
+                appUiFormSpacing
+                [formRowGap]="20"
+                [formColumnGap]="14"
+                [formMobileRowGap]="20"
+                [formMobileColumnGap]="0"
+              >
                 <div class="col-6">
                   <!--
                     required conserva Validators.required y la semántica accesible.
@@ -104,7 +111,14 @@
             <article class="form-section">
               <h3>Buscadores y selects</h3>
 
-              <div class="form-grid">
+              <div
+                class="form-grid"
+                appUiFormSpacing
+                [formRowGap]="20"
+                [formColumnGap]="14"
+                [formMobileRowGap]="20"
+                [formMobileColumnGap]="0"
+              >
                 <div class="col-12">
                   <app-ui-search-input
                     formControlName="criterioBusqueda"
@@ -146,7 +160,14 @@
             <article class="form-section">
               <h3>Fecha, hora y texto largo</h3>
 
-              <div class="form-grid">
+              <div
+                class="form-grid"
+                appUiFormSpacing
+                [formRowGap]="20"
+                [formColumnGap]="14"
+                [formMobileRowGap]="20"
+                [formMobileColumnGap]="0"
+              >
                 <div class="col-4">
                   <app-ui-date-time-picker
                     formControlName="fechaNacimiento"
@@ -204,7 +225,14 @@
             <article class="form-section">
               <h3>Time picker: AM/PM y 24 horas</h3>
 
-              <div class="form-grid">
+              <div
+                class="form-grid"
+                appUiFormSpacing
+                [formRowGap]="20"
+                [formColumnGap]="14"
+                [formMobileRowGap]="20"
+                [formMobileColumnGap]="0"
+              >
                 <div class="col-6">
                   <app-ui-time-picker
                     formControlName="horaAmPm"
@@ -297,7 +325,14 @@
               </div>
             </div>
 
-            <div class="modal-demo__grid">
+            <div
+              class="modal-demo__grid"
+              appUiFormSpacing
+              [formRowGap]="20"
+              [formColumnGap]="14"
+              [formMobileRowGap]="20"
+              [formMobileColumnGap]="0"
+            >
               <div class="modal-demo__field modal-demo__field--full">
                 <app-ui-input
                   formControlName="actividad"

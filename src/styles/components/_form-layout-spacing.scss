@@ -1,0 +1,18 @@
+/*
+ * Alias efectivos consumidos por la directiva. Al estar definidos como
+ * variables CSS, los grids descendientes también pueden heredarlos.
+ */
+.ui-form-spacing {
+  --_ui-form-effective-row-gap: var(--ui-form-row-gap, 18px);
+  --_ui-form-effective-column-gap: var(--ui-form-column-gap, 14px);
+}
+
+@media (max-width: 768px) {
+  .ui-form-spacing {
+    --_ui-form-effective-row-gap: var(--ui-form-mobile-row-gap, var(--ui-form-row-gap, 18px));
+    --_ui-form-effective-column-gap: var(
+      --ui-form-mobile-column-gap,
+      var(--ui-form-column-gap, 10px)
+    );
+  }
+}

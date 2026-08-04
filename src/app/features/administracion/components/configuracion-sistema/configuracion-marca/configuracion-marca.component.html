@@ -79,274 +79,293 @@
               />
             </div>
 
-            <!-- Controles del encabezado de marca que aparece dentro del menú lateral. -->
-            <div class="settings-form__subheading settings-form__field--full">
-              <i class="fa-solid fa-bars" aria-hidden="true"></i>
-              <div>
-                <h4>Presentación en el menú</h4>
-                <p>Ajuste nombres extensos sin modificar la identidad del sistema.</p>
+            <!-- El acordeón agrupa la configuración del menú sin desmontar sus FormControl. -->
+            <app-ui-expansion-panel
+              class="settings-form__field--full"
+              title="Presentación en el menú"
+              description="Ajuste nombres extensos sin modificar la identidad del sistema."
+              icon="fa-solid fa-bars"
+              appearance="divider"
+              density="compact"
+              indicator="chevron"
+              accentScope="header"
+              frame="header"
+              [accentWidth]="2"
+              [contentRowGap]="20"
+              [contentColumnGap]="14"
+              [(expanded)]="menuPresentationExpanded"
+            >
+              <div class="settings-form__accordion-grid">
+                <div class="settings-form__field">
+                  <app-ui-select
+                    formControlName="menuShowLogo"
+                    label="Logo"
+                    [options]="visibilityOptions"
+                    [searchable]="false"
+                    [clearable]="false"
+                  />
+                </div>
+
+                <div class="settings-form__field">
+                  <app-ui-select
+                    formControlName="menuShowInstitutionName"
+                    label="Nombre de la institución"
+                    [options]="visibilityOptions"
+                    [searchable]="false"
+                    [clearable]="false"
+                  />
+                </div>
+
+                <div class="settings-form__field">
+                  <app-ui-select
+                    formControlName="menuShowSystemName"
+                    label="Nombre del sistema"
+                    [options]="visibilityOptions"
+                    [searchable]="false"
+                    [clearable]="false"
+                  />
+                </div>
+
+                <div class="settings-form__field">
+                  <app-ui-select
+                    formControlName="menuShowAcronym"
+                    label="Sigla del sistema"
+                    [options]="visibilityOptions"
+                    [searchable]="false"
+                    [clearable]="false"
+                  />
+                </div>
+
+                <div class="settings-form__field">
+                  <app-ui-select
+                    formControlName="menuLogoPosition"
+                    label="Posición del logo"
+                    [options]="menuLogoPositionOptions"
+                    [searchable]="false"
+                    [clearable]="false"
+                  />
+                </div>
+
+                <div class="settings-form__field">
+                  <app-ui-select
+                    formControlName="menuTextLayout"
+                    label="Distribución de los textos"
+                    [options]="menuTextLayoutOptions"
+                    [searchable]="false"
+                    [clearable]="false"
+                  />
+                </div>
+
+                <div class="settings-form__field settings-form__field--full">
+                  <app-ui-select
+                    formControlName="menuBrandTextOrder"
+                    label="Orden de entidad, sistema y sigla"
+                    hint="Los elementos ocultos se omiten sin modificar el orden elegido."
+                    [options]="menuTextOrderOptions"
+                    [searchable]="false"
+                    [clearable]="false"
+                  />
+                </div>
+
+                <div class="settings-form__field">
+                  <app-ui-select
+                    formControlName="menuTextAlign"
+                    label="Alineación de los textos"
+                    [options]="menuTextAlignOptions"
+                    [searchable]="false"
+                    [clearable]="false"
+                  />
+                </div>
+
+                <div class="settings-form__field">
+                  <app-ui-select
+                    formControlName="menuLogoSizePx"
+                    label="Tamaño del logo"
+                    [options]="menuLogoSizeOptions"
+                    [searchable]="false"
+                    [clearable]="false"
+                    [error]="error('menuLogoSizePx')"
+                  />
+                </div>
+
+                <div class="settings-form__field">
+                  <app-ui-select
+                    formControlName="menuInstitutionTextSizePx"
+                    label="Tamaño de la institución"
+                    [options]="menuInstitutionTextSizeOptions"
+                    [searchable]="false"
+                    [clearable]="false"
+                    [error]="error('menuInstitutionTextSizePx')"
+                  />
+                </div>
+
+                <div class="settings-form__field">
+                  <app-ui-select
+                    formControlName="menuSystemTextSizePx"
+                    label="Tamaño del nombre del sistema"
+                    [options]="menuSystemTextSizeOptions"
+                    [searchable]="false"
+                    [clearable]="false"
+                    [error]="error('menuSystemTextSizePx')"
+                  />
+                </div>
+
+                <div class="settings-form__field">
+                  <app-ui-select
+                    formControlName="menuAcronymTextSizePx"
+                    label="Tamaño de la sigla"
+                    [options]="menuAcronymTextSizeOptions"
+                    [searchable]="false"
+                    [clearable]="false"
+                    [error]="error('menuAcronymTextSizePx')"
+                  />
+                </div>
               </div>
-            </div>
-
-            <div class="settings-form__field">
-              <app-ui-select
-                formControlName="menuShowLogo"
-                label="Logo"
-                [options]="visibilityOptions"
-                [searchable]="false"
-                [clearable]="false"
-              />
-            </div>
-
-            <div class="settings-form__field">
-              <app-ui-select
-                formControlName="menuShowInstitutionName"
-                label="Nombre de la institución"
-                [options]="visibilityOptions"
-                [searchable]="false"
-                [clearable]="false"
-              />
-            </div>
-
-            <div class="settings-form__field">
-              <app-ui-select
-                formControlName="menuShowSystemName"
-                label="Nombre del sistema"
-                [options]="visibilityOptions"
-                [searchable]="false"
-                [clearable]="false"
-              />
-            </div>
-
-            <div class="settings-form__field">
-              <app-ui-select
-                formControlName="menuShowAcronym"
-                label="Sigla del sistema"
-                [options]="visibilityOptions"
-                [searchable]="false"
-                [clearable]="false"
-              />
-            </div>
-
-            <div class="settings-form__field">
-              <app-ui-select
-                formControlName="menuLogoPosition"
-                label="Posición del logo"
-                [options]="menuLogoPositionOptions"
-                [searchable]="false"
-                [clearable]="false"
-              />
-            </div>
-
-            <div class="settings-form__field">
-              <app-ui-select
-                formControlName="menuTextLayout"
-                label="Distribución de los textos"
-                [options]="menuTextLayoutOptions"
-                [searchable]="false"
-                [clearable]="false"
-              />
-            </div>
-
-            <div class="settings-form__field settings-form__field--full">
-              <app-ui-select
-                formControlName="menuBrandTextOrder"
-                label="Orden de entidad, sistema y sigla"
-                hint="Los elementos ocultos se omiten sin modificar el orden elegido."
-                [options]="menuTextOrderOptions"
-                [searchable]="false"
-                [clearable]="false"
-              />
-            </div>
-
-            <div class="settings-form__field settings-form__field--full">
-              <app-ui-select
-                formControlName="menuTextAlign"
-                label="Alineación de los textos"
-                [options]="menuTextAlignOptions"
-                [searchable]="false"
-                [clearable]="false"
-              />
-            </div>
-
-            <div class="settings-form__field">
-              <app-ui-select
-                formControlName="menuLogoSizePx"
-                label="Tamaño del logo"
-                [options]="menuLogoSizeOptions"
-                [searchable]="false"
-                [clearable]="false"
-                [error]="error('menuLogoSizePx')"
-              />
-            </div>
-
-            <div class="settings-form__field">
-              <app-ui-select
-                formControlName="menuInstitutionTextSizePx"
-                label="Tamaño de la institución"
-                [options]="menuInstitutionTextSizeOptions"
-                labelMode="floating"
-                [searchable]="false"
-                [clearable]="false"
-                [error]="error('menuInstitutionTextSizePx')"
-              />
-            </div>
-
-            <div class="settings-form__field">
-              <app-ui-select
-                formControlName="menuSystemTextSizePx"
-                label="Tamaño del nombre del sistema"
-                [options]="menuSystemTextSizeOptions"
-                [searchable]="false"
-                [clearable]="false"
-                [error]="error('menuSystemTextSizePx')"
-              />
-            </div>
-
-            <div class="settings-form__field">
-              <app-ui-select
-                formControlName="menuAcronymTextSizePx"
-                label="Tamaño de la sigla"
-                [options]="menuAcronymTextSizeOptions"
-                [searchable]="false"
-                [clearable]="false"
-                [error]="error('menuAcronymTextSizePx')"
-              />
-            </div>
+            </app-ui-expansion-panel>
 
             <!-- Identidad independiente del login: permite combinar logo, entidad, sistema y sigla. -->
-            <div class="settings-form__subheading settings-form__field--full">
-              <i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i>
-              <div>
-                <h4>Presentación en el login</h4>
-                <p>Defina qué elementos aparecen, su orden, posición y escala visual.</p>
+            <app-ui-expansion-panel
+              class="settings-form__field--full"
+              title="Presentación en el login"
+              description="Defina qué elementos aparecen, su orden, posición y escala visual."
+              icon="fa-solid fa-right-to-bracket"
+              appearance="divider"
+              density="compact"
+              indicator="chevron"
+              accentScope="header"
+              frame="header"
+              [showAccent]="false"
+              [contentRowGap]="20"
+              [contentColumnGap]="14"
+              [(expanded)]="loginPresentationExpanded"
+            >
+              <div class="settings-form__accordion-grid">
+                <div class="settings-form__field">
+                  <app-ui-select
+                    formControlName="loginShowLogo"
+                    label="Logo"
+                    [options]="visibilityOptions"
+                    [searchable]="false"
+                    [clearable]="false"
+                  />
+                </div>
+
+                <div class="settings-form__field">
+                  <app-ui-select
+                    formControlName="loginShowInstitutionName"
+                    label="Nombre de la institución"
+                    [options]="visibilityOptions"
+                    [searchable]="false"
+                    [clearable]="false"
+                  />
+                </div>
+
+                <div class="settings-form__field">
+                  <app-ui-select
+                    formControlName="loginShowSystemName"
+                    label="Nombre del sistema"
+                    [options]="visibilityOptions"
+                    [searchable]="false"
+                    [clearable]="false"
+                  />
+                </div>
+
+                <div class="settings-form__field">
+                  <app-ui-select
+                    formControlName="loginShowAcronym"
+                    label="Sigla del sistema"
+                    [options]="visibilityOptions"
+                    [searchable]="false"
+                    [clearable]="false"
+                  />
+                </div>
+
+                <div class="settings-form__field">
+                  <app-ui-select
+                    formControlName="loginLogoPosition"
+                    label="Posición del logo"
+                    [options]="loginLogoPositionOptions"
+                    [searchable]="false"
+                    [clearable]="false"
+                  />
+                </div>
+
+                <div class="settings-form__field">
+                  <app-ui-select
+                    formControlName="loginTextLayout"
+                    label="Distribución de los textos"
+                    [options]="loginTextLayoutOptions"
+                    [searchable]="false"
+                    [clearable]="false"
+                  />
+                </div>
+
+                <div class="settings-form__field settings-form__field--full">
+                  <app-ui-select
+                    formControlName="loginBrandTextOrder"
+                    label="Orden del nombre, sistema y sigla"
+                    hint="Los elementos ocultos se omiten sin alterar el orden configurado."
+                    [options]="loginTextOrderOptions"
+                    [searchable]="false"
+                    [clearable]="false"
+                  />
+                </div>
+
+                <div class="settings-form__field">
+                  <app-ui-select
+                    formControlName="loginTextAlign"
+                    label="Alineación de los textos"
+                    [options]="loginTextAlignOptions"
+                    [searchable]="false"
+                    [clearable]="false"
+                  />
+                </div>
+
+                <div class="settings-form__field">
+                  <app-ui-select
+                    formControlName="loginLogoSizePx"
+                    label="Tamaño del logo"
+                    [options]="loginLogoSizeOptions"
+                    [searchable]="false"
+                    [clearable]="false"
+                    [error]="error('loginLogoSizePx')"
+                  />
+                </div>
+
+                <div class="settings-form__field">
+                  <app-ui-select
+                    formControlName="loginInstitutionTextSizePx"
+                    label="Tamaño de la institución"
+                    [options]="institutionTextSizeOptions"
+                    [searchable]="false"
+                    [clearable]="false"
+                    [error]="error('loginInstitutionTextSizePx')"
+                  />
+                </div>
+
+                <div class="settings-form__field">
+                  <app-ui-select
+                    formControlName="loginSystemTextSizePx"
+                    label="Tamaño del nombre del sistema"
+                    [options]="systemTextSizeOptions"
+                    [searchable]="false"
+                    [clearable]="false"
+                    [error]="error('loginSystemTextSizePx')"
+                  />
+                </div>
+
+                <div class="settings-form__field">
+                  <app-ui-select
+                    formControlName="loginAcronymTextSizePx"
+                    label="Tamaño de la sigla"
+                    [options]="acronymTextSizeOptions"
+                    [searchable]="false"
+                    [clearable]="false"
+                    [error]="error('loginAcronymTextSizePx')"
+                  />
+                </div>
               </div>
-            </div>
-
-            <div class="settings-form__field">
-              <app-ui-select
-                formControlName="loginShowLogo"
-                label="Logo"
-                [options]="visibilityOptions"
-                [searchable]="false"
-                [clearable]="false"
-              />
-            </div>
-
-            <div class="settings-form__field">
-              <app-ui-select
-                formControlName="loginShowInstitutionName"
-                label="Nombre de la institución"
-                [options]="visibilityOptions"
-                [searchable]="false"
-                [clearable]="false"
-              />
-            </div>
-
-            <div class="settings-form__field">
-              <app-ui-select
-                formControlName="loginShowSystemName"
-                label="Nombre del sistema"
-                [options]="visibilityOptions"
-                [searchable]="false"
-                [clearable]="false"
-              />
-            </div>
-
-            <div class="settings-form__field">
-              <app-ui-select
-                formControlName="loginShowAcronym"
-                label="Sigla del sistema"
-                [options]="visibilityOptions"
-                [searchable]="false"
-                [clearable]="false"
-              />
-            </div>
-
-            <div class="settings-form__field">
-              <app-ui-select
-                formControlName="loginLogoPosition"
-                label="Posición del logo"
-                [options]="loginLogoPositionOptions"
-                [searchable]="false"
-                [clearable]="false"
-              />
-            </div>
-
-            <div class="settings-form__field">
-              <app-ui-select
-                formControlName="loginTextLayout"
-                label="Distribución de los textos"
-                [options]="loginTextLayoutOptions"
-                [searchable]="false"
-                [clearable]="false"
-              />
-            </div>
-
-            <div class="settings-form__field settings-form__field--full">
-              <app-ui-select
-                formControlName="loginBrandTextOrder"
-                label="Orden del nombre, sistema y sigla"
-                hint="Los elementos ocultos se omiten sin alterar el orden configurado."
-                [options]="loginTextOrderOptions"
-                [searchable]="false"
-                [clearable]="false"
-              />
-            </div>
-
-            <div class="settings-form__field settings-form__field--full">
-              <app-ui-select
-                formControlName="loginTextAlign"
-                label="Alineación de los textos"
-                [options]="loginTextAlignOptions"
-                [searchable]="false"
-                [clearable]="false"
-              />
-            </div>
-
-            <div class="settings-form__field">
-              <app-ui-select
-                formControlName="loginLogoSizePx"
-                label="Tamaño del logo"
-                [options]="loginLogoSizeOptions"
-                [searchable]="false"
-                [clearable]="false"
-                [error]="error('loginLogoSizePx')"
-              />
-            </div>
-
-            <div class="settings-form__field">
-              <app-ui-select
-                formControlName="loginInstitutionTextSizePx"
-                label="Tamaño de la institución"
-                [options]="institutionTextSizeOptions"
-                [searchable]="false"
-                [clearable]="true"
-                [error]="error('loginInstitutionTextSizePx')"
-              />
-            </div>
-
-            <div class="settings-form__field">
-              <app-ui-select
-                formControlName="loginSystemTextSizePx"
-                label="Tamaño del nombre del sistema"
-                [options]="systemTextSizeOptions"
-                [searchable]="false"
-                [clearable]="true"
-                [error]="error('loginSystemTextSizePx')"
-              />
-            </div>
-
-            <div class="settings-form__field">
-              <app-ui-select
-                formControlName="loginAcronymTextSizePx"
-                label="Tamaño de la sigla"
-                [options]="acronymTextSizeOptions"
-                [searchable]="false"
-                [clearable]="false"
-                [error]="error('loginAcronymTextSizePx')"
-              />
-            </div>
+            </app-ui-expansion-panel>
 
             <div class="settings-form__field settings-form__field--full">
               <app-ui-file-upload

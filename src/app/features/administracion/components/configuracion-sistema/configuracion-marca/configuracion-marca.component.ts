@@ -29,6 +29,7 @@ import {
 import { ToastService } from '../../../../../core/services/toast.service';
 import { UiButtonComponent } from '../../../../../shared/components/ui-button/ui-button.component';
 import { UiChipComponent } from '../../../../../shared/components/ui-chip/ui-chip.component';
+import { UiExpansionPanelComponent } from '../../../../../shared/components/ui-expansion-panel/ui-expansion-panel.component';
 import { UiFileUploadComponent } from '../../../../../shared/components/ui-file-upload/ui-file-upload.component';
 import { UiInputComponent } from '../../../../../shared/components/ui-input/ui-input.component';
 import { UiPanelHeaderComponent } from '../../../../../shared/components/ui-panel-header/ui-panel-header.component';
@@ -88,6 +89,7 @@ const FAVICON_MAX_SIZE_BYTES = 2 * 1024 * 1024;
     ReactiveFormsModule,
     UiButtonComponent,
     UiChipComponent,
+    UiExpansionPanelComponent,
     UiFileUploadComponent,
     UiInputComponent,
     UiPanelHeaderComponent,
@@ -112,6 +114,8 @@ export class ConfiguracionMarcaComponent implements OnInit {
   readonly logoUrl = signal('');
   readonly faviconFileName = signal('');
   readonly faviconUrl = signal('');
+  readonly menuPresentationExpanded = signal(true);
+  readonly loginPresentationExpanded = signal(false);
 
   readonly form = new FormGroup<BrandingConfigurationForm>({
     sistema: new FormControl('SISGE', {

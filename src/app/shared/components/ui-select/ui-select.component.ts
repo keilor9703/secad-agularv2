@@ -1,14 +1,17 @@
 import { CommonModule, DOCUMENT } from '@angular/common';
 import {
+  ConnectedOverlayPositionChange,
+  ConnectedPosition,
+  OverlayModule,
+} from '@angular/cdk/overlay';
+import {
   booleanAttribute,
   Component,
   ElementRef,
   forwardRef,
-  HostListener,
   inject,
   Input,
   input,
-  OnDestroy,
   signal,
   ChangeDetectionStrategy
 } from '@angular/core';
@@ -25,7 +28,7 @@ type UiSelectPanelPlacement = 'above' | 'below';
 @Component({
   selector: 'app-ui-select',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, OverlayModule],
   hostDirectives: [
     {
       directive: UiFormControlSizeDirective,
@@ -44,7 +47,7 @@ type UiSelectPanelPlacement = 'above' | 'below';
   ],
 })
 export class UiSelectComponent<T = string | number | boolean | null>
-  implements ControlValueAccessor, OnDestroy
+  implements ControlValueAccessor
 {
   private readonly documentRef = inject(DOCUMENT);
   private readonly windowRef = this.documentRef.defaultView;
@@ -75,46 +78,33 @@ export class UiSelectComponent<T = string | number | boolean | null>
   controlDisabled = false;
   readonly panelPlacement = signal<UiSelectPanelPlacement>('below');
   readonly panelPositioned = signal(false);
-  readonly panelStyles = signal<Readonly<Record<string, string>>>({
-    top: '0px',
-    left: '-10000px',
-    width: '0px',
-    maxHeight: '260px',
-  });
+  readonly panelWidth = signal(240);
+
+  /**
+   * CDK intenta abrir debajo y, si no hay espacio, cambia el panel hacia arriba.
+   * El overlay queda fuera del acordeón y no hereda sus recortes o transforms.
+   */
+  readonly panelPositions: ConnectedPosition[] = [
+    {
+      originX: 'start',
+      originY: 'bottom',
+      overlayX: 'start',
+      overlayY: 'top',
+      offsetY: 6,
+    },
+    {
+      originX: 'start',
+      originY: 'top',
+      overlayX: 'start',
+      overlayY: 'bottom',
+      offsetY: -6,
+    },
+  ];
 
   private onChange: (value: T | null) => void = () => undefined;
   private onTouched: () => void = () => undefined;
-  private panelAnimationFrame: number | null = null;
-  private readonly handleViewportChange = (event: Event): void => {
-    const panel = this.elementRef.nativeElement.querySelector<HTMLElement>('.form-select__panel');
 
-    // El scroll propio de las opciones no debe volver a calcular el anclaje.
-    if (event.target instanceof Node && panel?.contains(event.target)) {
-      return;
-    }
-
-    if (this.opened) {
-      this.schedulePanelPosition();
-    }
-  };
-
-  constructor(private readonly elementRef: ElementRef<HTMLElement>) {
-    this.documentRef.addEventListener('scroll', this.handleViewportChange, true);
-    this.windowRef?.addEventListener('resize', this.handleViewportChange);
-  }
-
-  ngOnDestroy(): void {
-    this.documentRef.removeEventListener('scroll', this.handleViewportChange, true);
-    this.windowRef?.removeEventListener('resize', this.handleViewportChange);
-    this.cancelPanelPosition();
-  }
-
-  @HostListener('document:click', ['$event'])
-  closeOnOutsideClick(event: MouseEvent): void {
-    if (!this.elementRef.nativeElement.contains(event.target as Node)) {
-      this.close();
-    }
-  }
+  constructor(private readonly elementRef: ElementRef<HTMLElement>) {}
 
   writeValue(value: T | null | undefined): void {
     this.value = value ?? null;
@@ -145,7 +135,7 @@ export class UiSelectComponent<T = string | number | boolean | null>
     this.opened = true;
     this.searchTerm = '';
     this.panelPositioned.set(false);
-    this.schedulePanelPosition();
+    this.syncPanelWidth();
   }
 
   close(): void {
@@ -155,7 +145,6 @@ export class UiSelectComponent<T = string | number | boolean | null>
 
     this.opened = false;
     this.panelPositioned.set(false);
-    this.cancelPanelPosition();
     this.markAsTouched();
   }
 
@@ -179,7 +168,16 @@ export class UiSelectComponent<T = string | number | boolean | null>
   onSearch(event: Event): void {
     const target = event.target as HTMLInputElement;
     this.searchTerm = target.value;
-    this.schedulePanelPosition();
+  }
+
+  /** Activa la entrada visual cuando el overlay ya está anclado al control. */
+  onPanelAttached(): void {
+    this.panelPositioned.set(true);
+  }
+
+  /** Mantiene el origen de la animación al cambiar entre apertura superior e inferior. */
+  onPanelPositionChange(event: ConnectedOverlayPositionChange): void {
+    this.panelPlacement.set(event.connectionPair.overlayY === 'bottom' ? 'above' : 'below');
   }
 
   handleKeydown(event: KeyboardEvent): void {
@@ -235,83 +233,19 @@ export class UiSelectComponent<T = string | number | boolean | null>
     return null;
   }
 
-  private schedulePanelPosition(): void {
-    if (!this.windowRef) {
+  private syncPanelWidth(): void {
+    const control = this.elementRef.nativeElement.querySelector<HTMLElement>(
+      '.form-select__control',
+    );
+
+    if (!control) {
       return;
     }
 
-    this.cancelPanelPosition();
-    this.panelAnimationFrame = this.windowRef.requestAnimationFrame(() => {
-      this.panelAnimationFrame = null;
-      this.updatePanelPosition();
-    });
-  }
-
-  private cancelPanelPosition(): void {
-    if (this.panelAnimationFrame === null || !this.windowRef) {
-      return;
-    }
-
-    this.windowRef.cancelAnimationFrame(this.panelAnimationFrame);
-    this.panelAnimationFrame = null;
-  }
-
-  private updatePanelPosition(): void {
-    if (!this.opened || !this.windowRef) {
-      return;
-    }
-
-    const host = this.elementRef.nativeElement;
-    const control = host.querySelector<HTMLElement>('.form-select__control');
-    const panel = host.querySelector<HTMLElement>('.form-select__panel');
-
-    if (!control || !panel) {
-      return;
-    }
-
-    const controlRect = control.getBoundingClientRect();
-    const viewportWidth = this.windowRef.innerWidth;
-    const viewportHeight = this.windowRef.innerHeight;
+    const viewportWidth = this.windowRef?.innerWidth ?? control.clientWidth;
     const viewportMargin = viewportWidth <= 760 ? 8 : 12;
-    const mobileNavigationInset = viewportWidth <= 760 ? 78 : viewportMargin;
-    const panelGap = 6;
-    const maximumPanelHeight = 280;
-    const naturalPanelHeight = Math.min(
-      Math.max(panel.scrollHeight, this.searchable ? 170 : 110),
-      maximumPanelHeight,
-    );
-    const spaceAbove = Math.max(0, controlRect.top - viewportMargin - panelGap);
-    const spaceBelow = Math.max(
-      0,
-      viewportHeight - mobileNavigationInset - controlRect.bottom - panelGap,
-    );
-    const minimumComfortableHeight = Math.min(naturalPanelHeight, this.searchable ? 170 : 120);
-    const placement: UiSelectPanelPlacement =
-      spaceBelow < minimumComfortableHeight && spaceAbove > spaceBelow ? 'above' : 'below';
-    const availableHeight = placement === 'above' ? spaceAbove : spaceBelow;
-    const maxHeight = Math.max(96, Math.min(maximumPanelHeight, Math.floor(availableHeight)));
-    const renderedHeight = Math.min(panel.scrollHeight, maxHeight);
-    const maximumPanelWidth = Math.max(0, viewportWidth - viewportMargin * 2);
-    const panelWidth = Math.min(controlRect.width, maximumPanelWidth);
-    const panelLeft = Math.min(
-      Math.max(controlRect.left, viewportMargin),
-      viewportWidth - viewportMargin - panelWidth,
-    );
-    const panelTop =
-      placement === 'above'
-        ? Math.max(viewportMargin, controlRect.top - panelGap - renderedHeight)
-        : Math.min(
-            controlRect.bottom + panelGap,
-            viewportHeight - mobileNavigationInset - maxHeight,
-          );
+    const availableWidth = Math.max(0, viewportWidth - viewportMargin * 2);
 
-    this.panelPlacement.set(placement);
-    this.panelStyles.set({
-      top: `${Math.round(panelTop)}px`,
-      left: `${Math.round(panelLeft)}px`,
-      width: `${Math.round(panelWidth)}px`,
-      maxHeight: `${Math.round(maxHeight)}px`,
-    });
-    this.panelPositioned.set(true);
+    this.panelWidth.set(Math.min(control.getBoundingClientRect().width, availableWidth));
   }
 }

@@ -118,6 +118,153 @@
 
     <article class="header-demo__example header-demo__example--wide">
       <header>
+        <h3>Separador estático con contenido</h3>
+        <p>
+          Conserva el patrón utilizado originalmente en Información de marca, sin comportamiento
+          desplegable.
+        </p>
+      </header>
+
+      <div class="header-demo__preview">
+        <app-ui-section-header
+          title="Presentación en el menú"
+          description="Ajuste nombres extensos sin modificar la identidad del sistema."
+          icon="fa-solid fa-bars"
+          appearance="divider"
+          headingId="demo-static-divider"
+        />
+        <div class="header-demo__sample-content is-compact">
+          <span>Use esta opción cuando el contenido siempre deba permanecer visible.</span>
+        </div>
+      </div>
+
+      <div class="header-demo__loose-stack">
+        <app-ui-section-header
+          title="Cabecera suelta con acento"
+          description="La línea pertenece solo al encabezado; el contenido usa todo el ancho."
+          icon="fa-solid fa-sliders"
+          appearance="divider"
+          headingId="demo-static-loose-accent"
+          [compact]="true"
+          [showAccent]="true"
+          [accentWidth]="2"
+        />
+        <div class="header-demo__loose-content">
+          El contenido está fuera de la cabecera y no queda encerrado por un marco.
+        </div>
+      </div>
+
+      <div class="header-demo__loose-stack">
+        <app-ui-section-header
+          title="Recursos gráficos"
+          description="El contenido continúa debajo sin una caja que lo encierre."
+          icon="fa-solid fa-images"
+          appearance="divider"
+          headingId="demo-static-loose"
+          [compact]="true"
+          [showAccent]="false"
+        />
+        <div class="header-demo__loose-content">
+          Ejemplo suelto y compacto: puede colocarse directamente dentro de un formulario.
+        </div>
+      </div>
+    </article>
+
+    <article class="header-demo__example header-demo__example--wide">
+      <header>
+        <h3>Paneles de expansión</h3>
+        <p>
+          Dos apariencias y los indicadores solicitados. El contenido conserva su estado mientras
+          está cerrado.
+        </p>
+      </header>
+
+      <div class="header-demo__accordion-grid">
+        <app-ui-expansion-panel
+          title="Presentación en el menú"
+          description="Separador institucional para formularios y configuraciones extensas."
+          icon="fa-solid fa-bars"
+          appearance="divider"
+          density="compact"
+          indicator="plus-minus"
+          accentScope="header"
+          frame="header"
+          [accentWidth]="2"
+          [contentRowGap]="20"
+          [contentColumnGap]="14"
+          [(expanded)]="menuExpansionOpen"
+        >
+          <div class="header-demo__sample-content is-compact">
+            <i class="fa-solid fa-sliders" aria-hidden="true"></i>
+            <div>
+              <strong>Indicador más y menos</strong>
+              <p>Ideal para agrupar controles relacionados dentro de formularios reactivos.</p>
+            </div>
+          </div>
+        </app-ui-expansion-panel>
+
+        <app-ui-expansion-panel
+          title="Datos personales"
+          description="Digite el nombre y la información general del usuario."
+          icon="fa-solid fa-user-circle"
+          appearance="card"
+          density="comfortable"
+          indicator="chevron"
+          [(expanded)]="classicExpansionOpen"
+        >
+          <div class="header-demo__sample-content is-compact">
+            <i class="fa-solid fa-circle-check" aria-hidden="true"></i>
+            <div>
+              <strong>Indicador tipo V</strong>
+              <p>La flecha gira suavemente para comunicar el estado abierto o cerrado.</p>
+            </div>
+          </div>
+        </app-ui-expansion-panel>
+
+        <app-ui-expansion-panel
+          title="Contenido suelto con línea completa"
+          description="Sin marco neutro; el acento acompaña cabecera y contenido."
+          icon="fa-solid fa-grip-lines-vertical"
+          appearance="divider"
+          density="compact"
+          indicator="plus-minus"
+          frame="none"
+          accentScope="panel"
+          [accentWidth]="2"
+        >
+          <div class="header-demo__sample-content is-compact">
+            <i class="fa-solid fa-arrows-left-right" aria-hidden="true"></i>
+            <div>
+              <strong>Sin borde de recubrimiento</strong>
+              <p>La línea azul conserva la jerarquía y el interior recupera el ancho.</p>
+            </div>
+          </div>
+        </app-ui-expansion-panel>
+
+        <app-ui-expansion-panel
+          title="Encabezado completamente suelto"
+          description="Sin marco exterior y sin acento azul."
+          icon="fa-solid fa-align-left"
+          appearance="divider"
+          density="compact"
+          indicator="chevron"
+          frame="none"
+          accentScope="header"
+          [showAccent]="false"
+        >
+          <div class="header-demo__sample-content is-compact">
+            <i class="fa-solid fa-feather" aria-hidden="true"></i>
+            <div>
+              <strong>Variante mínima</strong>
+              <p>La cabecera conserva su fondo suave y el contenido queda independiente.</p>
+            </div>
+          </div>
+        </app-ui-expansion-panel>
+      </div>
+    </article>
+
+    <article class="header-demo__example header-demo__example--wide">
+      <header>
         <h3>Encabezado compacto recomendado</h3>
         <p>La caja es azul institucional y el icono utiliza el verde de acento.</p>
       </header>
@@ -219,6 +366,11 @@
         <h3>Código con acciones</h3>
         <pre><code>{{ actionsUsage }}</code></pre>
       </article>
+
+      <article>
+        <h3>Panel de expansión</h3>
+        <pre><code>{{ expansionUsage }}</code></pre>
+      </article>
     </div>
 
     <article class="header-demo__api">
@@ -311,6 +463,104 @@
               <td>boolean</td>
               <td>true</td>
               <td>Controla la altura de la sección.</td>
+            </tr>
+            <tr>
+              <td><code>ui-section-header</code></td>
+              <td><code>appearance</code></td>
+              <td>boxed | divider</td>
+              <td>boxed</td>
+              <td>Selecciona cabecera con icono en caja o separador liviano.</td>
+            </tr>
+            <tr>
+              <td><code>ui-section-header</code></td>
+              <td><code>showAccent</code></td>
+              <td>boolean</td>
+              <td>true</td>
+              <td>Muestra u oculta la línea lateral de divider.</td>
+            </tr>
+            <tr>
+              <td><code>ui-section-header</code></td>
+              <td><code>accentWidth</code></td>
+              <td>number</td>
+              <td>4</td>
+              <td>Grosor entre 0 y 8 px de la línea lateral.</td>
+            </tr>
+            <tr>
+              <td><code>ui-expansion-panel</code></td>
+              <td><code>expanded</code></td>
+              <td>model&lt;boolean&gt;</td>
+              <td>false</td>
+              <td>Estado reactivo; admite enlace bidireccional con una signal.</td>
+            </tr>
+            <tr>
+              <td><code>ui-expansion-panel</code></td>
+              <td><code>appearance</code></td>
+              <td>card | divider</td>
+              <td>divider</td>
+              <td>Define la apariencia de la cabecera desplegable.</td>
+            </tr>
+            <tr>
+              <td><code>ui-expansion-panel</code></td>
+              <td><code>indicator</code></td>
+              <td>plus-minus | chevron | custom</td>
+              <td>plus-minus</td>
+              <td>Selecciona el indicador situado al extremo derecho.</td>
+            </tr>
+            <tr>
+              <td><code>ui-expansion-panel</code></td>
+              <td><code>density</code></td>
+              <td>compact | comfortable</td>
+              <td>compact</td>
+              <td>Ajusta la altura y el espaciado interno.</td>
+            </tr>
+            <tr>
+              <td><code>ui-expansion-panel</code></td>
+              <td><code>disabled</code></td>
+              <td>boolean</td>
+              <td>false</td>
+              <td>Bloquea la interacción conservando el contenido.</td>
+            </tr>
+            <tr>
+              <td><code>ui-expansion-panel</code></td>
+              <td><code>showAccent</code></td>
+              <td>boolean</td>
+              <td>true</td>
+              <td>Muestra u oculta la línea azul en la apariencia divider.</td>
+            </tr>
+            <tr>
+              <td><code>ui-expansion-panel</code></td>
+              <td><code>accentWidth</code></td>
+              <td>number</td>
+              <td>4</td>
+              <td>Define un grosor seguro entre 0 y 8 px.</td>
+            </tr>
+            <tr>
+              <td><code>ui-expansion-panel</code></td>
+              <td><code>accentScope</code></td>
+              <td>header | panel</td>
+              <td>panel</td>
+              <td>Aplica la línea solo a la cabecera o a toda la altura del panel.</td>
+            </tr>
+            <tr>
+              <td><code>ui-expansion-panel</code></td>
+              <td><code>frame</code></td>
+              <td>panel | header | none</td>
+              <td>panel</td>
+              <td>Controla el marco neutro sin modificar la línea azul.</td>
+            </tr>
+            <tr>
+              <td><code>ui-expansion-panel</code></td>
+              <td><code>contentRowGap</code></td>
+              <td>number</td>
+              <td>18</td>
+              <td>Separación vertical heredada por los formularios proyectados.</td>
+            </tr>
+            <tr>
+              <td><code>ui-expansion-panel</code></td>
+              <td><code>contentColumnGap</code></td>
+              <td>number</td>
+              <td>14</td>
+              <td>Separación entre columnas; admite valores de 0 a 48 px.</td>
             </tr>
             <tr>
               <td><code>Todos</code></td>

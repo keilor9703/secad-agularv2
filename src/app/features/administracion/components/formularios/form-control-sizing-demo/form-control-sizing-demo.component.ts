@@ -6,6 +6,7 @@ import { UiInputComponent } from '../../../../../shared/components/ui-input/ui-i
 import { UiSearchInputComponent } from '../../../../../shared/components/ui-search-input/ui-search-input.component';
 import { UiSelectComponent } from '../../../../../shared/components/ui-select/ui-select.component';
 import { UiTimePickerComponent } from '../../../../../shared/components/ui-time-picker/ui-time-picker.component';
+import { UiFormSpacingDirective } from '../../../../../shared/directives/ui-form-spacing.directive';
 import { UiSelectOption } from '../../../../../shared/interfaces/ui-select-option.interface';
 import { UiFormControlSize } from '../../../../../shared/models/ui-form-control-size.model';
 
@@ -27,6 +28,7 @@ interface FormControlSizingDemoForm {
     UiSearchInputComponent,
     UiSelectComponent,
     UiTimePickerComponent,
+    UiFormSpacingDirective,
   ],
   templateUrl: './form-control-sizing-demo.component.html',
   styleUrl: './form-control-sizing-demo.component.scss',
@@ -95,6 +97,17 @@ export class FormControlSizingDemoComponent {
 
 <!-- La misma entrada funciona en ui-select, ui-date-time-picker,
      ui-time-picker y ui-search-input. -->`;
+
+  readonly spacingExample = `<div
+  class="mi-form-grid"
+  appUiFormSpacing
+  [formRowGap]="20"
+  [formColumnGap]="14"
+  [formMobileRowGap]="22"
+  [formMobileColumnGap]="0"
+>
+  <!-- Controles o grupos de campos -->
+</div>`;
 
   readonly cssExample = `.mi-formulario {
   --form-control-height: 46px;

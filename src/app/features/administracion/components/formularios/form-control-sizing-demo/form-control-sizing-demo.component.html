@@ -8,8 +8,8 @@
 
   <div class="ui-panel__body">
     <p class="sizing-demo__intro">
-      Una misma configuración controla inputs, buscadores, selects y pickers. La altura y el ancho
-      preferidos siempre respetan sus límites mínimo y máximo.
+      Una misma configuración controla inputs, buscadores, selects y pickers. También puede definir
+      la separación horizontal y vertical del formulario para escritorio y móvil.
     </p>
 
     <form class="sizing-demo__form" [formGroup]="demoForm">
@@ -24,7 +24,14 @@
           </div>
         </div>
 
-        <div class="sizing-demo__grid">
+        <div
+          class="sizing-demo__grid"
+          appUiFormSpacing
+          [formRowGap]="20"
+          [formColumnGap]="16"
+          [formMobileRowGap]="22"
+          [formMobileColumnGap]="0"
+        >
           <app-ui-input
             formControlName="nombre"
             label="Nombre del funcionario"
@@ -55,7 +62,14 @@
         </div>
 
         <!-- Las variables de .sizing-demo__scope controlan todos sus descendientes. -->
-        <div class="sizing-demo__scope">
+        <div
+          class="sizing-demo__scope"
+          appUiFormSpacing
+          [formRowGap]="20"
+          [formColumnGap]="16"
+          [formMobileRowGap]="22"
+          [formMobileColumnGap]="0"
+        >
           <app-ui-date-time-picker formControlName="fecha" label="Fecha programada" mode="date" />
 
           <app-ui-time-picker
@@ -89,6 +103,11 @@
       <article class="sizing-demo__code-wide">
         <h4>SCSS para una sección completa</h4>
         <pre><code>{{ cssExample }}</code></pre>
+      </article>
+
+      <article class="sizing-demo__code-wide">
+        <h4>Separación responsive del formulario</h4>
+        <pre><code>{{ spacingExample }}</code></pre>
       </article>
     </div>
   </div>

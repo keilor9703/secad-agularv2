@@ -1,4 +1,10 @@
-<header class="ui-section-header" [class.is-compact]="compact()">
+<header
+  class="ui-section-header"
+  [class.is-compact]="compact()"
+  [class.is-boxed]="appearance() === 'boxed'"
+  [class.is-divider]="appearance() === 'divider'"
+  [style.--ui-section-accent-width.px]="resolvedAccentWidth()"
+>
   <span class="ui-section-header__icon" aria-hidden="true">
     <i [class]="icon()"></i>
   </span>
