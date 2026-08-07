@@ -85,22 +85,9 @@
           "builder": "@angular/build:extract-i18n"
         },
         "test": {
-          "builder": "@angular/build:karma",
+          "builder": "@angular/build:unit-test",
           "options": {
-            "polyfills": ["zone.js", "zone.js/testing"],
-            "tsConfig": "tsconfig.spec.json",
-            "inlineStyleLanguage": "scss",
-            "assets": [
-              {
-                "glob": "**/*",
-                "input": "public"
-              }
-            ],
-            "styles": [
-              "node_modules/sweetalert2/dist/sweetalert2.min.css",
-              "src/styles.scss",
-              "@angular/cdk/overlay-prebuilt.css"
-            ]
+            "tsConfig": "tsconfig.spec.json"
           }
         }
       }

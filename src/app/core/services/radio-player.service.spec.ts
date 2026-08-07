@@ -59,6 +59,6 @@ describe('RadioPlayerService', () => {
     expect(service.volume()).toBe(1);
 
     service.toggleMuted();
-    expect(service.isMuted()).toBeTrue();
+    expect(service.isMuted()).toBe(true);
   });
 });

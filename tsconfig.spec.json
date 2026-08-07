@@ -9,7 +9,7 @@
   "compilerOptions": {
     "outDir": "./out-tsc/spec",
     "rootDir": "./src",
-    "types": ["jasmine"]
+    "types": ["vitest/globals"]
   },
   "include": ["src/**/*.ts"],
   "angularCompilerOptions": {
