@@ -1,0 +1,239 @@
+:host {
+  display: inline-flex;
+  max-width: 100%;
+  vertical-align: middle;
+}
+
+.ui-toggle {
+  --toggle-width: 62px;
+  --toggle-height: 34px;
+  --toggle-padding: 3px;
+  --toggle-icon-size: 13px;
+  --ui-toggle-inactive-color: #ffffff;
+  --ui-toggle-active-color: #ffffff;
+  --ui-toggle-border-color: #202124;
+  --ui-toggle-thumb-color: #202124;
+  --ui-toggle-active-thumb-color: #202124;
+  --ui-toggle-icon-color: #ffffff;
+  --ui-toggle-active-icon-color: #ffffff;
+
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 100%;
+  color: var(--ui-text, #26364c);
+  cursor: pointer;
+  user-select: none;
+}
+
+.ui-toggle--xs {
+  --toggle-width: 38px;
+  --toggle-height: 22px;
+  --toggle-padding: 3px;
+  --toggle-icon-size: 8px;
+}
+
+.ui-toggle--sm {
+  --toggle-width: 48px;
+  --toggle-height: 28px;
+  --toggle-padding: 3px;
+  --toggle-icon-size: 10px;
+}
+
+.ui-toggle--lg {
+  --toggle-width: 78px;
+  --toggle-height: 42px;
+  --toggle-padding: 4px;
+  --toggle-icon-size: 16px;
+}
+
+.ui-toggle--xl {
+  --toggle-width: 98px;
+  --toggle-height: 50px;
+  --toggle-padding: 4px;
+  --toggle-icon-size: 19px;
+}
+
+.ui-toggle--institutional {
+  --ui-toggle-inactive-color: #eef4f8;
+  --ui-toggle-active-color: var(--policia-azul, #003b78);
+  --ui-toggle-border-color: #88a3ba;
+  --ui-toggle-thumb-color: #ffffff;
+  --ui-toggle-active-thumb-color: var(--policia-verde, #c8ff00);
+  --ui-toggle-icon-color: #536477;
+  --ui-toggle-active-icon-color: var(--policia-azul, #003b78);
+}
+
+.ui-toggle--success {
+  --ui-toggle-inactive-color: #f1f5f4;
+  --ui-toggle-active-color: #16855d;
+  --ui-toggle-border-color: #7aa995;
+  --ui-toggle-thumb-color: #ffffff;
+  --ui-toggle-active-thumb-color: #ffffff;
+  --ui-toggle-icon-color: #64748b;
+  --ui-toggle-active-icon-color: #16855d;
+}
+
+.ui-toggle--danger {
+  --ui-toggle-inactive-color: #fff5f4;
+  --ui-toggle-active-color: #b42318;
+  --ui-toggle-border-color: #db8e88;
+  --ui-toggle-thumb-color: #ffffff;
+  --ui-toggle-active-thumb-color: #ffffff;
+  --ui-toggle-icon-color: #b42318;
+  --ui-toggle-active-icon-color: #b42318;
+}
+
+.ui-toggle__native {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.ui-toggle__track {
+  position: relative;
+  display: inline-flex;
+  width: var(--toggle-width);
+  height: var(--toggle-height);
+  flex: 0 0 var(--toggle-width);
+  align-items: center;
+  box-sizing: border-box;
+  padding: var(--toggle-padding);
+  border: 2px solid var(--ui-toggle-border-color);
+  border-radius: 999px;
+  background: var(--ui-toggle-inactive-color);
+  box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.08);
+  transition:
+    background-color 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.ui-toggle__thumb {
+  display: grid;
+  width: calc(var(--toggle-height) - (var(--toggle-padding) * 2) - 4px);
+  height: calc(var(--toggle-height) - (var(--toggle-padding) * 2) - 4px);
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--ui-toggle-thumb-color);
+  color: var(--ui-toggle-icon-color);
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.24);
+  transform: translateX(0);
+  transition:
+    transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 180ms ease,
+    color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.ui-toggle__thumb i {
+  font-size: var(--toggle-icon-size);
+  line-height: 1;
+}
+
+.ui-toggle.is-checked .ui-toggle__track {
+  border-color: var(--ui-toggle-active-color);
+  background: var(--ui-toggle-active-color);
+}
+
+.ui-toggle--neutral.is-checked .ui-toggle__track {
+  border-color: var(--ui-toggle-border-color);
+}
+
+.ui-toggle.is-checked .ui-toggle__thumb {
+  background: var(--ui-toggle-active-thumb-color);
+  color: var(--ui-toggle-active-icon-color);
+  transform: translateX(calc(var(--toggle-width) - var(--toggle-height)));
+}
+
+.ui-toggle__native:focus-visible + .ui-toggle__track {
+  outline: 3px solid color-mix(in srgb, var(--policia-cielo, #08a6cb) 34%, transparent);
+  outline-offset: 3px;
+  box-shadow:
+    0 0 0 1px var(--policia-cielo, #08a6cb),
+    0 5px 14px rgba(0, 59, 120, 0.14);
+}
+
+.ui-toggle.has-error .ui-toggle__track {
+  border-color: var(--ui-danger, #c62828);
+}
+
+.ui-toggle__copy {
+  display: inline-grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.ui-toggle--label-start .ui-toggle__copy {
+  order: -1;
+  text-align: right;
+}
+
+.ui-toggle__label {
+  color: var(--ui-text, #26364c);
+  font-size: calc(12px * var(--font-size-scale, 1));
+  font-weight: 750;
+  line-height: 1.25;
+}
+
+.ui-toggle__required {
+  color: var(--ui-danger, #c62828);
+}
+
+.ui-toggle__state,
+.ui-toggle__message {
+  color: var(--ui-muted, #64748b);
+  font-size: calc(10px * var(--font-size-scale, 1));
+  line-height: 1.25;
+}
+
+.ui-toggle__message--error {
+  color: var(--ui-danger, #b42318);
+  font-weight: 700;
+}
+
+.ui-toggle.is-disabled {
+  cursor: not-allowed;
+  opacity: 0.52;
+}
+
+.ui-toggle.is-readonly:not(.is-disabled) {
+  cursor: default;
+}
+
+.ui-toggle.is-readonly:not(.is-disabled) .ui-toggle__track {
+  box-shadow: inset 0 0 0 1px rgba(100, 116, 139, 0.18);
+}
+
+:host-context(html.dark-mode) {
+  .ui-toggle--neutral {
+    --ui-toggle-inactive-color: #172033;
+    --ui-toggle-active-color: #172033;
+    --ui-toggle-border-color: #dbe6f0;
+    --ui-toggle-thumb-color: #f8fafc;
+    --ui-toggle-active-thumb-color: #f8fafc;
+    --ui-toggle-icon-color: #172033;
+    --ui-toggle-active-icon-color: #172033;
+  }
+
+  .ui-toggle--institutional {
+    --ui-toggle-inactive-color: #263349;
+    --ui-toggle-border-color: #7790a8;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-toggle__track,
+  .ui-toggle__thumb {
+    transition-duration: 1ms;
+  }
+}

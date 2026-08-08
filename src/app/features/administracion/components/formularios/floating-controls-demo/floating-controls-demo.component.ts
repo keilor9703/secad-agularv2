@@ -16,8 +16,10 @@ interface FloatingControlsDemoForm {
   description: FormControl<string>;
   releaseDate: FormControl<string>;
   executionTime: FormControl<string>;
+  libraryTimeAmPm: FormControl<string>;
   meetingTime: FormControl<string>;
   deploymentDateTime: FormControl<string>;
+  libraryDateTimeAmPm: FormControl<string>;
 }
 
 @Component({
@@ -68,11 +70,19 @@ export class FloatingControlsDemoComponent {
       nonNullable: true,
       validators: [Validators.required],
     }),
+    libraryTimeAmPm: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required],
+    }),
     meetingTime: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required],
     }),
     deploymentDateTime: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required],
+    }),
+    libraryDateTimeAmPm: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required],
     }),
@@ -117,6 +127,25 @@ export class FloatingControlsDemoComponent {
   hourFormat="12"
 />`;
 
+  readonly libraryPickerUsage = `<app-ui-date-time-picker
+  formControlName="libraryTimeAmPm"
+  label="Hora Flatpickr AM/PM"
+  labelMode="floating"
+  mode="time"
+  hourFormat="12"
+  [minuteStep]="15"
+/>
+
+<app-ui-date-time-picker
+  formControlName="libraryDateTimeAmPm"
+  label="Fecha y hora AM/PM"
+  labelMode="floating"
+  mode="datetime"
+  hourFormat="12"
+  [minDate]="today"
+  [minuteStep]="15"
+/>`;
+
   readonly behaviorUsage = `// El valor predeterminado es "fixed" para no cambiar formularios existentes.
 // Active "floating" solamente en los controles que requieran la animación.
 
@@ -150,8 +179,10 @@ repositoryName: new FormControl('', {
       description: '',
       releaseDate: '',
       executionTime: '',
+      libraryTimeAmPm: '',
       meetingTime: '',
       deploymentDateTime: '',
+      libraryDateTimeAmPm: '',
     });
     this.validationMessage.set('');
   }

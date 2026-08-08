@@ -1,0 +1,73 @@
+<label
+  class="ui-toggle"
+  [class]="
+    'ui-toggle ui-toggle--' +
+    size() +
+    ' ui-toggle--' +
+    variant() +
+    ' ui-toggle--label-' +
+    labelPosition()
+  "
+  [class.is-checked]="value()"
+  [class.is-disabled]="isDisabled()"
+  [class.is-readonly]="readonly()"
+  [class.has-error]="!!error()"
+  [style.--ui-toggle-inactive-color]="inactiveColor() || null"
+  [style.--ui-toggle-active-color]="activeColor() || null"
+  [style.--ui-toggle-border-color]="borderColor() || null"
+  [style.--ui-toggle-thumb-color]="thumbColor() || null"
+  [style.--ui-toggle-active-thumb-color]="activeThumbColor() || null"
+  [style.--ui-toggle-icon-color]="iconColor() || null"
+  [style.--ui-toggle-active-icon-color]="activeIconColor() || null"
+>
+  <input
+    class="ui-toggle__native"
+    type="checkbox"
+    role="switch"
+    [id]="toggleId()"
+    [checked]="value()"
+    [disabled]="isDisabled()"
+    [required]="required()"
+    [attr.aria-checked]="value()"
+    [attr.aria-label]="accessibleLabel()"
+    [attr.aria-readonly]="readonly()"
+    [attr.aria-invalid]="error() ? 'true' : null"
+    [attr.aria-describedby]="error() ? toggleId() + '-error' : hint() ? toggleId() + '-hint' : null"
+    (click)="handleClick($event)"
+    (change)="handleChange($event)"
+    (blur)="markTouched()"
+  />
+
+  <span class="ui-toggle__track" aria-hidden="true">
+    <span class="ui-toggle__thumb">
+      @if (showIcons()) {
+        <i [class]="value() ? onIcon() : offIcon()"></i>
+      }
+    </span>
+  </span>
+
+  @if (label() || hint() || error() || showStateText()) {
+    <span class="ui-toggle__copy">
+      @if (label()) {
+        <span class="ui-toggle__label">
+          {{ label() }}
+          @if (required() && showRequiredMarker()) {
+            <span class="ui-toggle__required" aria-hidden="true">*</span>
+          }
+        </span>
+      }
+
+      @if (showStateText()) {
+        <span class="ui-toggle__state">{{ stateText() }}</span>
+      }
+
+      @if (error()) {
+        <span class="ui-toggle__message ui-toggle__message--error" [id]="toggleId() + '-error'">
+          {{ error() }}
+        </span>
+      } @else if (hint()) {
+        <span class="ui-toggle__message" [id]="toggleId() + '-hint'">{{ hint() }}</span>
+      }
+    </span>
+  }
+</label>

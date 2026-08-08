@@ -223,6 +223,48 @@
             </article>
 
             <article class="form-section">
+              <h3>Flatpickr: hora AM/PM y fecha-hora combinada</h3>
+
+              <div
+                class="form-grid"
+                appUiFormSpacing
+                [formRowGap]="20"
+                [formColumnGap]="14"
+                [formMobileRowGap]="20"
+                [formMobileColumnGap]="0"
+              >
+                <div class="col-6">
+                  <app-ui-date-time-picker
+                    formControlName="horaFlatpickrAmPm"
+                    label="Hora Flatpickr AM/PM"
+                    mode="time"
+                    hourFormat="12"
+                    hint="La biblioteca presenta AM/PM; el formulario conserva HH:mm."
+                    [minuteStep]="15"
+                    [required]="true"
+                    [showRequiredMarker]="showRequiredMarkers()"
+                    [error]="error('horaFlatpickrAmPm')"
+                  />
+                </div>
+
+                <div class="col-6">
+                  <app-ui-date-time-picker
+                    formControlName="fechaHoraFlatpickrAmPm"
+                    label="Fecha y hora Flatpickr AM/PM"
+                    mode="datetime"
+                    hourFormat="12"
+                    hint="Combina calendario y reloj de 12 horas en un solo control."
+                    [minDate]="today"
+                    [minuteStep]="15"
+                    [required]="true"
+                    [showRequiredMarker]="showRequiredMarkers()"
+                    [error]="error('fechaHoraFlatpickrAmPm')"
+                  />
+                </div>
+              </div>
+            </article>
+
+            <article class="form-section">
               <h3>Time picker: AM/PM y 24 horas</h3>
 
               <div
@@ -464,6 +506,9 @@
 
     <!-- Catálogo reutilizable de badges rectangulares y cápsulas redondeadas. -->
     <app-status-components-demo />
+
+    <!-- Toggle booleano con tamaños, iconos, estados y API para Reactive Forms. -->
+    <app-toggle-demo />
 
     <app-notificaciones-demo />
   </section>

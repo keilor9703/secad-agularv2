@@ -1,0 +1,180 @@
+<section class="toggle-demo ui-panel">
+  <header class="toggle-demo__header">
+    <div class="toggle-demo__number">16</div>
+    <div>
+      <h2>Toggle · interruptores reutilizables</h2>
+      <p>Control booleano accesible, responsive y compatible con Reactive Forms.</p>
+    </div>
+  </header>
+
+  <div class="toggle-demo__body">
+    <article class="toggle-demo__group toggle-demo__group--wide">
+      <header>
+        <h3>Cinco tamaños</h3>
+        <p>La escala cambia geometría, icono y recorrido sin alterar el valor booleano.</p>
+      </header>
+
+      <div class="toggle-demo__sizes">
+        @for (size of sizes; track size) {
+          <div class="toggle-demo__size-item">
+            <app-ui-toggle
+              [size]="size"
+              ariaLabel="Toggle de tamaño {{ size }}"
+              variant="neutral"
+              [checked]="true"
+            />
+            <code>{{ size }}</code>
+          </div>
+        }
+      </div>
+    </article>
+
+    <article class="toggle-demo__group">
+      <header>
+        <h3>Estados e iconos</h3>
+        <p>El check y la X son opcionales; el estado nunca depende solo del color.</p>
+      </header>
+
+      <div class="toggle-demo__items">
+        <app-ui-toggle
+          ariaLabel="Opción activa con icono"
+          size="md"
+          variant="neutral"
+          [checked]="true"
+          [showIcons]="true"
+        />
+        <app-ui-toggle
+          ariaLabel="Opción inactiva con icono"
+          size="md"
+          variant="neutral"
+          [showIcons]="true"
+        />
+        <app-ui-toggle
+          ariaLabel="Opción institucional"
+          size="md"
+          variant="institutional"
+          [checked]="true"
+          [showIcons]="true"
+        />
+        <app-ui-toggle
+          ariaLabel="Opción deshabilitada"
+          size="md"
+          variant="institutional"
+          [checked]="true"
+          [disabled]="true"
+        />
+      </div>
+    </article>
+
+    <article class="toggle-demo__group">
+      <header>
+        <h3>Etiqueta, ayuda y estado</h3>
+        <p>La etiqueta puede ubicarse antes o después del interruptor.</p>
+      </header>
+
+      <div class="toggle-demo__stack">
+        <app-ui-toggle
+          label="Autenticación reforzada"
+          hint="Solicita un segundo factor al iniciar sesión."
+          variant="success"
+          labelPosition="end"
+          [checked]="true"
+          [showIcons]="true"
+          [showStateText]="true"
+        />
+        <app-ui-toggle
+          label="Modo de mantenimiento"
+          variant="danger"
+          labelPosition="start"
+          [showIcons]="true"
+          [showStateText]="true"
+        />
+      </div>
+    </article>
+
+    <article class="toggle-demo__group toggle-demo__group--wide">
+      <header>
+        <h3>Uso recomendado con formulario reactivo</h3>
+        <p>El FormControl es la única fuente de verdad; no mezcle formControlName con checked.</p>
+      </header>
+
+      <form class="toggle-demo__form" [formGroup]="form">
+        <app-ui-toggle
+          formControlName="notifications"
+          label="Recibir notificaciones"
+          hint="Avisos relacionados con operaciones administrativas."
+          variant="institutional"
+          [showIcons]="true"
+        />
+        <app-ui-toggle
+          formControlName="secureAccess"
+          label="Acceso seguro"
+          variant="success"
+          [showStateText]="true"
+        />
+        <app-ui-toggle
+          formControlName="maintenance"
+          label="Mantenimiento"
+          variant="danger"
+          [showIcons]="true"
+        />
+      </form>
+    </article>
+
+    <article class="toggle-demo__group toggle-demo__group--wide">
+      <header>
+        <h3>Variables principales</h3>
+        <p>La referencia completa aparece también en “Referencia técnica de componentes UI”.</p>
+      </header>
+
+      <div class="toggle-demo__table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Variable</th>
+              <th>Predeterminado</th>
+              <th>Función</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>size</code></td>
+              <td><code>md</code></td>
+              <td>Escala xs, sm, md, lg o xl.</td>
+            </tr>
+            <tr>
+              <td><code>variant</code></td>
+              <td><code>neutral</code></td>
+              <td>Tono neutral, institucional, success o danger.</td>
+            </tr>
+            <tr>
+              <td><code>showIcons</code></td>
+              <td><code>false</code></td>
+              <td>Muestra check al activar y X al desactivar.</td>
+            </tr>
+            <tr>
+              <td><code>labelPosition</code></td>
+              <td><code>end</code></td>
+              <td>Ubica etiqueta y ayuda al inicio o al final.</td>
+            </tr>
+            <tr>
+              <td><code>showStateText</code></td>
+              <td><code>false</code></td>
+              <td>Presenta Activado/Desactivado junto a la etiqueta.</td>
+            </tr>
+            <tr>
+              <td><code>checkedChange</code></td>
+              <td><code>—</code></td>
+              <td>Notifica cambios del usuario fuera de Angular Forms.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </article>
+
+    <div class="toggle-demo__code-grid">
+      <pre><code>{{ reactiveUsage }}</code></pre>
+      <pre><code>{{ standaloneUsage }}</code></pre>
+    </div>
+  </div>
+</section>

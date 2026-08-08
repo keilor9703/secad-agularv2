@@ -572,6 +572,7 @@ export const UI_API_COMPONENTS: readonly UiApiComponentDoc[] = [
     controlValueAccessor: true,
     notes: [
       'mode decide formato, icono y opciones de Flatpickr mediante configuración centralizada.',
+      'hourFormat cambia la presentación de Flatpickr entre AM/PM y 24 horas sin cambiar el valor almacenado.',
       'minDate/maxDate limitan fechas; minTime/maxTime limitan horas.',
       'allowManualInput=false evita formatos inconsistentes y mantiene la selección mediante el panel.',
     ],
@@ -579,6 +580,7 @@ export const UI_API_COMPONENTS: readonly UiApiComponentDoc[] = [
   formControlName="fechaHora"
   label="Fecha y hora de cita"
   mode="datetime"
+  hourFormat="12"
   [minDate]="today"
   [minuteStep]="5"
   [allowManualInput]="false"
@@ -599,6 +601,14 @@ export const UI_API_COMPONENTS: readonly UiApiComponentDoc[] = [
         type: "'date' | 'time' | 'datetime'",
         defaultValue: "'date'",
         description: 'Define qué información se selecciona y el formato emitido.',
+      },
+      {
+        name: 'hourFormat',
+        kind: 'input',
+        type: "'12' | '24'",
+        defaultValue: "'24'",
+        description:
+          'Presentación AM/PM o 24 horas en los modos time y datetime; el modelo permanece normalizado.',
       },
       {
         name: 'controlId',
@@ -820,6 +830,216 @@ export const UI_API_COMPONENTS: readonly UiApiComponentDoc[] = [
         type: 'string',
         defaultValue: '—',
         description: 'Emite HH:mm cada vez que cambia la selección.',
+      },
+    ],
+  },
+  {
+    selector: 'app-ui-toggle',
+    name: 'Toggle booleano',
+    category: 'forms',
+    summary:
+      'Interruptor accesible para valores booleanos, compatible con Reactive Forms y uso controlado sin formulario.',
+    controlValueAccessor: true,
+    notes: [
+      'Con formControlName el FormControl es la única fuente de verdad: no combine esa forma con checked.',
+      'checked y checkedChange permiten uso autónomo; checkedChange solo se emite por interacción del usuario.',
+      'Los iconos son complementarios. El control conserva role=switch, aria-checked y foco de teclado aunque se oculten.',
+      'Los colores personalizados vacíos conservan la variante y el tema oscuro del sistema.',
+    ],
+    example: `<app-ui-toggle
+  formControlName="notifications"
+  label="Recibir notificaciones"
+  hint="Puede cambiar esta preferencia más adelante."
+  variant="institutional"
+  size="md"
+  [showIcons]="true"
+  [showStateText]="true"
+/>`,
+    members: [
+      {
+        name: 'label',
+        kind: 'input',
+        type: 'string',
+        defaultValue: "''",
+        description: 'Etiqueta visible asociada al interruptor.',
+      },
+      {
+        name: 'hint',
+        kind: 'input',
+        type: 'string',
+        defaultValue: "''",
+        description: 'Ayuda breve presentada junto al control.',
+      },
+      {
+        name: 'error',
+        kind: 'input',
+        type: 'string',
+        defaultValue: "''",
+        description: 'Mensaje inferior y estado visual inválido.',
+      },
+      {
+        name: 'ariaLabel',
+        kind: 'input',
+        type: 'string',
+        defaultValue: "''",
+        description: 'Nombre accesible alternativo. Es obligatorio cuando no existe label.',
+      },
+      {
+        name: 'toggleId',
+        kind: 'input',
+        type: 'string',
+        defaultValue: 'autogenerado',
+        description: 'Id estable para mensajes, automatización y accesibilidad.',
+      },
+      {
+        name: 'size',
+        kind: 'input',
+        type: "'xs' | 'sm' | 'md' | 'lg' | 'xl'",
+        defaultValue: "'md'",
+        description: 'Escala del track, thumb, icono y recorrido.',
+      },
+      {
+        name: 'variant',
+        kind: 'input',
+        type: "'neutral' | 'institutional' | 'success' | 'danger'",
+        defaultValue: "'neutral'",
+        description: 'Paleta semántica compatible con tema claro y oscuro.',
+      },
+      {
+        name: 'labelPosition',
+        kind: 'input',
+        type: "'start' | 'end'",
+        defaultValue: "'end'",
+        description: 'Ubica etiqueta, ayuda y estado antes o después del interruptor.',
+      },
+      {
+        name: 'checked',
+        kind: 'input',
+        type: 'boolean',
+        defaultValue: 'false',
+        description:
+          'Valor inicial o controlado fuera de Reactive Forms. No se combina con formControlName.',
+      },
+      {
+        name: 'disabled',
+        kind: 'input',
+        type: 'boolean',
+        defaultValue: 'false',
+        description: 'Bloquea interacción; también responde a FormControl.disable().',
+      },
+      {
+        name: 'readonly',
+        kind: 'input',
+        type: 'boolean',
+        defaultValue: 'false',
+        description: 'Conserva foco y lectura, pero impide cambiar el valor.',
+      },
+      {
+        name: 'required',
+        kind: 'input',
+        type: 'boolean',
+        defaultValue: 'false',
+        description: 'Expone semántica requerida; la validación continúa en el FormControl.',
+      },
+      requiredMarker,
+      {
+        name: 'showIcons',
+        kind: 'input',
+        type: 'boolean',
+        defaultValue: 'false',
+        description: 'Muestra un icono dentro del thumb para reforzar el estado.',
+      },
+      {
+        name: 'showStateText',
+        kind: 'input',
+        type: 'boolean',
+        defaultValue: 'false',
+        description: 'Presenta el texto correspondiente al estado actual.',
+      },
+      {
+        name: 'onIcon',
+        kind: 'input',
+        type: 'string',
+        defaultValue: "'fa-solid fa-check'",
+        description: 'Clases del icono activo.',
+      },
+      {
+        name: 'offIcon',
+        kind: 'input',
+        type: 'string',
+        defaultValue: "'fa-solid fa-xmark'",
+        description: 'Clases del icono inactivo.',
+      },
+      {
+        name: 'onText',
+        kind: 'input',
+        type: 'string',
+        defaultValue: "'Activado'",
+        description: 'Texto visible y respaldo accesible del estado activo.',
+      },
+      {
+        name: 'offText',
+        kind: 'input',
+        type: 'string',
+        defaultValue: "'Desactivado'",
+        description: 'Texto visible y respaldo accesible del estado inactivo.',
+      },
+      {
+        name: 'inactiveColor',
+        kind: 'input',
+        type: 'string',
+        defaultValue: "''",
+        description: 'Fondo CSS inactivo personalizado.',
+      },
+      {
+        name: 'activeColor',
+        kind: 'input',
+        type: 'string',
+        defaultValue: "''",
+        description: 'Fondo CSS activo personalizado.',
+      },
+      {
+        name: 'borderColor',
+        kind: 'input',
+        type: 'string',
+        defaultValue: "''",
+        description: 'Color CSS del borde en estado inactivo.',
+      },
+      {
+        name: 'thumbColor',
+        kind: 'input',
+        type: 'string',
+        defaultValue: "''",
+        description: 'Color del círculo en estado inactivo.',
+      },
+      {
+        name: 'activeThumbColor',
+        kind: 'input',
+        type: 'string',
+        defaultValue: "''",
+        description: 'Color del círculo en estado activo.',
+      },
+      {
+        name: 'iconColor',
+        kind: 'input',
+        type: 'string',
+        defaultValue: "''",
+        description: 'Color del icono inactivo.',
+      },
+      {
+        name: 'activeIconColor',
+        kind: 'input',
+        type: 'string',
+        defaultValue: "''",
+        description: 'Color del icono activo.',
+      },
+      {
+        name: 'checkedChange',
+        kind: 'output',
+        type: 'boolean',
+        defaultValue: '—',
+        description:
+          'Entrega el nuevo valor cuando lo cambia el usuario; no se emite desde writeValue.',
       },
     ],
   },

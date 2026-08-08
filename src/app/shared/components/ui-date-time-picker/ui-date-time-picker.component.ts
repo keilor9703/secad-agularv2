@@ -20,7 +20,7 @@ import { UiFormControlSizeDirective } from '../../directives/ui-form-control-siz
 import { UiFormLabelMode } from '../../interfaces/ui-form-label-mode.interface';
 import { UI_DATE_TIME_MODE_CONFIG } from './ui-date-time-picker.config';
 import { UI_DATE_TIME_SPANISH_LOCALE } from './ui-date-time-picker.locale';
-import { UiDateTimeMode } from './ui-date-time-picker.types';
+import type { UiDateTimeHourFormat, UiDateTimeMode } from './ui-date-time-picker.types';
 
 let nextControlId = 0;
 
@@ -47,6 +47,8 @@ let nextControlId = 0;
 export class UiDateTimePickerComponent implements AfterViewInit, OnDestroy, ControlValueAccessor {
   readonly label = input.required<string>();
   readonly mode = input<UiDateTimeMode>('date');
+  /** Cambia únicamente la presentación horaria; el modelo conserva su formato estable. */
+  readonly hourFormat = input<UiDateTimeHourFormat>('24');
   readonly controlId = input('');
   readonly placeholder = input('');
   readonly hint = input('');
@@ -81,9 +83,30 @@ export class UiDateTimePickerComponent implements AfterViewInit, OnDestroy, Cont
   readonly useNativeFallback = signal(false);
   readonly modeConfig = computed(() => UI_DATE_TIME_MODE_CONFIG[this.mode()]);
   readonly resolvedControlId = computed(() => this.controlId().trim() || this.generatedControlId);
-  readonly resolvedPlaceholder = computed(
-    () => this.placeholder().trim() || this.modeConfig().placeholder,
-  );
+  readonly resolvedPlaceholder = computed(() => {
+    const customPlaceholder = this.placeholder().trim();
+
+    if (customPlaceholder) {
+      return customPlaceholder;
+    }
+
+    if (this.hourFormat() === '12' && this.mode() === 'time') {
+      return 'hh:mm AM/PM';
+    }
+
+    if (this.hourFormat() === '12' && this.mode() === 'datetime') {
+      return 'dd/mm/aaaa hh:mm AM/PM';
+    }
+
+    return this.modeConfig().placeholder;
+  });
+  readonly resolvedDisplayFormat = computed(() => {
+    if (this.hourFormat() === '24' || this.mode() === 'date') {
+      return this.modeConfig().displayFormat;
+    }
+
+    return this.mode() === 'time' ? 'h:i K' : 'd/m/Y h:i K';
+  });
   readonly resolvedIcon = computed(() => this.icon().trim() || this.modeConfig().icon);
   readonly isDisabled = computed(() => this.disabled() || this.disabledByForm());
   readonly hasError = computed(() => Boolean(this.error().trim()));
@@ -111,6 +134,9 @@ export class UiDateTimePickerComponent implements AfterViewInit, OnDestroy, Cont
 
   constructor() {
     effect(() => this.applyDisabledState(this.isDisabled()));
+    effect(() => {
+      this.applyTimePresentation(this.hourFormat(), this.resolvedDisplayFormat());
+    });
   }
 
   readonly describedBy = computed(() => {
@@ -142,10 +168,10 @@ export class UiDateTimePickerComponent implements AfterViewInit, OnDestroy, Cont
        */
       const pickerResult = flatpickr(inputElement, {
         locale: UI_DATE_TIME_SPANISH_LOCALE,
-        dateFormat: config.displayFormat,
+        dateFormat: this.resolvedDisplayFormat(),
         enableTime: config.enableTime,
         noCalendar: config.noCalendar,
-        time_24hr: true,
+        time_24hr: this.hourFormat() === '24',
         minuteIncrement: this.normalizeMinuteStep(this.minuteStep()),
         allowInput: this.allowManualInput(),
         clickOpens: true,
@@ -180,6 +206,7 @@ export class UiDateTimePickerComponent implements AfterViewInit, OnDestroy, Cont
         this.activateNativeFallback(inputElement, false);
       } else {
         this.useNativeFallback.set(false);
+        this.applyTimePresentation(this.hourFormat(), this.resolvedDisplayFormat());
       }
     } catch (error: unknown) {
       console.error('[UiDateTimePicker] Flatpickr no pudo inicializarse.', error);
@@ -319,7 +346,7 @@ export class UiDateTimePickerComponent implements AfterViewInit, OnDestroy, Cont
       ? instance.formatDate(selectedDate, this.modeConfig().modelFormat)
       : '';
     const displayValue = selectedDate
-      ? instance.formatDate(selectedDate, this.modeConfig().displayFormat)
+      ? instance.formatDate(selectedDate, this.resolvedDisplayFormat())
       : '';
 
     /*
@@ -367,6 +394,25 @@ export class UiDateTimePickerComponent implements AfterViewInit, OnDestroy, Cont
 
     if (disabled) {
       this.picker.close();
+    }
+  }
+
+  /**
+   * Actualiza la presentación de Flatpickr cuando el consumidor cambia entre
+   * reloj de 12 y 24 horas. El valor emitido por Reactive Forms no se modifica.
+   */
+  private applyTimePresentation(hourFormat: UiDateTimeHourFormat, displayFormat: string): void {
+    if (!this.picker || this.mode() === 'date') {
+      return;
+    }
+
+    this.picker.set({
+      dateFormat: displayFormat,
+      time_24hr: hourFormat === '24',
+    });
+
+    if (this.pendingValue) {
+      this.picker.setDate(this.pendingValue, false, this.modeConfig().modelFormat);
     }
   }
 

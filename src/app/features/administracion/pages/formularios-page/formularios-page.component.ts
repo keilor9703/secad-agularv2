@@ -22,6 +22,7 @@ import { SpinnerDemoComponent } from '../../components/formularios/spinner-demo/
 import { StatusComponentsDemoComponent } from '../../components/formularios/status-components-demo/status-components-demo.component';
 import { TableVariantsDemoComponent } from '../../components/formularios/table-variants-demo/table-variants-demo.component';
 import { TabsDemoComponent } from '../../components/formularios/tabs-demo/tabs-demo.component';
+import { ToggleDemoComponent } from '../../components/formularios/toggle-demo/toggle-demo.component';
 import { UiApiReferenceComponent } from '../../components/formularios/ui-api-reference/ui-api-reference.component';
 
 interface FormulariosDemoForm {
@@ -33,6 +34,8 @@ interface FormulariosDemoForm {
   fechaNacimiento: FormControl<string>;
   horaInicio: FormControl<string>;
   fechaHoraCita: FormControl<string>;
+  horaFlatpickrAmPm: FormControl<string>;
+  fechaHoraFlatpickrAmPm: FormControl<string>;
   horaAmPm: FormControl<string>;
   hora24Horas: FormControl<string>;
   observacion: FormControl<string>;
@@ -70,6 +73,7 @@ interface ModalActividadForm {
     StatusComponentsDemoComponent,
     TableVariantsDemoComponent,
     TabsDemoComponent,
+    ToggleDemoComponent,
     UiApiReferenceComponent,
   ],
   templateUrl: './formularios-page.component.html',
@@ -126,6 +130,14 @@ export class FormulariosPageComponent {
       validators: [Validators.required],
     }),
     fechaHoraCita: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required],
+    }),
+    horaFlatpickrAmPm: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required],
+    }),
+    fechaHoraFlatpickrAmPm: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required],
     }),
@@ -204,6 +216,8 @@ export class FormulariosPageComponent {
       fechaNacimiento: '',
       horaInicio: '',
       fechaHoraCita: '',
+      horaFlatpickrAmPm: '',
+      fechaHoraFlatpickrAmPm: '',
       horaAmPm: '',
       hora24Horas: '',
       observacion: '',

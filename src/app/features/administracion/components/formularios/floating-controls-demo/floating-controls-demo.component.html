@@ -122,6 +122,19 @@
             [error]="error('executionTime')"
           />
 
+          <app-ui-date-time-picker
+            formControlName="libraryTimeAmPm"
+            label="Hora Flatpickr AM/PM"
+            labelMode="floating"
+            mode="time"
+            hourFormat="12"
+            hint="La vista usa AM/PM y conserva HH:mm."
+            [minuteStep]="15"
+            [required]="true"
+            [showRequiredMarker]="showRequiredMarkers()"
+            [error]="error('libraryTimeAmPm')"
+          />
+
           <app-ui-time-picker
             formControlName="meetingTime"
             label="Hora AM/PM"
@@ -143,6 +156,20 @@
             [required]="true"
             [showRequiredMarker]="showRequiredMarkers()"
             [error]="error('deploymentDateTime')"
+          />
+
+          <app-ui-date-time-picker
+            formControlName="libraryDateTimeAmPm"
+            label="Fecha y hora Flatpickr AM/PM"
+            labelMode="floating"
+            mode="datetime"
+            hourFormat="12"
+            hint="Calendario y reloj de 12 horas combinados."
+            [minDate]="today"
+            [minuteStep]="15"
+            [required]="true"
+            [showRequiredMarker]="showRequiredMarkers()"
+            [error]="error('libraryDateTimeAmPm')"
           />
         </div>
       </article>
@@ -196,6 +223,11 @@
         <section>
           <h4>Select y pickers</h4>
           <pre><code>{{ selectionUsage }}</code></pre>
+        </section>
+
+        <section class="floating-demo__code-wide">
+          <h4>Flatpickr AM/PM y fecha-hora combinada</h4>
+          <pre><code>{{ libraryPickerUsage }}</code></pre>
         </section>
 
         <section class="floating-demo__code-wide">
