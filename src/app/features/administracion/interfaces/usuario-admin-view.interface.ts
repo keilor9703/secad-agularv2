@@ -42,7 +42,14 @@ export interface RawAssignedRole {
   id?: number;
   rol?: string | null;
   fechaFin?: string | null;
+  FechaFin?: string | null;
   fecha_fin?: string | null;
+  FECHA_FIN?: string | null;
+  fechaExpiracion?: string | null;
+  fecha_expiracion?: string | null;
+  fechaVencimiento?: string | null;
+  fecha_vencimiento?: string | null;
+  fechaFinalizacion?: string | null;
   estado?: string | null;
   justificacion?: string | null;
 }

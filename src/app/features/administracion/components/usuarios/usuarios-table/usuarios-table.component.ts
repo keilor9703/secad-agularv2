@@ -24,6 +24,7 @@ import {
   UiTableAction,
   UiTableActionEvent,
   UiTableColumn,
+  UiTableRowAppearance,
 } from '../../../../../shared/interfaces/ui-table.interface';
 import { UiFormControlSize } from '../../../../../shared/models/ui-form-control-size.model';
 import { UsuarioListadoItem } from '../../../services/usuario-admin.service';
@@ -65,6 +66,7 @@ export class UsuariosTableComponent implements OnChanges, OnInit {
   @Input() totalUsuarios = 0;
   @Input() pageSize = 5;
   @Input() searchTerm = '';
+  @Input() selectedIdentification = '';
 
   @Output() buscar = new EventEmitter<string>();
   @Output() cambiarPagina = new EventEmitter<number>();
@@ -99,6 +101,26 @@ export class UsuariosTableComponent implements OnChanges, OnInit {
       variant: 'danger',
     },
   ];
+
+  /** Marca el registro que está abierto actualmente en Datos personales. */
+  readonly resolveRowAppearance = (row: UsuarioListadoItem): UiTableRowAppearance | null => {
+    const selectedKey = this.normalizeKey(this.selectedIdentification);
+    const rowKey = this.normalizeKey(row.identificacion);
+
+    if (!selectedKey || !rowKey || selectedKey !== rowKey) {
+      return null;
+    }
+
+    return {
+      selected: true,
+      backgroundColor: 'rgba(8, 126, 160, 0.12)',
+      darkBackgroundColor: 'rgba(34, 211, 238, 0.14)',
+      accentColor: '#08a6cb',
+      textColor: '#123f68',
+      darkTextColor: '#e8f7ff',
+      fontWeight: 'semibold',
+    };
+  };
 
   /** Tamaño compacto del buscador ubicado en el encabezado de la tabla. */
   readonly alturaCompacta: UiFormControlSize = {
@@ -178,5 +200,11 @@ export class UsuariosTableComponent implements OnChanges, OnInit {
     if (event.actionId === 'delete') {
       this.eliminar.emit(event.row);
     }
+  }
+
+  private normalizeKey(value: unknown): string {
+    return String(value ?? '')
+      .trim()
+      .toLocaleLowerCase('es-CO');
   }
 }

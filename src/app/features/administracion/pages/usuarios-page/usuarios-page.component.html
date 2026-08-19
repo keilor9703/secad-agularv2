@@ -12,7 +12,7 @@
             type="button"
             title="Minimizar"
             (click)="toggleMinimize()"
-            >
+          >
             <i class="fa-solid fa-minus"></i>
           </button>
           <button
@@ -20,7 +20,7 @@
             type="button"
             title="Cerrar"
             (click)="closePanel()"
-            >
+          >
             <i class="fa-solid fa-xmark"></i>
           </button>
         </div>
@@ -32,6 +32,7 @@
             [rolesCatalogo]="rolesCatalogo"
             [loading]="loading"
             [savingRole]="savingRole"
+            [roleSaveRevision]="roleSaveRevision"
             [deletingRoleId]="deletingRoleId"
             [superAdministradorRolId]="superAdministradorRolId"
             (consultar)="consultarUsuario($event)"
@@ -52,6 +53,7 @@
       [totalUsuarios]="totalUsuariosListado"
       [pageSize]="pageSize"
       [searchTerm]="searchNombreListado"
+      [selectedIdentification]="user?.identificacion || ''"
       (buscar)="onSearchNombreListadoChange($event)"
       (cambiarPagina)="setPaginaListado($event)"
       (cambiarTamanoPagina)="setTamanoPaginaListado($event)"

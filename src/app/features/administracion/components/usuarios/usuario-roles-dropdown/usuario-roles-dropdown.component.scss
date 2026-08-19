@@ -1,7 +1,4 @@
 :host {
-  --roles-dropdown-row-height: 58px;
-  --roles-dropdown-list-height: 174px;
-
   display: block;
   min-width: 0;
 }
@@ -46,6 +43,14 @@
   background: linear-gradient(180deg, #ffffff 0%, #eceff2 100%);
 }
 
+.roles-dropdown__trigger:disabled {
+  border-color: #e1e5ea;
+  background: #f4f5f7;
+  color: #7b8797;
+  cursor: default;
+  box-shadow: none;
+}
+
 .roles-dropdown__trigger:focus-visible,
 .roles-dropdown.is-open .roles-dropdown__trigger {
   border-color: #718096;
@@ -87,11 +92,18 @@
 }
 
 .roles-dropdown__panel {
+  /*
+   * El panel se renderiza en CDK Overlay, fuera del :host. Por eso estas
+   * variables deben vivir aquí: así el límite de tres filas no se pierde.
+   */
+  --roles-dropdown-row-height: calc(58px * var(--font-size-scale, 1));
+  --roles-dropdown-list-height: calc(var(--roles-dropdown-row-height) * 3);
+
   width: 100%;
   max-height: min(330px, calc(100vh - 24px));
   overflow: hidden;
   border: 1px solid #cbd1d9;
-  border-radius: 6px;
+  border-radius: 7px;
   outline: 0;
   background: #ffffff;
   color: #27364a;
@@ -106,9 +118,10 @@
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 12px;
-  padding: 11px 12px;
+  padding: 12px 13px;
   border-bottom: 1px solid #e1e5ea;
-  background: #f3f4f6;
+  border-left: 4px solid #f5a800;
+  background: #f7f9fb;
 }
 
 .roles-dropdown__panel-head > div {
@@ -139,17 +152,38 @@
   height: 28px;
   padding-inline: 7px;
   border: 1px solid #d5dae1;
-  border-radius: 50%;
-  background: #ffffff;
-  color: #334155;
+  border-radius: 999px;
+  background: #edf4ff;
+  color: #0b3a70;
   font-size: calc(11px * var(--font-size-scale));
   font-weight: 900;
   line-height: 1;
 }
 
+.roles-dropdown__result-message {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 36px;
+  margin: 0;
+  padding: 8px 13px;
+  border-bottom: 1px solid #e4e9ee;
+  background: #f7fcfa;
+  color: #19745d;
+  font-size: calc(10px * var(--font-size-scale));
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.roles-dropdown__result-message i {
+  color: #218c70;
+  font-size: calc(11px * var(--font-size-scale));
+}
+
 .roles-dropdown__list {
-  display: grid;
-  max-height: var(--roles-dropdown-list-height);
+  display: block;
+  min-height: 0;
+  max-height: var(--roles-dropdown-list-height, 174px);
   overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
@@ -164,8 +198,8 @@
   align-items: center;
   gap: 10px;
   min-width: 0;
-  min-height: var(--roles-dropdown-row-height);
-  padding: 11px 12px;
+  min-height: var(--roles-dropdown-row-height, 58px);
+  padding: 10px 13px;
   border-bottom: 1px solid #e6e9ed;
   background: #ffffff;
   transition: background-color 140ms ease;
@@ -176,7 +210,7 @@
 }
 
 .roles-dropdown__item:hover {
-  background: #f7f8fa;
+  background: #f4f8fc;
 }
 
 .roles-dropdown__item-icon {
@@ -219,7 +253,7 @@
 
 .roles-dropdown__status {
   justify-self: end;
-  color: #718096;
+  color: #8a98aa;
   font-size: calc(10px * var(--font-size-scale));
 }
 
@@ -292,6 +326,12 @@
   .roles-dropdown__panel-head {
     border-color: #3f4a5e;
     background: #252f45;
+  }
+
+  .roles-dropdown__result-message {
+    border-color: #3f4a5e;
+    background: #203b3b;
+    color: #96dfc8;
   }
 
   .roles-dropdown__panel-head strong,

@@ -1,18 +1,15 @@
 import { BreakpointObserver } from '@angular/cdk/layout';
-
 import {
-  ChangeDetectorRef,
+  ChangeDetectionStrategy,
   Component,
-  HostListener,
-  inject,
   OnDestroy,
   OnInit,
-  ChangeDetectionStrategy
+  inject,
+  signal,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { RouterLink } from '@angular/router';
 import { map } from 'rxjs';
-import { environment } from '../../../../../environments/environment';
+
 import { AuthService } from '../../../../core/auth/auth.service';
 import { BannerItem } from '../../../../core/interfaces/banner.interface';
 import { RadioPlayerComponent } from '../../../../core/layout/footer/radio-player/radio-player.component';
@@ -21,25 +18,28 @@ import { DtoLineaMando, LineaMandoService } from '../../../../core/services/line
 import { NoticiaService } from '../../../../core/services/noticia.service';
 import { VideoInstitucionalService } from '../../../../core/services/video-institucional.service';
 import { VideoUnidadService } from '../../../../core/services/video-unidad.service';
-import { SafeUrlPipe } from '../../../../shared/pipes/safe-url.pipe';
 import { HomeBannerSliderComponent } from '../../components/home-banner-slider/home-banner-slider.component';
+import { HomeCommandLineComponent } from '../../components/home-command-line/home-command-line.component';
+import { HomeMediaPanelComponent } from '../../components/home-media-panel/home-media-panel.component';
+import { HomeNewsFeedComponent } from '../../components/home-news-feed/home-news-feed.component';
 import { HomeStatsComponent } from '../../components/home-stats/home-stats.component';
-import { NewsItem, NewsTag, SocialLink } from '../../interfaces/home-page.interface';
+import { NewsItem, NewsTag } from '../../interfaces/home-page.interface';
 import { HomeService, HomeStats } from '../../services/home.service';
 
 @Component({
   selector: 'app-home',
   standalone: true,
   imports: [
-    SafeUrlPipe,
-    RouterLink,
     RadioPlayerComponent,
     HomeBannerSliderComponent,
-    HomeStatsComponent
-],
+    HomeStatsComponent,
+    HomeNewsFeedComponent,
+    HomeCommandLineComponent,
+    HomeMediaPanelComponent,
+  ],
   templateUrl: './home-page.component.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
-  styleUrls: ['./home-page.component.scss'],
+  styleUrl: './home-page.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HomePageComponent implements OnInit, OnDestroy {
   private static readonly DEFAULT_BANNER_ASPECT_RATIO = 3.78;
@@ -47,303 +47,166 @@ export class HomePageComponent implements OnInit, OnDestroy {
   private static readonly MAX_BANNER_ASPECT_RATIO = 5;
 
   private readonly breakpointObserver = inject(BreakpointObserver);
-  private readonly bannerAspectRatios = new Map<number, number>();
+  private readonly bannerService = inject(BannerService);
+  private readonly authService = inject(AuthService);
+  private readonly homeService = inject(HomeService);
+  private readonly videoUnidadService = inject(VideoUnidadService);
+  private readonly videoInstitucionalService = inject(VideoInstitucionalService);
+  private readonly lineaMandoService = inject(LineaMandoService);
+  private readonly noticiaService = inject(NoticiaService);
 
   readonly isMobile = toSignal(
     this.breakpointObserver.observe('(max-width: 768px)').pipe(map(({ matches }) => matches)),
     { initialValue: this.breakpointObserver.isMatched('(max-width: 768px)') },
   );
 
-  banners: BannerItem[] = [];
-  stats: HomeStats = {
+  readonly banners = signal<BannerItem[]>([]);
+  readonly currentBannerIndex = signal(0);
+  readonly bannerAspectRatios = signal<ReadonlyMap<number, number>>(new Map<number, number>());
+  readonly stats = signal<HomeStats>({
     usuariosActivos: 0,
     reportesGenerados: 0,
     alertasSistema: 0,
-  };
-  currentBannerIndex = 0;
+  });
+  readonly unitVideoUrl = signal('');
+  readonly institutionalVideoUrl = signal('');
+  readonly commandLine = signal<readonly DtoLineaMando[]>([]);
+  readonly news = signal<readonly NewsItem[]>([]);
+  readonly likedNewsIds = signal<ReadonlySet<number>>(this.readLikedNews());
+
   private bannerTimer: ReturnType<typeof setInterval> | null = null;
-  videoUnidadUrl = '';
-  videoInstitucionalUrl = '';
-  lineaMando: DtoLineaMando[] = [];
-  lineaMandoLightboxOpen = false;
-  lineaMandoLightboxItem: DtoLineaMando | null = null;
-  news: NewsItem[] = [];
-  newsModalOpen = false;
-  selectedNews: NewsItem | null = null;
-
-  socialLinks: SocialLink[] = [
-    {
-      name: 'Facebook',
-      icon: 'fa-facebook-f',
-      url: 'https://www.facebook.com/PoliciaColombia',
-      color: '#1877F2',
-    },
-    {
-      name: 'X',
-      icon: 'fa-x-twitter',
-      url: 'https://twitter.com/PoliciaColombia',
-      color: '#000000',
-    },
-    {
-      name: 'Instagram',
-      icon: 'fa-instagram',
-      url: 'https://www.instagram.com/policiacolombia',
-      color: '#E4405F',
-    },
-    {
-      name: 'YouTube',
-      icon: 'fa-youtube',
-      url: 'https://www.youtube.com/@PoliciaNacionalCol',
-      color: '#FF0000',
-    },
-  ];
-
-  constructor(
-    private bannerService: BannerService,
-    private authService: AuthService,
-    private cdr: ChangeDetectorRef,
-    private homeService: HomeService,
-    private videoUnidadService: VideoUnidadService,
-    private videoInstitucionalService: VideoInstitucionalService,
-    private lineaMandoService: LineaMandoService,
-    private noticiaService: NoticiaService,
-  ) {}
 
   ngOnInit(): void {
     this.loadBanners();
     this.loadStats();
-    this.loadVideoUnidad();
-    this.loadVideoInstitucional();
-    this.loadLineaMando();
-    this.loadNoticias();
+    this.loadUnitVideo();
+    this.loadInstitutionalVideo();
+    this.loadCommandLine();
+    this.loadNews();
   }
 
   ngOnDestroy(): void {
     this.stopBannerRotation();
-    document.body.classList.remove('ui-modal-open');
   }
 
-  loadNoticias(): void {
-    this.noticiaService.getActivas().subscribe({
-      next: (noticias) => {
-        const sorted = noticias
-          .sort((a, b) => new Date(b.fechaCreacion).getTime() - new Date(a.fechaCreacion).getTime())
-          .slice(0, 5);
-
-        this.news = sorted.map((n) => ({
-          id: n.idNoticia,
-          date: new Date(n.fechaCreacion).toLocaleDateString('es-CO', {
-            day: '2-digit',
-            month: 'short',
-            year: 'numeric',
-          }),
-          tag: this.mapSeccionToTag(n.seccion),
-          title: n.titulo,
-          lead: n.subtitulo || '',
-          content: n.contenido || '',
-          image: this.getNoticiaImageUrl(n.imagenNoticia),
-          megusta: n.megusta || 0,
-        }));
-      },
-      error: (err) => {
-        console.error('Error cargando noticias:', err);
-        this.news = [];
-      },
-    });
-  }
-
-  private getNoticiaImageUrl(imagenNoticia: string | null | undefined): string {
-    const raw = (imagenNoticia ?? '').trim();
-    if (!raw) return '';
-    if (raw.startsWith('http://') || raw.startsWith('https://') || raw.startsWith('data:')) {
-      return raw;
-    }
-
-    if (raw.startsWith('/api/')) {
-      return `${this.getMediaBaseUrl()}${raw}`;
-    }
-
-    const fileName = raw.split('/').filter(Boolean).pop() ?? '';
-    return fileName
-      ? `${this.getMediaBaseUrl()}/api/NoticiaUpload/Imagen/${encodeURIComponent(fileName)}`
-      : '';
-  }
-
-  private mapSeccionToTag(seccion: string): NewsTag {
-    switch (seccion.toLowerCase()) {
-      case 'comunicado':
-        return 'Comunicado';
-      case 'servicio':
-        return 'Servicio';
-      case 'importante':
-        return 'Importante';
-      default:
-        return 'Comunicado';
-    }
-  }
-
+  /** Conserva la rotación automática y el orden configurado desde administración. */
   private loadBanners(): void {
     this.bannerService.getPublicos(this.authService.getIdentificacion()).subscribe({
       next: (items) => {
         const now = new Date();
-        const ordered = (items ?? [])
-          .filter((x) => this.isBannerVigenteNow(x, now))
+        const visibleItems = (items ?? [])
+          .filter((item) => this.isBannerCurrent(item, now))
           .slice()
-          .sort((a, b) => a.orden - b.orden);
-        this.banners = ordered.length > 0 ? ordered : this.getFallbackBanners();
+          .sort((left, right) => left.orden - right.orden);
+
+        this.banners.set(visibleItems.length > 0 ? visibleItems : this.getFallbackBanners());
         this.setCurrentBanner(0, false);
         this.startBannerRotation();
       },
       error: () => {
-        this.banners = this.getFallbackBanners();
+        this.banners.set(this.getFallbackBanners());
         this.setCurrentBanner(0, false);
         this.startBannerRotation();
       },
     });
-  }
-
-  private isBannerVigenteNow(item: BannerItem, now: Date): boolean {
-    if (Number(item?.vigente ?? 0) !== 1) {
-      return false;
-    }
-
-    const inicio = this.parseSliderDate(item?.fechaInicio);
-    const fin = this.parseSliderDate(item?.fechaFin);
-
-    if (inicio && inicio.getTime() > now.getTime()) {
-      return false;
-    }
-
-    if (fin && fin.getTime() < now.getTime()) {
-      return false;
-    }
-
-    return true;
-  }
-
-  private parseSliderDate(value?: string | null): Date | null {
-    const raw = String(value ?? '').trim();
-    if (!raw) {
-      return null;
-    }
-
-    const parsed = new Date(raw);
-    return Number.isNaN(parsed.getTime()) ? null : parsed;
   }
 
   private loadStats(): void {
     this.homeService.getStats().subscribe({
-      next: (data) => {
-        this.stats = {
+      next: (data) =>
+        this.stats.set({
           usuariosActivos: Number(data?.usuariosActivos ?? 0),
           reportesGenerados: Number(data?.reportesGenerados ?? 0),
           alertasSistema: Number(data?.alertasSistema ?? 0),
-        };
-      },
-      error: () => {
-        this.stats = {
-          usuariosActivos: 0,
-          reportesGenerados: 0,
-          alertasSistema: 0,
-        };
-      },
+        }),
+      error: () => this.stats.set({ usuariosActivos: 0, reportesGenerados: 0, alertasSistema: 0 }),
     });
   }
 
-  private loadVideoUnidad(): void {
+  private loadUnitVideo(): void {
     this.videoUnidadService.getCurrent().subscribe({
-      next: (data) => {
-        this.videoUnidadUrl = data?.hasVideo ? data.url : '';
-      },
-      error: () => {
-        this.videoUnidadUrl = '';
-      },
+      next: (data) => this.unitVideoUrl.set(data?.hasVideo ? data.url : ''),
+      error: () => this.unitVideoUrl.set(''),
     });
   }
 
-  private loadVideoInstitucional(): void {
+  private loadInstitutionalVideo(): void {
     this.videoInstitucionalService.getCurrent().subscribe({
-      next: (data) => {
-        this.videoInstitucionalUrl =
-          data?.hasVideo && data.data?.embedUrl ? data.data.embedUrl : '';
-      },
-      error: () => {
-        this.videoInstitucionalUrl = '';
-      },
+      next: (data) =>
+        this.institutionalVideoUrl.set(
+          data?.hasVideo && data.data?.embedUrl ? data.data.embedUrl : '',
+        ),
+      error: () => this.institutionalVideoUrl.set(''),
     });
   }
 
-  private loadLineaMando(): void {
+  private loadCommandLine(): void {
     this.lineaMandoService.getAll().subscribe({
-      next: (items) => {
-        this.lineaMando = (items ?? [])
-          .filter((x) => Number(x?.vigente ?? 1) === 1)
-          .sort((a, b) => Number(a?.orden ?? 0) - Number(b?.orden ?? 0));
-      },
-      error: () => {
-        this.lineaMando = [];
-      },
+      next: (items) =>
+        this.commandLine.set(
+          (items ?? [])
+            .filter((item) => Number(item?.vigente ?? 1) === 1)
+            .sort((left, right) => Number(left?.orden ?? 0) - Number(right?.orden ?? 0)),
+        ),
+      error: () => this.commandLine.set([]),
     });
   }
 
-  getLineaMandoFotoUrl(item: DtoLineaMando): string {
-    const fotoBase64 = item?.fotoBase64?.trim();
-    if (!fotoBase64) {
-      return 'imagenes/policia.jpg';
-    }
+  private loadNews(): void {
+    this.noticiaService.getActivas().subscribe({
+      next: (items) => {
+        const orderedItems = (items ?? [])
+          .slice()
+          .sort(
+            (left, right) =>
+              new Date(right.fechaCreacion).getTime() - new Date(left.fechaCreacion).getTime(),
+          );
 
-    if (fotoBase64.startsWith('data:')) {
-      return fotoBase64;
-    }
-
-    return `data:image/jpeg;base64,${fotoBase64}`;
+        this.news.set(
+          orderedItems.map((item) => ({
+            id: item.idNoticia,
+            date: new Date(item.fechaCreacion).toLocaleDateString('es-CO', {
+              day: '2-digit',
+              month: 'short',
+              year: 'numeric',
+            }),
+            tag: this.mapSectionToTag(item.seccion),
+            title: item.titulo,
+            lead: item.subtitulo || '',
+            content: item.contenido || '',
+            image: this.noticiaService.resolveImageUrl(item.imagenNoticia),
+            megusta: item.megusta || 0,
+          })),
+        );
+      },
+      error: () => this.news.set([]),
+    });
   }
 
-  getLineaMandoNombre(item: DtoLineaMando): string {
-    return `${item?.nombre ?? ''} ${item?.apellidos ?? ''}`.trim();
-  }
-
-  getLineaMandoCargoDisplay(item: DtoLineaMando): string {
-    const rawCargo = (item?.cargo ?? '').trim();
-    return rawCargo ? this.toTitleCase(rawCargo) : 'Sin cargo';
-  }
-
-  private toTitleCase(value: string): string {
-    return value
-      .toLowerCase()
-      .split(/\s+/)
-      .filter(Boolean)
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
-  }
-
-  openLineaMandoLightbox(item: DtoLineaMando): void {
-    this.lineaMandoLightboxItem = item;
-    this.lineaMandoLightboxOpen = true;
-    this.syncBodyModalClass();
-  }
-
-  closeLineaMandoLightbox(): void {
-    this.lineaMandoLightboxOpen = false;
-    this.lineaMandoLightboxItem = null;
-    this.syncBodyModalClass();
-  }
-
-  private syncBodyModalClass(): void {
-    if (this.newsModalOpen || this.lineaMandoLightboxOpen) {
-      document.body.classList.add('ui-modal-open');
+  /** Registra el me gusta una sola vez por sesión y actualiza el feed sin recargarlo. */
+  likeNews(item: NewsItem): void {
+    if (this.likedNewsIds().has(item.id)) {
       return;
     }
 
-    document.body.classList.remove('ui-modal-open');
+    this.noticiaService.darLike(item.id).subscribe({
+      next: () => {
+        this.news.update((items) =>
+          items.map((current) =>
+            current.id === item.id ? { ...current, megusta: current.megusta + 1 } : current,
+          ),
+        );
+        this.likedNewsIds.update((current) => new Set([...current, item.id]));
+        this.persistLikedNews();
+      },
+      error: (error) => console.error('No fue posible registrar la reacción.', error),
+    });
   }
 
   goToBanner(index: number): void {
-    if (index < 0 || index >= this.banners.length) {
-      return;
+    if (index >= 0 && index < this.banners().length) {
+      this.setCurrentBanner(index);
     }
-
-    this.setCurrentBanner(index);
   }
 
   showPreviousBanner(): void {
@@ -356,9 +219,8 @@ export class HomePageComponent implements OnInit, OnDestroy {
 
   getActiveBannerAspectRatio(): string {
     const ratio =
-      this.bannerAspectRatios.get(this.currentBannerIndex) ??
+      this.bannerAspectRatios().get(this.currentBannerIndex()) ??
       HomePageComponent.DEFAULT_BANNER_ASPECT_RATIO;
-
     return `${ratio} / 1`;
   }
 
@@ -373,106 +235,77 @@ export class HomePageComponent implements OnInit, OnDestroy {
       HomePageComponent.MAX_BANNER_ASPECT_RATIO,
       Math.max(HomePageComponent.MIN_BANNER_ASPECT_RATIO, naturalRatio),
     );
-
-    this.bannerAspectRatios.set(index, Number(safeRatio.toFixed(4)));
-    this.cdr.markForCheck();
+    this.bannerAspectRatios.update((current) => {
+      const next = new Map(current);
+      next.set(index, Number(safeRatio.toFixed(4)));
+      return next;
+    });
   }
 
-  getBannerImageUrl(item: BannerItem): string {
-    const raw = (item.urlImagen ?? '').trim();
-    if (!raw) {
-      return '';
+  private isBannerCurrent(item: BannerItem, now: Date): boolean {
+    if (Number(item?.vigente ?? 0) !== 1) {
+      return false;
     }
-
-    if (raw.startsWith('data:')) {
-      return raw;
-    }
-
-    if (raw.startsWith('/api/Slider/Image/')) {
-      return `${this.getMediaBaseUrl()}${raw}`;
-    }
-
-    const uploadPathIndex = raw.toLowerCase().indexOf('/uploads/sliders/');
-    if (uploadPathIndex >= 0) {
-      const fileName = raw.substring(uploadPathIndex).split('/').filter(Boolean).pop() ?? '';
-      return fileName ? `${this.getApiBaseUrl()}/Slider/Image/${encodeURIComponent(fileName)}` : '';
-    }
-
-    const normalized = raw.replace(/\\/g, '/');
-    if (normalized.toLowerCase().startsWith('uploads/sliders/')) {
-      const fileName = normalized.split('/').filter(Boolean).pop() ?? '';
-      return fileName ? `${this.getApiBaseUrl()}/Slider/Image/${encodeURIComponent(fileName)}` : '';
-    }
-
-    if (raw.startsWith('http://') || raw.startsWith('https://')) {
-      return raw;
-    }
-
-    if (raw.startsWith('/')) {
-      return `${this.getApiOrigin()}${raw}`;
-    }
-
-    if (/^[^/]+\.(jpg|jpeg|png|webp)$/i.test(normalized)) {
-      return `${this.getApiBaseUrl()}/Slider/Image/${encodeURIComponent(normalized)}`;
-    }
-
-    return `/${raw}`;
+    const start = this.parseDate(item?.fechaInicio);
+    const end = this.parseDate(item?.fechaFin);
+    return !(start && start > now) && !(end && end < now);
   }
 
-  private getMediaBaseUrl(): string {
-    return (environment.mediaBaseUrl || environment.sliderMediaBaseUrl || '')
-      .trim()
-      .replace(/\/+$/, '');
-  }
-
-  private getApiBaseUrl(): string {
-    const base = (environment.apiBaseUrl ?? '/api').trim().replace(/\/+$/, '');
-    return base || '/api';
-  }
-
-  private getApiOrigin(): string {
-    const base = this.getApiBaseUrl();
-    if (!/^https?:\/\//i.test(base)) {
-      return '';
+  private parseDate(value?: string | null): Date | null {
+    const rawValue = String(value ?? '').trim();
+    if (!rawValue) {
+      return null;
     }
+    const date = new Date(rawValue);
+    return Number.isNaN(date.getTime()) ? null : date;
+  }
 
+  private mapSectionToTag(section: string): NewsTag {
+    switch (section.toLocaleLowerCase('es-CO')) {
+      case 'servicio':
+        return 'Servicio';
+      case 'importante':
+        return 'Importante';
+      default:
+        return 'Comunicado';
+    }
+  }
+
+  private readLikedNews(): ReadonlySet<number> {
     try {
-      const url = new URL(base);
-      return `${url.protocol}//${url.host}`;
+      const storedValue = sessionStorage.getItem('likedNews');
+      const parsedValue: unknown = storedValue ? JSON.parse(storedValue) : [];
+      return new Set(Array.isArray(parsedValue) ? parsedValue.filter(Number.isFinite) : []);
     } catch {
-      return '';
+      return new Set<number>();
     }
+  }
+
+  private persistLikedNews(): void {
+    sessionStorage.setItem('likedNews', JSON.stringify([...this.likedNewsIds()]));
   }
 
   private startBannerRotation(): void {
     this.stopBannerRotation();
-    if (this.banners.length <= 1) {
+    if (this.banners().length <= 1) {
       return;
     }
-
-    this.bannerTimer = window.setInterval(() => {
-      this.moveBanner(1, false);
-    }, 5000);
+    this.bannerTimer = window.setInterval(() => this.moveBanner(1, false), 5000);
   }
 
   private moveBanner(offset: -1 | 1, restart = true): void {
-    const total = this.banners.length;
+    const total = this.banners().length;
     if (total <= 1) {
       return;
     }
-
-    const nextIndex = (this.currentBannerIndex + offset + total) % total;
-    this.setCurrentBanner(nextIndex, restart);
+    this.setCurrentBanner((this.currentBannerIndex() + offset + total) % total, restart);
   }
 
   private setCurrentBanner(index: number, restart = true): void {
-    if (index < 0 || index >= this.banners.length) {
+    if (index < 0 || index >= this.banners().length) {
       return;
     }
-
-    this.currentBannerIndex = index;
-    this.cdr.markForCheck();
-
+    this.currentBannerIndex.set(index);
     if (restart) {
       this.startBannerRotation();
     }
@@ -515,66 +348,5 @@ export class HomePageComponent implements OnInit, OnDestroy {
         vigente: 1,
       },
     ];
-  }
-
-  openNews(item: NewsItem): void {
-    this.selectedNews = item;
-    this.newsModalOpen = true;
-    this.syncBodyModalClass();
-  }
-
-  closeNews(): void {
-    this.newsModalOpen = false;
-    this.selectedNews = null;
-    this.syncBodyModalClass();
-  }
-
-  likeNoticia(item: NewsItem, event: Event): void {
-    event.stopPropagation();
-
-    const likedNews = this.getLikedNews();
-    if (likedNews.includes(item.id)) {
-      return;
-    }
-
-    this.noticiaService.darLike(item.id).subscribe({
-      next: () => {
-        item.megusta = (item.megusta || 0) + 1;
-        this.saveLikedNews(item.id);
-      },
-      error: (err) => {
-        console.error('Error dando like:', err);
-      },
-    });
-  }
-
-  hasLiked(noticiaId: number): boolean {
-    const likedNews = this.getLikedNews();
-    return likedNews.includes(noticiaId);
-  }
-
-  private getLikedNews(): number[] {
-    const stored = sessionStorage.getItem('likedNews');
-    return stored ? JSON.parse(stored) : [];
-  }
-
-  private saveLikedNews(noticiaId: number): void {
-    const liked = this.getLikedNews();
-    if (!liked.includes(noticiaId)) {
-      liked.push(noticiaId);
-      sessionStorage.setItem('likedNews', JSON.stringify(liked));
-    }
-  }
-
-  @HostListener('document:keydown.escape')
-  onEsc(): void {
-    if (this.lineaMandoLightboxOpen) {
-      this.closeLineaMandoLightbox();
-      return;
-    }
-
-    if (this.newsModalOpen) {
-      this.closeNews();
-    }
   }
 }

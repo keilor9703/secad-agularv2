@@ -1,0 +1,151 @@
+<section
+  class="command"
+  aria-labelledby="command-title"
+  (mouseenter)="pauseAutoplay()"
+  (mouseleave)="resumeAutoplay()"
+  (focusin)="pauseAutoplay()"
+  (focusout)="resumeAutoplay()"
+>
+  <header class="command__header">
+    <span class="command__icon"><i class="fa-solid fa-sitemap" aria-hidden="true"></i></span>
+    <div>
+      <h2 id="command-title">Línea de mando</h2>
+      <p>Directivos institucionales vigentes</p>
+    </div>
+    <span class="command__count">{{ members().length }}</span>
+  </header>
+
+  @if (visibleMembers().length > 0) {
+    <div class="command__carousel">
+      <div
+        #viewport
+        class="command__viewport"
+        (scroll)="syncActiveCard()"
+        (pointerdown)="pauseAutoplay()"
+        (pointerup)="resumeAutoplay()"
+      >
+        <div class="command__track">
+          @for (member of visibleMembers(); track member.idLineaMando; let index = $index) {
+          <button
+            #memberCard
+            class="member"
+            type="button"
+            [class.is-active]="activeIndex() === index"
+            (click)="openProfile(member)"
+          >
+          @if (hasPhoto(member)) {
+            <img
+              class="member__avatar"
+              [src]="getPhoto(member)"
+              [alt]="getFullName(member)"
+              loading="lazy"
+              (error)="markPhotoAsFailed(member.idLineaMando)"
+            />
+          } @else {
+            <span class="member__avatar member__avatar--fallback" aria-hidden="true">
+              {{ getInitials(member) }}
+            </span>
+          }
+
+          <span class="member__data">
+            <span class="member__grade">{{ member.grado || 'Directivo' }}</span>
+            <strong>{{ getFullName(member) }}</strong>
+            <span class="member__position">{{ getPosition(member) }}</span>
+          </span>
+
+          <i class="fa-solid fa-chevron-right member__go" aria-hidden="true"></i>
+          </button>
+          }
+        </div>
+      </div>
+
+      <button
+        class="command__side-control command__side-control--previous"
+        type="button"
+        aria-label="Directivo anterior"
+        (click)="previousSlide()"
+      >
+        <i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
+      </button>
+
+      <button
+        class="command__side-control command__side-control--next"
+        type="button"
+        aria-label="Directivo siguiente"
+        (click)="nextSlide()"
+      >
+        <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
+      </button>
+    </div>
+
+    <footer class="command__footer" aria-label="Controles de línea de mando">
+      <button type="button" aria-label="Directivo anterior" (click)="previousSlide()">
+        <i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
+      </button>
+
+      <div class="command__pagination">
+        @for (member of visibleMembers(); track member.idLineaMando; let index = $index) {
+          <button
+            type="button"
+            [class.is-active]="activeIndex() === index"
+            [attr.aria-label]="'Mostrar directivo ' + (index + 1)"
+            [attr.aria-current]="activeIndex() === index ? 'true' : null"
+            (click)="selectSlide(index)"
+          ></button>
+        }
+      </div>
+
+      <span>{{ activeIndex() + 1 }} / {{ visibleMembers().length }}</span>
+
+      <button type="button" aria-label="Directivo siguiente" (click)="nextSlide()">
+        <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
+      </button>
+    </footer>
+  } @else {
+    <div class="command__empty">
+      <i class="fa-solid fa-user-shield" aria-hidden="true"></i>
+      <div>
+        <strong>Sin registros activos</strong>
+        <span>La línea de mando aparecerá cuando exista información publicada.</span>
+      </div>
+    </div>
+  }
+</section>
+
+@if (selectedMember(); as member) {
+  <div class="profile-dialog" (click)="closeProfile()">
+    <article
+      class="profile-dialog__panel"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="command-profile-title"
+      (click)="$event.stopPropagation()"
+    >
+      <header>
+        <span>Línea de mando</span>
+        <button type="button" aria-label="Cerrar perfil" (click)="closeProfile()">
+          <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+        </button>
+      </header>
+      <div class="profile-dialog__content">
+        @if (hasPhoto(member)) {
+          <img
+            [src]="getPhoto(member)"
+            [alt]="getFullName(member)"
+            (error)="markPhotoAsFailed(member.idLineaMando)"
+          />
+        } @else {
+          <span class="profile-dialog__fallback" aria-hidden="true">{{ getInitials(member) }}</span>
+        }
+        <div>
+          <span class="profile-dialog__grade">{{ member.grado || 'Directivo' }}</span>
+          <h2 id="command-profile-title">{{ getFullName(member) }}</h2>
+          <p>{{ getPosition(member) }}</p>
+          @if (member.unidad) {
+            <small>{{ member.unidad }}</small>
+          }
+        </div>
+      </div>
+    </article>
+  </div>
+}

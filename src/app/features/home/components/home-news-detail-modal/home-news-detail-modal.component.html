@@ -1,0 +1,87 @@
+<div class="news-detail" (click)="close()">
+  <article
+    class="news-detail__panel"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="news-detail-title"
+    aria-describedby="news-detail-summary"
+    (click)="$event.stopPropagation()"
+  >
+    <header class="news-detail__header">
+      <div class="news-detail__identity">
+        <span class="news-detail__avatar" aria-hidden="true">
+          <i class="fa-solid fa-bullhorn"></i>
+          <span></span>
+        </span>
+        <div>
+          <strong>Policía Nacional</strong>
+          <span>Información institucional · {{ news().date }}</span>
+        </div>
+      </div>
+
+      <button
+        #closeButton
+        class="news-detail__close"
+        type="button"
+        aria-label="Cerrar noticia"
+        (click)="close()"
+      >
+        <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+      </button>
+    </header>
+
+    <div class="news-detail__scroll">
+      @if (imageVisible() && !localImageFailed()) {
+        <figure class="news-detail__media">
+          <img [src]="news().image" [alt]="news().title" (error)="handleImageError()" />
+        </figure>
+      }
+
+      <div class="news-detail__article">
+        <div class="news-detail__metadata">
+          <span>{{ news().tag }}</span>
+          <time>{{ news().date }}</time>
+        </div>
+
+        <h2 id="news-detail-title">{{ news().title }}</h2>
+
+        @if (news().lead) {
+          <p id="news-detail-summary" class="news-detail__lead">{{ news().lead }}</p>
+        } @else {
+          <span id="news-detail-summary" class="sr-only"
+            >Detalle de la publicación institucional.</span
+          >
+        }
+
+        <div class="news-detail__copy">
+          @for (paragraph of paragraphs(); track $index) {
+            <p>{{ paragraph }}</p>
+          } @empty {
+            <p>La publicación no contiene información adicional.</p>
+          }
+        </div>
+      </div>
+    </div>
+
+    <footer class="news-detail__footer">
+      <button
+        class="news-detail__reaction"
+        type="button"
+        [class.is-liked]="liked()"
+        [disabled]="liked()"
+        (click)="requestLike()"
+      >
+        <i
+          class="fa-thumbs-up"
+          [class.fa-solid]="liked()"
+          [class.fa-regular]="!liked()"
+          aria-hidden="true"
+        ></i>
+        <span>{{ liked() ? 'Te gusta' : 'Me gusta' }}</span>
+        <strong>{{ news().megusta }}</strong>
+      </button>
+
+      <button class="news-detail__dismiss" type="button" (click)="close()">Cerrar</button>
+    </footer>
+  </article>
+</div>

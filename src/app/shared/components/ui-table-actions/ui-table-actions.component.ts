@@ -44,6 +44,8 @@ export class UiTableActionsComponent<
 
   readonly isOpen = signal(false);
   readonly inlineActionsOpen = signal(false);
+  /** Evita que :hover vuelva a mostrar acciones después de ejecutar una opción. */
+  readonly inlineHoverSuppressed = signal(false);
   readonly visibleActions = computed(() =>
     this.actions().filter((action) => this.isActionVisible(action)),
   );
@@ -194,14 +196,24 @@ export class UiTableActionsComponent<
       return;
     }
 
-    this.actionClick.emit({ actionId: action.id, row: this.row() });
+    /*
+     * Cerramos antes de emitir. El consumidor puede abrir un modal o cambiar
+     * la fila de forma síncrona y no debe dejar controles flotando debajo.
+     */
     this.inlineActionsOpen.set(false);
+    this.inlineHoverSuppressed.set(this.displayMode() === 'row-hover');
     this.close();
+    this.actionClick.emit({ actionId: action.id, row: this.row() });
   }
 
   toggleInlineActions(event: Event): void {
     event.stopPropagation();
+    this.inlineHoverSuppressed.set(false);
     this.inlineActionsOpen.update((open) => !open);
+  }
+
+  releaseInlineHover(): void {
+    this.inlineHoverSuppressed.set(false);
   }
 
   closeInlineActions(event: FocusEvent): void {

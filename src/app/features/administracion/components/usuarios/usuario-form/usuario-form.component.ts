@@ -1,5 +1,5 @@
-
 import {
+  ChangeDetectionStrategy,
   Component,
   EventEmitter,
   Input,
@@ -7,7 +7,7 @@ import {
   Output,
   SimpleChanges,
   inject,
-  ChangeDetectionStrategy
+  signal,
 } from '@angular/core';
 import { AbstractControl, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { UiButtonComponent } from '../../../../../shared/components/ui-button/ui-button.component';
@@ -15,7 +15,9 @@ import { UiInputComponent } from '../../../../../shared/components/ui-input/ui-i
 import { UiSearchInputComponent } from '../../../../../shared/components/ui-search-input/ui-search-input.component';
 import { UiTabComponent } from '../../../../../shared/components/ui-tabs/ui-tab.component';
 import { UiTabsComponent } from '../../../../../shared/components/ui-tabs/ui-tabs.component';
+import { UiToggleComponent } from '../../../../../shared/components/ui-toggle/ui-toggle.component';
 import { getFormErrorMessage } from '../../../../../shared/utils/form-error.util';
+import { minDateValidator } from '../../../../../shared/validators/min-date.validator';
 import { UsuarioRolesPanelComponent } from '../usuario-roles-panel/usuario-roles-panel.component';
 
 import {
@@ -36,19 +38,22 @@ import { DtoRolCatalogo } from '../../../services/usuario-admin.service';
     UiSearchInputComponent,
     UiTabComponent,
     UiTabsComponent,
-    UsuarioRolesPanelComponent
-],
+    UiToggleComponent,
+    UsuarioRolesPanelComponent,
+  ],
   templateUrl: './usuario-form.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./usuario-form.component.scss'],
 })
 export class UsuarioFormComponent implements OnChanges {
   private readonly fb = inject(FormBuilder);
+  readonly lastLoginLabel = signal('Sin registros');
 
   @Input() user: UserProfile | null = null;
   @Input() rolesCatalogo: DtoRolCatalogo[] = [];
   @Input() loading = false;
   @Input() savingRole = false;
+  @Input() roleSaveRevision = 0;
   @Input() deletingRoleId: number | null = null;
   @Input() superAdministradorRolId = 1;
 
@@ -84,19 +89,30 @@ export class UsuarioFormComponent implements OnChanges {
     undeLaborandoCodigo: ['', [Validators.required, Validators.maxLength(30)]],
     codigoCargo: ['', [Validators.required, Validators.maxLength(30)]],
     activo: [true, [Validators.required]],
-    ultimoIngreso: ['Sin dato', [Validators.maxLength(100)]],
   });
 
   rolForm = this.fb.group({
     rolId: [null as number | null, [Validators.required]],
-    fechaFin: ['', [Validators.required]],
+    fechaFin: ['', [Validators.required, minDateValidator(() => new Date())]],
     justificacion: ['', [Validators.required, Validators.maxLength(500)]],
   });
 
   /** Sincroniza el formulario cuando llega un usuario consultado o cambia la seleccion. */
   ngOnChanges(changes: SimpleChanges): void {
+    if (changes['loading']) {
+      this.syncLoadingState();
+    }
+
     if (changes['user']) {
       this.cargarUsuario(this.user);
+    }
+
+    if (
+      changes['roleSaveRevision'] &&
+      !changes['roleSaveRevision'].firstChange &&
+      changes['roleSaveRevision'].currentValue > changes['roleSaveRevision'].previousValue
+    ) {
+      this.cancelarNuevoRol();
     }
   }
 
@@ -113,12 +129,6 @@ export class UsuarioFormComponent implements OnChanges {
     if (tab === 'datos' || tab === 'roles') {
       this.activeTab = tab;
     }
-  }
-
-  /** Alterna el estado activo/inactivo que se enviara al guardar. */
-  toggleEstadoUsuario(): void {
-    const currentValue = this.usuarioForm.controls.activo.value ?? false;
-    this.usuarioForm.controls.activo.setValue(!currentValue);
   }
 
   /** Valida y emite la identificacion digitada en el buscador principal. */
@@ -142,7 +152,8 @@ export class UsuarioFormComponent implements OnChanges {
   /** Limpia el formulario actual y deja la pantalla lista para una nueva consulta. */
   onNuevoUsuario(): void {
     this.consultaForm.reset({ identificacion: '' });
-    this.usuarioForm.reset({ activo: true, ultimoIngreso: 'Sin dato' });
+    this.usuarioForm.reset({ activo: true });
+    this.lastLoginLabel.set('Sin registros');
     this.cancelarNuevoRol();
     this.activeTab = 'datos';
     this.nuevoUsuario.emit();
@@ -158,7 +169,7 @@ export class UsuarioFormComponent implements OnChanges {
     fecha.setMonth(fecha.getMonth() + 6);
 
     this.rolForm.reset({
-      rolId: null,
+      rolId: { value: null, disabled: false },
       justificacion: '',
       fechaFin: this.normalizeDateString(fecha.toISOString()),
     });
@@ -169,13 +180,23 @@ export class UsuarioFormComponent implements OnChanges {
 
   /** Carga un rol vigente en el formulario para actualizar su informacion. */
   prepararEdicionRol(rol: UserRole): void {
-    this.editingRole = rol;
+    const fechaFin = this.normalizeDateString(rol.fechaExpiracion);
+
+    /*
+     * El valor y el estado disabled se aplican juntos antes de proyectar el
+     * modal. Así Angular entrega a los CVA un formulario estable desde su
+     * primer ciclo y el selector de fecha recibe fechaFin al inicializarse.
+     */
     this.rolForm.reset({
-      rolId: rol.id,
+      rolId: { value: rol.id, disabled: true },
       justificacion: rol.justificacion,
-      fechaFin: rol.fechaExpiracion,
+      fechaFin,
     });
-    this.rolForm.controls.rolId.disable();
+
+    this.editingRole = {
+      ...rol,
+      fechaExpiracion: fechaFin,
+    };
     this.showAddRoleForm = true;
   }
 
@@ -183,9 +204,8 @@ export class UsuarioFormComponent implements OnChanges {
   cancelarNuevoRol(): void {
     this.showAddRoleForm = false;
     this.editingRole = null;
-    this.rolForm.controls.rolId.enable();
     this.rolForm.reset({
-      rolId: null,
+      rolId: { value: null, disabled: false },
       justificacion: '',
       fechaFin: '',
     });
@@ -219,7 +239,6 @@ export class UsuarioFormComponent implements OnChanges {
       undeLaborandoCodigo: formValue.undeLaborandoCodigo ?? '',
       codigoCargo: formValue.codigoCargo ?? '',
       activo: formValue.activo ?? true,
-      ultimoIngreso: formValue.ultimoIngreso ?? 'Sin dato',
       fotoUrl: this.user.fotoUrl,
       roles: this.user.roles,
     });
@@ -267,12 +286,31 @@ export class UsuarioFormComponent implements OnChanges {
     return this.rolForm.get(fieldName);
   }
 
+  /**
+   * Reactive Forms es la única fuente del estado disabled. Evita combinar
+   * formControlName con [disabled] y elimina el aviso de Angular.
+   */
+  private syncLoadingState(): void {
+    const controls = [this.consultaForm.controls.identificacion, this.usuarioForm.controls.activo];
+
+    for (const control of controls) {
+      if (this.loading && control.enabled) {
+        control.disable({ emitEvent: false });
+      } else if (!this.loading && control.disabled) {
+        control.enable({ emitEvent: false });
+      }
+    }
+  }
+
   /** Carga en el formulario los datos devueltos por la consulta empresarial. */
   private cargarUsuario(user: UserProfile | null): void {
     if (!user) {
-      this.usuarioForm.reset({ activo: true, ultimoIngreso: 'Sin dato' });
+      this.usuarioForm.reset({ activo: true });
+      this.lastLoginLabel.set('Sin registros');
       return;
     }
+
+    this.lastLoginLabel.set(user.ultimoIngreso || 'Sin registros');
 
     this.consultaForm.patchValue({ identificacion: user.identificacion });
     this.usuarioForm.patchValue({
@@ -293,7 +331,6 @@ export class UsuarioFormComponent implements OnChanges {
       undeLaborandoCodigo: user.undeLaborandoCodigo,
       codigoCargo: user.codigoCargo,
       activo: user.activo,
-      ultimoIngreso: user.ultimoIngreso,
     });
   }
 
@@ -305,10 +342,16 @@ export class UsuarioFormComponent implements OnChanges {
       return '';
     }
 
-    const onlyDate = value.includes('T') ? value.split('T')[0] : value;
+    const onlyDate = value.includes('T') ? value.split('T')[0] : value.split(' ')[0];
 
     if (/^\d{4}-\d{2}-\d{2}$/.test(onlyDate)) {
       return onlyDate;
+    }
+
+    const dayFirstMatch = onlyDate.match(/^(\d{2})[\/-](\d{2})[\/-](\d{4})$/);
+    if (dayFirstMatch) {
+      const [, day, month, year] = dayFirstMatch;
+      return `${year}-${month}-${day}`;
     }
 
     const parsed = new Date(value);

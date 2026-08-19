@@ -61,11 +61,12 @@
         [headerColorEnd]="tableHeaderColorEnd()"
         headerTextColor="#ffffff"
         paginationVariant="numbered"
-        [paginationMaxVisiblePages]="4"
+        [paginationMaxVisiblePages]="5"
         [paginationShowSummary]="true"
         [paginationShowPageSize]="true"
         [columns]="columns"
         [rows]="usuarios"
+        [rowAppearance]="resolveRowAppearance"
         [bodyFontSize]="12"
         bodyFontWeight="regular"
         bodyTextColor="#536b85"
@@ -95,6 +96,7 @@
     <app-usuario-roles-dropdown
       [roles]="row.rol"
       [vencimientos]="row.fechaFinRol || ''"
+      [contextLabel]="row.identificacion || row.username"
     ></app-usuario-roles-dropdown>
   </ng-template>
 </section>

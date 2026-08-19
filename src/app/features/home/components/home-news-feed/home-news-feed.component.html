@@ -1,0 +1,137 @@
+<section class="news-board" aria-labelledby="home-news-title">
+  <header class="news-board__header">
+    <div class="news-board__heading">
+      <span class="news-board__icon"
+        ><i class="fa-regular fa-newspaper" aria-hidden="true"></i
+      ></span>
+      <div>
+        <span class="news-board__eyebrow">Actualidad institucional</span>
+        <h2 id="home-news-title">Noticias y comunicados</h2>
+        <p>Información oficial publicada por las unidades.</p>
+      </div>
+    </div>
+    <a class="news-board__all" routerLink="/noticias">
+      Ver todas
+      <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+    </a>
+  </header>
+
+  @if (visibleItems().length > 0) {
+    <div
+      class="news-board__carousel"
+      (mouseenter)="pauseAutoplay()"
+      (mouseleave)="resumeAutoplay()"
+      (focusin)="pauseAutoplay()"
+      (focusout)="resumeAutoplay()"
+    >
+      <div
+        #newsViewport
+        class="news-board__viewport"
+        (pointerdown)="pauseAutoplay()"
+        (pointerup)="resumeAutoplay()"
+      >
+        <div class="news-board__track">
+          @for (item of visibleItems(); track item.id) {
+            <article
+              #newsCard
+              class="news-card"
+              [class.news-card--without-image]="!hasVisibleImage(item)"
+              tabindex="0"
+              (click)="openNews(item)"
+              (keydown.enter)="openNews(item)"
+            >
+              <header class="news-card__social-header">
+                <span class="news-card__avatar">
+                  <i class="fa-solid fa-bullhorn" aria-hidden="true"></i>
+                </span>
+                <div>
+                  <strong>{{ item.tag }}</strong>
+                  <time>{{ item.date }}</time>
+                </div>
+                <i class="fa-solid fa-ellipsis" aria-hidden="true"></i>
+              </header>
+
+              @if (hasVisibleImage(item)) {
+                <img
+                  class="news-card__image"
+                  [src]="item.image"
+                  [alt]="item.title"
+                  loading="lazy"
+                  (error)="markImageAsFailed(item.id)"
+                />
+              }
+
+              <div class="news-card__body">
+                <span class="news-card__tag" [class.is-important]="item.tag === 'Importante'">
+                  {{ item.tag }}
+                </span>
+
+                <h3>{{ item.title }}</h3>
+                @if (item.lead) {
+                  <p>{{ item.lead }}</p>
+                }
+
+                <footer class="news-card__footer">
+                  <button
+                    type="button"
+                    class="news-card__like"
+                    [class.is-liked]="likedIds().has(item.id)"
+                    [disabled]="likedIds().has(item.id)"
+                    (click)="requestLike(item, $event)"
+                    [attr.aria-label]="'Me gusta. ' + item.megusta + ' reacciones'"
+                  >
+                    <i class="fa-regular fa-thumbs-up" aria-hidden="true"></i>
+                    {{ item.megusta }}
+                  </button>
+                  <span>
+                    Leer noticia
+                    <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
+                  </span>
+                </footer>
+              </div>
+            </article>
+          }
+        </div>
+      </div>
+
+      @if (visibleItems().length > 1) {
+        <button
+          class="news-board__side-control news-board__side-control--previous"
+          type="button"
+          aria-label="Noticias anteriores"
+          (click)="previousNews()"
+        >
+          <i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
+        </button>
+
+        <button
+          class="news-board__side-control news-board__side-control--next"
+          type="button"
+          aria-label="Noticias siguientes"
+          (click)="nextNews()"
+        >
+          <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
+        </button>
+      }
+    </div>
+  } @else {
+    <div class="news-board__empty">
+      <i class="fa-regular fa-newspaper" aria-hidden="true"></i>
+      <div>
+        <strong>No hay publicaciones disponibles</strong>
+        <span>Las novedades aparecerán cuando sean publicadas.</span>
+      </div>
+    </div>
+  }
+</section>
+
+@if (selectedNews(); as news) {
+  <app-home-news-detail-modal
+    [news]="news"
+    [liked]="likedIds().has(news.id)"
+    [imageVisible]="hasVisibleImage(news)"
+    (closed)="closeNews()"
+    (likeRequested)="requestLike($event)"
+    (imageFailed)="markImageAsFailed($event)"
+  />
+}

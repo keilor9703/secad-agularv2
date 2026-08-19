@@ -1,25 +1,28 @@
-<div class="stats-grid">
-  <div class="stat-card">
-    <div class="stat-icon blue"><i class="fa-solid fa-users" aria-hidden="true"></i></div>
-    <div class="stat-info">
-      <h3>{{ stats.usuariosActivos | number }}</h3>
-      <p>Usuarios Activos</p>
+<section class="stats" aria-label="Resumen operativo">
+  <article class="stat stat--blue">
+    <span class="stat__icon"><i class="fa-solid fa-users" aria-hidden="true"></i></span>
+    <div>
+      <strong>{{ stats().usuariosActivos | number }}</strong>
+      <span>Usuarios activos</span>
     </div>
-  </div>
+    <small>Sesiones vigentes</small>
+  </article>
 
-  <div class="stat-card">
-    <div class="stat-icon green"><i class="fa-solid fa-file-circle-check" aria-hidden="true"></i></div>
-    <div class="stat-info">
-      <h3>{{ stats.reportesGenerados | number }}</h3>
-      <p>Reportes del Mes</p>
+  <article class="stat stat--green">
+    <span class="stat__icon"><i class="fa-solid fa-file-circle-check" aria-hidden="true"></i></span>
+    <div>
+      <strong>{{ stats().reportesGenerados | number }}</strong>
+      <span>Reportes del mes</span>
     </div>
-  </div>
+    <small>Gestión registrada</small>
+  </article>
 
-  <div class="stat-card">
-    <div class="stat-icon orange"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></div>
-    <div class="stat-info">
-      <h3>{{ stats.alertasSistema | number }}</h3>
-      <p>Roles por Vencer (7 dias)</p>
+  <article class="stat stat--amber">
+    <span class="stat__icon"><i class="fa-solid fa-clock" aria-hidden="true"></i></span>
+    <div>
+      <strong>{{ stats().alertasSistema | number }}</strong>
+      <span>Roles por vencer</span>
     </div>
-  </div>
-</div>
+    <small>Próximos 7 días</small>
+  </article>
+</section>

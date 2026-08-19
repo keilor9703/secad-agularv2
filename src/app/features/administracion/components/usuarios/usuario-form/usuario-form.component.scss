@@ -111,48 +111,14 @@
   display: block;
   text-align: left;
   margin-top: 2px;
-  color: var(--color-success-text);
+  color: var(--policia-azul, #003b78);
   font-size: calc(12px * var(--font-size-scale));
   font-weight: 900;
+  transition: color 180ms ease;
 }
 
 .state-box__value.inactive {
-  color: var(--color-danger-text);
-}
-
-.switch {
-  width: 46px;
-  height: 26px;
-  border: none;
-  border-radius: 999px;
-  background: rgba(var(--policia-neutral-oscuro-rgb), 0.4);
-  padding: 0 4px;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: flex-start;
-  transition: background 0.2s ease;
-}
-
-.switch span {
-  width: 18px;
-  height: 18px;
-  background: var(--ui-surface);
-  border-radius: 999px;
-  transition: transform 0.2s ease;
-}
-
-.switch.active {
-  background: var(--policia-medio);
-}
-
-.switch.active span {
-  transform: translateX(20px);
-}
-
-.switch:disabled {
-  cursor: not-allowed;
-  opacity: 0.65;
+  color: #64748b;
 }
 
 .access-summary {

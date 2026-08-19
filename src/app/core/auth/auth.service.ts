@@ -1,6 +1,6 @@
-import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, tap, timeout } from 'rxjs';
+import { Injectable } from '@angular/core';
+import { catchError, map, Observable, of, switchMap, tap, timeout } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
 interface LoginRequest {
@@ -29,6 +29,7 @@ export class AuthService {
   private readonly userIdKey = 'sisge_user_id';
   private readonly identificationKey = 'sisge_identificacion';
   private readonly loginUrl = `${environment.apiBaseUrl}/Cuenta/Token`;
+  private readonly lastLoginUrl = `${environment.apiBaseUrl}/Usuario/UltimoIngreso`;
   private readonly maxJwtLength = 8192;
   private readonly maxJwtPayloadB64Length = 4096;
   private readonly maxJwtPayloadJsonLength = 6144;
@@ -38,7 +39,7 @@ export class AuthService {
   login(usuario: string, contrasena: string): Observable<LoginResponse> {
     const payload: LoginRequest = {
       Usuario: usuario,
-      Contrasena: contrasena
+      Contrasena: contrasena,
     };
 
     return this.http.post<LoginResponse>(this.loginUrl, payload, { withCredentials: true }).pipe(
@@ -65,7 +66,22 @@ export class AuthService {
           localStorage.setItem(this.userKey, resp.usuario ?? usuario);
           sessionStorage.removeItem('modales_vistos');
         }
-      })
+      }),
+      /*
+       * El acceso se registra después de almacenar el JWT, por lo que el
+       * interceptor puede autenticar esta solicitud. Una falla de auditoría
+       * se degrada de forma segura y nunca invalida un inicio de sesión válido.
+       */
+      switchMap((resp) => {
+        if (!this.isLoginSuccessful(resp)) {
+          return of(resp);
+        }
+
+        return this.http.post<void>(this.lastLoginUrl, {}).pipe(
+          map(() => resp),
+          catchError(() => of(resp)),
+        );
+      }),
     );
   }
 
@@ -146,17 +162,22 @@ export class AuthService {
         return false;
       }
 
-      const roleClaimUri = ['http', '://schemas.microsoft.com/ws/2008/06/identity/claims/role'].join('');
+      const roleClaimUri = [
+        'http',
+        '://schemas.microsoft.com/ws/2008/06/identity/claims/role',
+      ].join('');
       const roleClaimShort = 'role';
       const roleClaimLegacy = 'roles';
 
       const rawRoles = [
         parsed?.[roleClaimUri],
         parsed?.[roleClaimShort],
-        parsed?.[roleClaimLegacy]
+        parsed?.[roleClaimLegacy],
       ];
 
-      const values = rawRoles.flatMap((r) => (Array.isArray(r) ? r : [r])).map((v) => String(v ?? '').trim());
+      const values = rawRoles
+        .flatMap((r) => (Array.isArray(r) ? r : [r]))
+        .map((v) => String(v ?? '').trim());
       return values.some((v) => v === '1');
     } catch {
       return false;
@@ -170,12 +191,10 @@ export class AuthService {
         return null;
       }
 
-      const nameIdentifierClaim = 'http' + '://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier';
+      const nameIdentifierClaim =
+        'http' + '://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier';
       const rawId =
-        parsed['id_usuario'] ??
-        parsed['nameid'] ??
-        parsed['sub'] ??
-        parsed[nameIdentifierClaim];
+        parsed['id_usuario'] ?? parsed['nameid'] ?? parsed['sub'] ?? parsed[nameIdentifierClaim];
       const userId = Number(rawId);
       return Number.isFinite(userId) ? userId : null;
     } catch {

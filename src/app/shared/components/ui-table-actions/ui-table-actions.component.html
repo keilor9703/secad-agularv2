@@ -9,6 +9,8 @@
       [class.ui-table-inline-shell--left]="resolvedPosition() === 'left'"
       [class.ui-table-inline-shell--right]="resolvedPosition() === 'right'"
       [class.is-open]="inlineActionsOpen()"
+      [class.is-suppressed]="inlineHoverSuppressed()"
+      (mouseleave)="releaseInlineHover()"
       (focusout)="closeInlineActions($event)"
     >
       <!-- Estado contraído: mantiene visible el indicador sin ensanchar la columna. -->

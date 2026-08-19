@@ -7,6 +7,7 @@
     type="button"
     aria-haspopup="dialog"
     [id]="triggerId"
+    [disabled]="!hasRoles()"
     [attr.aria-expanded]="opened()"
     [attr.aria-controls]="opened() ? panelId : null"
     (click)="toggle()"
@@ -46,14 +47,19 @@
     >
       <header class="roles-dropdown__panel-head">
         <div>
-          <strong [id]="panelTitleId">Roles asignados</strong>
-          <span [id]="panelId + '-description'">Vigencias asociadas al usuario</span>
+          <strong [id]="panelTitleId">Roles vigentes</strong>
+          <span [id]="panelId + '-description'">{{ panelContext() }}</span>
         </div>
 
         <span class="roles-dropdown__count" [attr.aria-label]="items().length + ' roles'">
           {{ items().length }}
         </span>
       </header>
+
+      <p class="roles-dropdown__result-message">
+        <i class="fa-solid fa-circle-check" aria-hidden="true"></i>
+        {{ resultMessage() }}
+      </p>
 
       <!-- Desde el cuarto rol, este contenedor conserva tres filas visibles y activa scroll. -->
       <div class="roles-dropdown__list" role="list" tabindex="0">
@@ -68,7 +74,7 @@
               <span>Vencimiento: {{ item.vencimiento }}</span>
             </div>
 
-            <i class="fa-solid fa-check roles-dropdown__status" aria-hidden="true"></i>
+            <i class="fa-solid fa-chevron-right roles-dropdown__status" aria-hidden="true"></i>
           </article>
         }
       </div>

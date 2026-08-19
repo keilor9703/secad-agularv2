@@ -1,15 +1,15 @@
-import { CommonModule } from '@angular/common';
-import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
+import { DecimalPipe } from '@angular/common';
+import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { HomeStats } from '../../services/home.service';
 
 @Component({
   selector: 'app-home-stats',
   standalone: true,
-  imports: [CommonModule],
+  imports: [DecimalPipe],
   templateUrl: './home-stats.component.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './home-stats.component.scss',
 })
 export class HomeStatsComponent {
-  @Input({ required: true }) stats!: HomeStats;
+  readonly stats = input.required<HomeStats>();
 }

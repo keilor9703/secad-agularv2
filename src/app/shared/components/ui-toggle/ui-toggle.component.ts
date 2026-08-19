@@ -68,6 +68,7 @@ export class UiToggleComponent implements ControlValueAccessor {
 
   readonly value = signal(false);
   private readonly formDisabled = signal(false);
+  private controlledByAngularForms = false;
 
   readonly isDisabled = computed(() => this.disabled() || this.formDisabled());
   readonly stateText = computed(() => (this.value() ? this.onText() : this.offText()));
@@ -79,11 +80,19 @@ export class UiToggleComponent implements ControlValueAccessor {
   private onTouched: () => void = () => undefined;
 
   constructor() {
-    // Permite usar [checked] fuera de Reactive Forms sin duplicar el estado visual.
-    effect(() => this.value.set(this.checked()));
+    // [checked] controla usos directos; Reactive Forms mantiene su propio valor
+    // después de llamar writeValue y no debe ser sobrescrito por este effect.
+    effect(() => {
+      const checkedValue = this.checked();
+
+      if (!this.controlledByAngularForms) {
+        this.value.set(checkedValue);
+      }
+    });
   }
 
   writeValue(value: boolean | null | undefined): void {
+    this.controlledByAngularForms = true;
     this.value.set(Boolean(value));
   }
 

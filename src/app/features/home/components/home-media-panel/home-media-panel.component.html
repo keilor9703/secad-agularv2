@@ -1,0 +1,56 @@
+<section class="media-grid" aria-label="Contenido audiovisual">
+  <article class="video-card">
+    <header class="video-card__header">
+      <span><i class="fa-solid fa-building-shield" aria-hidden="true"></i></span>
+      <div>
+        <h2>Video de la unidad</h2>
+        <p>Contenido audiovisual de la unidad</p>
+      </div>
+    </header>
+    <div class="video-card__stage">
+      @if (unitVideoUrl()) {
+        <video controls preload="metadata" aria-label="Video de la unidad">
+          <source [src]="unitVideoUrl()" type="video/mp4" />
+          Tu navegador no soporta reproducción de video.
+        </video>
+      } @else {
+        <div class="video-card__empty">
+          <i class="fa-solid fa-film" aria-hidden="true"></i>
+          <div>
+            <strong>Video no disponible</strong>
+            <span>La unidad aún no ha publicado contenido.</span>
+          </div>
+        </div>
+      }
+    </div>
+  </article>
+
+  <article class="video-card">
+    <header class="video-card__header">
+      <span><i class="fa-solid fa-shield-halved" aria-hidden="true"></i></span>
+      <div>
+        <h2>Video institucional</h2>
+        <p>Información audiovisual oficial</p>
+      </div>
+    </header>
+    <div class="video-card__stage">
+      @if (institutionalVideoUrl()) {
+        <iframe
+          [src]="institutionalVideoUrl() | safeUrl"
+          title="Video institucional"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowfullscreen
+          sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
+        ></iframe>
+      } @else {
+        <div class="video-card__empty">
+          <i class="fa-solid fa-film" aria-hidden="true"></i>
+          <div>
+            <strong>Video no disponible</strong>
+            <span>El contenido institucional aún no ha sido publicado.</span>
+          </div>
+        </div>
+      }
+    </div>
+  </article>
+</section>

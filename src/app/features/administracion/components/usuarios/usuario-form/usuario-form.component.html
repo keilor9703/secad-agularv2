@@ -28,16 +28,15 @@
                 {{ usuarioForm.controls.activo.value ? 'ACTIVO' : 'INACTIVO' }}
               </span>
             </div>
-            <button
-              class="switch"
-              type="button"
-              [class.active]="usuarioForm.controls.activo.value"
-              [disabled]="loading"
-              aria-label="Cambiar estado del usuario"
-              (click)="toggleEstadoUsuario()"
-            >
-              <span></span>
-            </button>
+            <app-ui-toggle
+              [formControl]="usuarioForm.controls.activo"
+              variant="institutional"
+              size="sm"
+              ariaLabel="Cambiar estado del usuario"
+              onIcon="fa-solid fa-check"
+              offIcon="fa-solid fa-xmark"
+              [showIcons]="true"
+            ></app-ui-toggle>
           </div>
         </div>
       </article>
@@ -49,7 +48,7 @@
         </div>
         <div class="summary-row">
           <span>Último ingreso</span>
-          <strong>{{ usuarioForm.controls.ultimoIngreso.value }}</strong>
+          <strong>{{ lastLoginLabel() }}</strong>
         </div>
       </article>
     </aside>
@@ -76,7 +75,6 @@
                   [iconOnly]="true"
                   [required]="true"
                   [maxlength]="20"
-                  [disabled]="loading"
                   [clearable]="false"
                   [showRequiredMarker]="false"
                   [error]="getFieldError('consulta', 'identificacion')"
@@ -263,7 +261,6 @@
         [iconOnly]="false"
         [required]="true"
         [maxlength]="20"
-        [disabled]="loading"
         [clearable]="false"
         [buttonGap]="10"
         [error]="getFieldError('consulta', 'identificacion')"

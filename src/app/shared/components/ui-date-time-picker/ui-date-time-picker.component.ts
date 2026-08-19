@@ -137,6 +137,9 @@ export class UiDateTimePickerComponent implements AfterViewInit, OnDestroy, Cont
     effect(() => {
       this.applyTimePresentation(this.hourFormat(), this.resolvedDisplayFormat());
     });
+    effect(() => {
+      this.applyDateLimits(this.minDate(), this.maxDate());
+    });
   }
 
   readonly describedBy = computed(() => {
@@ -180,8 +183,13 @@ export class UiDateTimePickerComponent implements AfterViewInit, OnDestroy, Cont
          * basándose en el user agent del navegador.
          */
         disableMobile: true,
-        minDate: this.minDate() ?? undefined,
-        maxDate: this.maxDate() ?? undefined,
+        /*
+         * El modelo usa YYYY-MM-DD, pero Flatpickr interpreta los límites de
+         * texto con el formato visible d/m/Y. Normalizarlos a Date evita que
+         * minDate o maxDate se ignoren por esa diferencia de formatos.
+         */
+        minDate: this.toFlatpickrDateLimit(this.minDate()),
+        maxDate: this.toFlatpickrDateLimit(this.maxDate()),
         minTime: this.minTime() ?? undefined,
         maxTime: this.maxTime() ?? undefined,
         monthSelectorType: 'static',
@@ -206,6 +214,7 @@ export class UiDateTimePickerComponent implements AfterViewInit, OnDestroy, Cont
         this.activateNativeFallback(inputElement, false);
       } else {
         this.useNativeFallback.set(false);
+        this.applyDateLimits(this.minDate(), this.maxDate());
         this.applyTimePresentation(this.hourFormat(), this.resolvedDisplayFormat());
       }
     } catch (error: unknown) {
@@ -377,7 +386,30 @@ export class UiDateTimePickerComponent implements AfterViewInit, OnDestroy, Cont
       return;
     }
 
-    this.picker.setDate(value, false, this.modeConfig().modelFormat);
+    /*
+     * No se delega el modelo estable al parser textual de Flatpickr. En un
+     * modal reutilizado ese parser puede conservar el formato visible de la
+     * instancia anterior y dejar el input vacío aunque el FormControl sí
+     * contenga yyyy-MM-dd. La conversión local hace determinista la edición.
+     */
+    const parsedValue = this.parseModelValue(value);
+
+    if (!parsedValue) {
+      this.picker.setDate(value, false, this.modeConfig().modelFormat);
+      return;
+    }
+
+    this.picker.setDate(parsedValue, false);
+
+    /*
+     * setDate actualiza normalmente el input. La asignación explícita cubre
+     * también instancias reabiertas después de cambiar minDate o maxDate.
+     */
+    const selectedDate = this.picker.selectedDates.at(0) ?? parsedValue;
+    this.pickerInput().nativeElement.value = this.picker.formatDate(
+      selectedDate,
+      this.resolvedDisplayFormat(),
+    );
   }
 
   /**
@@ -412,8 +444,82 @@ export class UiDateTimePickerComponent implements AfterViewInit, OnDestroy, Cont
     });
 
     if (this.pendingValue) {
-      this.picker.setDate(this.pendingValue, false, this.modeConfig().modelFormat);
+      this.syncValueToPicker(this.pendingValue);
     }
+  }
+
+  /**
+   * Mantiene los límites sincronizados aunque cambien después de inicializar
+   * el picker, por ejemplo al reutilizar el control dentro de un modal.
+   */
+  private applyDateLimits(minimum: string | Date | null, maximum: string | Date | null): void {
+    if (!this.picker || this.mode() === 'time') {
+      return;
+    }
+
+    this.picker.set({
+      minDate: this.toFlatpickrDateLimit(minimum),
+      maxDate: this.toFlatpickrDateLimit(maximum),
+    });
+
+    /*
+     * Flatpickr reconstruye parte del estado al cambiar límites. Se vuelve a
+     * pintar el valor del formulario sin emitir un cambio hacia Angular.
+     */
+    if (this.pendingValue) {
+      this.syncValueToPicker(this.pendingValue);
+    }
+  }
+
+  /**
+   * Convierte el formato estable del formulario a una fecha local validada.
+   * Evita desplazamientos de zona horaria y admite date, time y datetime.
+   */
+  private parseModelValue(value: string): Date | null {
+    if (this.mode() === 'time') {
+      const timeMatch = value.match(/^(\d{2}):(\d{2})(?::(\d{2}))?$/);
+      if (!timeMatch) {
+        return null;
+      }
+
+      const [, hour, minute, second = '0'] = timeMatch;
+      const parsedTime = new Date();
+      parsedTime.setHours(Number(hour), Number(minute), Number(second), 0);
+
+      return parsedTime.getHours() === Number(hour) &&
+        parsedTime.getMinutes() === Number(minute) &&
+        parsedTime.getSeconds() === Number(second)
+        ? parsedTime
+        : null;
+    }
+
+    const dateMatch = value.match(/^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2})(?::(\d{2}))?)?$/);
+
+    if (!dateMatch) {
+      return null;
+    }
+
+    const [, year, month, day, hour = '0', minute = '0', second = '0'] = dateMatch;
+    const parsedDate = new Date(
+      Number(year),
+      Number(month) - 1,
+      Number(day),
+      Number(hour),
+      Number(minute),
+      Number(second),
+      0,
+    );
+
+    const hasValidDate =
+      parsedDate.getFullYear() === Number(year) &&
+      parsedDate.getMonth() === Number(month) - 1 &&
+      parsedDate.getDate() === Number(day);
+    const hasValidTime =
+      parsedDate.getHours() === Number(hour) &&
+      parsedDate.getMinutes() === Number(minute) &&
+      parsedDate.getSeconds() === Number(second);
+
+    return hasValidDate && hasValidTime ? parsedDate : null;
   }
 
   /**
@@ -491,5 +597,43 @@ export class UiDateTimePickerComponent implements AfterViewInit, OnDestroy, Cont
     }
 
     return `${date}T${pad(value.getHours())}:${pad(value.getMinutes())}`;
+  }
+
+  /**
+   * Convierte los límites del modelo estable a fechas locales que Flatpickr
+   * puede comparar sin depender del formato utilizado para mostrarlas.
+   */
+  private toFlatpickrDateLimit(value: string | Date | null): string | Date | undefined {
+    if (!value) {
+      return undefined;
+    }
+
+    if (value instanceof Date) {
+      return new Date(value.getTime());
+    }
+
+    const stableDate = value.match(/^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2})(?::(\d{2}))?)?$/);
+
+    if (!stableDate) {
+      return value;
+    }
+
+    const [, year, month, day, hour = '0', minute = '0', second = '0'] = stableDate;
+    const parsedDate = new Date(
+      Number(year),
+      Number(month) - 1,
+      Number(day),
+      Number(hour),
+      Number(minute),
+      Number(second),
+      0,
+    );
+
+    const isValid =
+      parsedDate.getFullYear() === Number(year) &&
+      parsedDate.getMonth() === Number(month) - 1 &&
+      parsedDate.getDate() === Number(day);
+
+    return isValid ? parsedDate : value;
   }
 }

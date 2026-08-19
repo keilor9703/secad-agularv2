@@ -1,4 +1,4 @@
-﻿import { HttpClient } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { forkJoin, map, Observable, of, switchMap } from 'rxjs';
 import { catchError } from 'rxjs/operators';
@@ -43,6 +43,11 @@ export interface UsuarioConsultaResult {
   fotoBase64: string | null;
   rolesAsignados: DtoRolAsignado[];
   rolesCatalogo: DtoRolCatalogo[];
+  ultimoIngreso: string | null;
+}
+
+interface UltimoIngresoResponse {
+  ultimoIngreso?: string | null;
 }
 
 export interface UsuarioListadoItem {
@@ -138,6 +143,17 @@ export class UsuarioAdminService {
             rolesCatalogo: this.http
               .get<DtoRolCatalogo[]>(`${this.baseUrl}/Roles`)
               .pipe(catchError(() => of([]))),
+            ultimoIngreso: this.http
+              .get<UltimoIngresoResponse>(`${this.baseUrl}/UltimoIngreso`, {
+                params: {
+                  identificacion: id,
+                  ...(usuario ? { usuario } : {}),
+                },
+              })
+              .pipe(
+                map((response) => response?.ultimoIngreso ?? null),
+                catchError(() => of(null)),
+              ),
           });
         }),
       );

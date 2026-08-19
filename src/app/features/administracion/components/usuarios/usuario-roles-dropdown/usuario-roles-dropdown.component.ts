@@ -82,6 +82,7 @@ let nextRolesDropdownId = 0;
 export class UsuarioRolesDropdownComponent {
   readonly roles = input('');
   readonly vencimientos = input('');
+  readonly contextLabel = input('');
 
   private readonly trigger = viewChild.required<ElementRef<HTMLButtonElement>>('trigger');
   private readonly panel = viewChild<ElementRef<HTMLElement>>('panel');
@@ -94,20 +95,48 @@ export class UsuarioRolesDropdownComponent {
   readonly items = computed<UsuarioRolDetalle[]>(() => {
     const roles = this.splitList(this.roles());
     const vencimientos = this.splitList(this.vencimientos());
+    const vigentesPorNombre = new Map<string, UsuarioRolDetalle>();
 
-    if (roles.length === 0) {
-      return [{ nombre: 'Sin rol', vencimiento: 'Sin fecha' }];
-    }
+    roles.forEach((nombre, index) => {
+      if (this.isEmptyRole(nombre)) {
+        return;
+      }
 
-    return roles.map((nombre, index) => ({
-      nombre,
-      vencimiento: vencimientos[index] || 'Sin fecha',
-    }));
+      const detalle = {
+        nombre,
+        vencimiento: vencimientos[index] || 'Sin fecha',
+      };
+      const key = this.normalizeRoleName(nombre);
+      const current = vigentesPorNombre.get(key);
+
+      // La consulta ya entrega una asignación vigente por rol. Esta defensa evita
+      // repetirlo si una respuesta antigua permanece temporalmente en caché.
+      if (
+        !current ||
+        this.expirationWeight(detalle.vencimiento) > this.expirationWeight(current.vencimiento)
+      ) {
+        vigentesPorNombre.set(key, detalle);
+      }
+    });
+
+    return [...vigentesPorNombre.values()];
+  });
+
+  readonly hasRoles = computed(() => this.items().length > 0);
+
+  readonly resultMessage = computed(() => {
+    const count = this.items().length;
+    return count === 1 ? 'Se encontró un rol vigente.' : `Se encontraron ${count} roles vigentes.`;
+  });
+
+  readonly panelContext = computed(() => {
+    const value = this.contextLabel().trim();
+    return value ? `CC ${value} · consulte una asignación` : 'Consulte las asignaciones vigentes';
   });
 
   readonly selectedLabel = computed(() => {
     const items = this.items();
-    const firstRole = items.at(0)?.nombre ?? 'Sin rol';
+    const firstRole = items.at(0)?.nombre ?? 'Sin roles vigentes';
 
     return items.length > 1 ? `${items.length} roles asignados` : firstRole;
   });
@@ -129,6 +158,10 @@ export class UsuarioRolesDropdownComponent {
   }
 
   toggle(): void {
+    if (!this.hasRoles()) {
+      return;
+    }
+
     if (this.opened()) {
       this.close();
       return;
@@ -177,5 +210,22 @@ export class UsuarioRolesDropdownComponent {
       .split(',')
       .map((item) => item.trim())
       .filter(Boolean);
+  }
+
+  private isEmptyRole(value: string): boolean {
+    return ['sin rol', 'sin roles', 'sin roles vigentes'].includes(this.normalizeRoleName(value));
+  }
+
+  private normalizeRoleName(value: string): string {
+    return value.trim().replace(/\s+/g, ' ').toLocaleLowerCase('es-CO');
+  }
+
+  private expirationWeight(value: string): number {
+    if (!value || value.toLocaleLowerCase('es-CO') === 'sin fecha') {
+      return Number.MAX_SAFE_INTEGER;
+    }
+
+    const timestamp = Date.parse(`${value}T00:00:00`);
+    return Number.isNaN(timestamp) ? 0 : timestamp;
   }
 }

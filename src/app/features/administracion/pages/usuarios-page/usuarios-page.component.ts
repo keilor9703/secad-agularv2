@@ -1,6 +1,6 @@
-
-import { Component, OnDestroy, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { Router } from '@angular/router';
+import { finalize } from 'rxjs';
 
 import { AuthService } from '../../../../core/auth/auth.service';
 import { ToastService } from '../../../../core/services/toast.service';
@@ -25,11 +25,7 @@ import {
 @Component({
   selector: 'app-usuarios',
   standalone: true,
-  imports: [
-    UsuarioDeleteModalComponent,
-    UsuarioFormComponent,
-    UsuariosTableComponent
-],
+  imports: [UsuarioDeleteModalComponent, UsuarioFormComponent, UsuariosTableComponent],
   templateUrl: './usuarios-page.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./usuarios-page.component.scss'],
@@ -48,6 +44,7 @@ export class UsuariosPageComponent implements OnInit, OnDestroy {
   visible = true;
   loading = false;
   savingRole = false;
+  roleSaveRevision = 0;
   deletingRoleId: number | null = null;
   deletingUser = false;
   loadingListado = false;
@@ -63,6 +60,9 @@ export class UsuariosPageComponent implements OnInit, OnDestroy {
   user: UserProfile | null = null;
   usuariosListado: UsuarioListadoItem[] = [];
   rolesCatalogo: DtoRolCatalogo[] = [];
+  private savedUserKeys = new Set<string>();
+  private savedUserIndexReady = false;
+  private lastUnsavedAlertKey = '';
 
   ngOnInit(): void {
     this.canAssignSuperAdministrador = this.authService.isCurrentUserSuperAdmin();
@@ -88,6 +88,7 @@ export class UsuariosPageComponent implements OnInit, OnDestroy {
     this.user = null;
     this.searchIdentification = '';
     this.rolesCatalogo = [];
+    this.lastUnsavedAlertKey = '';
   }
 
   consultarUsuario(documentoRecibido?: string): void {
@@ -107,6 +108,11 @@ export class UsuariosPageComponent implements OnInit, OnDestroy {
         const funcionario = resp.funcionario ?? {};
         const nombres = (funcionario.nombres ?? '').trim();
         const apellidos = (funcionario.apellidos ?? '').trim();
+        const assignedRoles = this.hydrateMissingRoleDatesFromList(
+          resp.rolesAsignados ?? [],
+          String(funcionario.identificacion ?? documento),
+          String(funcionario.usuario ?? ''),
+        );
         const nombreCompleto = `${nombres} ${apellidos}`.trim() || 'SIN NOMBRE';
 
         this.user = {
@@ -127,13 +133,14 @@ export class UsuariosPageComponent implements OnInit, OnDestroy {
           undeLaborandoCodigo: (funcionario.undeLaborandoCodigo ?? '').trim(),
           codigoCargo: (funcionario.codigoCargo ?? '').trim(),
           activo: funcionario.activo ?? true,
-          ultimoIngreso: 'Sin dato',
+          ultimoIngreso: this.formatLastLogin(resp.ultimoIngreso),
           fotoUrl: resp.fotoBase64 ?? undefined,
-          roles: (resp.rolesAsignados ?? []).map((rol) => this.mapAssignedRole(rol)),
+          roles: this.normalizeAssignedRoles(assignedRoles),
         };
 
         this.rolesCatalogo = this.filtrarRolesCatalogo(resp.rolesCatalogo ?? []);
         this.loading = false;
+        this.syncCurrentUserWithSavedList();
         this.toast.success('Consulta exitosa', 'Se cargó la información del usuario.');
       },
       error: (err) => {
@@ -244,6 +251,8 @@ export class UsuariosPageComponent implements OnInit, OnDestroy {
         }
 
         this.user = user;
+        this.registerSavedUser(user.identificacion, user.usuarioEmpresarial);
+        this.lastUnsavedAlertKey = '';
         this.toast.success('Guardar datos', resp.message || 'Usuario guardado correctamente.');
         this.cargarListadoUsuarios();
       },
@@ -262,6 +271,10 @@ export class UsuariosPageComponent implements OnInit, OnDestroy {
   }
 
   guardarRoles(roleForm: NewRoleForm): void {
+    if (this.savingRole) {
+      return;
+    }
+
     if (!this.user) {
       this.toast.warning('Roles', 'Consulta un usuario primero.');
       return;
@@ -294,21 +307,29 @@ export class UsuariosPageComponent implements OnInit, OnDestroy {
         fechaFin: roleForm.fechaFin,
         vigente: 1,
       })
+      .pipe(finalize(() => (this.savingRole = false)))
       .subscribe({
         next: (resp) => {
-          this.savingRole = false;
-
           if (!resp?.success) {
             this.toast.warning('Roles', resp?.message || 'No fue posible asignar el rol.');
             return;
           }
 
-          this.toast.success('Roles', resp.message || 'Rol asignado correctamente.');
-          this.consultarUsuario(this.user?.identificacion);
+          /*
+           * La respuesta del POST ya confirma la persistencia. Actualizamos
+           * solamente el rol afectado y evitamos repetir la consulta externa
+           * de funcionario, token, fotografía y catálogos.
+           */
+          this.reflectSavedRole(roleForm);
+          this.roleSaveRevision += 1;
           this.cargarListadoUsuarios();
+
+          void this.alert.success(
+            'Rol guardado',
+            resp.message || 'El rol fue asignado correctamente.',
+          );
         },
         error: (err) => {
-          this.savingRole = false;
           this.toast.error(
             'Roles',
             err?.error?.detail ?? err?.error?.message ?? 'Error asignando rol.',
@@ -317,7 +338,35 @@ export class UsuariosPageComponent implements OnInit, OnDestroy {
       });
   }
 
+  /** Refleja inmediatamente en la tabla el rol confirmado por el backend. */
+  private reflectSavedRole(roleForm: NewRoleForm): void {
+    if (!this.user || !roleForm.rolId) {
+      return;
+    }
+
+    const roleName =
+      this.rolesCatalogo.find((role) => role.id === roleForm.rolId)?.nombre?.trim() ||
+      `Rol ${roleForm.rolId}`;
+    const savedRole: UserRole = {
+      id: roleForm.rolId,
+      nombre: roleName,
+      fechaExpiracion: roleForm.fechaFin,
+      estado: 'Vigente',
+      justificacion: roleForm.justificacion.trim(),
+    };
+    const otherRoles = this.user.roles.filter((role) => role.id !== roleForm.rolId);
+
+    this.user = {
+      ...this.user,
+      roles: [...otherRoles, savedRole],
+    };
+  }
+
   async eliminarRol(rol: UserRole): Promise<void> {
+    if (this.deletingRoleId !== null) {
+      return;
+    }
+
     if (!this.user) {
       this.toast.warning('Roles', 'Consulta un usuario primero.');
       return;
@@ -337,27 +386,41 @@ export class UsuariosPageComponent implements OnInit, OnDestroy {
 
     this.usuarioAdminService
       .eliminarRol(rol.id, this.user.usuarioEmpresarial, this.user.identificacion)
+      .pipe(finalize(() => (this.deletingRoleId = null)))
       .subscribe({
         next: (resp) => {
-          this.deletingRoleId = null;
-
           if (!resp?.success) {
             this.toast.warning('Roles', resp?.message || 'No fue posible retirar el rol.');
             return;
           }
 
-          this.toast.success('Roles', resp.message || 'Rol retirado correctamente.');
-          this.consultarUsuario(this.user?.identificacion);
+          this.removeRoleLocally(rol.id);
           this.cargarListadoUsuarios();
+
+          void this.alert.success(
+            'Rol retirado',
+            resp.message || 'El rol fue retirado correctamente.',
+          );
         },
         error: (err) => {
-          this.deletingRoleId = null;
           this.toast.error(
             'Roles',
             err?.error?.detail ?? err?.error?.message ?? 'Error retirando rol.',
           );
         },
       });
+  }
+
+  /** Retira de la vista todas las copias locales del rol confirmado por el backend. */
+  private removeRoleLocally(roleId: number): void {
+    if (!this.user) {
+      return;
+    }
+
+    this.user = {
+      ...this.user,
+      roles: this.user.roles.filter((role) => role.id !== roleId),
+    };
   }
 
   cargarListadoUsuarios(): void {
@@ -382,8 +445,14 @@ export class UsuariosPageComponent implements OnInit, OnDestroy {
           ...item,
           fechaFinRol: this.normalizeDateString(item?.fechaFinRol ?? ''),
         }));
+
+        if (!hasSearchTerm) {
+          this.refreshSavedUserIndex(this.usuariosListado);
+        }
+
         this.currentPage = 1;
         this.loadingListado = false;
+        this.syncCurrentUserWithSavedList();
       },
       error: () => {
         this.usuariosListado = [];
@@ -490,7 +559,7 @@ export class UsuariosPageComponent implements OnInit, OnDestroy {
   }
 
   private mapAssignedRole(rol: RawAssignedRole): UserRole {
-    const fechaExpiracion = this.normalizeDateString(rol?.fechaFin ?? rol?.fecha_fin ?? '');
+    const fechaExpiracion = this.readAssignedRoleEndDate(rol);
     const estadoBase = String(rol?.estado ?? '')
       .trim()
       .toLowerCase();
@@ -505,6 +574,126 @@ export class UsuariosPageComponent implements OnInit, OnDestroy {
     };
   }
 
+  /**
+   * Unifica el nombre de fecha usado por versiones distintas del API. El resto
+   * de la vista trabaja únicamente con fechaExpiracion en formato YYYY-MM-DD.
+   */
+  private readAssignedRoleEndDate(role: RawAssignedRole): string {
+    const candidates = [
+      role?.fechaFin,
+      role?.FechaFin,
+      role?.fecha_fin,
+      role?.FECHA_FIN,
+      role?.fechaExpiracion,
+      role?.fecha_expiracion,
+      role?.fechaVencimiento,
+      role?.fecha_vencimiento,
+      role?.fechaFinalizacion,
+    ];
+
+    for (const candidate of candidates) {
+      const normalizedDate = this.normalizeDateString(String(candidate ?? ''));
+      if (normalizedDate) {
+        return normalizedDate;
+      }
+    }
+
+    return '';
+  }
+
+  /**
+   * Recupera fechas del listado consolidado cuando una versión anterior del
+   * endpoint detallado devuelve el rol y su justificación, pero omite fechaFin.
+   * Ambos campos agregados usan el mismo ORDER BY en Oracle, por eso conservan
+   * una correspondencia estable por posición y nombre.
+   */
+  private hydrateMissingRoleDatesFromList(
+    roles: RawAssignedRole[],
+    identification: string,
+    username: string,
+  ): RawAssignedRole[] {
+    if (roles.length === 0 || roles.every((role) => Boolean(this.readAssignedRoleEndDate(role)))) {
+      return roles;
+    }
+
+    const identificationKey = this.normalizeLookupValue(identification);
+    const usernameKey = this.normalizeLookupValue(username);
+    const listedUser = this.usuariosListado.find((item) => {
+      const sameIdentification =
+        identificationKey && this.normalizeLookupValue(item.identificacion) === identificationKey;
+      const sameUsername = usernameKey && this.normalizeLookupValue(item.username) === usernameKey;
+
+      return Boolean(sameIdentification || sameUsername);
+    });
+
+    if (!listedUser?.fechaFinRol) {
+      return roles;
+    }
+
+    const listedRoleNames = this.splitAggregatedValues(listedUser.rol);
+    const listedDates = this.splitAggregatedValues(listedUser.fechaFinRol);
+    const dateByRoleName = new Map<string, string>();
+
+    listedRoleNames.forEach((roleName, index) => {
+      const normalizedDate = this.normalizeDateString(listedDates[index] ?? '');
+      if (normalizedDate && /^\d{4}-\d{2}-\d{2}$/.test(normalizedDate)) {
+        dateByRoleName.set(this.normalizeLookupValue(roleName), normalizedDate);
+      }
+    });
+
+    return roles.map((role, index) => {
+      if (this.readAssignedRoleEndDate(role)) {
+        return role;
+      }
+
+      const dateByName = dateByRoleName.get(this.normalizeLookupValue(String(role.rol ?? '')));
+      const dateByPosition = this.normalizeDateString(listedDates[index] ?? '');
+      const recoveredDate =
+        dateByName || (/^\d{4}-\d{2}-\d{2}$/.test(dateByPosition) ? dateByPosition : '');
+
+      return recoveredDate ? { ...role, fechaFin: recoveredDate } : role;
+    });
+  }
+
+  /** Separa los LISTAGG simples emitidos por el listado administrativo. */
+  private splitAggregatedValues(value: string | null | undefined): string[] {
+    return String(value ?? '')
+      .split(/\s*,\s*/)
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+
+  /**
+   * Protege la interfaz frente a registros historicos duplicados.
+   * Conserva una sola tarjeta por rol y prioriza la asignacion vigente.
+   */
+  private normalizeAssignedRoles(roles: RawAssignedRole[]): UserRole[] {
+    const normalizedByRole = new Map<number, UserRole>();
+
+    for (const rawRole of roles) {
+      const mappedRole = this.mapAssignedRole(rawRole);
+      if (mappedRole.id <= 0) {
+        continue;
+      }
+
+      const currentRole = normalizedByRole.get(mappedRole.id);
+      if (!currentRole || this.shouldReplaceRole(currentRole, mappedRole)) {
+        normalizedByRole.set(mappedRole.id, mappedRole);
+      }
+    }
+
+    return Array.from(normalizedByRole.values());
+  }
+
+  /** Decide cual registro representa mejor una asignacion repetida. */
+  private shouldReplaceRole(currentRole: UserRole, candidateRole: UserRole): boolean {
+    if (currentRole.estado !== candidateRole.estado) {
+      return candidateRole.estado === 'Vigente';
+    }
+
+    return candidateRole.fechaExpiracion >= currentRole.fechaExpiracion;
+  }
+
   private normalizeDateString(raw: string): string {
     const value = String(raw ?? '').trim();
 
@@ -512,10 +701,16 @@ export class UsuariosPageComponent implements OnInit, OnDestroy {
       return '';
     }
 
-    const onlyDate = value.includes('T') ? value.split('T')[0] : value;
+    const onlyDate = value.includes('T') ? value.split('T')[0] : value.split(' ')[0];
 
     if (/^\d{4}-\d{2}-\d{2}$/.test(onlyDate)) {
       return onlyDate;
+    }
+
+    const dayFirstMatch = onlyDate.match(/^(\d{2})[\/-](\d{2})[\/-](\d{4})$/);
+    if (dayFirstMatch) {
+      const [, day, month, year] = dayFirstMatch;
+      return `${year}-${month}-${day}`;
     }
 
     const parsed = new Date(value);
@@ -531,11 +726,113 @@ export class UsuariosPageComponent implements OnInit, OnDestroy {
     return `${year}-${month}-${day}`;
   }
 
+  /** Convierte el instante ISO del API a una fecha legible en la zona del navegador. */
+  private formatLastLogin(raw: string | null | undefined): string {
+    const value = String(raw ?? '').trim();
+    if (!value) {
+      return 'Sin registros';
+    }
+
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) {
+      return 'Sin registros';
+    }
+
+    return new Intl.DateTimeFormat('es-CO', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+    }).format(parsed);
+  }
+
   private filtrarRolesCatalogo(roles: DtoRolCatalogo[]): DtoRolCatalogo[] {
     if (!this.canAssignSuperAdministrador) {
       return [];
     }
 
     return roles ?? [];
+  }
+
+  /** Reconstruye el índice únicamente con el listado completo persistido. */
+  private refreshSavedUserIndex(users: UsuarioListadoItem[]): void {
+    const keys = new Set<string>();
+
+    for (const item of users) {
+      for (const key of this.buildUserKeys(item.identificacion, item.username)) {
+        keys.add(key);
+      }
+    }
+
+    this.savedUserKeys = keys;
+    this.savedUserIndexReady = true;
+  }
+
+  /** Registra inmediatamente un guardado confirmado, antes de recargar la tabla. */
+  private registerSavedUser(identification: string, username: string): void {
+    for (const key of this.buildUserKeys(identification, username)) {
+      this.savedUserKeys.add(key);
+    }
+
+    this.savedUserIndexReady = true;
+  }
+
+  /**
+   * Selecciona visualmente el registro guardado o informa una sola vez cuando
+   * el funcionario empresarial todavía no pertenece a la administración.
+   */
+  private syncCurrentUserWithSavedList(): void {
+    if (!this.user || !this.savedUserIndexReady) {
+      return;
+    }
+
+    const userKeys = this.buildUserKeys(this.user.identificacion, this.user.usuarioEmpresarial);
+    const isSaved = userKeys.some((key) => this.savedUserKeys.has(key));
+
+    if (isSaved) {
+      this.lastUnsavedAlertKey = '';
+      this.focusCurrentUserPage(this.user.identificacion);
+      return;
+    }
+
+    const alertKey = userKeys.at(0) ?? '';
+    if (!alertKey || this.lastUnsavedAlertKey === alertKey) {
+      return;
+    }
+
+    this.lastUnsavedAlertKey = alertKey;
+    void this.alert.info(
+      'Usuario no guardado',
+      'El funcionario fue consultado, pero todavía no está registrado en Administración de Usuarios. Guarde sus datos antes de asignar roles.',
+    );
+  }
+
+  /** Lleva el paginador a la fila seleccionada cuando está en el resultado actual. */
+  private focusCurrentUserPage(identification: string): void {
+    const selectedKey = this.normalizeLookupValue(identification);
+    const selectedIndex = this.usuariosListado.findIndex(
+      (item) => this.normalizeLookupValue(item.identificacion) === selectedKey,
+    );
+
+    if (selectedIndex >= 0) {
+      this.currentPage = Math.floor(selectedIndex / this.pageSize) + 1;
+    }
+  }
+
+  private buildUserKeys(identification: string, username: string): string[] {
+    const identificationKey = this.normalizeLookupValue(identification);
+    const usernameKey = this.normalizeLookupValue(username);
+
+    return [
+      identificationKey ? `identification:${identificationKey}` : '',
+      usernameKey ? `username:${usernameKey}` : '',
+    ].filter(Boolean);
+  }
+
+  private normalizeLookupValue(value: unknown): string {
+    return String(value ?? '')
+      .trim()
+      .toLocaleLowerCase('es-CO');
   }
 }

@@ -121,19 +121,46 @@
   transform: translate(7px, -50%);
 }
 
-:host-context(.ui-table--hover-actions tbody tr:hover) .ui-table-inline-actions,
-:host-context(.ui-table--hover-actions tbody tr:focus-within) .ui-table-inline-actions,
+:host-context(.ui-table--hover-actions tbody tr:hover)
+  .ui-table-inline-shell:not(.is-suppressed)
+  .ui-table-inline-actions,
+:host-context(.ui-table--hover-actions tbody tr:focus-within)
+  .ui-table-inline-shell:not(.is-suppressed)
+  .ui-table-inline-actions,
 .ui-table-inline-shell.is-open .ui-table-inline-actions {
   opacity: 1;
   pointer-events: auto;
   transform: translate(0, -50%);
 }
 
-:host-context(.ui-table--hover-actions tbody tr:hover) .ui-table-inline-trigger,
-:host-context(.ui-table--hover-actions tbody tr:focus-within) .ui-table-inline-trigger,
+:host-context(.ui-table--hover-actions tbody tr:hover)
+  .ui-table-inline-shell:not(.is-suppressed)
+  .ui-table-inline-trigger,
+:host-context(.ui-table--hover-actions tbody tr:focus-within)
+  .ui-table-inline-shell:not(.is-suppressed)
+  .ui-table-inline-trigger,
 .ui-table-inline-shell.is-open .ui-table-inline-trigger {
   opacity: 0;
   pointer-events: none;
+}
+
+/*
+ * Después de seleccionar una acción, el hover de la fila no debe reabrir el
+ * grupo detrás de un modal o confirmación. El disparador queda disponible.
+ */
+.ui-table-inline-shell.is-suppressed .ui-table-inline-actions {
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(7px, -50%);
+}
+
+.ui-table-inline-shell.is-suppressed .ui-table-inline-trigger {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.ui-table-inline-shell--left.is-suppressed .ui-table-inline-actions {
+  transform: translate(-7px, -50%);
 }
 
 .ui-table-inline-action {

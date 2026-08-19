@@ -10,10 +10,3 @@ export interface NewsItem {
   image: string;
   megusta: number;
 }
-
-export interface SocialLink {
-  name: string;
-  icon: string;
-  url: string;
-  color: string;
-}

@@ -1,6 +1,6 @@
 .slider-wrapper {
   width: 100%;
-  margin-bottom: 30px;
+  margin-bottom: 0;
 }
 
 .main-slider {
@@ -236,10 +236,6 @@
 }
 
 @media (max-width: 768px) {
-  .slider-wrapper {
-    margin-bottom: 12px;
-  }
-
   .main-slider {
     height: auto;
     border-radius: var(--ui-radius-sm);
