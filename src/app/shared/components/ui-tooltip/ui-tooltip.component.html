@@ -1,0 +1,37 @@
+<span
+  #origin="cdkOverlayOrigin"
+  cdkOverlayOrigin
+  class="ui-tooltip__origin"
+  [attr.aria-describedby]="opened() ? resolvedId() : null"
+  (pointerenter)="scheduleOpen()"
+  (pointerleave)="scheduleClose()"
+  (focusin)="scheduleOpen()"
+  (focusout)="scheduleClose()"
+  (click)="closeNow()"
+  (keydown)="handleKeydown($event)"
+>
+  <ng-content />
+</span>
+
+<ng-template
+  cdkConnectedOverlay
+  [cdkConnectedOverlayOrigin]="origin"
+  [cdkConnectedOverlayOpen]="opened() && !!resolvedText()"
+  [cdkConnectedOverlayPositions]="positions()"
+  [cdkConnectedOverlayPush]="true"
+  [cdkConnectedOverlayViewportMargin]="viewportMargin()"
+  cdkConnectedOverlayPanelClass="ui-tooltip-overlay-pane"
+  (positionChange)="handlePositionChange($event)"
+  (detach)="closeNow()"
+>
+  <span
+    [id]="resolvedId()"
+    role="tooltip"
+    [class]="tooltipClasses()"
+    [style.max-width.px]="maxWidth()"
+    (pointerenter)="scheduleOpen()"
+    (pointerleave)="scheduleClose()"
+  >
+    {{ resolvedText() }}
+  </span>
+</ng-template>

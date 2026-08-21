@@ -33,6 +33,7 @@
             [loading]="loading"
             [savingRole]="savingRole"
             [roleSaveRevision]="roleSaveRevision"
+            [roleDeleteRevision]="roleDeleteRevision"
             [deletingRoleId]="deletingRoleId"
             [superAdministradorRolId]="superAdministradorRolId"
             (consultar)="consultarUsuario($event)"
@@ -65,7 +66,7 @@
       [user]="deletingTarget"
       [loading]="deletingUser"
       (close)="cerrarModalEliminarUsuario()"
-      (confirm)="confirmarEliminarUsuario()"
+      (confirm)="confirmarEliminarUsuario($event)"
     ></app-usuario-delete-modal>
   </section>
 }

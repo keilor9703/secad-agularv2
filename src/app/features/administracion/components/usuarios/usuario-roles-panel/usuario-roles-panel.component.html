@@ -137,3 +137,11 @@
     </app-ui-button>
   </div>
 </app-ui-modal>
+
+<app-usuario-role-removal-modal
+  [open]="rolePendingRemoval() !== null"
+  [role]="rolePendingRemoval()"
+  [loading]="deletingRoleId !== null"
+  (closeRequested)="closeRemovalModal()"
+  (confirmed)="confirmRoleRemoval($event)"
+/>

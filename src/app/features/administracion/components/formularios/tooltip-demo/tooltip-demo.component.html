@@ -1,0 +1,80 @@
+<section class="ui-panel tooltip-demo" aria-labelledby="tooltip-demo-title">
+  <div class="ui-panel__head">
+    <div>
+      <div id="tooltip-demo-title" class="ui-panel__title">
+        <i class="fa-regular fa-message" aria-hidden="true"></i>
+        Tooltips reutilizables
+      </div>
+      <p class="tooltip-demo__lead">
+        Overlay global accesible: no se recorta en tarjetas, tablas, modales ni contenedores con
+        scroll.
+      </p>
+    </div>
+  </div>
+
+  <div class="ui-panel__body tooltip-demo__body">
+    <article class="tooltip-demo__group">
+      <header>
+        <strong>Integrado en ui-button</strong>
+        <span>La ayuda se cierra al pulsar y conserva un nombre accesible.</span>
+      </header>
+
+      <div class="tooltip-demo__actions">
+        <app-ui-button
+          icon="fa-solid fa-pen"
+          [iconOnly]="true"
+          variant="info"
+          appearance="soft"
+          tooltip="Editar registro"
+          tooltipPosition="bottom"
+          ariaLabel="Editar registro"
+        />
+        <app-ui-button
+          icon="fa-solid fa-circle-check"
+          [iconOnly]="true"
+          variant="success"
+          appearance="soft"
+          tooltip="Aprobar registro"
+          tooltipPosition="top"
+          tooltipVariant="success"
+          ariaLabel="Aprobar registro"
+        />
+        <app-ui-button
+          icon="fa-solid fa-trash-can"
+          [iconOnly]="true"
+          variant="danger"
+          appearance="outline"
+          tooltip="Eliminar definitivamente"
+          tooltipPosition="left"
+          tooltipVariant="danger"
+          ariaLabel="Eliminar definitivamente"
+        />
+      </div>
+    </article>
+
+    <article class="tooltip-demo__group is-clipped-example">
+      <header>
+        <strong>Sobre cualquier contenido</strong>
+        <span>El origen puede ser un icono, enlace, estado o control propio.</span>
+      </header>
+
+      <div class="tooltip-demo__actions">
+        <app-ui-tooltip text="Ayuda institucional" position="right" variant="institutional">
+          <button class="tooltip-demo__target" type="button" aria-label="Información del sistema">
+            <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+          </button>
+        </app-ui-tooltip>
+
+        <app-ui-tooltip
+          text="El sistema intentará ubicarlo donde exista espacio"
+          position="bottom"
+          variant="dark"
+          size="md"
+          [maxWidth]="230"
+        >
+          <button class="tooltip-demo__target" type="button">Posición responsive</button>
+        </app-ui-tooltip>
+      </div>
+    </article>
+  </div>
+</section>

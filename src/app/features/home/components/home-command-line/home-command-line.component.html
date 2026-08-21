@@ -26,35 +26,35 @@
       >
         <div class="command__track">
           @for (member of visibleMembers(); track member.idLineaMando; let index = $index) {
-          <button
-            #memberCard
-            class="member"
-            type="button"
-            [class.is-active]="activeIndex() === index"
-            (click)="openProfile(member)"
-          >
-          @if (hasPhoto(member)) {
-            <img
-              class="member__avatar"
-              [src]="getPhoto(member)"
-              [alt]="getFullName(member)"
-              loading="lazy"
-              (error)="markPhotoAsFailed(member.idLineaMando)"
-            />
-          } @else {
-            <span class="member__avatar member__avatar--fallback" aria-hidden="true">
-              {{ getInitials(member) }}
-            </span>
-          }
+            <button
+              #memberCard
+              class="member"
+              type="button"
+              [class.is-active]="activeIndex() === index"
+              (click)="openProfile(member)"
+            >
+              @if (hasPhoto(member)) {
+                <img
+                  class="member__avatar"
+                  [src]="getPhoto(member)"
+                  [alt]="getFullName(member)"
+                  loading="lazy"
+                  (error)="markPhotoAsFailed(member.idLineaMando)"
+                />
+              } @else {
+                <span class="member__avatar member__avatar--fallback" aria-hidden="true">
+                  {{ getInitials(member) }}
+                </span>
+              }
 
-          <span class="member__data">
-            <span class="member__grade">{{ member.grado || 'Directivo' }}</span>
-            <strong>{{ getFullName(member) }}</strong>
-            <span class="member__position">{{ getPosition(member) }}</span>
-          </span>
+              <span class="member__data">
+                <span class="member__grade">{{ member.grado || 'Directivo' }}</span>
+                <strong>{{ getFullName(member) }}</strong>
+                <span class="member__position">{{ getPosition(member) }}</span>
+              </span>
 
-          <i class="fa-solid fa-chevron-right member__go" aria-hidden="true"></i>
-          </button>
+              <i class="fa-solid fa-chevron-right member__go" aria-hidden="true"></i>
+            </button>
           }
         </div>
       </div>

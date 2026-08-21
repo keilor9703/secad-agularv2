@@ -1,113 +1,10 @@
 :host {
-  position: relative;
   display: inline-flex;
   max-width: 100%;
 }
 
-:host(.ui-button-host--tooltip)::before,
-:host(.ui-button-host--tooltip)::after {
-  position: absolute;
-  z-index: 50;
-  left: 50%;
-  opacity: 0;
-  pointer-events: none;
-  transition:
-    opacity 140ms ease,
-    transform 140ms ease;
-}
-
-:host(.ui-button-host--tooltip)::before {
-  top: calc(100% + 4px);
-  width: 8px;
-  height: 8px;
-  border: 1px solid rgba(15, 23, 42, 0.13);
-  border-right: 0;
-  border-bottom: 0;
-  background: #ffffff;
-  content: '';
-  transform: translate(-50%, -3px) rotate(45deg);
-}
-
-:host(.ui-button-host--tooltip)::after {
-  top: calc(100% + 8px);
-  width: max-content;
-  max-width: min(230px, calc(100vw - 24px));
-  padding: 6px 9px;
-  border: 1px solid rgba(15, 23, 42, 0.13);
-  border-radius: 6px;
-  background: #ffffff;
-  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.14);
-  color: #1e293b;
-  content: attr(data-ui-tooltip);
-  font-size: calc(10px * var(--font-size-scale, 1));
-  font-weight: 750;
-  line-height: 1.25;
-  text-align: center;
-  white-space: normal;
-  transform: translate(-50%, -3px);
-}
-
-:host(.ui-button-host--tooltip-start)::before,
-:host(.ui-button-host--tooltip-start)::after,
-:host(.ui-button-host--tooltip-end)::before,
-:host(.ui-button-host--tooltip-end)::after {
-  left: auto;
-}
-
-:host(.ui-button-host--tooltip-start)::after {
-  left: 0;
-  transform: translate(0, -3px);
-}
-
-:host(.ui-button-host--tooltip-start)::before {
-  left: 14px;
-  transform: translate(0, -3px) rotate(45deg);
-}
-
-:host(.ui-button-host--tooltip-end)::after {
-  right: 0;
-  transform: translate(0, -3px);
-}
-
-:host(.ui-button-host--tooltip-end)::before {
-  right: 14px;
-  transform: translate(0, -3px) rotate(45deg);
-}
-
-:host(.ui-button-host--tooltip:hover),
-:host(.ui-button-host--tooltip:has(.ui-btn:focus-visible)) {
-  z-index: 30;
-}
-
-:host(.ui-button-host--tooltip:hover)::before,
-:host(.ui-button-host--tooltip:hover)::after,
-:host(.ui-button-host--tooltip:has(.ui-btn:focus-visible))::before,
-:host(.ui-button-host--tooltip:has(.ui-btn:focus-visible))::after {
-  opacity: 1;
-}
-
-:host(.ui-button-host--tooltip:hover)::before,
-:host(.ui-button-host--tooltip:has(.ui-btn:focus-visible))::before {
-  transform: translate(-50%, 0) rotate(45deg);
-}
-
-:host(.ui-button-host--tooltip:hover)::after,
-:host(.ui-button-host--tooltip:has(.ui-btn:focus-visible))::after {
-  transform: translate(-50%, 0);
-}
-
-:host(.ui-button-host--tooltip-start:hover)::before,
-:host(.ui-button-host--tooltip-start:has(.ui-btn:focus-visible))::before,
-:host(.ui-button-host--tooltip-end:hover)::before,
-:host(.ui-button-host--tooltip-end:has(.ui-btn:focus-visible))::before {
-  transform: translate(0, 0) rotate(45deg);
-}
-
-:host(.ui-button-host--tooltip-start:hover)::after,
-:host(.ui-button-host--tooltip-start:has(.ui-btn:focus-visible))::after,
-:host(.ui-button-host--tooltip-end:hover)::after,
-:host(.ui-button-host--tooltip-end:has(.ui-btn:focus-visible))::after {
-  transform: translate(0, 0);
+:host(.ui-button-host--block) {
+  width: 100%;
 }
 
 :host .ui-btn {
@@ -441,25 +338,12 @@
 
 @media (prefers-reduced-motion: reduce) {
   :host .ui-btn,
-  :host .ui-btn::before,
-  :host(.ui-button-host--tooltip)::before,
-  :host(.ui-button-host--tooltip)::after {
+  :host .ui-btn::before {
     transition: none;
   }
 }
 
 :host-context(html.dark-mode) {
-  &.ui-button-host--tooltip::before,
-  &.ui-button-host--tooltip::after {
-    border-color: rgba(255, 255, 255, 0.13);
-    background: #1e2840;
-  }
-
-  &.ui-button-host--tooltip::after {
-    color: #f4f7fb;
-    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.3);
-  }
-
   .ui-btn--primary {
     --_btn-soft-bg: rgba(200, 255, 0, 0.11);
     --_btn-soft-text: #dcff73;

@@ -90,15 +90,32 @@
       </div>
 
       <div class="submenu-form__field submenu-form__field--detail">
-        <app-ui-input
-          formControlName="detalle"
-          label="Ruta o recurso"
-          placeholder="/administracion/nueva-ruta"
-          icon="fa-solid fa-link"
-          [maxlength]="500"
-          [controlSize]="compactControlSize"
-          [error]="errorFor('detalle')"
-        />
+        @if (usesInternalRoute()) {
+          <app-ui-select
+            formControlName="detalle"
+            [label]="isContainerDestination() ? 'Ruta opcional' : 'Ruta Angular'"
+            [placeholder]="isContainerDestination() ? 'Sin destino' : 'Seleccione'"
+            [options]="routeOptions"
+            [required]="isInternalDestination()"
+            [clearable]="isContainerDestination()"
+            [searchable]="true"
+            [controlSize]="compactControlSize"
+            [error]="errorFor('detalle')"
+          />
+        } @else {
+          <app-ui-input
+            formControlName="detalle"
+            label="URL o recurso"
+            [placeholder]="
+              selectedType() === 'pdf' ? '/assets/documentos/archivo.pdf' : 'https://sitio.gov.co'
+            "
+            icon="fa-solid fa-link"
+            [required]="true"
+            [maxlength]="500"
+            [controlSize]="compactControlSize"
+            [error]="errorFor('detalle')"
+          />
+        }
       </div>
     </div>
 

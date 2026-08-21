@@ -2,128 +2,196 @@
   <app-ui-panel-header
     headingId="linea-mando-list-title"
     title="Estructura configurada"
-    description="Orden jerárquico y disponibilidad de los integrantes registrados."
+    description="Administre por separado los integrantes activos y retirados."
     icon="fa-solid fa-sitemap"
     appearance="soft"
   >
     <app-ui-chip
       panel-header-actions
       size="sm"
-      label="activos"
-      [value]="activeCount()"
+      label="registros"
+      [value]="rows().length"
       variant="info"
       appearance="outline"
-      icon="fa-solid fa-user-shield"
+      icon="fa-solid fa-users-gear"
     />
   </app-ui-panel-header>
 
   <div class="command-structure__body">
-    @if (loading()) {
-      <div class="command-structure__state">
-        <app-ui-spinner
-          type="bars"
-          size="sm"
-          variant="info"
-          label="Cargando estructura..."
-          [contained]="true"
-        />
-      </div>
-    } @else if (orderedRows().length === 0) {
-      <div class="command-structure__empty">
-        <span aria-hidden="true"><i class="fa-solid fa-people-arrows"></i></span>
-        <strong>Aún no hay integrantes configurados</strong>
-        <p>Consulte un funcionario y asígnele una posición para construir la línea de mando.</p>
-      </div>
-    } @else {
-      <ol class="command-structure__list" aria-label="Integrantes de la línea de mando">
-        @for (item of orderedRows(); track item.idLineaMando; let index = $index) {
-          <li
-            class="command-card"
-            [class.is-selected]="selectedId() === item.idLineaMando"
-            [class.is-inactive]="item.vigente !== 1"
-          >
-            <div class="command-card__order" [attr.aria-label]="'Orden ' + item.orden">
-              <span>{{ item.orden }}</span>
-              @if (index < orderedRows().length - 1) {
-                <i aria-hidden="true"></i>
-              }
-            </div>
+    <app-ui-segmented-tabs
+      tabsId="command-structure-status"
+      controlsId="command-structure-panel"
+      ariaLabel="Estado del integrante"
+      [items]="statusTabs()"
+      [activeId]="currentView()"
+      [stretch]="true"
+      [showDescriptions]="true"
+      [hideDescriptionsOnMobile]="true"
+      (selectionChange)="selectView($event.id)"
+    />
 
-            <img class="command-card__photo" [src]="photoUrl(item)" [alt]="fullName(item)" />
+    <div
+      id="command-structure-panel"
+      class="command-structure__viewport"
+      role="tabpanel"
+      [attr.aria-labelledby]="'command-structure-status-tab-' + currentView()"
+    >
+      @if (loading()) {
+        <div class="command-structure__state">
+          <app-ui-spinner
+            type="bars"
+            size="sm"
+            variant="info"
+            label="Cargando estructura..."
+            [contained]="true"
+          />
+        </div>
+      } @else if (visibleRows().length === 0) {
+        <div class="command-structure__empty">
+          <span aria-hidden="true">
+            <i
+              [class]="
+                currentView() === 'active' ? 'fa-solid fa-people-arrows' : 'fa-solid fa-user-clock'
+              "
+            ></i>
+          </span>
+          @if (currentView() === 'active') {
+            <strong>Aún no hay integrantes activos</strong>
+            <p>Consulte un funcionario y asígnele una posición para construir la línea de mando.</p>
+          } @else {
+            <strong>No hay integrantes retirados</strong>
+            <p>Los registros desactivados aparecerán aquí para reactivarlos o eliminarlos.</p>
+          }
+        </div>
+      } @else {
+        <ol class="command-structure__list" aria-label="Integrantes de la línea de mando">
+          @for (item of visibleRows(); track item.idLineaMando; let index = $index) {
+            <li
+              class="command-card"
+              [class.is-selected]="selectedId() === item.idLineaMando"
+              [class.is-inactive]="item.vigente !== 1"
+            >
+              <div
+                class="command-card__order"
+                [attr.aria-label]="'Orden ' + displayOrder(item, index)"
+              >
+                @if (item.vigente === 1) {
+                  <span>{{ displayOrder(item, index) }}</span>
+                  @if (index < visibleRows().length - 1) {
+                    <i aria-hidden="true"></i>
+                  }
+                } @else {
+                  <span class="is-history"><i class="fa-solid fa-clock-rotate-left"></i></span>
+                }
+              </div>
 
-            <div class="command-card__content">
-              <div class="command-card__title-row">
+              <img class="command-card__photo" [src]="photoUrl(item)" [alt]="fullName(item)" />
+
+              <div class="command-card__content">
                 <div class="command-card__identity">
                   <strong>{{ fullName(item) }}</strong>
                   <span>{{ item.identificacion }}</span>
                 </div>
+
+                <div class="command-card__position">
+                  <app-ui-badge
+                    size="sm"
+                    [label]="item.peso || 'Posición sin definir'"
+                    [variant]="item.vigente === 1 ? 'primary' : 'neutral'"
+                    appearance="soft"
+                    icon="fa-solid fa-ranking-star"
+                    iconPosition="start"
+                  />
+                </div>
+
+                <dl class="command-card__metadata">
+                  <div>
+                    <dt><i class="fa-solid fa-briefcase" aria-hidden="true"></i> Cargo</dt>
+                    <dd>{{ item.cargo || 'No registrado' }}</dd>
+                  </div>
+                  <div>
+                    <dt><i class="fa-solid fa-building-shield" aria-hidden="true"></i> Unidad</dt>
+                    <dd>{{ item.unidad || 'No registrada' }}</dd>
+                  </div>
+                  <div class="command-card__metadata-status">
+                    <dd>
+                      <app-ui-badge
+                        class="command-card__status"
+                        size="xs"
+                        appearance="soft"
+                        [label]="item.vigente === 1 ? 'Activo' : 'Inactivo'"
+                        [variant]="item.vigente === 1 ? 'success' : 'neutral'"
+                        [icon]="item.vigente === 1 ? 'fa-solid fa-check' : 'fa-solid fa-pause'"
+                        [uppercase]="true"
+                      />
+                    </dd>
+                  </div>
+                </dl>
               </div>
 
-              <div class="command-card__position">
-                <app-ui-badge
-                  size="sm"
-                  [label]="item.peso || 'Posición sin definir'"
-                  variant="primary"
-                  appearance="soft"
-                  icon="fa-solid fa-ranking-star"
-                  iconPosition="start"
-                />
-              </div>
-
-              <dl class="command-card__metadata">
-                <div>
-                  <dt><i class="fa-solid fa-briefcase" aria-hidden="true"></i> Cargo</dt>
-                  <dd>{{ item.cargo || 'No registrado' }}</dd>
-                </div>
-                <div>
-                  <dt><i class="fa-solid fa-building-shield" aria-hidden="true"></i> Unidad</dt>
-                  <dd>{{ item.unidad || 'No registrada' }}</dd>
-                </div>
-                <div class="command-card__metadata-status">
-                  <dd>
-                    <app-ui-badge
-                      class="command-card__status"
-                      size="xs"
-                      appearance="soft"
-                      [label]="item.vigente === 1 ? 'Activo' : 'Inactivo'"
-                      [variant]="item.vigente === 1 ? 'success' : 'neutral'"
-                      [icon]="item.vigente === 1 ? 'fa-solid fa-check' : 'fa-solid fa-pause'"
-                      [uppercase]="true"
-                    />
-                  </dd>
-                </div>
-              </dl>
-            </div>
-
-            @if (item.vigente === 1) {
               <div class="command-card__actions" aria-label="Acciones del integrante">
                 <div class="command-card__action-buttons">
-                  <app-ui-button
-                    size="sm"
-                    variant="info"
-                    appearance="soft"
-                    icon="fa-solid fa-pen"
-                    [iconOnly]="true"
-                    tooltip="Editar integrante"
-                    ariaLabel="Editar integrante"
-                    (buttonClick)="editRequested.emit(item)"
-                  />
-                  <app-ui-button
-                    size="sm"
-                    variant="danger"
-                    appearance="soft"
-                    icon="fa-solid fa-user-minus"
-                    [iconOnly]="true"
-                    tooltip="Retirar integrante"
-                    ariaLabel="Retirar integrante"
-                    (buttonClick)="removeRequested.emit(item)"
-                  />
+                  @if (item.vigente === 1) {
+                    <app-ui-button
+                      size="sm"
+                      variant="info"
+                      appearance="soft"
+                      icon="fa-solid fa-pen"
+                      [iconOnly]="true"
+                      [disabled]="isProcessing(item)"
+                      tooltip="Editar integrante"
+                      tooltipPosition="bottom"
+                      tooltipVariant="light"
+                      ariaLabel="Editar integrante"
+                      (buttonClick)="editRequested.emit(item)"
+                    />
+                    <app-ui-button
+                      size="sm"
+                      variant="danger"
+                      appearance="soft"
+                      icon="fa-solid fa-user-minus"
+                      [iconOnly]="true"
+                      [loading]="isProcessing(item)"
+                      tooltip="Retirar integrante"
+                      tooltipPosition="bottom"
+                      tooltipVariant="light"
+                      ariaLabel="Retirar integrante"
+                      (buttonClick)="removeRequested.emit(item)"
+                    />
+                  } @else {
+                    <app-ui-button
+                      size="sm"
+                      variant="success"
+                      appearance="soft"
+                      icon="fa-solid fa-user-check"
+                      [iconOnly]="true"
+                      [loading]="isProcessing(item)"
+                      tooltip="Reactivar integrante"
+                      tooltipPosition="bottom"
+                      tooltipVariant="success"
+                      ariaLabel="Reactivar integrante"
+                      (buttonClick)="activateRequested.emit(item)"
+                    />
+                    <app-ui-button
+                      size="sm"
+                      variant="danger"
+                      appearance="outline"
+                      icon="fa-solid fa-trash-can"
+                      [iconOnly]="true"
+                      [disabled]="isProcessing(item)"
+                      tooltip="Eliminar definitivamente"
+                      tooltipPosition="bottom"
+                      tooltipVariant="danger"
+                      ariaLabel="Eliminar integrante definitivamente"
+                      (buttonClick)="permanentDeleteRequested.emit(item)"
+                    />
+                  }
                 </div>
               </div>
-            }
-          </li>
-        }
-      </ol>
-    }
+            </li>
+          }
+        </ol>
+      }
+    </div>
   </div>
 </section>

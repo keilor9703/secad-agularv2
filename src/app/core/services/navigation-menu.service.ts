@@ -2,7 +2,15 @@ import { inject, Injectable } from '@angular/core';
 import { catchError, map, Observable, of, switchMap } from 'rxjs';
 
 import { AuthService } from '../auth/auth.service';
-import { MenuItem, SubMenuItem } from '../interfaces/menu-item.interface';
+import { MenuItem } from '../interfaces/menu-item.interface';
+import { isKnownAppRoute, normalizeAppRoute } from '../navigation/app-route-catalog';
+import {
+  isSafeExternalUrl,
+  isSafePdfResource,
+  MenuNavigationTarget,
+  normalizeExternalResource,
+  resolveMenuTarget,
+} from '../navigation/menu-destination';
 import { DbMenuItem, MenuService } from './menu.service';
 
 interface DbMenuApiItem extends Partial<DbMenuItem> {
@@ -10,16 +18,31 @@ interface DbMenuApiItem extends Partial<DbMenuItem> {
   Descripcion?: string;
   IdPadre?: number;
   Posicion?: number;
+  Tipo?: string;
   Icono?: string | null;
   Detalle?: string | null;
   Vigente?: number;
 }
 
+interface NormalizedDbMenuItem {
+  readonly idMenu: number;
+  readonly descripcion: string;
+  readonly idPadre: number;
+  readonly posicion: number;
+  readonly tipo: string;
+  readonly icono: string | null;
+  readonly detalle: string | null;
+  readonly vigente: number;
+}
+
+interface MenuPartition {
+  readonly regular: readonly MenuItem[];
+  readonly administration: readonly MenuItem[];
+}
+
 /**
- * Adapta el menú de la API al modelo que utiliza la navegación.
- *
- * La vista del sidebar no conoce reglas de rutas, agrupaciones administrativas
- * ni estrategias de respaldo: su única responsabilidad es presentar el resultado.
+ * Convierte el catálogo autorizado por la API en un árbol de navegación.
+ * El sidebar recibe un modelo listo para presentar y no conoce reglas del backend.
  */
 @Injectable({ providedIn: 'root' })
 export class NavigationMenuService {
@@ -35,119 +58,107 @@ export class NavigationMenuService {
     );
   }
 
+  canAccessRoute(rawUrl: string): Observable<boolean> {
+    const requestedRoute = normalizeAppRoute(String(rawUrl ?? '').split(/[?#]/, 1)[0]);
+
+    return this.loadMenu().pipe(map((items) => this.hasAccessibleRoute(items, requestedRoute)));
+  }
+
   private loadFallback(): Observable<DbMenuItem[]> {
     const userId = this.authService.getUserId();
-
-    if (!userId) {
-      return of([]);
-    }
-
-    return this.menuService.getByUser(userId).pipe(catchError(() => of([])));
+    return userId ? this.menuService.getByUser(userId).pipe(catchError(() => of([]))) : of([]);
   }
 
   private buildMenu(items: DbMenuItem[]): readonly MenuItem[] {
-    const mapped = this.mapDatabaseMenu(items);
-    return this.ensureHomeItem(this.groupAdministrationItems(mapped));
+    return this.ensureHomeItem(this.groupAdministrationItems(this.mapDatabaseMenu(items)));
   }
 
+  /** Construye todos los niveles y corta ciclos accidentales de datos. */
   private mapDatabaseMenu(items: DbMenuItem[]): MenuItem[] {
-    const normalized = (items ?? []).map((item: DbMenuApiItem) => ({
-      idMenu: Number(item.idMenu ?? item.IdMenu ?? 0),
-      descripcion: String(item.descripcion ?? item.Descripcion ?? ''),
-      idPadre: Number(item.idPadre ?? item.IdPadre ?? 0),
-      posicion: Number(item.posicion ?? item.Posicion ?? 0),
-      icono: item.icono ?? item.Icono,
-      detalle: item.detalle ?? item.Detalle,
-      vigente: Number(item.vigente ?? item.Vigente ?? 1),
-    }));
-
-    const activeItems = normalized.filter(
-      (item) => Boolean(item.descripcion) && item.vigente === 1,
+    const normalized = this.normalizeDatabaseItems(items).filter(
+      (item) => item.idMenu > 0 && Boolean(item.descripcion) && item.vigente === 1,
     );
-    const itemsById = new Map(activeItems.map((item) => [item.idMenu, item]));
+    const itemsById = new Map(normalized.map((item) => [item.idMenu, item]));
+    const childrenByParent = new Map<number, NormalizedDbMenuItem[]>();
 
-    const parentItems = activeItems
-      .filter((item) => item.idPadre === 0 || item.idPadre === 1 || !itemsById.has(item.idPadre))
+    for (const item of normalized) {
+      const siblings = childrenByParent.get(item.idPadre) ?? [];
+      siblings.push(item);
+      childrenByParent.set(item.idPadre, siblings);
+    }
+
+    for (const siblings of childrenByParent.values()) {
+      siblings.sort((left, right) => left.posicion - right.posicion || left.idMenu - right.idMenu);
+    }
+
+    const roots = normalized
       .filter((item) => item.idMenu !== 1)
-      .sort((left, right) => left.posicion - right.posicion);
+      .filter((item) => item.idPadre === 0 || item.idPadre === 1 || !itemsById.has(item.idPadre))
+      .sort((left, right) => left.posicion - right.posicion || left.idMenu - right.idMenu);
 
-    return parentItems
-      .map((parent): MenuItem | null => {
-        const submenu = activeItems
-          .filter((child) => child.idPadre === parent.idMenu)
-          .sort((left, right) => left.posicion - right.posicion)
-          .map((child): SubMenuItem => {
-            const route = this.normalizeRoute(child.detalle);
+    const buildNode = (
+      item: NormalizedDbMenuItem,
+      ancestors: ReadonlySet<number>,
+    ): MenuItem | null => {
+      if (ancestors.has(item.idMenu)) {
+        return null;
+      }
 
-            return {
-              id: child.idMenu,
-              route,
-              label: this.normalizeLabel(child.descripcion, route),
-              isExternal: this.isExternalUrl(route),
-            };
-          })
-          .filter((item) => Boolean(item.route));
+      const nextAncestors = new Set(ancestors).add(item.idMenu);
+      const children = (childrenByParent.get(item.idMenu) ?? [])
+        .map((child) => buildNode(child, nextAncestors))
+        .filter((child): child is MenuItem => child !== null);
+      const target = resolveMenuTarget(item.tipo, item.detalle);
+      const route = this.resolveDestination(target, item.detalle);
 
-        const route = this.normalizeRoute(parent.detalle);
-        const baseItem = {
-          id: parent.idMenu,
-          icon: this.normalizeIcon(parent.icono),
-          label: this.normalizeLabel(parent.descripcion, route),
-        };
+      // Los contenedores sin ruta son válidos; los destinos rotos no se publican.
+      if (target !== 'group' && !route && children.length === 0) {
+        return null;
+      }
 
-        if (submenu.length) {
-          return { ...baseItem, submenu };
-        }
+      return {
+        id: item.idMenu,
+        icon: this.normalizeIcon(item.icono),
+        label: this.normalizeLabel(item.descripcion, route),
+        target: children.length > 0 ? 'group' : target,
+        ...(route ? { route } : {}),
+        ...(children.length ? { children } : {}),
+      };
+    };
 
-        if (!route) {
-          return null;
-        }
-
-        return {
-          ...baseItem,
-          route,
-          isExternal: this.isExternalUrl(route),
-        };
-      })
+    return roots
+      .map((root) => buildNode(root, new Set<number>()))
       .filter((item): item is MenuItem => item !== null);
   }
 
-  private normalizeRoute(rawRoute: unknown): string {
-    const route = String(rawRoute ?? '').trim();
+  private normalizeDatabaseItems(items: DbMenuItem[]): NormalizedDbMenuItem[] {
+    return (items ?? []).map((item: DbMenuApiItem) => ({
+      idMenu: Number(item.idMenu ?? item.IdMenu ?? 0),
+      descripcion: String(item.descripcion ?? item.Descripcion ?? '').trim(),
+      idPadre: Number(item.idPadre ?? item.IdPadre ?? 0),
+      posicion: Number(item.posicion ?? item.Posicion ?? 0),
+      tipo: String(item.tipo ?? item.Tipo ?? ''),
+      icono: item.icono ?? item.Icono ?? null,
+      detalle: item.detalle ?? item.Detalle ?? null,
+      vigente: Number(item.vigente ?? item.Vigente ?? 1),
+    }));
+  }
 
-    if (!route) {
+  private resolveDestination(target: MenuNavigationTarget, rawDetail: unknown): string {
+    if (target === 'group') {
       return '';
     }
 
-    if (this.isExternalUrl(route)) {
-      return route.startsWith('www.') ? `https://${route}` : route;
+    if (target === 'external') {
+      return isSafeExternalUrl(rawDetail) ? normalizeExternalResource(rawDetail) : '';
     }
 
-    if (route.startsWith('/administracion/')) {
-      return route;
+    if (target === 'document') {
+      return isSafePdfResource(rawDetail) ? normalizeExternalResource(rawDetail) : '';
     }
 
-    const configurationAliases = new Set([
-      '/video-unidad',
-      '/configuracion-imagen-sitio',
-      '/admin-multimedia',
-      '/configuracion-sistema',
-    ]);
-
-    if (configurationAliases.has(route)) {
-      return '/administracion/configuracion-sistema';
-    }
-
-    const routeAliases: Readonly<Record<string, string>> = {
-      '/formularios': '/administracion/formularios',
-      '/usuarios': '/administracion/usuarios',
-      '/roles': '/administracion/roles',
-      '/linea-mando': '/administracion/linea-mando',
-      '/menu': '/administracion/menu',
-      '/auditoria': '/administracion/auditoria',
-    };
-
-    return routeAliases[route] ?? (route.startsWith('/') ? route : `/${route}`);
+    const route = normalizeAppRoute(rawDetail);
+    return isKnownAppRoute(route) ? route : '';
   }
 
   private normalizeLabel(label: string, route: string): string {
@@ -156,88 +167,76 @@ export class NavigationMenuService {
 
   private normalizeIcon(rawIcon: unknown): string {
     const icon = String(rawIcon ?? '').trim();
-
-    if (!icon) {
-      return 'fa-solid fa-folder';
-    }
-
-    return icon.includes('fa-') ? icon : `fa-solid ${icon}`;
+    return !icon ? 'fa-solid fa-folder' : icon.includes('fa-') ? icon : `fa-solid ${icon}`;
   }
 
-  private groupAdministrationItems(items: MenuItem[]): MenuItem[] {
-    const visibleItems: MenuItem[] = [];
-    const administrationItems: SubMenuItem[] = [];
-
-    for (const item of items) {
-      if (item.route && this.isAdministrationRoute(item.route)) {
-        administrationItems.push({
-          id: item.id,
-          label: item.label,
-          route: item.route,
-          isExternal: item.isExternal,
-        });
-        continue;
-      }
-
-      if (item.submenu?.length) {
-        const adminChildren = item.submenu.filter((child) =>
-          this.isAdministrationRoute(child.route),
-        );
-        const regularChildren = item.submenu.filter(
-          (child) => !this.isAdministrationRoute(child.route),
-        );
-
-        administrationItems.push(...adminChildren);
-
-        if (regularChildren.length) {
-          visibleItems.push({ ...item, submenu: regularChildren });
-        } else if (item.route && !this.isAdministrationRoute(item.route)) {
-          visibleItems.push({ ...item, submenu: undefined });
-        }
-        continue;
-      }
-
-      visibleItems.push(item);
+  /** Conserva la jerarquía al reunir destinos administrativos. */
+  private groupAdministrationItems(items: readonly MenuItem[]): MenuItem[] {
+    const existingAdministration = items.find(
+      (item) => item.label.trim().toLocaleLowerCase('es') === 'administración',
+    );
+    if (existingAdministration) {
+      return [...items];
     }
 
-    const uniqueAdministrationItems = administrationItems
-      .filter(
-        (item, index, source) =>
-          source.findIndex((candidate) => candidate.route === item.route) === index,
-      )
-      .sort((left, right) => left.label.localeCompare(right.label, 'es'));
+    const partition = this.partitionAdministration(items);
+    if (!partition.administration.length) {
+      return [...partition.regular];
+    }
 
-    if (uniqueAdministrationItems.length) {
-      visibleItems.unshift({
+    return [
+      {
         id: 999001,
         icon: 'fa-solid fa-user-shield',
         label: 'Administración',
-        submenu: uniqueAdministrationItems,
-      });
+        target: 'group',
+        children: partition.administration,
+      },
+      ...partition.regular,
+    ];
+  }
+
+  private partitionAdministration(items: readonly MenuItem[]): MenuPartition {
+    const regular: MenuItem[] = [];
+    const administration: MenuItem[] = [];
+
+    for (const item of items) {
+      if (item.route?.startsWith('/administracion/')) {
+        administration.push(item);
+        continue;
+      }
+
+      const childPartition = this.partitionAdministration(item.children ?? []);
+      if (childPartition.administration.length) {
+        administration.push({
+          ...item,
+          target: 'group',
+          route: undefined,
+          children: childPartition.administration,
+        });
+      }
+
+      if (item.route || childPartition.regular.length || !item.children?.length) {
+        regular.push({
+          ...item,
+          children: childPartition.regular.length ? childPartition.regular : undefined,
+        });
+      }
     }
 
-    return visibleItems;
+    return { regular, administration };
   }
 
-  private isAdministrationRoute(route: string): boolean {
-    return route.startsWith('/administracion/');
-  }
-
-  private isExternalUrl(route: string): boolean {
-    return /^(https?:\/\/|www\.)/i.test(route);
-  }
-
-  private ensureHomeItem(items: MenuItem[]): MenuItem[] {
+  private ensureHomeItem(items: readonly MenuItem[]): MenuItem[] {
     if (!this.authService.isAuthenticated()) {
-      return items;
+      return [...items];
     }
 
     const homeIndex = items.findIndex(
       (item) => item.route === '/home' || item.label.toLocaleLowerCase('es') === 'inicio',
     );
-
     if (homeIndex >= 0) {
-      const homeItem = { ...items[homeIndex], route: '/home' };
+      const homeItem: MenuItem = { ...items[homeIndex], target: 'internal', route: '/home' };
       return [homeItem, ...items.filter((_, index) => index !== homeIndex)];
     }
 
@@ -246,9 +245,24 @@ export class NavigationMenuService {
         id: 999000,
         icon: 'fa-solid fa-house',
         label: 'Inicio',
+        target: 'internal',
         route: '/home',
       },
       ...items,
     ];
+  }
+
+  private hasAccessibleRoute(items: readonly MenuItem[], requestedRoute: string): boolean {
+    return items.some((item) => {
+      const itemRoute = item.route ? normalizeAppRoute(item.route) : '';
+      const routeMatches = Boolean(
+        itemRoute &&
+        (requestedRoute === itemRoute ||
+          requestedRoute.startsWith(`${itemRoute}/`) ||
+          itemRoute.startsWith(`${requestedRoute}/`)),
+      );
+
+      return routeMatches || this.hasAccessibleRoute(item.children ?? [], requestedRoute);
+    });
   }
 }

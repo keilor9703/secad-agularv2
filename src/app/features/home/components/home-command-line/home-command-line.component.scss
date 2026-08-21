@@ -1,4 +1,9 @@
 :host {
+  --command-wood-base: #594034;
+  --command-wood-line-light: rgba(255, 244, 226, 0.055);
+  --command-wood-line-dark: rgba(28, 16, 11, 0.09);
+  --command-wood-ink: #fff9ee;
+  --command-brass: #d6b46f;
   display: block;
   min-width: 0;
 }
@@ -9,13 +14,39 @@
   height: 100%;
   grid-template-rows: auto minmax(0, 1fr) auto;
   overflow: hidden;
-  border: 1px solid var(--ui-border);
-  border-radius: 18px;
-  background: var(--ui-surface);
+  padding: 6px;
+  border: 1px solid #2a190f;
+  border-radius: 22px;
+  background-color: var(--command-wood-base);
+  background-image:
+    repeating-linear-gradient(
+      2deg,
+      transparent 0 11px,
+      var(--command-wood-line-light) 12px,
+      transparent 13px 25px
+    ),
+    repeating-linear-gradient(
+      178deg,
+      transparent 0 20px,
+      var(--command-wood-line-dark) 21px,
+      transparent 22px 41px
+    );
   box-shadow:
-    0 2px 7px rgba(15, 42, 75, 0.11),
-    0 17px 34px rgba(15, 42, 75, 0.12);
+    inset 0 0 0 1px rgba(255, 229, 185, 0.2),
+    0 1px 0 rgba(255, 255, 255, 0.44),
+    0 14px 30px rgba(25, 18, 12, 0.2);
   container-type: inline-size;
+}
+
+/* Brillo interior continuo: conserva el relieve sin herrajes ni adornos clásicos. */
+.command::after {
+  position: absolute;
+  z-index: 8;
+  inset: 4px;
+  border-radius: 17px;
+  border: 1px solid rgba(255, 239, 214, 0.18);
+  content: '';
+  pointer-events: none;
 }
 
 .command__carousel {
@@ -31,14 +62,27 @@
   align-items: center;
   gap: 11px;
   padding: 14px 18px;
-  border-bottom: 1px solid color-mix(in srgb, var(--ui-border) 78%, #aab9ca);
-  color: var(--ui-text);
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--ui-surface) 92%, #dce5ee) 0%,
-    color-mix(in srgb, var(--ui-surface) 86%, #dce5ee) 100%
-  );
-  box-shadow: 0 7px 18px rgba(24, 49, 82, 0.07);
+  border: 1px solid rgba(255, 230, 191, 0.17);
+  border-bottom-color: rgba(31, 15, 7, 0.62);
+  border-radius: 15px 15px 5px 5px;
+  color: var(--command-wood-ink);
+  background-color: var(--command-wood-base);
+  background-image:
+    repeating-linear-gradient(
+      2deg,
+      transparent 0 11px,
+      var(--command-wood-line-light) 12px,
+      transparent 13px 25px
+    ),
+    repeating-linear-gradient(
+      178deg,
+      transparent 0 20px,
+      var(--command-wood-line-dark) 21px,
+      transparent 22px 41px
+    );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 239, 211, 0.16),
+    0 5px 13px rgba(28, 14, 7, 0.16);
 }
 
 .command__icon {
@@ -47,22 +91,24 @@
   height: 42px;
   flex: 0 0 auto;
   place-items: center;
-  border: 1px solid #d4dee9;
+  border: 1px solid rgba(246, 218, 157, 0.52);
   border-radius: 11px;
-  color: #075d86;
-  background: var(--ui-surface);
-  box-shadow: 0 5px 12px rgba(24, 49, 82, 0.08);
+  color: #ffe2a1;
+  background: rgba(30, 16, 9, 0.48);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 5px 12px rgba(15, 7, 3, 0.25);
 }
 
 .command__header h2 {
   margin: 0;
-  color: var(--ui-text);
+  color: var(--command-wood-ink);
   font-size: 1.1rem;
 }
 
 .command__header p {
   margin: 2px 0 0;
-  color: var(--policia-neutral-medio);
+  color: #ead8bd;
   font-size: 0.73rem;
 }
 
@@ -72,10 +118,10 @@
   height: 26px;
   margin-left: auto;
   place-items: center;
-  border: 1px solid #b9dce6;
+  border: 1px solid rgba(246, 218, 157, 0.48);
   border-radius: 999px;
-  color: #075d86;
-  background: #e9f8fb;
+  color: #fff4dc;
+  background: rgba(31, 16, 8, 0.48);
   font-size: 0.68rem;
   font-weight: 900;
 }
@@ -86,11 +132,15 @@
   overflow-x: auto;
   overflow-y: hidden;
   padding: 14px 38px;
-  background: linear-gradient(
-    135deg,
-    color-mix(in srgb, var(--ui-surface) 94%, #dce5ee) 0%,
-    color-mix(in srgb, var(--ui-surface) 88%, #dce5ee) 100%
+  border-inline: 1px solid rgba(47, 25, 13, 0.42);
+  background-color: #f4efe7;
+  background-image: repeating-linear-gradient(
+    2deg,
+    transparent 0 15px,
+    rgba(90, 62, 43, 0.025) 16px,
+    transparent 17px 31px
   );
+  box-shadow: inset 0 9px 20px rgba(68, 42, 23, 0.12);
   scroll-behavior: smooth;
   scroll-padding-inline: 38px;
   scroll-snap-type: x mandatory;
@@ -318,13 +368,26 @@
   align-items: center;
   gap: 9px;
   padding: 7px 12px;
-  border-top: 1px solid color-mix(in srgb, var(--ui-border) 78%, #aab9ca);
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--ui-surface) 90%, #dce5ee),
-    color-mix(in srgb, var(--ui-surface) 84%, #dce5ee)
-  );
-  box-shadow: 0 -6px 16px rgba(24, 49, 82, 0.06);
+  border: 1px solid rgba(255, 230, 191, 0.15);
+  border-top-color: rgba(31, 15, 7, 0.6);
+  border-radius: 5px 5px 15px 15px;
+  background-color: var(--command-wood-base);
+  background-image:
+    repeating-linear-gradient(
+      2deg,
+      transparent 0 11px,
+      var(--command-wood-line-light) 12px,
+      transparent 13px 25px
+    ),
+    repeating-linear-gradient(
+      178deg,
+      transparent 0 20px,
+      var(--command-wood-line-dark) 21px,
+      transparent 22px 41px
+    );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 239, 211, 0.14),
+    0 -4px 11px rgba(28, 14, 7, 0.11);
 }
 
 .command__footer > button {
@@ -415,10 +478,12 @@
   line-height: 1.35;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 768px) {
   .command {
     display: block;
     height: auto;
+    border-width: 4px;
+    border-radius: 17px;
   }
 
   .command__carousel,
@@ -432,6 +497,11 @@
   }
 
   .command__header p {
+    display: none;
+  }
+
+  /* El contador circular se retira en móvil para liberar la cabecera. */
+  .command__count {
     display: none;
   }
 
@@ -508,11 +578,20 @@
     justify-content: center;
     gap: 14px;
     padding: 8px 62px;
-    background: linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--ui-surface) 91%, #dce5ee),
-      color-mix(in srgb, var(--ui-surface) 84%, #dce5ee)
-    );
+    background-color: var(--command-wood-base);
+    background-image:
+      repeating-linear-gradient(
+        2deg,
+        transparent 0 11px,
+        var(--command-wood-line-light) 12px,
+        transparent 13px 25px
+      ),
+      repeating-linear-gradient(
+        178deg,
+        transparent 0 20px,
+        var(--command-wood-line-dark) 21px,
+        transparent 22px 41px
+      );
   }
 
   .command__footer > button {
@@ -550,17 +629,9 @@
     gap: 7px;
   }
 
+  /* En móvil se conserva la navegación visual, pero no la fracción numérica 1 / N. */
   .command__footer > span {
-    min-width: 44px;
-    margin: 0;
-    padding: 5px 10px;
-    border: 1px solid color-mix(in srgb, var(--ui-border) 82%, #aab9ca);
-    border-radius: 999px;
-    background: color-mix(in srgb, var(--ui-surface) 80%, #dce5ee);
-    box-shadow:
-      inset 0 2px 5px rgba(18, 45, 78, 0.12),
-      inset 0 -1px 0 rgba(255, 255, 255, 0.7);
-    text-align: center;
+    display: none;
   }
 
   .command__pagination button {
@@ -578,7 +649,7 @@
   }
 }
 
-@media (min-width: 641px) {
+@media (min-width: 769px) {
   .member {
     grid-template-rows: minmax(120px, 1fr) 118px;
   }
@@ -595,9 +666,7 @@
     align-items: center;
     justify-content: center;
     padding: 5px 12px 7px;
-    border-top-color: color-mix(in srgb, var(--ui-border) 70%, transparent);
-    background: transparent;
-    box-shadow: none;
+    border-top-color: rgba(31, 15, 7, 0.56);
   }
 
   .command__footer > button,
@@ -744,5 +813,139 @@
   .profile-dialog__panel {
     transition: none;
     animation: none;
+  }
+}
+
+:host-context(html.dark-mode) {
+  --command-wood-base: #36271f;
+  --command-wood-line-light: rgba(255, 236, 207, 0.045);
+  --command-wood-line-dark: rgba(0, 0, 0, 0.13);
+
+  .command {
+    background-color: var(--command-wood-base);
+    background-image:
+      repeating-linear-gradient(
+        2deg,
+        transparent 0 11px,
+        var(--command-wood-line-light) 12px,
+        transparent 13px 25px
+      ),
+      repeating-linear-gradient(
+        178deg,
+        transparent 0 20px,
+        var(--command-wood-line-dark) 21px,
+        transparent 22px 41px
+      );
+    box-shadow:
+      inset 0 0 0 1px rgba(255, 232, 199, 0.18),
+      0 0 0 1px rgba(12, 8, 5, 0.72),
+      0 18px 38px rgba(0, 0, 0, 0.34);
+  }
+
+  .command__header,
+  .command__footer {
+    border-color: rgba(246, 218, 157, 0.18);
+    background-color: var(--command-wood-base);
+    background-image:
+      repeating-linear-gradient(
+        2deg,
+        transparent 0 11px,
+        var(--command-wood-line-light) 12px,
+        transparent 13px 25px
+      ),
+      repeating-linear-gradient(
+        178deg,
+        transparent 0 20px,
+        var(--command-wood-line-dark) 21px,
+        transparent 22px 41px
+      );
+  }
+
+  .command__viewport {
+    background-color: #172238;
+    background-image: repeating-linear-gradient(
+      2deg,
+      transparent 0 15px,
+      rgba(255, 255, 255, 0.018) 16px,
+      transparent 17px 31px
+    );
+  }
+
+  .command__header h2,
+  .member__data strong,
+  .command__empty strong,
+  .profile-dialog__content h2 {
+    color: #f8fafc;
+  }
+
+  .command__header p,
+  .command__footer > span,
+  .command__empty,
+  .profile-dialog__content p,
+  .profile-dialog__content small {
+    color: #b7c5d8;
+  }
+
+  .command__icon,
+  .command__count {
+    border-color: rgba(246, 218, 157, 0.42);
+    background: rgba(9, 4, 2, 0.4);
+    color: #ffe0a0;
+  }
+
+  .member {
+    border-color: rgba(148, 163, 184, 0.25);
+    background: #1b2940;
+    box-shadow:
+      0 2px 7px rgba(0, 0, 0, 0.3),
+      0 13px 26px rgba(0, 0, 0, 0.22);
+  }
+
+  .member__avatar {
+    border-bottom-color: rgba(148, 163, 184, 0.24);
+    background: linear-gradient(180deg, #27364d, #182438);
+  }
+
+  .member__grade {
+    color: #67e8f9;
+  }
+
+  .member__position {
+    color: #b9dcff;
+  }
+
+  .member__go {
+    border-color: rgba(255, 255, 255, 0.16);
+    background: rgba(15, 23, 42, 0.78);
+    color: #d8e5f4;
+  }
+
+  .command__side-control--previous,
+  .command__side-control--next {
+    color: #9bdcf0;
+    background: color-mix(in srgb, #172238 74%, transparent);
+  }
+
+  .command__footer > button,
+  .command__footer > span {
+    border-color: rgba(148, 163, 184, 0.28);
+    background: #223047;
+    color: #dce8f5;
+    box-shadow:
+      inset 0 2px 5px rgba(0, 0, 0, 0.35),
+      inset 0 -1px 0 rgba(255, 255, 255, 0.08);
+  }
+
+  .command__pagination button {
+    background: #718198;
+  }
+
+  .command__pagination button.is-active {
+    background: linear-gradient(90deg, #22b7d6, #7dd3fc);
+    box-shadow: 0 0 0 3px rgba(34, 183, 214, 0.15);
+  }
+
+  .profile-dialog__panel {
+    background: #172238;
   }
 }

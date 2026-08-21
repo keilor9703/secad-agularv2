@@ -1,6 +1,21 @@
-import { ChangeDetectionStrategy, Component, effect, inject, input, output } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  input,
+  output,
+  signal,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { startWith } from 'rxjs';
 
+import {
+  isMenuDestinationType,
+  MenuDestinationType,
+} from '../../../../../core/navigation/menu-destination';
 import { DbMenuItem, MenuSaveRequest } from '../../../../../core/services/menu.service';
 import { UiButtonComponent } from '../../../../../shared/components/ui-button/ui-button.component';
 import { UiChipComponent } from '../../../../../shared/components/ui-chip/ui-chip.component';
@@ -10,6 +25,8 @@ import { UiSelectComponent } from '../../../../../shared/components/ui-select/ui
 import { UiSelectOption } from '../../../../../shared/interfaces/ui-select-option.interface';
 import { UiFormControlSize } from '../../../../../shared/models/ui-form-control-size.model';
 import { getFormErrorMessage } from '../../../../../shared/utils/form-error.util';
+import { menuDetailError, menuDetailValidators } from '../menu-destination.validators';
+import { MENU_ROUTE_OPTIONS } from '../menu-route-options';
 
 type SubmenuFormField = 'descripcion' | 'posicion' | 'tipo' | 'icono' | 'vigente' | 'detalle';
 
@@ -52,6 +69,13 @@ export class MenuAdminSubmenuFormComponent {
 
   readonly typeOptions = SUBMENU_TYPE_OPTIONS;
   readonly statusOptions = SUBMENU_STATUS_OPTIONS;
+  readonly routeOptions = MENU_ROUTE_OPTIONS;
+  readonly selectedType = signal<MenuDestinationType>('S');
+  readonly isInternalDestination = computed(() => this.selectedType() === 'frm');
+  readonly usesInternalRoute = computed(
+    () => this.selectedType() === 'frm' || this.selectedType() === 'S',
+  );
+  readonly isContainerDestination = computed(() => this.selectedType() === 'S');
 
   /**
    * Tamaño compacto compartido por input y select. El ancho queda en 100 %
@@ -84,6 +108,15 @@ export class MenuAdminSubmenuFormComponent {
   });
 
   constructor() {
+    this.form.controls.tipo.valueChanges
+      .pipe(startWith(this.form.controls.tipo.value), takeUntilDestroyed())
+      .subscribe((rawType) => {
+        const type = isMenuDestinationType(rawType) ? rawType : 'S';
+        this.selectedType.set(type);
+        this.form.controls.detalle.setValidators(menuDetailValidators(type));
+        this.form.controls.detalle.updateValueAndValidity({ emitEvent: false });
+      });
+
     /*
      * Cada cambio de padre representa una operación nueva; por eso se
      * restablecen los valores y se propone la siguiente posición disponible.
@@ -114,7 +147,7 @@ export class MenuAdminSubmenuFormComponent {
       descripcion: value.descripcion.trim(),
       idPadre: this.parent().idMenu,
       posicion: position,
-      tipo: value.tipo.trim(),
+      tipo: isMenuDestinationType(value.tipo) ? value.tipo : 'S',
       icono: value.icono.trim(),
       vigente: value.vigente,
       detalle: value.detalle.trim(),
@@ -130,6 +163,13 @@ export class MenuAdminSubmenuFormComponent {
 
     if (field === 'posicion' && control.hasError('invalidPosition')) {
       return 'Ingrese una posición entera igual o mayor que cero.';
+    }
+
+    if (field === 'detalle') {
+      const detailError = menuDetailError(control);
+      if (detailError) {
+        return detailError;
+      }
     }
 
     return getFormErrorMessage(control);

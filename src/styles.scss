@@ -1611,6 +1611,14 @@ body > .cdk-overlay-container:has(.usuario-roles-overlay-pane) {
   z-index: 1250;
 }
 
+/*
+ * El tooltip vive fuera del árbol visual del control. Esta capa evita que
+ * tarjetas con overflow, tablas, expansion panels o modales lo recorten.
+ */
+body > .cdk-overlay-container:has(.ui-tooltip-overlay-pane) {
+  z-index: var(--ui-z-tooltip, 14000);
+}
+
 .ui-modal {
   position: fixed;
   inset: 0;

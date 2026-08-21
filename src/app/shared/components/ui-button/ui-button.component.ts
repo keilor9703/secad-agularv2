@@ -6,6 +6,13 @@ import {
   input,
   output,
 } from '@angular/core';
+import { UiTooltipComponent } from '../ui-tooltip/ui-tooltip.component';
+import {
+  UiTooltipAlign,
+  UiTooltipPosition,
+  UiTooltipSize,
+  UiTooltipVariant,
+} from '../ui-tooltip/ui-tooltip.types';
 
 export type UiButtonVariant =
   | 'primary'
@@ -20,16 +27,14 @@ export type UiButtonVariant =
 export type UiButtonAppearance = 'solid' | 'soft' | 'outline' | 'ghost';
 export type UiButtonSize = 'sm' | 'md' | 'lg';
 export type UiButtonIconPosition = 'start' | 'end';
-export type UiButtonTooltipAlign = 'start' | 'center' | 'end';
+export type UiButtonTooltipAlign = UiTooltipAlign;
 
 @Component({
   selector: 'app-ui-button',
   standalone: true,
+  imports: [UiTooltipComponent],
   host: {
-    '[attr.data-ui-tooltip]': 'tooltip() || null',
-    '[class.ui-button-host--tooltip]': '!!tooltip()',
-    '[class.ui-button-host--tooltip-start]': 'tooltipAlign() === "start"',
-    '[class.ui-button-host--tooltip-end]': 'tooltipAlign() === "end"',
+    '[class.ui-button-host--block]': 'block()',
   },
   templateUrl: './ui-button.component.html',
   styleUrl: './ui-button.component.scss',
@@ -46,6 +51,11 @@ export class UiButtonComponent {
   /** Tooltip visual reutilizable; también sirve como nombre accesible de respaldo. */
   readonly tooltip = input('');
   readonly tooltipAlign = input<UiButtonTooltipAlign>('center');
+  readonly tooltipPosition = input<UiTooltipPosition>('bottom');
+  readonly tooltipVariant = input<UiTooltipVariant>('light');
+  readonly tooltipSize = input<UiTooltipSize>('sm');
+  readonly tooltipShowDelay = input(180);
+  readonly tooltipHideDelay = input(80);
   readonly ariaLabel = input('');
   readonly disabled = input(false, { transform: booleanAttribute });
   readonly loading = input(false, { transform: booleanAttribute });

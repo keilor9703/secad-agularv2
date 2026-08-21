@@ -23,6 +23,8 @@ import { StatusComponentsDemoComponent } from '../../components/formularios/stat
 import { TableVariantsDemoComponent } from '../../components/formularios/table-variants-demo/table-variants-demo.component';
 import { TabsDemoComponent } from '../../components/formularios/tabs-demo/tabs-demo.component';
 import { ToggleDemoComponent } from '../../components/formularios/toggle-demo/toggle-demo.component';
+
+import { TooltipDemoComponent } from '../../components/formularios/tooltip-demo/tooltip-demo.component';
 import { UiApiReferenceComponent } from '../../components/formularios/ui-api-reference/ui-api-reference.component';
 
 interface FormulariosDemoForm {
@@ -74,6 +76,7 @@ interface ModalActividadForm {
     TableVariantsDemoComponent,
     TabsDemoComponent,
     ToggleDemoComponent,
+    TooltipDemoComponent,
     UiApiReferenceComponent,
   ],
   templateUrl: './formularios-page.component.html',

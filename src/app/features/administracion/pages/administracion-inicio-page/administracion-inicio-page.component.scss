@@ -1,3 +1,135 @@
-.admin-home .ui-panel__body {
-  padding-top: 18px;
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.admin-hub {
+  display: grid;
+  align-content: start;
+  min-width: 0;
+  min-height: calc(100vh - 210px);
+  gap: 12px;
+  padding: 10px;
+}
+
+.admin-hub__summary {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.admin-catalog {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid rgba(21, 27, 59, 0.13);
+  border-radius: 9px;
+  background: var(--ui-surface, #ffffff);
+  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.08);
+}
+
+.admin-catalog__body {
+  display: grid;
+  min-width: 0;
+  gap: 14px;
+  padding: 14px;
+}
+
+.admin-catalog__guide {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid rgba(8, 166, 203, 0.2);
+  border-left: 3px solid var(--policia-cielo, #08a6cb);
+  border-radius: 7px;
+  background: rgba(8, 166, 203, 0.055);
+}
+
+.admin-catalog__guide-icon {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border-radius: 8px;
+  background: rgba(31, 78, 121, 0.09);
+  color: var(--policia-medio, #1f4e79);
+}
+
+.admin-catalog__guide strong,
+.admin-catalog__guide p {
+  margin: 0;
+}
+
+.admin-catalog__guide strong {
+  color: var(--ui-text, #111936);
+  font-size: calc(11px * var(--font-size-scale, 1));
+  font-weight: 850;
+}
+
+.admin-catalog__guide p {
+  margin-top: 2px;
+  color: var(--ui-muted, #687891);
+  font-size: calc(9.5px * var(--font-size-scale, 1));
+  line-height: 1.4;
+}
+
+.admin-catalog__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 265px), 1fr));
+  align-items: stretch;
+  gap: 14px;
+  min-width: 0;
+}
+
+@media (max-width: 680px) {
+  .admin-hub {
+    min-height: auto;
+    gap: 8px;
+    padding: 6px;
+  }
+
+  .admin-hub__summary app-ui-chip:nth-child(n + 2) {
+    display: none;
+  }
+
+  .admin-catalog__body {
+    gap: 10px;
+    padding: 9px;
+  }
+
+  .admin-catalog__guide {
+    padding: 8px;
+  }
+
+  .admin-catalog__guide p {
+    display: none;
+  }
+
+  .admin-catalog__grid {
+    grid-template-columns: 1fr;
+    gap: 9px;
+  }
+}
+
+@media (max-width: 390px) {
+  .admin-hub__summary {
+    display: none;
+  }
+}
+
+:host-context(html.dark-mode) {
+  .admin-catalog {
+    border-color: rgba(255, 255, 255, 0.11);
+  }
+
+  .admin-catalog__guide {
+    background: rgba(8, 166, 203, 0.075);
+  }
+
+  .admin-catalog__guide-icon {
+    background: rgba(85, 200, 229, 0.12);
+    color: var(--policia-cielo, #55c8e5);
+  }
 }

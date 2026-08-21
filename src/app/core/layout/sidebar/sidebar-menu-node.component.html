@@ -1,0 +1,99 @@
+<li
+  class="sidebar-node"
+  [class.sidebar-node--root]="depth() === 0"
+  [class.sidebar-node--expanded]="isExpanded()"
+  [class.sidebar-node--active]="isActive()"
+>
+  @if (item().children?.length) {
+    <button
+      type="button"
+      class="sidebar-node__link"
+      [class.sidebar-node__link--root]="depth() === 0"
+      [class.sidebar-node__link--active]="isActive()"
+      [class.sidebar-node__link--current]="isCurrentRoute()"
+      [style.--node-depth]="depth()"
+      [attr.aria-expanded]="isExpanded()"
+      [attr.aria-controls]="'sidebar-branch-' + item().id"
+      [title]="!sidebarOpen() ? item().label : null"
+      (click)="toggle()"
+    >
+      @if (depth() === 0) {
+        <span class="sidebar-node__icon"><i [class]="item().icon" aria-hidden="true"></i></span>
+      } @else {
+        <span class="sidebar-node__icon sidebar-node__icon--child" aria-hidden="true">
+          <i [class]="item().icon"></i>
+        </span>
+      }
+      <span class="sidebar-node__label">{{ item().label }}</span>
+      <i class="sidebar-node__arrow fa-solid fa-chevron-down" aria-hidden="true"></i>
+    </button>
+
+    <div
+      class="sidebar-node__branch"
+      [class.sidebar-node__branch--open]="sidebarOpen() && isExpanded()"
+      [attr.aria-hidden]="!(sidebarOpen() && isExpanded())"
+      [attr.inert]="sidebarOpen() && isExpanded() ? null : ''"
+    >
+      <div class="sidebar-node__branch-clip">
+        <ul [id]="'sidebar-branch-' + item().id" class="sidebar-node__children">
+          @for (child of item().children; track child.id) {
+            <app-sidebar-menu-node
+              [item]="child"
+              [depth]="depth() + 1"
+              [sidebarOpen]="sidebarOpen()"
+              [expandedIds]="expandedIds()"
+              [currentUrl]="currentUrl()"
+              (toggleRequested)="toggleRequested.emit($event)"
+              (navigateRequested)="navigateRequested.emit()"
+            />
+          }
+        </ul>
+      </div>
+    </div>
+  } @else if (isLinkTarget()) {
+    <a
+      class="sidebar-node__link"
+      [class.sidebar-node__link--root]="depth() === 0"
+      [style.--node-depth]="depth()"
+      [href]="item().route"
+      target="_blank"
+      rel="noopener noreferrer"
+      [title]="!sidebarOpen() ? item().label : null"
+      (click)="navigateRequested.emit()"
+    >
+      @if (depth() === 0) {
+        <span class="sidebar-node__icon"><i [class]="item().icon" aria-hidden="true"></i></span>
+      } @else {
+        <span class="sidebar-node__icon sidebar-node__icon--child" aria-hidden="true">
+          <i [class]="item().icon"></i>
+        </span>
+      }
+      <span class="sidebar-node__label">{{ item().label }}</span>
+      <i
+        class="sidebar-node__external fa-solid fa-arrow-up-right-from-square"
+        aria-hidden="true"
+      ></i>
+    </a>
+  } @else {
+    <a
+      class="sidebar-node__link"
+      [class.sidebar-node__link--root]="depth() === 0"
+      [class.sidebar-node__link--active]="isActive()"
+      [class.sidebar-node__link--current]="isCurrentRoute()"
+      [style.--node-depth]="depth()"
+      [routerLink]="item().route"
+      [attr.aria-current]="isCurrentRoute() ? 'page' : null"
+      [title]="!sidebarOpen() ? item().label : null"
+      (click)="navigateRequested.emit()"
+    >
+      @if (depth() === 0) {
+        <span class="sidebar-node__icon"><i [class]="item().icon" aria-hidden="true"></i></span>
+      } @else {
+        <span class="sidebar-node__icon sidebar-node__icon--child" aria-hidden="true">
+          <i [class]="item().icon"></i>
+        </span>
+      }
+      <span class="sidebar-node__label">{{ item().label }}</span>
+    </a>
+  }
+</li>

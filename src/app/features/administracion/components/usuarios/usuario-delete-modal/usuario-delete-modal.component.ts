@@ -1,65 +1,60 @@
-
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, inject, ChangeDetectionStrategy } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ChangeDetectionStrategy, Component, effect, input, output } from '@angular/core';
+import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { UiButtonComponent } from '../../../../../shared/components/ui-button/ui-button.component';
 import { UiInputComponent } from '../../../../../shared/components/ui-input/ui-input.component';
 import { UiModalComponent } from '../../../../../shared/components/ui-modal/ui-modal.component';
-import { UsuarioListadoItem } from '../../../services/usuario-admin.service';
+import { getFormErrorMessage } from '../../../../../shared/utils/form-error.util';
+import type { UsuarioListadoItem } from '../../../services/usuario-admin.service';
 
 @Component({
   selector: 'app-usuario-delete-modal',
   standalone: true,
   imports: [ReactiveFormsModule, UiButtonComponent, UiInputComponent, UiModalComponent],
   templateUrl: './usuario-delete-modal.component.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
-  styleUrls: ['./usuario-delete-modal.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  styleUrl: './usuario-delete-modal.component.scss',
 })
-export class UsuarioDeleteModalComponent implements OnChanges {
-  private readonly fb = inject(FormBuilder);
+export class UsuarioDeleteModalComponent {
+  readonly open = input(false);
+  readonly user = input<UsuarioListadoItem | null>(null);
+  readonly loading = input(false);
 
-  @Input() open = false;
-  @Input() user: UsuarioListadoItem | null = null;
-  @Input() loading = false;
+  readonly close = output<void>();
+  readonly confirm = output<string>();
 
-  @Output() close = new EventEmitter<void>();
-  @Output() confirm = new EventEmitter<void>();
-
-  confirmationError = '';
-
-  readonly form = this.fb.group({
-    confirmacion: ['', [Validators.required]],
+  readonly observation = new FormControl('', {
+    nonNullable: true,
+    validators: [Validators.required, Validators.minLength(10), Validators.maxLength(1000)],
   });
 
-  ngOnChanges(changes: SimpleChanges): void {
-    if (changes['open']?.currentValue) {
-      this.form.reset({ confirmacion: '' });
-      this.confirmationError = '';
-    }
+  constructor() {
+    // Al cerrar se limpia el motivo para no reutilizarlo en otro usuario.
+    effect(() => {
+      if (!this.open()) {
+        this.observation.reset('', { emitEvent: false });
+      }
+    });
   }
 
   requestClose(): void {
-    if (!this.loading) {
+    if (!this.loading()) {
       this.close.emit();
     }
   }
 
   submit(): void {
-    const value = (this.form.controls.confirmacion.getRawValue() ?? '').trim().toUpperCase();
+    this.observation.setValue(this.observation.value.trim(), { emitEvent: false });
+    this.observation.markAsTouched();
 
-    if (!value) {
-      this.confirmationError = 'Este campo es obligatorio.';
-      this.form.markAllAsTouched();
+    if (this.observation.invalid || this.loading()) {
       return;
     }
 
-    if (value !== 'ELIMINAR') {
-      this.confirmationError = 'Escribe ELIMINAR para confirmar.';
-      this.form.markAllAsTouched();
-      return;
-    }
+    this.confirm.emit(this.observation.value);
+  }
 
-    this.confirmationError = '';
-    this.confirm.emit();
+  get errorMessage(): string {
+    return getFormErrorMessage(this.observation);
   }
 }

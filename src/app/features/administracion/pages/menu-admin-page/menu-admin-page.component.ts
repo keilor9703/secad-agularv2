@@ -113,6 +113,7 @@ export class MenuAdminPageComponent implements OnInit {
     return this.menuItems()
       .filter((item) => !excludedIds.has(item.idMenu))
       .filter((item) => item.idMenu === 1 || !this.isRoot(item))
+      .filter((item) => item.idMenu === 1 || item.tipo === 'S')
       .slice()
       .sort((a, b) => a.descripcion.localeCompare(b.descripcion, 'es'));
   });

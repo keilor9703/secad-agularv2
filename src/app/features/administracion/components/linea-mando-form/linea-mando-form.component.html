@@ -59,9 +59,7 @@
 
           <div class="command-editor__identity">
             <small>{{ form.controls.grado.value || 'Funcionario' }}</small>
-            <strong>
-              {{ form.controls.nombre.value }} {{ form.controls.apellidos.value }}
-            </strong>
+            <strong> {{ form.controls.nombre.value }} {{ form.controls.apellidos.value }} </strong>
             <span>
               <i class="fa-regular fa-id-card" aria-hidden="true"></i>
               {{ form.controls.identificacion.value }}
@@ -107,7 +105,7 @@
             formControlName="peso"
             label="Posición en la línea"
             placeholder="Seleccione una posición"
-            [options]="positionOptions"
+            [options]="positionOptions()"
             [searchable]="false"
             [clearable]="false"
             [required]="true"
@@ -121,11 +119,13 @@
             [readonly]="true"
           />
 
-          <app-ui-input
+          <app-ui-select
             formControlName="orden"
-            type="number"
             label="Orden de presentación"
-            hint="Define la posición visual dentro de la estructura."
+            placeholder="Seleccione el orden visual"
+            [options]="orderOptions()"
+            [searchable]="false"
+            [clearable]="false"
             [required]="true"
             [error]="fieldError('orden')"
           />

@@ -1,0 +1,41 @@
+:host {
+  display: contents;
+}
+
+.role-removal {
+  display: grid;
+  gap: 1rem;
+}
+
+.role-removal__notice {
+  display: flex;
+  gap: 0.7rem;
+  align-items: flex-start;
+  padding: 0.75rem 0.85rem;
+  border-left: 3px solid var(--color-info, #10a7ca);
+  background: color-mix(in srgb, var(--color-info, #10a7ca) 8%, white);
+  color: var(--text-secondary, #596a82);
+}
+
+.role-removal__notice i {
+  margin-top: 0.15rem;
+  color: var(--color-info, #08799a);
+}
+
+.role-removal__notice p {
+  margin: 0;
+  line-height: 1.45;
+}
+
+.role-removal__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.65rem;
+  width: 100%;
+}
+
+@media (max-width: 36rem) {
+  .role-removal__actions app-ui-button {
+    flex: 1 1 0;
+  }
+}

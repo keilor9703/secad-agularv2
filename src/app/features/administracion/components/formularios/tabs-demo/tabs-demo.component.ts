@@ -1,7 +1,9 @@
-import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
+import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { UiButtonComponent } from '../../../../../shared/components/ui-button/ui-button.component';
 import { UiInputComponent } from '../../../../../shared/components/ui-input/ui-input.component';
+import { UiSegmentedTabsComponent } from '../../../../../shared/components/ui-segmented-tabs/ui-segmented-tabs.component';
+import { UiSegmentedTabItem } from '../../../../../shared/components/ui-segmented-tabs/ui-segmented-tabs.types';
 import { UiSelectComponent } from '../../../../../shared/components/ui-select/ui-select.component';
 import { UiTabComponent } from '../../../../../shared/components/ui-tabs/ui-tab.component';
 import { UiTabsComponent } from '../../../../../shared/components/ui-tabs/ui-tabs.component';
@@ -25,6 +27,7 @@ interface TabsProfileForm {
     ReactiveFormsModule,
     UiButtonComponent,
     UiInputComponent,
+    UiSegmentedTabsComponent,
     UiSelectComponent,
     UiTabComponent,
     UiTabsComponent,
@@ -36,6 +39,25 @@ interface TabsProfileForm {
 })
 export class TabsDemoComponent {
   readonly savedProfile = signal('');
+  readonly segmentedActive = signal('active');
+  readonly segmentedItems: readonly UiSegmentedTabItem[] = [
+    {
+      id: 'active',
+      label: 'Activos',
+      description: 'Estructura visible',
+      icon: 'fa-solid fa-user-shield',
+      badge: 4,
+      tone: 'info',
+    },
+    {
+      id: 'inactive',
+      label: 'Inactivos',
+      description: 'Histórico administrable',
+      icon: 'fa-solid fa-user-clock',
+      badge: 11,
+      tone: 'neutral',
+    },
+  ];
 
   readonly roleOptions: UiSelectOption<number>[] = [
     { label: 'Administrador', value: 1 },

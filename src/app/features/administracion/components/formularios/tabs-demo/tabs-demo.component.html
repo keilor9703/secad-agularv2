@@ -412,5 +412,43 @@
         </app-ui-tab>
       </app-ui-tabs>
     </article>
+
+    <!-- Variante 7: selector de estados reutilizable, sin acoplar el panel de contenido. -->
+    <article class="tabs-demo__example">
+      <header class="tabs-demo__example-head">
+        <span class="tabs-demo__number">07</span>
+        <div>
+          <h3>Tabs segmentados con estado</h3>
+          <p>
+            Icono · descripción · contador · contenido administrado por la pantalla consumidora.
+          </p>
+        </div>
+      </header>
+
+      <app-ui-segmented-tabs
+        tabsId="segmented-status-demo"
+        controlsId="segmented-status-demo-panel"
+        ariaLabel="Ejemplo de registros por estado"
+        [items]="segmentedItems"
+        [activeId]="segmentedActive()"
+        [stretch]="true"
+        (selectionChange)="segmentedActive.set($event.id)"
+      />
+
+      <div
+        id="segmented-status-demo-panel"
+        class="tabs-demo__segmented-panel"
+        role="tabpanel"
+        [attr.aria-labelledby]="'segmented-status-demo-tab-' + segmentedActive()"
+      >
+        @if (segmentedActive() === 'active') {
+          <strong>Registros activos</strong>
+          <p>La pantalla decide qué colección mostrar sin duplicar el componente de navegación.</p>
+        } @else {
+          <strong>Histórico inactivo</strong>
+          <p>La misma vista puede administrar reactivación, consulta o eliminación protegida.</p>
+        }
+      </div>
+    </article>
   </div>
 </section>

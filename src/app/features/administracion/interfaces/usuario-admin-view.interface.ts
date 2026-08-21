@@ -15,6 +15,12 @@ export interface NewRoleForm {
   fechaFin: string;
 }
 
+/** Comando emitido por el diálogo de retiro con su justificación auditable. */
+export interface RemoveRoleCommand {
+  role: UserRole;
+  observacion: string;
+}
+
 export interface UserProfile {
   identificacion: string;
   nombres: string;

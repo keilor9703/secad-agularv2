@@ -1,6 +1,7 @@
-﻿import { HttpClient } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
+
 import { environment } from '../../../environments/environment';
 
 export interface DtoLineaMando {
@@ -35,7 +36,9 @@ export interface DtoLineaMandoResult {
   message: string;
 }
 
-@Injectable({ providedIn: 'root' })
+@Injectable({
+  providedIn: 'root',
+})
 export class LineaMandoService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = `${environment.apiBaseUrl}/LineaMando`;
@@ -49,7 +52,9 @@ export class LineaMandoService {
   }
 
   getByIdentificacion(identificacion: string): Observable<DtoLineaMando> {
-    return this.http.get<DtoLineaMando>(`${this.baseUrl}/por-identificacion/${identificacion}`);
+    const value = encodeURIComponent(identificacion.trim());
+
+    return this.http.get<DtoLineaMando>(`${this.baseUrl}/por-identificacion/${value}`);
   }
 
   create(request: DtoLineaMandoRequest): Observable<DtoLineaMandoResult> {
@@ -64,7 +69,12 @@ export class LineaMandoService {
     return this.http.delete<DtoLineaMandoResult>(`${this.baseUrl}/${id}`);
   }
 
-  setVigente(id: number, vigente: number): Observable<DtoLineaMandoResult> {
+  /** Borra físicamente un registro que ya fue retirado de la estructura activa. */
+  deletePermanently(id: number): Observable<DtoLineaMandoResult> {
+    return this.http.delete<DtoLineaMandoResult>(`${this.baseUrl}/${id}/permanente`);
+  }
+
+  setVigente(id: number, vigente: 0 | 1): Observable<DtoLineaMandoResult> {
     return this.http.put<DtoLineaMandoResult>(`${this.baseUrl}/${id}/vigente`, { vigente });
   }
 }

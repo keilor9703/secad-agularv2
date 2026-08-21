@@ -1,14 +1,15 @@
-﻿import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+﻿import { HttpClient } from '@angular/common/http';
+import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { MenuDestinationType } from '../navigation/menu-destination';
 
 export interface DbMenuItem {
   idMenu: number;
   descripcion: string;
   idPadre: number;
   posicion: number;
-  tipo: string;
+  tipo: MenuDestinationType | string;
   icono?: string | null;
   vigente: number;
   detalle?: string | null;
@@ -19,7 +20,7 @@ export interface MenuSaveRequest {
   descripcion: string;
   idPadre: number;
   posicion: number;
-  tipo: string;
+  tipo: MenuDestinationType;
   icono?: string | null;
   vigente: number;
   detalle?: string | null;
@@ -85,7 +86,10 @@ export class MenuService {
   }
 
   setEstadoAdminMenu(idMenu: number, payload: MenuEstadoRequest): Observable<MenuApiResponse> {
-    return this.http.patch<MenuApiResponse>(`${environment.apiBaseUrl}/menu/admin/${idMenu}/estado`, payload);
+    return this.http.patch<MenuApiResponse>(
+      `${environment.apiBaseUrl}/menu/admin/${idMenu}/estado`,
+      payload,
+    );
   }
 
   getRolesCatalog(): Observable<MenuRolCatalogItem[]> {
@@ -97,23 +101,34 @@ export class MenuService {
   }
 
   assignRolToMenu(idMenu: number, payload: MenuRolAssignRequest): Observable<MenuApiResponse> {
-    return this.http.post<MenuApiResponse>(`${environment.apiBaseUrl}/menu/admin/${idMenu}/roles`, payload);
+    return this.http.post<MenuApiResponse>(
+      `${environment.apiBaseUrl}/menu/admin/${idMenu}/roles`,
+      payload,
+    );
   }
 
   removeRolFromMenu(idMenu: number, idRol: number): Observable<MenuApiResponse> {
-    return this.http.delete<MenuApiResponse>(`${environment.apiBaseUrl}/menu/admin/${idMenu}/roles/${idRol}`);
+    return this.http.delete<MenuApiResponse>(
+      `${environment.apiBaseUrl}/menu/admin/${idMenu}/roles/${idRol}`,
+    );
   }
 
   getMenusByRol(idRol: number): Observable<RoleMenuItem[]> {
-    return this.http.get<RoleMenuItem[]>(`${environment.apiBaseUrl}/menu/admin/roles/${idRol}/menus`);
+    return this.http.get<RoleMenuItem[]>(
+      `${environment.apiBaseUrl}/menu/admin/roles/${idRol}/menus`,
+    );
   }
 
   assignMenuToRol(idRol: number, payload: RoleMenuAssignRequest): Observable<MenuApiResponse> {
-    return this.http.post<MenuApiResponse>(`${environment.apiBaseUrl}/menu/admin/roles/${idRol}/menus`, payload);
+    return this.http.post<MenuApiResponse>(
+      `${environment.apiBaseUrl}/menu/admin/roles/${idRol}/menus`,
+      payload,
+    );
   }
 
   removeMenuFromRol(idRol: number, idMenu: number): Observable<MenuApiResponse> {
-    return this.http.delete<MenuApiResponse>(`${environment.apiBaseUrl}/menu/admin/roles/${idRol}/menus/${idMenu}`);
+    return this.http.delete<MenuApiResponse>(
+      `${environment.apiBaseUrl}/menu/admin/roles/${idRol}/menus/${idMenu}`,
+    );
   }
 }
-

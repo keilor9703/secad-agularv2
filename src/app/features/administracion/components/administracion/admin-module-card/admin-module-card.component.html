@@ -1,0 +1,28 @@
+<a
+  [class]="cardClass()"
+  [routerLink]="site().route"
+  [attr.aria-labelledby]="titleId()"
+  [attr.aria-describedby]="descriptionId()"
+>
+  <span class="admin-module-card__icon" aria-hidden="true">
+    <i [class]="site().icon"></i>
+  </span>
+
+  <span class="admin-module-card__content">
+    <span class="admin-module-card__meta">
+      <small>{{ site().area }}</small>
+      <span aria-hidden="true">{{ displaySequence() }}</span>
+    </span>
+    <strong [id]="titleId()">{{ site().title }}</strong>
+    <span [id]="descriptionId()" class="admin-module-card__description">
+      {{ site().description }}
+    </span>
+  </span>
+
+  <span class="admin-module-card__footer" aria-hidden="true">
+    <span>Abrir módulo</span>
+    <span class="admin-module-card__arrow">
+      <i class="fa-solid fa-arrow-right"></i>
+    </span>
+  </span>
+</a>

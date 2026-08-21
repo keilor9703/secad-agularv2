@@ -2047,6 +2047,35 @@ export const UI_API_COMPONENTS: readonly UiApiComponentDoc[] = [
         description: 'Alineación horizontal del tooltip.',
       },
       {
+        name: 'tooltipPosition',
+        kind: 'input',
+        type: "'top' | 'right' | 'bottom' | 'left'",
+        defaultValue: "'bottom'",
+        description:
+          'Posición preferida. El overlay cambia automáticamente de lado cuando no existe espacio.',
+      },
+      {
+        name: 'tooltipVariant',
+        kind: 'input',
+        type: 'UiTooltipVariant',
+        defaultValue: "'light'",
+        description: 'Tono light, dark, institutional, success, warning o danger.',
+      },
+      {
+        name: 'tooltipSize',
+        kind: 'input',
+        type: "'sm' | 'md'",
+        defaultValue: "'sm'",
+        description: 'Escala de texto y padding del tooltip.',
+      },
+      {
+        name: 'tooltipShowDelay / tooltipHideDelay',
+        kind: 'input',
+        type: 'number',
+        defaultValue: '180 / 80',
+        description: 'Tiempos en milisegundos para evitar parpadeo al recorrer varias acciones.',
+      },
+      {
         name: 'ariaLabel',
         kind: 'input',
         type: 'string',
@@ -2122,6 +2151,139 @@ export const UI_API_COMPONENTS: readonly UiApiComponentDoc[] = [
         type: 'MouseEvent',
         defaultValue: '—',
         description: 'Evento de activación; no se emite si disabled o loading.',
+      },
+    ],
+  },
+  {
+    selector: 'app-ui-tooltip',
+    name: 'Tooltip global',
+    category: 'actions',
+    summary:
+      'Ayuda contextual accesible sobre cualquier contenido, renderizada en overlay para evitar recortes.',
+    notes: [
+      'No depende del overflow ni del z-index de la tarjeta consumidora: Angular CDK lo mueve a una capa global.',
+      'Se abre con hover o foco de teclado, se cierra con Escape y desaparece al activar el control.',
+      'position es una preferencia: si el borde de pantalla no tiene espacio, el overlay prueba alternativas.',
+      'En botones iconOnly use también ariaLabel; el tooltip no reemplaza el nombre accesible.',
+    ],
+    example: `<app-ui-tooltip
+  text="Explicación del control"
+  position="bottom"
+  align="center"
+  variant="institutional"
+  size="sm"
+  [showDelay]="180"
+  [maxWidth]="260"
+>
+  <button type="button" aria-label="Consultar ayuda">
+    <i class="fa-solid fa-circle-info"></i>
+  </button>
+</app-ui-tooltip>`,
+    members: [
+      {
+        name: 'text',
+        kind: 'input',
+        type: 'string',
+        defaultValue: "''",
+        description: 'Contenido textual. Vacío impide abrir el overlay.',
+      },
+      {
+        name: 'position',
+        kind: 'input',
+        type: "'top' | 'right' | 'bottom' | 'left'",
+        defaultValue: "'bottom'",
+        description: 'Lado preferido del origen; incluye posiciones fallback automáticas.',
+      },
+      {
+        name: 'align',
+        kind: 'input',
+        type: "'start' | 'center' | 'end'",
+        defaultValue: "'center'",
+        description: 'Alineación sobre el eje secundario.',
+      },
+      {
+        name: 'variant',
+        kind: 'input',
+        type: "'light' | 'dark' | 'institutional' | 'success' | 'warning' | 'danger'",
+        defaultValue: "'light'",
+        description: 'Paleta visual del mensaje.',
+      },
+      {
+        name: 'size',
+        kind: 'input',
+        type: "'sm' | 'md'",
+        defaultValue: "'sm'",
+        description: 'Escala de la ayuda.',
+      },
+      {
+        name: 'tooltipId',
+        kind: 'input',
+        type: 'string',
+        defaultValue: 'autogenerado',
+        description: 'Id estable para aria-describedby; normalmente puede omitirse.',
+      },
+      {
+        name: 'showDelay',
+        kind: 'input',
+        type: 'number',
+        defaultValue: '180',
+        description: 'Espera en milisegundos antes de abrir.',
+      },
+      {
+        name: 'hideDelay',
+        kind: 'input',
+        type: 'number',
+        defaultValue: '80',
+        description: 'Espera en milisegundos antes de cerrar.',
+      },
+      {
+        name: 'offset',
+        kind: 'input',
+        type: 'number',
+        defaultValue: '8',
+        description: 'Separación en píxeles respecto al origen.',
+      },
+      {
+        name: 'maxWidth',
+        kind: 'input',
+        type: 'number',
+        defaultValue: '260',
+        description: 'Ancho máximo en píxeles; el texto largo se ajusta en varias líneas.',
+      },
+      {
+        name: 'viewportMargin',
+        kind: 'input',
+        type: 'number',
+        defaultValue: '8',
+        description: 'Distancia mínima frente a los bordes de la ventana.',
+      },
+      {
+        name: 'disabled',
+        kind: 'input',
+        type: 'boolean',
+        defaultValue: 'false',
+        description: 'Desactiva la ayuda sin retirar el contenido proyectado.',
+      },
+      {
+        name: 'showArrow',
+        kind: 'input',
+        type: 'boolean',
+        defaultValue: 'true',
+        description: 'Muestra la flecha que conecta visualmente el mensaje con su origen.',
+      },
+      {
+        name: 'block',
+        kind: 'input',
+        type: 'boolean',
+        defaultValue: 'false',
+        description: 'Hace que el origen ocupe todo el ancho disponible.',
+      },
+      {
+        name: 'default slot',
+        kind: 'slot',
+        type: 'contenido proyectado',
+        defaultValue: '—',
+        description: 'Elemento que activa el tooltip: botón, icono, enlace, badge u otro control.',
       },
     ],
   },
@@ -2519,6 +2681,111 @@ export const UI_API_COMPONENTS: readonly UiApiComponentDoc[] = [
         type: 'boolean',
         defaultValue: 'false',
         description: 'Impide seleccionar el tab.',
+      },
+    ],
+  },
+  {
+    selector: 'app-ui-segmented-tabs',
+    name: 'Tabs segmentados con estado',
+    category: 'structure',
+    summary:
+      'Selector compacto de colecciones o estados con icono, descripción y contador; el contenido queda en el padre.',
+    notes: [
+      'Use este componente cuando ambos tabs comparten el mismo panel, tabla o lista y solo cambia la colección visible.',
+      'items es inmutable y puede construirse con computed para mantener contadores reactivos.',
+      'El componente implementa roles tab/tablist, foco roving y teclas de flecha, Home y End.',
+      'La pantalla consumidora conserva la lógica de negocio y atiende selectionChange.',
+    ],
+    example: `<app-ui-segmented-tabs
+  tabsId="usuarios-status"
+  controlsId="usuarios-panel"
+  ariaLabel="Usuarios por estado"
+  [items]="statusTabs()"
+  [activeId]="currentStatus()"
+  [stretch]="true"
+  (selectionChange)="currentStatus.set($event.id)"
+/>
+
+<section id="usuarios-panel" role="tabpanel">
+  <!-- La tabla o lista se decide aquí. -->
+</section>`,
+    members: [
+      {
+        name: 'items',
+        kind: 'input',
+        type: 'readonly UiSegmentedTabItem[]',
+        defaultValue: 'requerido',
+        description: 'Cada item admite id, label, description, icon, badge, tone y disabled.',
+      },
+      {
+        name: 'activeId',
+        kind: 'model',
+        type: 'string',
+        defaultValue: "''",
+        description: 'Id seleccionado; admite [(activeId)] o control explícito desde el padre.',
+      },
+      {
+        name: 'ariaLabel',
+        kind: 'input',
+        type: 'string',
+        defaultValue: "'Secciones por estado'",
+        description: 'Nombre accesible del tablist.',
+      },
+      {
+        name: 'tabsId',
+        kind: 'input',
+        type: 'string',
+        defaultValue: 'autogenerado',
+        description: 'Prefijo estable de los ids ARIA.',
+      },
+      {
+        name: 'controlsId',
+        kind: 'input',
+        type: 'string',
+        defaultValue: "''",
+        description: 'Id del panel externo controlado por los tabs.',
+      },
+      {
+        name: 'size',
+        kind: 'input',
+        type: "'sm' | 'md'",
+        defaultValue: "'md'",
+        description: 'Escala general del selector.',
+      },
+      {
+        name: 'stretch',
+        kind: 'input',
+        type: 'boolean',
+        defaultValue: 'true',
+        description: 'Distribuye todos los items en el ancho disponible.',
+      },
+      {
+        name: 'showDescriptions',
+        kind: 'input',
+        type: 'boolean',
+        defaultValue: 'true',
+        description: 'Presenta el texto auxiliar de cada item.',
+      },
+      {
+        name: 'hideDescriptionsOnMobile',
+        kind: 'input',
+        type: 'boolean',
+        defaultValue: 'true',
+        description: 'Oculta solo la descripción en móvil para preservar una fila compacta.',
+      },
+      {
+        name: 'showBadges',
+        kind: 'input',
+        type: 'boolean',
+        defaultValue: 'true',
+        description: 'Muestra el contador o estado corto recibido en badge.',
+      },
+      {
+        name: 'selectionChange',
+        kind: 'output',
+        type: 'UiSegmentedTabSelectionChange',
+        defaultValue: '—',
+        description: 'Emite id, índice y item completo cuando cambia la selección.',
       },
     ],
   },

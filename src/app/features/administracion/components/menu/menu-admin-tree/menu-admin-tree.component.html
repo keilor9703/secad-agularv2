@@ -123,17 +123,19 @@
             </div>
 
             <div class="menu-tree-item__actions">
-              <app-ui-button
-                size="sm"
-                variant="primary"
-                appearance="soft"
-                icon="fa-solid fa-folder-plus"
-                [iconOnly]="true"
-                [tooltip]="'Crear submenú dentro de ' + row.item.descripcion"
-                tooltipAlign="end"
-                [ariaLabel]="'Crear submenú dentro de ' + row.item.descripcion"
-                (buttonClick)="submenuRequested.emit(row.item)"
-              />
+              @if (row.item.tipo === 'S') {
+                <app-ui-button
+                  size="sm"
+                  variant="primary"
+                  appearance="soft"
+                  icon="fa-solid fa-folder-plus"
+                  [iconOnly]="true"
+                  [tooltip]="'Crear submenú dentro de ' + row.item.descripcion"
+                  tooltipAlign="end"
+                  [ariaLabel]="'Crear submenú dentro de ' + row.item.descripcion"
+                  (buttonClick)="submenuRequested.emit(row.item)"
+                />
+              }
 
               <app-ui-button
                 size="sm"

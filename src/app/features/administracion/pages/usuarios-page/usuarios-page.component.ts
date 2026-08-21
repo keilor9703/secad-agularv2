@@ -12,6 +12,7 @@ import { UsuariosTableComponent } from '../../components/usuarios/usuarios-table
 import {
   NewRoleForm,
   RawAssignedRole,
+  RemoveRoleCommand,
   RolEstado,
   UserProfile,
   UserRole,
@@ -19,6 +20,7 @@ import {
 import {
   DtoRolCatalogo,
   UsuarioAdminService,
+  type UsuarioConsultaOrigen,
   UsuarioListadoItem,
 } from '../../services/usuario-admin.service';
 
@@ -45,6 +47,7 @@ export class UsuariosPageComponent implements OnInit, OnDestroy {
   loading = false;
   savingRole = false;
   roleSaveRevision = 0;
+  roleDeleteRevision = 0;
   deletingRoleId: number | null = null;
   deletingUser = false;
   loadingListado = false;
@@ -91,7 +94,10 @@ export class UsuariosPageComponent implements OnInit, OnDestroy {
     this.lastUnsavedAlertKey = '';
   }
 
-  consultarUsuario(documentoRecibido?: string): void {
+  consultarUsuario(
+    documentoRecibido?: string,
+    origen: UsuarioConsultaOrigen = 'BUSQUEDA_DIGITADA',
+  ): void {
     const documento = (documentoRecibido ?? this.searchIdentification).trim();
 
     if (!documento) {
@@ -103,7 +109,7 @@ export class UsuariosPageComponent implements OnInit, OnDestroy {
     this.loading = true;
     this.toast.info('Consulta', 'Buscando información empresarial...');
 
-    this.usuarioAdminService.consultarUsuarioPorIdentificacion(documento).subscribe({
+    this.usuarioAdminService.consultarUsuarioPorIdentificacion(documento, origen).subscribe({
       next: (resp) => {
         const funcionario = resp.funcionario ?? {};
         const nombres = (funcionario.nombres ?? '').trim();
@@ -362,7 +368,7 @@ export class UsuariosPageComponent implements OnInit, OnDestroy {
     };
   }
 
-  async eliminarRol(rol: UserRole): Promise<void> {
+  eliminarRol(command: RemoveRoleCommand): void {
     if (this.deletingRoleId !== null) {
       return;
     }
@@ -372,20 +378,17 @@ export class UsuariosPageComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const confirmar = await this.alert.confirmDelete(
-      'Retirar rol',
-      `¿Deseas retirar el rol "${rol.nombre}" del usuario?`,
-      'Sí, retirar',
-    );
-
-    if (!confirmar) {
+    const observacion = command.observacion.trim();
+    if (observacion.length < 10) {
+      this.toast.warning('Roles', 'La observación debe contener al menos 10 caracteres.');
       return;
     }
 
+    const rol = command.role;
     this.deletingRoleId = rol.id;
 
     this.usuarioAdminService
-      .eliminarRol(rol.id, this.user.usuarioEmpresarial, this.user.identificacion)
+      .retirarRol(rol.id, this.user.usuarioEmpresarial, this.user.identificacion, observacion)
       .pipe(finalize(() => (this.deletingRoleId = null)))
       .subscribe({
         next: (resp) => {
@@ -395,6 +398,7 @@ export class UsuariosPageComponent implements OnInit, OnDestroy {
           }
 
           this.removeRoleLocally(rol.id);
+          this.roleDeleteRevision += 1;
           this.cargarListadoUsuarios();
 
           void this.alert.success(
@@ -504,7 +508,7 @@ export class UsuariosPageComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.consultarUsuario(identificacion);
+    this.consultarUsuario(identificacion, 'TABLA_USUARIOS');
   }
 
   abrirModalEliminarUsuario(item: UsuarioListadoItem): void {
@@ -521,14 +525,15 @@ export class UsuariosPageComponent implements OnInit, OnDestroy {
     this.deletingTarget = null;
   }
 
-  confirmarEliminarUsuario(): void {
-    if (!this.deletingTarget) {
+  confirmarEliminarUsuario(observacion: string): void {
+    const target = this.deletingTarget;
+    if (!target || this.deletingUser) {
       return;
     }
 
     this.deletingUser = true;
 
-    this.usuarioAdminService.eliminarUsuario(this.deletingTarget.idUsuario).subscribe({
+    this.usuarioAdminService.eliminarUsuario(target.idUsuario, observacion).subscribe({
       next: (resp) => {
         this.deletingUser = false;
 
@@ -541,10 +546,7 @@ export class UsuariosPageComponent implements OnInit, OnDestroy {
         this.cerrarModalEliminarUsuario();
         this.cargarListadoUsuarios();
 
-        if (
-          this.user?.identificacion?.trim() ===
-          String(this.deletingTarget?.identificacion ?? '').trim()
-        ) {
+        if (this.user?.identificacion?.trim() === String(target.identificacion ?? '').trim()) {
           this.user = null;
         }
       },

@@ -1,24 +1,36 @@
-<button
-  [class]="classes()"
-  [type]="type()"
-  [title]="tooltip() ? '' : title()"
-  [attr.aria-label]="ariaLabel() || tooltip() || null"
+<app-ui-tooltip
+  [text]="tooltip()"
+  [position]="tooltipPosition()"
+  [align]="tooltipAlign()"
+  [variant]="tooltipVariant()"
+  [size]="tooltipSize()"
+  [showDelay]="tooltipShowDelay()"
+  [hideDelay]="tooltipHideDelay()"
   [disabled]="disabled() || loading()"
-  [style.--ui-button-custom-bg]="backgroundColor() || null"
-  [style.--ui-button-custom-text]="textColor() || null"
-  [style.--ui-button-custom-border]="borderColor() || null"
-  [style.--ui-button-icon-color]="iconColor() || null"
-  (click)="handleClick($event)"
+  [block]="block()"
 >
-  @if (loading()) {
-    <i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i>
-  } @else if (icon() && iconPosition() === 'start') {
-    <i [class]="icon()" aria-hidden="true"></i>
-  }
+  <button
+    [class]="classes()"
+    [type]="type()"
+    [title]="tooltip() ? '' : title()"
+    [attr.aria-label]="ariaLabel() || tooltip() || null"
+    [disabled]="disabled() || loading()"
+    [style.--ui-button-custom-bg]="backgroundColor() || null"
+    [style.--ui-button-custom-text]="textColor() || null"
+    [style.--ui-button-custom-border]="borderColor() || null"
+    [style.--ui-button-icon-color]="iconColor() || null"
+    (click)="handleClick($event)"
+  >
+    @if (loading()) {
+      <i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i>
+    } @else if (icon() && iconPosition() === 'start') {
+      <i [class]="icon()" aria-hidden="true"></i>
+    }
 
-  <span class="ui-btn__label"><ng-content /></span>
+    <span class="ui-btn__label"><ng-content /></span>
 
-  @if (!loading() && icon() && iconPosition() === 'end') {
-    <i [class]="icon()" aria-hidden="true"></i>
-  }
-</button>
+    @if (!loading() && icon() && iconPosition() === 'end') {
+      <i [class]="icon()" aria-hidden="true"></i>
+    }
+  </button>
+</app-ui-tooltip>

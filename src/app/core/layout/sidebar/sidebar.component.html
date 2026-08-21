@@ -73,102 +73,14 @@
   <nav id="primary-navigation" class="sidebar__scroll" aria-label="Secciones del sistema">
     <ul class="sidebar__list">
       @for (item of menuItems(); track item.id) {
-        <li
-          class="menu-item"
-          [class.menu-item--expanded]="isExpandedItem(item)"
-          [class.menu-item--active]="isMenuItemActive(item)"
-        >
-          @if (item.submenu?.length) {
-            <!-- Los grupos se despliegan como acordeón dentro del menú, nunca como flyout. -->
-            <button
-              class="menu-link"
-              type="button"
-              (click)="toggleGroup(item)"
-              [class.menu-link--active]="isMenuItemActive(item)"
-              [attr.aria-expanded]="isExpandedItem(item)"
-              [attr.aria-controls]="'submenu-' + item.id"
-              [title]="!isOpen() ? item.label : null"
-            >
-              <span class="menu-link__icon">
-                <i [class]="item.icon" aria-hidden="true"></i>
-              </span>
-              <span class="menu-link__label">{{ item.label }}</span>
-              <i class="menu-link__arrow fa-solid fa-chevron-down" aria-hidden="true"></i>
-            </button>
-
-            <div
-              class="submenu"
-              [class.submenu--open]="isOpen() && isExpandedItem(item)"
-              [attr.aria-hidden]="!(isOpen() && isExpandedItem(item))"
-              [attr.inert]="isOpen() && isExpandedItem(item) ? null : ''"
-            >
-              <div class="submenu__clip">
-                <ul [id]="'submenu-' + item.id" class="submenu__list">
-                  @for (subItem of item.submenu; track subItem.id) {
-                    <li>
-                      @if (subItem.isExternal) {
-                        <a
-                          class="submenu__link"
-                          [href]="subItem.route"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          (click)="onNavigate()"
-                        >
-                          <span class="submenu__marker" aria-hidden="true"></span>
-                          <span>{{ subItem.label }}</span>
-                          <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i>
-                        </a>
-                      } @else {
-                        <a
-                          class="submenu__link"
-                          [class.submenu__link--active]="isSubmenuItemActive(subItem)"
-                          [routerLink]="subItem.route"
-                          [attr.aria-current]="isSubmenuItemActive(subItem) ? 'page' : null"
-                          (click)="onNavigate()"
-                        >
-                          <span class="submenu__marker" aria-hidden="true"></span>
-                          <span>{{ subItem.label }}</span>
-                        </a>
-                      }
-                    </li>
-                  }
-                </ul>
-              </div>
-            </div>
-          } @else if (item.isExternal) {
-            <a
-              class="menu-link"
-              [href]="item.route"
-              target="_blank"
-              rel="noopener noreferrer"
-              (click)="onNavigate()"
-              [title]="!isOpen() ? item.label : null"
-            >
-              <span class="menu-link__icon">
-                <i [class]="item.icon" aria-hidden="true"></i>
-              </span>
-              <span class="menu-link__label">{{ item.label }}</span>
-              <i
-                class="menu-link__external fa-solid fa-arrow-up-right-from-square"
-                aria-hidden="true"
-              ></i>
-            </a>
-          } @else {
-            <a
-              class="menu-link"
-              [class.menu-link--active]="isMenuItemActive(item)"
-              [routerLink]="item.route"
-              [attr.aria-current]="isMenuItemActive(item) ? 'page' : null"
-              (click)="onNavigate()"
-              [title]="!isOpen() ? item.label : null"
-            >
-              <span class="menu-link__icon">
-                <i [class]="item.icon" aria-hidden="true"></i>
-              </span>
-              <span class="menu-link__label">{{ item.label }}</span>
-            </a>
-          }
-        </li>
+        <app-sidebar-menu-node
+          [item]="item"
+          [sidebarOpen]="isOpen()"
+          [expandedIds]="expandedItemIds()"
+          [currentUrl]="currentUrl()"
+          (toggleRequested)="toggleGroup($event)"
+          (navigateRequested)="onNavigate()"
+        />
       } @empty {
         @if (isOpen()) {
           <li class="sidebar__empty">

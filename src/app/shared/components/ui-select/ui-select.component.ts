@@ -1,11 +1,12 @@
-import { CommonModule, DOCUMENT } from '@angular/common';
 import {
   ConnectedOverlayPositionChange,
   ConnectedPosition,
   OverlayModule,
 } from '@angular/cdk/overlay';
+import { CommonModule, DOCUMENT } from '@angular/common';
 import {
   booleanAttribute,
+  ChangeDetectionStrategy,
   Component,
   ElementRef,
   forwardRef,
@@ -13,13 +14,12 @@ import {
   Input,
   input,
   signal,
-  ChangeDetectionStrategy
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
 import { UiFormControlSizeDirective } from '../../directives/ui-form-control-size.directive';
-import { UiSelectOption } from '../../interfaces/ui-select-option.interface';
 import { UiFormLabelMode } from '../../interfaces/ui-form-label-mode.interface';
+import { UiSelectOption } from '../../interfaces/ui-select-option.interface';
 
 let nextUiSelectId = 0;
 
@@ -46,9 +46,9 @@ type UiSelectPanelPlacement = 'above' | 'below';
     },
   ],
 })
-export class UiSelectComponent<T = string | number | boolean | null>
-  implements ControlValueAccessor
-{
+export class UiSelectComponent<
+  T = string | number | boolean | null,
+> implements ControlValueAccessor {
   private readonly documentRef = inject(DOCUMENT);
   private readonly windowRef = this.documentRef.defaultView;
 
@@ -58,7 +58,7 @@ export class UiSelectComponent<T = string | number | boolean | null>
   @Input() hint = '';
   @Input() error = '';
   @Input() inputId = `ui-select-${nextUiSelectId++}`;
-  @Input() options: UiSelectOption<T>[] = [];
+  @Input() options: readonly UiSelectOption<T>[] = [];
   @Input({ transform: booleanAttribute }) disabled = false;
   @Input({ transform: booleanAttribute }) required = false;
   @Input({ transform: booleanAttribute }) clearable = true;
@@ -213,7 +213,7 @@ export class UiSelectComponent<T = string | number | boolean | null>
     return this.options.find((option) => Object.is(option.value, this.value))?.label ?? '';
   }
 
-  get filteredOptions(): UiSelectOption<T>[] {
+  get filteredOptions(): readonly UiSelectOption<T>[] {
     const term = this.searchTerm.trim().toLowerCase();
 
     if (!term) {
@@ -234,9 +234,8 @@ export class UiSelectComponent<T = string | number | boolean | null>
   }
 
   private syncPanelWidth(): void {
-    const control = this.elementRef.nativeElement.querySelector<HTMLElement>(
-      '.form-select__control',
-    );
+    const control =
+      this.elementRef.nativeElement.querySelector<HTMLElement>('.form-select__control');
 
     if (!control) {
       return;

@@ -1,15 +1,10 @@
-export interface SubMenuItem {
-  id: number;
-  label: string;
-  route: string;
-  isExternal?: boolean;
-}
+import { MenuNavigationTarget } from '../navigation/menu-destination';
 
 export interface MenuItem {
-  id: number;
-  icon: string;
-  label: string;
-  route?: string;
-  isExternal?: boolean;
-  submenu?: SubMenuItem[];
+  readonly id: number;
+  readonly icon: string;
+  readonly label: string;
+  readonly target: MenuNavigationTarget;
+  readonly route?: string;
+  readonly children?: readonly MenuItem[];
 }

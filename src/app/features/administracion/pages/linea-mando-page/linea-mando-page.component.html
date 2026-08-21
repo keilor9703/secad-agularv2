@@ -65,8 +65,10 @@
           [editing]="isEditing()"
           [searching]="searching()"
           [saving]="saving()"
+          [maxOrder]="isEditing() ? activeCount() : activeCount() + 1"
           (searchRequested)="searchEmployee($event)"
           (saveRequested)="saveRecord($event)"
+          (orderPreviewChanged)="previewPosition($event)"
           (cancelRequested)="closeEditor()"
           (validationWarning)="showFormWarning($event)"
         />
@@ -76,8 +78,12 @@
         [rows]="records()"
         [loading]="loading()"
         [selectedId]="editingId()"
+        [previewOrder]="previewOrder()"
+        [processingId]="processingId()"
         (editRequested)="editRecord($event)"
         (removeRequested)="removeRecord($event)"
+        (activateRequested)="activateRecord($event)"
+        (permanentDeleteRequested)="permanentlyDeleteRecord($event)"
       />
     </div>
   }

@@ -13,10 +13,11 @@ import { NavigationEnd, Router, RouterLink } from '@angular/router';
 import { filter, map, startWith } from 'rxjs';
 
 import { AuthService } from '../../auth/auth.service';
-import { MenuItem, SubMenuItem } from '../../interfaces/menu-item.interface';
+import { MenuItem } from '../../interfaces/menu-item.interface';
 import { BrandIdentityService } from '../../services/brand-identity.service';
 import { NavigationMenuService } from '../../services/navigation-menu.service';
 import { SidebarService } from '../../services/sidebar.service';
+import { SidebarMenuNodeComponent } from './sidebar-menu-node.component';
 
 type MenuBrandTextKind = 'institution' | 'system' | 'acronym';
 
@@ -29,7 +30,7 @@ interface MenuBrandTextItem {
 @Component({
   selector: 'app-sidebar',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, SidebarMenuNodeComponent],
   templateUrl: './sidebar.component.html',
   styleUrl: './sidebar.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -75,9 +76,9 @@ export class SidebarComponent {
       .filter((item): item is MenuBrandTextItem => item !== null && Boolean(item.text));
   });
   readonly menuItems = signal<readonly MenuItem[]>([]);
-  readonly expandedItemId = signal<number | null>(null);
+  readonly expandedItemIds = signal<ReadonlySet<number>>(new Set<number>());
 
-  private readonly currentUrl = toSignal(
+  readonly currentUrl = toSignal(
     this.router.events.pipe(
       filter((event): event is NavigationEnd => event instanceof NavigationEnd),
       map((event) => event.urlAfterRedirects),
@@ -95,7 +96,30 @@ export class SidebarComponent {
      * permanece visible en el rail compacto.
      */
     effect(() => {
-      this.expandedItemId.set(this.findActiveGroup()?.id ?? null);
+      const sidebarOpen = this.isOpen();
+      const activeAncestors = this.collectActiveAncestorIds(this.menuItems());
+
+      if (!sidebarOpen || !activeAncestors.size) {
+        return;
+      }
+
+      /*
+       * Al abrir el drawer se recupera la rama de la ruta actual. Se hace una
+       * unión para conservar también los grupos que el usuario abrió a mano.
+       */
+      this.expandedItemIds.update((current) => {
+        const next = new Set(current);
+        let changed = false;
+
+        activeAncestors.forEach((id) => {
+          if (!next.has(id)) {
+            next.add(id);
+            changed = true;
+          }
+        });
+
+        return changed ? next : current;
+      });
     });
 
     this.navigationMenu
@@ -117,34 +141,16 @@ export class SidebarComponent {
     this.sidebarService.closeSidebar();
   }
 
-  toggleGroup(item: MenuItem): void {
-    if (!item.submenu?.length) {
-      return;
-    }
-
+  toggleGroup(itemId: number): void {
     if (!this.isOpen()) {
       this.sidebarService.openSidebar();
-      this.expandedItemId.set(item.id);
-      return;
     }
 
-    this.expandedItemId.update((currentId) => (currentId === item.id ? null : item.id));
-  }
-
-  isExpandedItem(item: MenuItem): boolean {
-    return this.expandedItemId() === item.id;
-  }
-
-  isMenuItemActive(item: MenuItem): boolean {
-    if (item.route && this.routeMatches(item.route)) {
-      return true;
-    }
-
-    return item.submenu?.some((child) => this.routeMatches(child.route)) ?? false;
-  }
-
-  isSubmenuItemActive(item: SubMenuItem): boolean {
-    return this.routeMatches(item.route);
+    this.expandedItemIds.update((current) => {
+      const next = new Set(current);
+      next.has(itemId) ? next.delete(itemId) : next.add(itemId);
+      return next;
+    });
   }
 
   onNavigate(): void {
@@ -176,9 +182,21 @@ export class SidebarComponent {
     );
   }
 
-  private findActiveGroup(): MenuItem | undefined {
-    return this.menuItems().find((item) =>
-      item.submenu?.some((child) => this.routeMatches(child.route)),
-    );
+  private collectActiveAncestorIds(items: readonly MenuItem[]): ReadonlySet<number> {
+    const expanded = new Set<number>();
+
+    const visit = (item: MenuItem): boolean => {
+      const childActive = item.children?.some((child) => visit(child)) ?? false;
+      const selfActive = Boolean(item.route && this.routeMatches(item.route));
+
+      if (childActive && item.children?.length) {
+        expanded.add(item.id);
+      }
+
+      return selfActive || childActive;
+    };
+
+    items.forEach(visit);
+    return expanded;
   }
 }

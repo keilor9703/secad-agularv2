@@ -6,9 +6,16 @@ import {
   inject,
   input,
   output,
+  signal,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { startWith } from 'rxjs';
 
+import {
+  isMenuDestinationType,
+  MenuDestinationType,
+} from '../../../../../core/navigation/menu-destination';
 import { DbMenuItem, MenuSaveRequest } from '../../../../../core/services/menu.service';
 import { UiButtonComponent } from '../../../../../shared/components/ui-button/ui-button.component';
 import { UiIconPickerComponent } from '../../../../../shared/components/ui-icon-picker/ui-icon-picker.component';
@@ -16,6 +23,8 @@ import { UiInputComponent } from '../../../../../shared/components/ui-input/ui-i
 import { UiSelectComponent } from '../../../../../shared/components/ui-select/ui-select.component';
 import { UiSelectOption } from '../../../../../shared/interfaces/ui-select-option.interface';
 import { getFormErrorMessage } from '../../../../../shared/utils/form-error.util';
+import { menuDetailError, menuDetailValidators } from '../menu-destination.validators';
+import { MENU_ROUTE_OPTIONS } from '../menu-route-options';
 
 type MenuFormField =
   | 'descripcion'
@@ -73,6 +82,7 @@ export class MenuAdminFormComponent {
 
   readonly typeOptions = MENU_TYPE_OPTIONS;
   readonly statusOptions = MENU_STATUS_OPTIONS;
+  readonly routeOptions = MENU_ROUTE_OPTIONS;
   readonly isCreating = computed(() => this.creating() && this.editingItem() === null);
   readonly title = computed(() =>
     this.isCreating() ? 'Crear menú principal' : 'Editar ítem de menú',
@@ -83,6 +93,12 @@ export class MenuAdminFormComponent {
       : 'Actualice la ubicación, el comportamiento y la visibilidad del ítem.',
   );
   readonly submitLabel = computed(() => (this.isCreating() ? 'Guardar menú' : 'Guardar cambios'));
+  readonly selectedType = signal<MenuDestinationType>('S');
+  readonly isInternalDestination = computed(() => this.selectedType() === 'frm');
+  readonly usesInternalRoute = computed(
+    () => this.selectedType() === 'frm' || this.selectedType() === 'S',
+  );
+  readonly isContainerDestination = computed(() => this.selectedType() === 'S');
 
   readonly form = this.fb.group({
     descripcion: ['', [Validators.required, Validators.maxLength(255)]],
@@ -103,6 +119,15 @@ export class MenuAdminFormComponent {
   ]);
 
   constructor() {
+    this.form.controls.tipo.valueChanges
+      .pipe(startWith(this.form.controls.tipo.value), takeUntilDestroyed())
+      .subscribe((rawType) => {
+        const type = isMenuDestinationType(rawType) ? rawType : 'S';
+        this.selectedType.set(type);
+        this.form.controls.detalle.setValidators(menuDetailValidators(type));
+        this.form.controls.detalle.updateValueAndValidity({ emitEvent: false });
+      });
+
     effect(() => {
       const item = this.editingItem();
       const creating = this.creating();
@@ -135,7 +160,7 @@ export class MenuAdminFormComponent {
       descripcion: value.descripcion.trim(),
       idPadre: value.idPadre,
       posicion: position,
-      tipo: value.tipo.trim(),
+      tipo: isMenuDestinationType(value.tipo) ? value.tipo : 'S',
       icono: value.icono.trim(),
       vigente: value.vigente,
       detalle: value.detalle.trim(),
@@ -152,6 +177,13 @@ export class MenuAdminFormComponent {
 
     if (field === 'posicion' && control.hasError('invalidPosition')) {
       return 'Ingrese una posición entera igual o mayor que cero.';
+    }
+
+    if (field === 'detalle') {
+      const detailError = menuDetailError(control);
+      if (detailError) {
+        return detailError;
+      }
     }
 
     return getFormErrorMessage(control);

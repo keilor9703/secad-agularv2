@@ -1,0 +1,60 @@
+<app-ui-modal
+  [open]="open()"
+  title="Retirar rol"
+  [subtitle]="
+    'Registre el motivo para retirar ' +
+    (role()?.nombre || 'el rol seleccionado') +
+    '. La observación quedará en auditoría.'
+  "
+  icon="fa-solid fa-user-shield"
+  size="md"
+  [closeOnBackdrop]="!loading()"
+  [closeOnEscape]="!loading()"
+  (closeRequested)="requestClose()"
+>
+  <div modal-body class="role-removal" role="form" aria-label="Motivo de retiro del rol">
+    <div class="role-removal__notice">
+      <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+      <p>
+        Esta acción desactiva la asignación; no elimina su historial. Indique un motivo concreto de
+        al menos 10 caracteres.
+      </p>
+    </div>
+
+    <app-ui-input
+      [formControl]="observation"
+      label="Observación de retiro"
+      placeholder="Ej.: Finalizó la responsabilidad que requería este acceso"
+      [multiline]="true"
+      [rows]="4"
+      [maxlength]="1000"
+      [required]="true"
+      [error]="errorMessage"
+    />
+  </div>
+
+  <div modal-actions class="role-removal__actions">
+    <app-ui-button
+      type="button"
+      variant="secondary"
+      size="sm"
+      icon="fa-solid fa-xmark"
+      [disabled]="loading()"
+      (buttonClick)="requestClose()"
+    >
+      Cancelar
+    </app-ui-button>
+
+    <app-ui-button
+      type="button"
+      variant="danger"
+      size="sm"
+      icon="fa-solid fa-user-minus"
+      [disabled]="observation.invalid || loading()"
+      [loading]="loading()"
+      (buttonClick)="submit()"
+    >
+      {{ loading() ? 'Retirando...' : 'Retirar rol' }}
+    </app-ui-button>
+  </div>
+</app-ui-modal>

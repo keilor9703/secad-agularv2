@@ -47,22 +47,19 @@ export class LineaMandoPageComponent implements OnInit {
   readonly records = signal<readonly DtoLineaMando[]>([]);
   readonly editorValue = signal<DtoLineaMandoRequest | null>(null);
   readonly editingId = signal<number | null>(null);
+  readonly previewOrder = signal<number | null>(null);
   readonly loading = signal(false);
   readonly searching = signal(false);
   readonly saving = signal(false);
+  readonly processingId = signal<number | null>(null);
   readonly headerMinimized = signal(false);
 
   readonly isEditing = computed(() => this.editingId() !== null);
   readonly activeCount = computed(() => this.records().filter((item) => item.vigente === 1).length);
   readonly inactiveCount = computed(() => this.records().length - this.activeCount());
-  readonly nextOrder = computed(() => {
-    const highestOrder = this.records().reduce(
-      (current, item) => Math.max(current, Number(item.orden) || 0),
-      0,
-    );
-
-    return highestOrder + 1;
-  });
+  // Los retirados conservan su último ORDEN histórico; no deben ampliar el
+  // rango disponible al preparar un integrante nuevo.
+  readonly nextOrder = computed(() => this.activeCount() + 1);
 
   ngOnInit(): void {
     void this.loadCommandLine();
@@ -88,7 +85,7 @@ export class LineaMandoPageComponent implements OnInit {
 
     try {
       const response = await firstValueFrom(
-        this.usuarioAdminService.consultarUsuarioPorIdentificacion(identification),
+        this.usuarioAdminService.consultarUsuarioPorIdentificacion(identification, 'LINEA_MANDO'),
       );
       const employee = response.funcionario;
 
@@ -103,6 +100,7 @@ export class LineaMandoPageComponent implements OnInit {
       }
 
       this.editingId.set(null);
+      this.previewOrder.set(null);
       this.editorValue.set({
         identificacion: identification.trim(),
         nombre: employee.nombres ?? '',
@@ -125,6 +123,7 @@ export class LineaMandoPageComponent implements OnInit {
   /** Abre una copia del registro en el editor sin mutar la colección visible. */
   editRecord(item: DtoLineaMando): void {
     this.editingId.set(item.idLineaMando);
+    this.previewOrder.set(item.orden);
     this.editorValue.set(this.toRequest(item));
 
     this.documentRef.defaultView?.requestAnimationFrame(() => {
@@ -134,43 +133,9 @@ export class LineaMandoPageComponent implements OnInit {
     });
   }
 
-  /** Decide si se actualiza, se crea o se reemplaza una posición activa existente. */
+  /** Delega el reordenamiento atómico al backend para no desactivar integrantes por coincidencia de cargo. */
   async saveRecord(request: DtoLineaMandoRequest): Promise<void> {
-    const duplicatedPosition = this.records().find(
-      (item) =>
-        item.vigente === 1 && item.peso === request.peso && item.idLineaMando !== this.editingId(),
-    );
-
-    if (duplicatedPosition && this.isEditing()) {
-      this.toast.warning(
-        'Posición ocupada',
-        `Ya existe un ${request.peso} activo dentro de la línea de mando.`,
-      );
-      return;
-    }
-
-    let replacementId: number | null = null;
-
-    if (duplicatedPosition) {
-      const confirmed = await this.alert.confirm({
-        title: 'Reemplazar posición activa',
-        message:
-          `${this.fullName(duplicatedPosition)} ocupa actualmente la posición ` +
-          `“${request.peso}”. El registro anterior pasará a estado inactivo.`,
-        confirmText: 'Sí, reemplazar',
-        cancelText: 'Conservar actual',
-        icon: 'warning',
-        intent: 'primary',
-      });
-
-      if (!confirmed) {
-        return;
-      }
-
-      replacementId = duplicatedPosition.idLineaMando;
-    }
-
-    await this.persistRecord(request, replacementId);
+    await this.persistRecord(request);
   }
 
   /** Solicita confirmación antes de retirar un integrante activo. */
@@ -185,10 +150,10 @@ export class LineaMandoPageComponent implements OnInit {
       return;
     }
 
+    this.processingId.set(item.idLineaMando);
+
     try {
-      const response = await firstValueFrom(
-        this.lineaMandoService.setVigente(item.idLineaMando, 0),
-      );
+      const response = await firstValueFrom(this.lineaMandoService.delete(item.idLineaMando));
 
       if (!response.success) {
         this.toast.warning('Retirar integrante', response.message);
@@ -203,6 +168,80 @@ export class LineaMandoPageComponent implements OnInit {
       await this.loadCommandLine();
     } catch {
       this.toast.error('Retirar integrante', 'No fue posible actualizar el estado del registro.');
+    } finally {
+      this.processingId.set(null);
+    }
+  }
+
+  /** Reactiva un registro histórico y deja que el backend recalcule su posición válida. */
+  async activateRecord(item: DtoLineaMando): Promise<void> {
+    const confirmed = await this.alert.confirm({
+      title: 'Reactivar integrante',
+      message: `${this.fullName(item)} volverá a la estructura visible de la línea de mando.`,
+      confirmText: 'Sí, reactivar',
+      icon: 'question',
+      intent: 'primary',
+    });
+
+    if (!confirmed) {
+      return;
+    }
+
+    this.processingId.set(item.idLineaMando);
+
+    try {
+      const response = await firstValueFrom(
+        this.lineaMandoService.setVigente(item.idLineaMando, 1),
+      );
+
+      if (!response.success) {
+        this.toast.warning('Reactivar integrante', response.message);
+        return;
+      }
+
+      this.toast.success('Integrante reactivado', response.message);
+      await this.loadCommandLine();
+    } catch {
+      this.toast.error('Reactivar integrante', 'No fue posible reactivar el registro.');
+    } finally {
+      this.processingId.set(null);
+    }
+  }
+
+  /** Elimina definitivamente solo un registro ya retirado, después de una confirmación explícita. */
+  async permanentlyDeleteRecord(item: DtoLineaMando): Promise<void> {
+    const confirmed = await this.alert.confirmDelete(
+      'Eliminar definitivamente',
+      `${this.fullName(item)} se eliminará de la tabla. Esta acción no se puede deshacer y su auditoría permanecerá disponible.`,
+      'Sí, eliminar definitivamente',
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    this.processingId.set(item.idLineaMando);
+
+    try {
+      const response = await firstValueFrom(
+        this.lineaMandoService.deletePermanently(item.idLineaMando),
+      );
+
+      if (!response.success) {
+        this.toast.warning('Eliminar definitivamente', response.message);
+        return;
+      }
+
+      if (this.editingId() === item.idLineaMando) {
+        this.closeEditor();
+      }
+
+      this.toast.success('Registro eliminado', response.message);
+      await this.loadCommandLine();
+    } catch {
+      this.toast.error('Eliminar definitivamente', 'No fue posible eliminar el registro.');
+    } finally {
+      this.processingId.set(null);
     }
   }
 
@@ -210,6 +249,12 @@ export class LineaMandoPageComponent implements OnInit {
   closeEditor(): void {
     this.editorValue.set(null);
     this.editingId.set(null);
+    this.previewOrder.set(null);
+  }
+
+  /** Mueve solo la representación seleccionada; la persistencia ocurre al guardar. */
+  previewPosition(order: number | null): void {
+    this.previewOrder.set(order);
   }
 
   /** Presenta las validaciones locales con el canal global ya usado por la plantilla. */
@@ -217,24 +262,10 @@ export class LineaMandoPageComponent implements OnInit {
     this.toast.warning('Formulario', message);
   }
 
-  private async persistRecord(
-    request: DtoLineaMandoRequest,
-    replacementId: number | null,
-  ): Promise<void> {
+  private async persistRecord(request: DtoLineaMandoRequest): Promise<void> {
     this.saving.set(true);
 
     try {
-      if (replacementId !== null) {
-        const replacementResponse = await firstValueFrom(
-          this.lineaMandoService.setVigente(replacementId, 0),
-        );
-
-        if (!replacementResponse.success) {
-          this.toast.error('Reemplazar posición', replacementResponse.message);
-          return;
-        }
-      }
-
       const editingId = this.editingId();
       const response = await firstValueFrom(
         editingId === null

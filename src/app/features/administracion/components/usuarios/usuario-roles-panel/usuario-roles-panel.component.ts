@@ -29,8 +29,13 @@ import {
   UiTableVariant,
 } from '../../../../../shared/interfaces/ui-table.interface';
 import { getFormErrorMessage } from '../../../../../shared/utils/form-error.util';
-import { RolEstado, UserRole } from '../../../interfaces/usuario-admin-view.interface';
+import {
+  RemoveRoleCommand,
+  RolEstado,
+  UserRole,
+} from '../../../interfaces/usuario-admin-view.interface';
 import { DtoRolCatalogo } from '../../../services/usuario-admin.service';
+import { UsuarioRoleRemovalModalComponent } from '../usuario-role-removal-modal/usuario-role-removal-modal.component';
 
 @Component({
   selector: 'app-usuario-roles-panel',
@@ -45,6 +50,7 @@ import { DtoRolCatalogo } from '../../../services/usuario-admin.service';
     UiSectionHeaderComponent,
     UiSelectComponent,
     UiTableComponent,
+    UsuarioRoleRemovalModalComponent,
   ],
   templateUrl: './usuario-roles-panel.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
@@ -58,13 +64,16 @@ export class UsuarioRolesPanelComponent implements OnChanges {
   @Input() editingRole: UserRole | null = null;
   @Input() savingRole = false;
   @Input() deletingRoleId: number | null = null;
+  @Input() roleDeleteRevision = 0;
   @Input() superAdministradorRolId = 1;
 
   @Output() agregarRol = new EventEmitter<void>();
   @Output() guardarRol = new EventEmitter<void>();
   @Output() cancelarRol = new EventEmitter<void>();
   @Output() editarRol = new EventEmitter<UserRole>();
-  @Output() eliminarRol = new EventEmitter<UserRole>();
+  @Output() eliminarRol = new EventEmitter<RemoveRoleCommand>();
+
+  readonly rolePendingRemoval = signal<UserRole | null>(null);
 
   /**
    * Configuración visual de esta tabla:
@@ -83,6 +92,14 @@ export class UsuarioRolesPanelComponent implements OnChanges {
   readonly minimumRoleEndDate = signal(this.toStableLocalDate(new Date()));
 
   ngOnChanges(changes: SimpleChanges): void {
+    if (
+      changes['roleDeleteRevision'] &&
+      !changes['roleDeleteRevision'].firstChange &&
+      changes['roleDeleteRevision'].currentValue > changes['roleDeleteRevision'].previousValue
+    ) {
+      this.rolePendingRemoval.set(null);
+    }
+
     if (
       changes['showAddRoleForm']?.currentValue === true ||
       (this.showAddRoleForm && changes['editingRole'])
@@ -195,8 +212,23 @@ export class UsuarioRolesPanelComponent implements OnChanges {
     }
 
     if (event.actionId === 'delete') {
-      this.eliminarRol.emit(event.row);
+      this.rolePendingRemoval.set(event.row);
     }
+  }
+
+  closeRemovalModal(): void {
+    if (this.deletingRoleId === null) {
+      this.rolePendingRemoval.set(null);
+    }
+  }
+
+  confirmRoleRemoval(observacion: string): void {
+    const role = this.rolePendingRemoval();
+    if (!role || this.deletingRoleId !== null) {
+      return;
+    }
+
+    this.eliminarRol.emit({ role, observacion });
   }
 
   getRoleError(fieldName: string): string {

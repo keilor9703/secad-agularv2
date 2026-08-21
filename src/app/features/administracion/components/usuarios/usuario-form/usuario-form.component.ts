@@ -22,6 +22,7 @@ import { UsuarioRolesPanelComponent } from '../usuario-roles-panel/usuario-roles
 
 import {
   NewRoleForm,
+  RemoveRoleCommand,
   TabKey,
   UserProfile,
   UserRole,
@@ -54,6 +55,7 @@ export class UsuarioFormComponent implements OnChanges {
   @Input() loading = false;
   @Input() savingRole = false;
   @Input() roleSaveRevision = 0;
+  @Input() roleDeleteRevision = 0;
   @Input() deletingRoleId: number | null = null;
   @Input() superAdministradorRolId = 1;
 
@@ -61,7 +63,7 @@ export class UsuarioFormComponent implements OnChanges {
   @Output() guardarDatos = new EventEmitter<UserProfile>();
   @Output() nuevoUsuario = new EventEmitter<void>();
   @Output() guardarRol = new EventEmitter<NewRoleForm>();
-  @Output() eliminarRol = new EventEmitter<UserRole>();
+  @Output() eliminarRol = new EventEmitter<RemoveRoleCommand>();
 
   activeTab: TabKey = 'datos';
   showAddRoleForm = false;

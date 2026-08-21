@@ -99,10 +99,26 @@ export interface EliminarRolResponse {
   message: string;
 }
 
+export interface RetirarRolRequest {
+  usuario: string;
+  identificacion: string;
+  observacion: string;
+}
+
 export interface EliminarUsuarioResponse {
   success: boolean;
   message: string;
 }
+
+export interface DesactivarUsuarioRequest {
+  observacion: string;
+}
+
+export type UsuarioConsultaOrigen =
+  | 'BUSQUEDA_DIGITADA'
+  | 'TABLA_USUARIOS'
+  | 'LINEA_MANDO'
+  | 'CONSULTA_DIRECTA';
 
 @Injectable({ providedIn: 'root' })
 export class UsuarioAdminService {
@@ -110,11 +126,14 @@ export class UsuarioAdminService {
 
   constructor(private http: HttpClient) {}
 
-  consultarUsuarioPorIdentificacion(identificacion: string): Observable<UsuarioConsultaResult> {
+  consultarUsuarioPorIdentificacion(
+    identificacion: string,
+    origen: UsuarioConsultaOrigen = 'CONSULTA_DIRECTA',
+  ): Observable<UsuarioConsultaResult> {
     const id = identificacion.trim();
     return this.http
       .get<DtoFuncionario>(`${this.baseUrl}/Funcionario`, {
-        params: { identificacion: id },
+        params: { identificacion: id, origen },
       })
       .pipe(
         map((funcionario) => funcionario ?? {}),
@@ -174,21 +193,29 @@ export class UsuarioAdminService {
     return this.http.post<AsignarRolResponse>(`${this.baseUrl}/Roles`, payload);
   }
 
-  eliminarRol(
+  retirarRol(
     rolId: number,
     usuario: string,
     identificacion: string,
+    observacion: string,
   ): Observable<EliminarRolResponse> {
-    return this.http.delete<EliminarRolResponse>(`${this.baseUrl}/Roles/${rolId}`, {
-      params: {
-        usuario: (usuario ?? '').trim(),
-        identificacion: (identificacion ?? '').trim(),
-      },
-    });
+    const payload: RetirarRolRequest = {
+      usuario: (usuario ?? '').trim(),
+      identificacion: (identificacion ?? '').trim(),
+      observacion: (observacion ?? '').trim(),
+    };
+
+    // El retiro es un comando con motivo obligatorio; POST evita depender de
+    // cuerpos DELETE, que algunos proxies empresariales descartan.
+    return this.http.post<EliminarRolResponse>(`${this.baseUrl}/Roles/${rolId}/Retiro`, payload);
   }
 
-  eliminarUsuario(idUsuario: number): Observable<EliminarUsuarioResponse> {
-    return this.http.delete<EliminarUsuarioResponse>(`${this.baseUrl}/${idUsuario}`);
+  eliminarUsuario(idUsuario: number, observacion: string): Observable<EliminarUsuarioResponse> {
+    const payload: DesactivarUsuarioRequest = {
+      observacion: (observacion ?? '').trim(),
+    };
+
+    return this.http.post<EliminarUsuarioResponse>(`${this.baseUrl}/${idUsuario}/Retiro`, payload);
   }
 
   private normalizeFotoResponse(raw: string | null): string | null {

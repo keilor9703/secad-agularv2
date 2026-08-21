@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   computed,
   effect,
   inject,
@@ -8,10 +9,10 @@ import {
   output,
   signal,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { DtoLineaMandoRequest } from '../../../../core/services/linea-mando.service';
-import { UiSelectOption } from '../../../../shared/interfaces/ui-select-option.interface';
 import { UiButtonComponent } from '../../../../shared/components/ui-button/ui-button.component';
 import { UiChipComponent } from '../../../../shared/components/ui-chip/ui-chip.component';
 import { UiFileUploadComponent } from '../../../../shared/components/ui-file-upload/ui-file-upload.component';
@@ -19,6 +20,7 @@ import { UiInputComponent } from '../../../../shared/components/ui-input/ui-inpu
 import { UiPanelHeaderComponent } from '../../../../shared/components/ui-panel-header/ui-panel-header.component';
 import { UiSearchInputComponent } from '../../../../shared/components/ui-search-input/ui-search-input.component';
 import { UiSelectComponent } from '../../../../shared/components/ui-select/ui-select.component';
+import { UiSelectOption } from '../../../../shared/interfaces/ui-select-option.interface';
 
 const DEFAULT_PHOTO = 'imagenes/policia.jpg';
 const MAX_PHOTO_SIZE = 2 * 1024 * 1024;
@@ -42,16 +44,19 @@ const MAX_PHOTO_SIZE = 2 * 1024 * 1024;
 })
 export class LineaMandoFormComponent {
   private readonly formBuilder = inject(FormBuilder);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly value = input<DtoLineaMandoRequest | null>(null);
   readonly editing = input(false);
   readonly searching = input(false);
   readonly saving = input(false);
+  readonly maxOrder = input(1);
 
   readonly searchRequested = output<string>();
   readonly saveRequested = output<DtoLineaMandoRequest>();
   readonly cancelRequested = output<void>();
   readonly validationWarning = output<string>();
+  readonly orderPreviewChanged = output<number | null>();
 
   readonly searchControl = this.formBuilder.nonNullable.control('', [Validators.required]);
   readonly form = this.formBuilder.nonNullable.group({
@@ -76,12 +81,26 @@ export class LineaMandoFormComponent {
       : 'Consulte al funcionario y complete su posición dentro de la línea de mando.',
   );
 
-  readonly positionOptions: UiSelectOption<string>[] = [
-    { value: 'Director Policía', label: 'Director Policía' },
-    { value: 'Subdirector Policía', label: 'Subdirector Policía' },
-    { value: 'Jefe Unidad', label: 'Jefe Unidad' },
-    { value: 'Mando Ejecutivo', label: 'Mando Ejecutivo' },
-  ];
+  readonly positionOptions = computed<UiSelectOption<string>[]>(() => {
+    const options: UiSelectOption<string>[] = [
+      { value: 'Director Policía', label: 'Director Policía' },
+      { value: 'Subdirector Policía', label: 'Subdirector Policía' },
+      { value: 'Jefe Unidad', label: 'Jefe Unidad' },
+      { value: 'Mando Ejecutivo', label: 'Mando Ejecutivo' },
+    ];
+    const current = this.normalizePosition(this.value()?.peso ?? '');
+
+    return current && !options.some((option) => option.value === current)
+      ? [...options, { value: current, label: current }]
+      : options;
+  });
+
+  readonly orderOptions = computed<UiSelectOption<number>[]>(() =>
+    Array.from({ length: Math.max(1, Math.min(99, this.maxOrder())) }, (_, index) => ({
+      value: index + 1,
+      label: `Posición ${index + 1}`,
+    })),
+  );
 
   constructor() {
     effect(() => {
@@ -96,11 +115,30 @@ export class LineaMandoFormComponent {
       }
 
       // El componente recibe una copia del registro y nunca modifica el estado del padre.
-      this.form.reset({ ...value, orden: Math.max(1, Number(value.orden) || 1) });
+      this.form.reset({
+        ...value,
+        peso: this.normalizePosition(value.peso),
+        orden: Math.max(1, Number(value.orden) || 1),
+      });
       this.searchControl.setValue(value.identificacion);
       this.photoPreview.set(this.resolvePhoto(value.fotoBase64));
       this.photoFileName.set(value.fotoBase64 ? 'Fotografía actual' : '');
     });
+
+    effect(() => {
+      const maximum = Math.max(1, Math.min(99, this.maxOrder()));
+      const control = this.form.controls.orden;
+      control.setValidators([Validators.required, Validators.min(1), Validators.max(maximum)]);
+      control.updateValueAndValidity({ emitEvent: false });
+    });
+
+    this.form.controls.orden.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((order) => {
+        if (this.editing()) {
+          this.orderPreviewChanged.emit(Math.max(1, Number(order) || 1));
+        }
+      });
   }
 
   /** Solicita la consulta solo cuando existe una identificación válida. */
@@ -178,7 +216,9 @@ export class LineaMandoFormComponent {
       return 'Este campo es obligatorio.';
     }
 
-    return field === 'orden' ? 'El orden debe ser igual o mayor que 1.' : 'Revise este campo.';
+    return field === 'orden'
+      ? `Seleccione una posición entre 1 y ${Math.max(1, this.maxOrder())}.`
+      : 'Revise este campo.';
   }
 
   protected readonly allowedPhotoTypes = ['image/jpeg', 'image/png', 'image/webp'];
@@ -195,5 +235,17 @@ export class LineaMandoFormComponent {
     return normalizedPhoto.startsWith('data:')
       ? normalizedPhoto
       : `data:image/jpeg;base64,${normalizedPhoto}`;
+  }
+
+  private normalizePosition(value: string): string {
+    const normalized = value.trim();
+    const legacyValues: Readonly<Record<string, string>> = {
+      'Director P': 'Director Policía',
+      Subdirecto: 'Subdirector Policía',
+      'Jefe Unida': 'Jefe Unidad',
+      'Mando Ejec': 'Mando Ejecutivo',
+    };
+
+    return legacyValues[normalized] ?? normalized;
   }
 }

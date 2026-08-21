@@ -1,0 +1,224 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.ui-segmented-tabs {
+  display: flex;
+  gap: 8px;
+  min-width: 0;
+  padding: 5px;
+  border: 1px solid rgba(15, 58, 102, 0.1);
+  border-radius: 10px;
+  background: #f3f6f9;
+}
+
+.ui-segmented-tabs.is-stretched .ui-segmented-tabs__item {
+  flex: 1 1 0;
+}
+
+.ui-segmented-tabs__item {
+  --_tab-icon-bg: #e4f6fa;
+  --_tab-icon-color: #057d9c;
+
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 9px;
+  min-width: 150px;
+  padding: 8px 10px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: #607086;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease,
+    box-shadow 160ms ease,
+    color 160ms ease,
+    transform 160ms ease;
+}
+
+.ui-segmented-tabs__item.is-neutral {
+  --_tab-icon-bg: #e8edf3;
+  --_tab-icon-color: #66768a;
+}
+
+.ui-segmented-tabs__item.is-success {
+  --_tab-icon-bg: #e8f8ee;
+  --_tab-icon-color: #15803d;
+}
+
+.ui-segmented-tabs__item.is-warning {
+  --_tab-icon-bg: #fff5df;
+  --_tab-icon-color: #b45309;
+}
+
+.ui-segmented-tabs__item.is-danger {
+  --_tab-icon-bg: #fff0ef;
+  --_tab-icon-color: #b42318;
+}
+
+.ui-segmented-tabs__item:hover:not(:disabled) {
+  border-color: rgba(10, 79, 144, 0.14);
+  background: rgba(255, 255, 255, 0.74);
+  color: #173f6c;
+}
+
+.ui-segmented-tabs__item.is-active {
+  border-color: rgba(8, 169, 207, 0.32);
+  background: #ffffff;
+  color: #082f63;
+  box-shadow: 0 5px 14px rgba(15, 58, 102, 0.1);
+  transform: translateY(-1px);
+}
+
+.ui-segmented-tabs__item:focus-visible {
+  outline: 0;
+  box-shadow:
+    0 0 0 3px rgba(8, 166, 203, 0.22),
+    0 5px 14px rgba(15, 58, 102, 0.1);
+}
+
+.ui-segmented-tabs__item:disabled {
+  cursor: not-allowed;
+  opacity: 0.52;
+}
+
+.ui-segmented-tabs__icon {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border-radius: 8px;
+  background: var(--_tab-icon-bg);
+  color: var(--_tab-icon-color);
+  font-size: 12px;
+}
+
+.ui-segmented-tabs__copy {
+  display: grid;
+  min-width: 0;
+  gap: 1px;
+}
+
+.ui-segmented-tabs__copy strong,
+.ui-segmented-tabs__copy small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ui-segmented-tabs__copy strong {
+  font-size: 11px;
+  font-weight: 850;
+}
+
+.ui-segmented-tabs__copy small {
+  color: #7a899b;
+  font-size: 8px;
+}
+
+.ui-segmented-tabs__badge {
+  display: grid;
+  min-width: 26px;
+  height: 26px;
+  padding-inline: 6px;
+  place-items: center;
+  border: 1px solid rgba(10, 79, 144, 0.13);
+  border-radius: 999px;
+  background: #edf4fa;
+  color: #174f82;
+  font-size: 9px;
+}
+
+.ui-segmented-tabs--sm .ui-segmented-tabs__item {
+  grid-template-columns: 28px minmax(0, 1fr) auto;
+  gap: 6px;
+  padding: 6px;
+}
+
+.ui-segmented-tabs--sm .ui-segmented-tabs__icon {
+  width: 28px;
+  height: 28px;
+  font-size: 10px;
+}
+
+.ui-segmented-tabs--sm .ui-segmented-tabs__badge {
+  min-width: 22px;
+  height: 22px;
+  font-size: 8px;
+}
+
+@media (max-width: 620px) {
+  .ui-segmented-tabs {
+    gap: 5px;
+    padding: 4px;
+  }
+
+  .ui-segmented-tabs__item {
+    grid-template-columns: 28px minmax(0, 1fr) auto;
+    min-width: 0;
+    gap: 6px;
+    padding: 6px;
+  }
+
+  .ui-segmented-tabs__icon {
+    width: 28px;
+    height: 28px;
+    font-size: 10px;
+  }
+
+  .ui-segmented-tabs.hide-description-mobile .ui-segmented-tabs__copy small {
+    display: none;
+  }
+
+  .ui-segmented-tabs__badge {
+    min-width: 22px;
+    height: 22px;
+    font-size: 8px;
+  }
+}
+
+@media (max-width: 390px) {
+  .ui-segmented-tabs__item {
+    grid-template-columns: 25px minmax(0, 1fr) auto;
+    gap: 4px;
+    padding-inline: 4px;
+  }
+
+  .ui-segmented-tabs__icon {
+    width: 25px;
+    height: 25px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-segmented-tabs__item {
+    transition: none;
+  }
+}
+
+:host-context(html.dark-mode) {
+  .ui-segmented-tabs {
+    border-color: rgba(148, 163, 184, 0.18);
+    background: #111b2d;
+  }
+
+  .ui-segmented-tabs__item.is-active {
+    background: #1b2940;
+    color: #f4f7fb;
+  }
+
+  .ui-segmented-tabs__item:hover:not(:disabled) {
+    background: rgba(30, 41, 59, 0.78);
+    color: #e2e8f0;
+  }
+
+  .ui-segmented-tabs__copy small {
+    color: #a9b6c8;
+  }
+}

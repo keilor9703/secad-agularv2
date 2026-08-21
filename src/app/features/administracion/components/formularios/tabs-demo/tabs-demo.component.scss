@@ -144,6 +144,30 @@
   font-weight: 750;
 }
 
+.tabs-demo__segmented-panel {
+  padding: 12px 14px;
+  border: 1px solid rgba(15, 58, 102, 0.1);
+  border-radius: 8px;
+  background: rgba(8, 166, 203, 0.045);
+}
+
+.tabs-demo__segmented-panel strong,
+.tabs-demo__segmented-panel p {
+  margin: 0;
+}
+
+.tabs-demo__segmented-panel strong {
+  color: var(--ui-text, #151b3b);
+  font-size: calc(12px * var(--font-size-scale, 1));
+}
+
+.tabs-demo__segmented-panel p {
+  margin-top: 3px;
+  color: var(--form-hint-color, #64748b);
+  font-size: calc(10px * var(--font-size-scale, 1));
+  line-height: 1.45;
+}
+
 @media (max-width: 760px) {
   .tabs-demo__form-grid {
     grid-template-columns: 1fr;

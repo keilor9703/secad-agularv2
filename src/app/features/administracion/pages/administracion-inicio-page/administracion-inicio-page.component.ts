@@ -1,59 +1,93 @@
+import { ChangeDetectionStrategy, Component, computed, signal } from '@angular/core';
 
-import { Component, ChangeDetectionStrategy } from '@angular/core';
-import { RouterModule } from '@angular/router';
+import { UiChipComponent } from '../../../../shared/components/ui-chip/ui-chip.component';
+import { UiPageHeaderComponent } from '../../../../shared/components/ui-page-header/ui-page-header.component';
+import { UiSectionHeaderComponent } from '../../../../shared/components/ui-section-header/ui-section-header.component';
+import { AdminModuleCardComponent } from '../../components/administracion/admin-module-card/admin-module-card.component';
 import { AdminSite } from '../../interfaces/admin-site.interface';
 
 @Component({
   selector: 'app-administracion-inicio',
   standalone: true,
-  imports: [RouterModule],
+  imports: [
+    AdminModuleCardComponent,
+    UiChipComponent,
+    UiPageHeaderComponent,
+    UiSectionHeaderComponent,
+  ],
   templateUrl: './administracion-inicio-page.component.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
-  styleUrls: ['./administracion-inicio-page.component.scss']
+  styleUrl: './administracion-inicio-page.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AdministracionInicioPageComponent {
-  readonly sites: AdminSite[] = [
+  /** Catálogo único de accesos mostrados en el centro administrativo. */
+  readonly sites = signal<readonly AdminSite[]>([
     {
       title: 'Usuarios',
-      description: 'Administra usuarios, estado y datos base del sistema.',
+      description: 'Consulte funcionarios, gestione su estado y asigne roles con vigencia.',
       route: '/administracion/usuarios',
-      icon: 'fa-regular fa-user'
+      icon: 'fa-solid fa-users',
+      area: 'Acceso y seguridad',
+      tone: 'access',
     },
     {
-      title: 'Administrar Roles',
-      description: 'Configura permisos y relación de menús por rol.',
+      title: 'Roles y permisos',
+      description: 'Defina perfiles de acceso y controle los menús habilitados para cada rol.',
       route: '/administracion/roles',
-      icon: 'fa-solid fa-user-shield'
+      icon: 'fa-solid fa-user-shield',
+      area: 'Acceso y seguridad',
+      tone: 'access',
     },
     {
-      title: 'Menú',
-      description: 'Gestiona estructura, orden y visibilidad del menú.',
+      title: 'Administración de menú',
+      description: 'Organice la jerarquía, el orden, las rutas y la visibilidad de la navegación.',
       route: '/administracion/menu',
-      icon: 'fa-solid fa-bars'
+      icon: 'fa-solid fa-bars-staggered',
+      area: 'Estructura y navegación',
+      tone: 'structure',
     },
     {
-      title: 'Línea de Mando',
-      description: 'Gestiona cargos, orden y vigencia de línea de mando.',
+      title: 'Línea de mando',
+      description: 'Administre integrantes, posiciones y vigencia de la estructura institucional.',
       route: '/administracion/linea-mando',
-      icon: 'fa-solid fa-sitemap'
+      icon: 'fa-solid fa-sitemap',
+      area: 'Estructura y navegación',
+      tone: 'structure',
     },
     {
-      title: 'Formularios',
-      description: 'Galería y base de formularios administrativos.',
-      route: '/administracion/formularios',
-      icon: 'fa-solid fa-clipboard-list'
-    },
-    {
-      title: 'Configuración del Sistema',
-      description: 'Marca del sistema, visual login y video institucional.',
+      title: 'Configuración del sistema',
+      description: 'Personalice la identidad, el acceso y el contenido institucional del portal.',
       route: '/administracion/configuracion-sistema',
-      icon: 'fa fa-cog fa-spin fa-3x fa-fw'
+      icon: 'fa-solid fa-sliders',
+      area: 'Configuración institucional',
+      tone: 'configuration',
     },
     {
-      title: 'Configuración de Dominios',
-      description: 'Administra dominios del sistema, para listas desplegables.',
+      title: 'Dominios',
+      description: 'Mantenga catálogos jerárquicos y valores reutilizables en los formularios.',
       route: '/administracion/dominio',
-      icon: 'fa fa-refresh fa-spin fa-3x fa-fw'
-    }
-  ];
+      icon: 'fa-solid fa-tags',
+      area: 'Configuración institucional',
+      tone: 'configuration',
+    },
+    {
+      title: 'Cuentas de correo',
+      description: 'Configure las cuentas SMTP utilizadas por los servicios de notificación.',
+      route: '/administracion/cuentas-email',
+      icon: 'fa-solid fa-envelope-open-text',
+      area: 'Configuración institucional',
+      tone: 'configuration',
+    },
+    {
+      title: 'Guía de componentes',
+      description: 'Consulte ejemplos, propiedades y patrones UI disponibles en la plantilla.',
+      route: '/administracion/formularios',
+      icon: 'fa-solid fa-swatchbook',
+      area: 'Referencia de la plantilla',
+      tone: 'reference',
+    },
+  ]);
+
+  readonly moduleCount = computed(() => this.sites().length);
+  readonly areaCount = computed(() => new Set(this.sites().map((site) => site.area)).size);
 }

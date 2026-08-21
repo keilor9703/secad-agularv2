@@ -1,0 +1,34 @@
+<nav [class]="classes()" role="tablist" [attr.aria-label]="ariaLabel()">
+  @for (item of items(); track item.id) {
+    <button
+      #tabButton
+      type="button"
+      role="tab"
+      [class]="itemClasses(item)"
+      [id]="buttonId(item)"
+      [disabled]="item.disabled"
+      [attr.aria-selected]="isActive(item)"
+      [attr.aria-controls]="controlsId().trim() || null"
+      [tabIndex]="isActive(item) ? 0 : -1"
+      (click)="select(item)"
+      (keydown)="handleKeydown($event, item)"
+    >
+      @if (item.icon) {
+        <span class="ui-segmented-tabs__icon" aria-hidden="true">
+          <i [class]="item.icon"></i>
+        </span>
+      }
+
+      <span class="ui-segmented-tabs__copy">
+        <strong>{{ item.label }}</strong>
+        @if (showDescriptions() && item.description) {
+          <small>{{ item.description }}</small>
+        }
+      </span>
+
+      @if (showBadges() && item.badge !== null && item.badge !== undefined && item.badge !== '') {
+        <b class="ui-segmented-tabs__badge">{{ item.badge }}</b>
+      }
+    </button>
+  }
+</nav>

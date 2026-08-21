@@ -102,15 +102,40 @@
       </div>
 
       <div class="menu-form__field menu-form__field--full">
-        <app-ui-input
-          formControlName="detalle"
-          label="Ruta o recurso"
-          placeholder="/administracion/menu"
-          icon="fa-solid fa-link"
-          hint="Ruta interna, URL externa o ubicación del documento."
-          [maxlength]="500"
-          [error]="errorFor('detalle')"
-        />
+        @if (usesInternalRoute()) {
+          <app-ui-select
+            formControlName="detalle"
+            [label]="isContainerDestination() ? 'Ruta opcional' : 'Ruta Angular registrada'"
+            [placeholder]="
+              isContainerDestination()
+                ? 'Sin pantalla de destino'
+                : 'Seleccione la pantalla de destino'
+            "
+            [hint]="
+              isContainerDestination()
+                ? 'Déjelo vacío si el elemento solo agrupa submenús.'
+                : 'Solo aparecen rutas que ya existen en los archivos *.routes.ts.'
+            "
+            [options]="routeOptions"
+            [required]="isInternalDestination()"
+            [clearable]="isContainerDestination()"
+            [searchable]="true"
+            [error]="errorFor('detalle')"
+          />
+        } @else {
+          <app-ui-input
+            formControlName="detalle"
+            label="URL o recurso"
+            [placeholder]="
+              selectedType() === 'pdf' ? '/assets/documentos/archivo.pdf' : 'https://sitio.gov.co'
+            "
+            icon="fa-solid fa-link"
+            hint="Use un destino seguro y completo."
+            [required]="true"
+            [maxlength]="500"
+            [error]="errorFor('detalle')"
+          />
+        }
       </div>
     </div>
 
