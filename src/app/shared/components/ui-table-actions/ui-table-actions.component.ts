@@ -1,11 +1,13 @@
 import { CdkMenuModule } from '@angular/cdk/menu';
 import { ConnectedPosition, OverlayModule } from '@angular/cdk/overlay';
+import { DOCUMENT } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
   ElementRef,
   OnDestroy,
   computed,
+  inject,
   input,
   output,
   signal,
@@ -37,6 +39,11 @@ export class UiTableActionsComponent<
   readonly row = input.required<T>();
   readonly ariaLabel = input('Acciones disponibles');
   readonly displayMode = input<UiTableActionDisplay>('menu');
+  /**
+   * En superficies táctiles el menú flotante evita que el primer toque active
+   * accidentalmente una acción que apareció debajo del dedo.
+   */
+  readonly mobileDisplayMode = input<UiTableActionDisplay>('menu');
   /** Extremo de la tabla donde vive la columna de acciones. */
   readonly position = input<UiTableActionsPosition>('left');
 
@@ -54,6 +61,9 @@ export class UiTableActionsComponent<
 
     return position === 'right' || position === 'end' ? 'right' : 'left';
   });
+  readonly effectiveDisplayMode = computed<UiTableActionDisplay>(() =>
+    this.usesCompactPointer() ? this.mobileDisplayMode() : this.displayMode(),
+  );
 
   readonly menuId = `ui-table-actions-menu-${nextMenuId++}`;
   readonly positions: ConnectedPosition[] = [
@@ -104,21 +114,51 @@ export class UiTableActionsComponent<
 
   private readonly trigger = viewChild<ElementRef<HTMLButtonElement>>('trigger');
   private readonly menuItems = viewChildren<ElementRef<HTMLButtonElement>>('menuItem');
+  private readonly viewport = inject(DOCUMENT).defaultView;
+  /**
+   * Incluye el ancho para que los simuladores responsive que conservan un
+   * puntero de escritorio reproduzcan el mismo comportamiento del teléfono.
+   */
+  private readonly pointerQuery = this.viewport?.matchMedia(
+    '(hover: none), (pointer: coarse), (max-width: 768px)',
+  );
+  private readonly usesCompactPointer = signal(this.pointerQuery?.matches ?? false);
+  private readonly updatePointerMode = (event: MediaQueryListEvent): void => {
+    this.usesCompactPointer.set(event.matches);
+
+    if (event.matches) {
+      this.inlineActionsOpen.set(false);
+      this.inlineHoverSuppressed.set(false);
+    } else {
+      this.close();
+    }
+  };
 
   private readonly isPinned = signal(false);
   private closeTimer: ReturnType<typeof setTimeout> | null = null;
   private focusFirstItemOnAttach = false;
 
+  constructor() {
+    this.pointerQuery?.addEventListener('change', this.updatePointerMode);
+  }
+
   ngOnDestroy(): void {
     this.cancelClose();
+    this.pointerQuery?.removeEventListener('change', this.updatePointerMode);
   }
 
   openFromPointer(): void {
+    if (this.usesCompactPointer()) {
+      return;
+    }
+
     this.cancelClose();
     this.isOpen.set(true);
   }
 
-  toggleFromTrigger(): void {
+  toggleFromTrigger(event: Event): void {
+    event.preventDefault();
+    event.stopPropagation();
     this.cancelClose();
 
     if (this.isOpen() && this.isPinned()) {
@@ -201,7 +241,7 @@ export class UiTableActionsComponent<
      * la fila de forma síncrona y no debe dejar controles flotando debajo.
      */
     this.inlineActionsOpen.set(false);
-    this.inlineHoverSuppressed.set(this.displayMode() === 'row-hover');
+    this.inlineHoverSuppressed.set(this.effectiveDisplayMode() === 'row-hover');
     this.close();
     this.actionClick.emit({ actionId: action.id, row: this.row() });
   }

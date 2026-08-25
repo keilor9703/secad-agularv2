@@ -58,6 +58,7 @@ export class UsuarioFormComponent implements OnChanges {
   @Input() roleDeleteRevision = 0;
   @Input() deletingRoleId: number | null = null;
   @Input() superAdministradorRolId = 1;
+  @Input() focusBasicInfoRevision = 0;
 
   @Output() consultar = new EventEmitter<string>();
   @Output() guardarDatos = new EventEmitter<UserProfile>();
@@ -110,6 +111,15 @@ export class UsuarioFormComponent implements OnChanges {
     }
 
     if (
+      changes['focusBasicInfoRevision'] &&
+      changes['focusBasicInfoRevision'].currentValue > 0 &&
+      changes['focusBasicInfoRevision'].currentValue !==
+        changes['focusBasicInfoRevision'].previousValue
+    ) {
+      this.openBasicInformationTab();
+    }
+
+    if (
       changes['roleSaveRevision'] &&
       !changes['roleSaveRevision'].firstChange &&
       changes['roleSaveRevision'].currentValue > changes['roleSaveRevision'].previousValue
@@ -131,6 +141,12 @@ export class UsuarioFormComponent implements OnChanges {
     if (tab === 'datos' || tab === 'roles') {
       this.activeTab = tab;
     }
+  }
+
+  /** Regresa a la información básica al cargar un usuario desde cualquier buscador. */
+  private openBasicInformationTab(): void {
+    this.activeTab = 'datos';
+    this.cancelarNuevoRol();
   }
 
   /** Valida y emite la identificacion digitada en el buscador principal. */

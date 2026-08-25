@@ -1,4 +1,14 @@
-import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
+import {
+  afterNextRender,
+  ChangeDetectionStrategy,
+  Component,
+  inject,
+  Injector,
+  OnDestroy,
+  OnInit,
+  signal,
+} from '@angular/core';
 import { Router } from '@angular/router';
 import { finalize } from 'rxjs';
 
@@ -38,34 +48,181 @@ export class UsuariosPageComponent implements OnInit, OnDestroy {
   private readonly usuarioAdminService = inject(UsuarioAdminService);
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly injector = inject(Injector);
+  private readonly document = inject(DOCUMENT);
+
+  /*
+   * Estos estados cambian desde respuestas HTTP, temporizadores y promesas.
+   * Los signals notifican a Angular inmediatamente, incluso con eventos
+   * agrupados o al probar la aplicación desde un simulador táctil.
+   * Los accesores mantienen legible la orquestación existente.
+   */
+  private readonly loadingState = signal(false);
+  private readonly savingRoleState = signal(false);
+  private readonly roleSaveRevisionState = signal(0);
+  private readonly roleDeleteRevisionState = signal(0);
+  private readonly deletingRoleIdState = signal<number | null>(null);
+  private readonly deletingUserState = signal(false);
+  private readonly loadingListadoState = signal(false);
+  private readonly showDeleteUserModalState = signal(false);
+  private readonly deletingTargetState = signal<UsuarioListadoItem | null>(null);
+  private readonly searchNombreListadoState = signal('');
+  private readonly pageSizeState = signal(5);
+  private readonly currentPageState = signal(1);
+  private readonly isSearchModeState = signal(false);
+  private readonly searchIdentificationState = signal('');
+  private readonly userState = signal<UserProfile | null>(null);
+  private readonly usuariosListadoState = signal<UsuarioListadoItem[]>([]);
+  private readonly rolesCatalogoState = signal<DtoRolCatalogo[]>([]);
+  readonly basicInfoFocusRevision = signal(0);
 
   public readonly superAdministradorRolId = 1;
   private canAssignSuperAdministrador = false;
 
   minimized = false;
   visible = true;
-  loading = false;
-  savingRole = false;
-  roleSaveRevision = 0;
-  roleDeleteRevision = 0;
-  deletingRoleId: number | null = null;
-  deletingUser = false;
-  loadingListado = false;
-  showDeleteUserModal = false;
-  deletingTarget: UsuarioListadoItem | null = null;
-  searchNombreListado = '';
   private searchNombreTimeout: ReturnType<typeof setTimeout> | null = null;
+  private listadoRequestRevision = 0;
   readonly minSearchChars = 6;
-  pageSize = 5;
-  currentPage = 1;
-  isSearchMode = false;
-  searchIdentification = '';
-  user: UserProfile | null = null;
-  usuariosListado: UsuarioListadoItem[] = [];
-  rolesCatalogo: DtoRolCatalogo[] = [];
   private savedUserKeys = new Set<string>();
   private savedUserIndexReady = false;
   private lastUnsavedAlertKey = '';
+
+  get loading(): boolean {
+    return this.loadingState();
+  }
+
+  set loading(value: boolean) {
+    this.loadingState.set(value);
+  }
+
+  get savingRole(): boolean {
+    return this.savingRoleState();
+  }
+
+  set savingRole(value: boolean) {
+    this.savingRoleState.set(value);
+  }
+
+  get roleSaveRevision(): number {
+    return this.roleSaveRevisionState();
+  }
+
+  set roleSaveRevision(value: number) {
+    this.roleSaveRevisionState.set(value);
+  }
+
+  get roleDeleteRevision(): number {
+    return this.roleDeleteRevisionState();
+  }
+
+  set roleDeleteRevision(value: number) {
+    this.roleDeleteRevisionState.set(value);
+  }
+
+  get deletingRoleId(): number | null {
+    return this.deletingRoleIdState();
+  }
+
+  set deletingRoleId(value: number | null) {
+    this.deletingRoleIdState.set(value);
+  }
+
+  get deletingUser(): boolean {
+    return this.deletingUserState();
+  }
+
+  set deletingUser(value: boolean) {
+    this.deletingUserState.set(value);
+  }
+
+  get loadingListado(): boolean {
+    return this.loadingListadoState();
+  }
+
+  set loadingListado(value: boolean) {
+    this.loadingListadoState.set(value);
+  }
+
+  get showDeleteUserModal(): boolean {
+    return this.showDeleteUserModalState();
+  }
+
+  set showDeleteUserModal(value: boolean) {
+    this.showDeleteUserModalState.set(value);
+  }
+
+  get deletingTarget(): UsuarioListadoItem | null {
+    return this.deletingTargetState();
+  }
+
+  set deletingTarget(value: UsuarioListadoItem | null) {
+    this.deletingTargetState.set(value);
+  }
+
+  get searchNombreListado(): string {
+    return this.searchNombreListadoState();
+  }
+
+  set searchNombreListado(value: string) {
+    this.searchNombreListadoState.set(value);
+  }
+
+  get pageSize(): number {
+    return this.pageSizeState();
+  }
+
+  set pageSize(value: number) {
+    this.pageSizeState.set(value);
+  }
+
+  get currentPage(): number {
+    return this.currentPageState();
+  }
+
+  set currentPage(value: number) {
+    this.currentPageState.set(value);
+  }
+
+  get isSearchMode(): boolean {
+    return this.isSearchModeState();
+  }
+
+  set isSearchMode(value: boolean) {
+    this.isSearchModeState.set(value);
+  }
+
+  get searchIdentification(): string {
+    return this.searchIdentificationState();
+  }
+
+  set searchIdentification(value: string) {
+    this.searchIdentificationState.set(value);
+  }
+
+  get user(): UserProfile | null {
+    return this.userState();
+  }
+
+  set user(value: UserProfile | null) {
+    this.userState.set(value);
+  }
+
+  get usuariosListado(): UsuarioListadoItem[] {
+    return this.usuariosListadoState();
+  }
+
+  set usuariosListado(value: UsuarioListadoItem[]) {
+    this.usuariosListadoState.set(value);
+  }
+
+  get rolesCatalogo(): DtoRolCatalogo[] {
+    return this.rolesCatalogoState();
+  }
+
+  set rolesCatalogo(value: DtoRolCatalogo[]) {
+    this.rolesCatalogoState.set(value);
+  }
 
   ngOnInit(): void {
     this.canAssignSuperAdministrador = this.authService.isCurrentUserSuperAdmin();
@@ -147,6 +304,7 @@ export class UsuariosPageComponent implements OnInit, OnDestroy {
         this.rolesCatalogo = this.filtrarRolesCatalogo(resp.rolesCatalogo ?? []);
         this.loading = false;
         this.syncCurrentUserWithSavedList();
+        this.focusBasicUserInformation();
         this.toast.success('Consulta exitosa', 'Se cargó la información del usuario.');
       },
       error: (err) => {
@@ -162,6 +320,31 @@ export class UsuariosPageComponent implements OnInit, OnDestroy {
         this.toast.error('Consulta fallida', errorMsg);
       },
     });
+  }
+
+  /**
+   * Abre el panel, solicita al formulario la pestaña de información básica y
+   * lleva al inicio el contenedor desplazable cuando Angular termina de
+   * proyectar los datos consultados.
+   */
+  private focusBasicUserInformation(): void {
+    this.minimized = false;
+    this.basicInfoFocusRevision.update((revision) => revision + 1);
+
+    afterNextRender(
+      () => {
+        const mainScrollContainer = this.document.querySelector<HTMLElement>('.main');
+
+        if (mainScrollContainer) {
+          mainScrollContainer.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+          return;
+        }
+
+        // Respaldo si el componente se reutiliza fuera del layout principal.
+        this.document.scrollingElement?.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+      },
+      { injector: this.injector },
+    );
   }
 
   async guardarDatosUsuario(user: UserProfile): Promise<void> {
@@ -428,6 +611,7 @@ export class UsuariosPageComponent implements OnInit, OnDestroy {
   }
 
   cargarListadoUsuarios(): void {
+    const requestRevision = ++this.listadoRequestRevision;
     this.loadingListado = true;
 
     const term = (this.searchNombreListado ?? '').trim();
@@ -445,6 +629,11 @@ export class UsuariosPageComponent implements OnInit, OnDestroy {
 
     this.usuarioAdminService.getListadoUsuarios(this.isSearchMode ? term : '').subscribe({
       next: (items) => {
+        // Una respuesta anterior nunca debe reemplazar la búsqueda más reciente.
+        if (requestRevision !== this.listadoRequestRevision) {
+          return;
+        }
+
         this.usuariosListado = (items ?? []).map((item) => ({
           ...item,
           fechaFinRol: this.normalizeDateString(item?.fechaFinRol ?? ''),
@@ -459,6 +648,10 @@ export class UsuariosPageComponent implements OnInit, OnDestroy {
         this.syncCurrentUserWithSavedList();
       },
       error: () => {
+        if (requestRevision !== this.listadoRequestRevision) {
+          return;
+        }
+
         this.usuariosListado = [];
         this.currentPage = 1;
         this.loadingListado = false;

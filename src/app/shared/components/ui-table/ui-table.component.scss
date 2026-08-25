@@ -4,6 +4,7 @@
 }
 
 .ui-table-panel {
+  --ui-table-action-cell-surface: var(--ui-surface, #ffffff);
   --ui-table-body-text-color: var(--ui-table-body-text-color-light, #5b708a);
   --ui-table-body-font-size: 13px;
   --ui-table-body-font-weight: 600;
@@ -377,7 +378,18 @@
 
 .ui-table-panel .ui-table .ui-table-actions-cell {
   padding: 4px 8px;
-  background: #ffffff;
+  /*
+   * La primera capa conserva el resaltado de fila y la segunda garantiza una
+   * superficie opaca cuando la columna sticky pasa sobre otras celdas.
+   */
+  background:
+    linear-gradient(
+      var(--ui-table-row-background-light, transparent),
+      var(--ui-table-row-background-light, transparent)
+    ),
+    var(--ui-table-action-cell-surface);
+  background-clip: padding-box;
+  isolation: isolate;
   transition: background-color 150ms ease;
 }
 
@@ -391,12 +403,23 @@
 }
 
 .ui-table-panel .ui-table tbody tr:hover .ui-table-actions-cell {
-  background: #f6f9fc;
+  background:
+    linear-gradient(rgba(241, 245, 249, 0.78), rgba(241, 245, 249, 0.78)),
+    linear-gradient(
+      var(--ui-table-row-background-light, transparent),
+      var(--ui-table-row-background-light, transparent)
+    ),
+    var(--ui-table-action-cell-surface);
 }
 
 .ui-table-panel .ui-table tbody tr.is-selected .ui-table-actions-cell,
 .ui-table-panel .ui-table tbody tr.is-selected:hover .ui-table-actions-cell {
-  background: var(--ui-table-row-background-light, #eaf7fb);
+  background:
+    linear-gradient(
+      var(--ui-table-row-background-light, #eaf7fb),
+      var(--ui-table-row-background-light, #eaf7fb)
+    ),
+    var(--ui-table-action-cell-surface);
 }
 
 .ui-table-actions-cell app-ui-table-actions {
@@ -487,6 +510,7 @@ app-ui-pagination {
 :host-context(html.dark-mode) {
   .ui-table-panel {
     --ui-table-body-text-color: var(--ui-table-body-text-color-dark, var(--ui-text, #e4e7eb));
+    --ui-table-action-cell-surface: var(--ui-surface, #1e2840);
   }
 
   .ui-table-panel .ui-table-wrap {
@@ -540,7 +564,12 @@ app-ui-pagination {
   }
 
   .ui-table-panel .ui-table .ui-table-actions-cell {
-    background: var(--ui-surface);
+    background:
+      linear-gradient(
+        var(--ui-table-row-background-dark, transparent),
+        var(--ui-table-row-background-dark, transparent)
+      ),
+      var(--ui-table-action-cell-surface);
   }
 
   .ui-table-panel .ui-table tbody .ui-table-loading-cell {
@@ -552,11 +581,22 @@ app-ui-pagination {
   }
 
   .ui-table-panel .ui-table tbody tr:hover .ui-table-actions-cell {
-    background: #26324c;
+    background:
+      linear-gradient(rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.07)),
+      linear-gradient(
+        var(--ui-table-row-background-dark, transparent),
+        var(--ui-table-row-background-dark, transparent)
+      ),
+      var(--ui-table-action-cell-surface);
   }
 
   .ui-table-panel .ui-table tbody tr.is-selected .ui-table-actions-cell,
   .ui-table-panel .ui-table tbody tr.is-selected:hover .ui-table-actions-cell {
-    background: var(--ui-table-row-background-dark, #22384a);
+    background:
+      linear-gradient(
+        var(--ui-table-row-background-dark, #22384a),
+        var(--ui-table-row-background-dark, #22384a)
+      ),
+      var(--ui-table-action-cell-surface);
   }
 }

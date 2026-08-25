@@ -94,7 +94,7 @@
   top: 50%;
   right: auto;
   left: 0;
-  z-index: 12;
+  z-index: 20;
   display: inline-flex;
   align-items: center;
   justify-content: flex-start;
@@ -105,6 +105,8 @@
   border: 1px solid #d6dee9;
   border-radius: 7px;
   background: #ffffff;
+  background-clip: padding-box;
+  isolation: isolate;
   box-shadow: 0 8px 20px rgba(15, 23, 42, 0.16);
   opacity: 0;
   pointer-events: none;
@@ -217,11 +219,15 @@
 }
 
 .ui-table-action-menu {
+  position: relative;
+  z-index: 1000;
   width: min(230px, calc(100vw - 16px));
   overflow: hidden;
   border: 1px solid #c6cdd5;
   border-radius: 0;
   background: #ffffff;
+  background-clip: padding-box;
+  isolation: isolate;
   box-shadow: 0 5px 12px rgba(15, 23, 42, 0.16);
   color: #163b63;
   animation: ui-table-action-menu-in 100ms ease-out;

@@ -1,5 +1,5 @@
 @if (visibleActions().length > 0) {
-  @if (displayMode() === 'row-hover') {
+  @if (effectiveDisplayMode() === 'row-hover') {
     <!--
       Variante compacta: permanece accesible por teclado y aparece visualmente
       cuando la fila recibe hover o focus-within.
@@ -19,6 +19,7 @@
         type="button"
         [attr.aria-label]="ariaLabel()"
         [attr.aria-expanded]="inlineActionsOpen()"
+        (pointerdown)="$event.stopPropagation()"
         (click)="toggleInlineActions($event)"
       >
         <i class="fa-solid fa-ellipsis" aria-hidden="true"></i>
@@ -33,6 +34,7 @@
             [disabled]="isActionDisabled(action)"
             [attr.aria-label]="action.label"
             [attr.title]="action.title || action.label"
+            (pointerdown)="$event.stopPropagation()"
             (click)="$event.stopPropagation(); selectAction(action)"
           >
             <i [class]="action.icon" aria-hidden="true"></i>
@@ -56,7 +58,8 @@
         [attr.aria-label]="ariaLabel()"
         [attr.aria-controls]="isOpen() ? menuId : null"
         [attr.aria-expanded]="isOpen()"
-        (click)="toggleFromTrigger()"
+        (pointerdown)="$event.stopPropagation()"
+        (click)="toggleFromTrigger($event)"
         (keydown.enter)="openFromKeyboard($event)"
         (keydown.space)="openFromKeyboard($event)"
         (keydown.arrowdown)="openFromKeyboard($event)"

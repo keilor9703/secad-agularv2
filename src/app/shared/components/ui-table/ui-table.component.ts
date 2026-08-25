@@ -85,6 +85,11 @@ export class UiTableComponent<T extends object = Record<string, unknown>> {
   /** Menú desplegable tradicional o botones que aparecen al enfocar/pasar por la fila. */
   readonly actionDisplay = input<UiTableActionDisplay>('menu');
   /**
+   * Apariencia usada en móvil o punteros táctiles. El valor seguro por defecto
+   * es `menu`, porque una interacción táctil no dispone de hover real.
+   */
+  readonly mobileActionDisplay = input<UiTableActionDisplay>('menu');
+  /**
    * Ubica la columna de acciones en el extremo izquierdo o derecho.
    * También acepta start/end por compatibilidad con usos anteriores.
    */
