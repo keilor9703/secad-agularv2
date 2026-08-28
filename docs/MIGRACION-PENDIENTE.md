@@ -64,7 +64,37 @@ Faltan 7 por portar:
 | `integraciones` | ⬜ pendiente |
 | `tenants` | ⬜ pendiente |
 
-### ⚠️ Usuarios: existe pero está incompleta
+### Auditoría de las 9 pantallas que ya existen — hecha
+
+Se compararon una por una contra secad_angular: campos de formulario, métodos
+de servicio y volumen de código. **El resultado es mejor de lo esperado: 8 de
+las 9 están completas**, y de hecho son bastante más elaboradas que las del
+origen.
+
+| Pantalla | Origen | Plantilla | Veredicto |
+|---|---|---|---|
+| `formularios` | 492 | 11.746 | ✅ completa |
+| `menu-admin` | 712 | 4.052 | ✅ completa |
+| `roles-admin` | 506 | 3.704 | ✅ completa |
+| `configuracion-sistema` | 868 | 2.827 | ✅ completa |
+| `dominio` | 566 | 2.241 | ✅ completa |
+| `linea-mando` | 736 | 1.822 | ✅ completa |
+| `cuentas-email` | 742 | 805 | ✅ completa |
+| `administracion-inicio` | 104 | 297 | ✅ completa |
+| `usuarios` | 2.265 | 4.069 | ⚠️ **le faltan dos flujos** |
+
+Dos falsas alarmas que conviene dejar anotadas, porque el método las produce:
+
+- `cuentas-email` usa `ngModel` en vez de `formControlName`, así que comparar
+  por `formControlName` la daba por vacía. No lo está.
+- `configuracion-sistema` sí maneja el video, en el componente
+  `configuracion-video`, solo que los campos se llaman `descripcion` y
+  `observaciones` en vez de `videoDescripcion` y `videoObservaciones`.
+
+Moraleja: comparar por nombre de campo detecta huecos, pero también inventa
+algunos. Cada "falta" hay que confirmarla mirando el archivo.
+
+### ⚠️ Usuarios: existe pero le faltan dos flujos
 
 La versión de la plantilla **no tiene la sección "Asignación de Fuerza, Canal y
 ACD"** que sí tiene secad_angular (`usuarios.html`, línea 311). Sin ella no se
@@ -74,19 +104,25 @@ son justamente los datos que el backend usa para decidir qué ve cada despachado
 Incluye un selector en cascada: al elegir fuerza se cargan sus canales.
 Depende de `fuerza.service.ts`, que tampoco está portado.
 
-**Este es el caso a vigilar en el resto de pantallas de administración que "ya
-existen":** que estén no significa que estén completas. Hay que revisar una por
-una si perdieron funcionalidad específica del CAD.
+**Segundo hueco: el flujo de usuario civil.** Faltan los campos `username`,
+`password` y `entidad`, y en el servicio faltan `createCivilUsuario`,
+`getLocalUsuario` y `eliminarRol`. La plantilla solo contempla el usuario
+institucional (el que valida contra OUD con `usuarioEmpresarial`); no se puede
+crear un usuario civil con usuario y contraseña propios.
+
+Fuera de estos dos flujos, el resto de la pantalla está completo — el formulario
+institucional de la plantilla tiene incluso más campos que el del origen
+(`situacionLaboral`, `unidadFisica`, `justificacion`, `fechaFin`).
 
 ---
 
-## Servicios de administración — 11 de 20
+## Servicios de administración — 12 de 20
 
-Faltan 9, y varios bloquean pantallas de la lista de arriba:
+Faltan 8, y varios bloquean pantallas de la lista de arriba:
 
 | Servicio | Bloquea |
 |---|---|
-| `fuerza.service.ts` | la sección de operación en Usuarios |
+| ~~`fuerza.service.ts`~~ | ✅ portado |
 | `usuario-admin.service.ts` | Usuarios (la plantilla usa el suyo) |
 | `roles-admin.service.ts` | Roles (idem) |
 | `camara-integracion.service.ts` | Integraciones |
@@ -105,7 +141,7 @@ Faltan 9, y varios bloquean pantallas de la lista de arriba:
 | Servicios de operación | 12 | 12 |
 | Pantallas de operación | 3 | 9 |
 | Pantallas de administración | 9 | 16 |
-| Servicios de administración | 11 | 20 |
+| Servicios de administración | 12 | 20 |
 | Super Admin | 0 | 1 |
 
 **Cimientos ya resueltos** (no hay que repetirlos): multi-tenant en
