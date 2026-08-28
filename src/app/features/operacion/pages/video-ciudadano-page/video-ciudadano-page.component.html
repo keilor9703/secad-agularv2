@@ -1,0 +1,96 @@
+<!-- El elemento de video se mantiene siempre montado (aunque oculto) para que la
+     referencia #videoLocal esté disponible en cuanto se conceden los permisos,
+     sin depender del timing del @switch. -->
+<video #videoLocal autoplay playsinline muted class="vc-video-local"
+       [class.vc-video-local--activo]="estado() === 'esperando' || estado() === 'conectada'"
+       [class.vc-video-local--frontal]="camaraFrontal()"></video>
+
+<!-- Audio del despachador (el CAD le habla al ciudadano) — no se ve, solo se escucha. -->
+<audio #audioRemoto autoplay></audio>
+
+@if (estado() === 'esperando' || estado() === 'conectada') {
+  <!-- Vista de llamada en curso: video a pantalla completa con controles superpuestos -->
+  <div class="vc-call">
+    <div class="vc-call-top">
+      @switch (estado()) {
+        @case ('esperando')  { <span class="vc-pill vc-pill--warning"><i class="vc-dot"></i>Conectando con el despachador…</span> }
+        @case ('conectada')  { <span class="vc-pill vc-pill--live"><i class="vc-dot"></i>En vivo con la Policía</span> }
+      }
+      @if (ubicacionActiva()) {
+        <span class="vc-pill vc-pill--info"><i class="fa-solid fa-location-dot"></i>Compartiendo su ubicación</span>
+      }
+      @if (errorCamara()) {
+        <span class="vc-pill vc-pill--warning"><i class="fa-solid fa-triangle-exclamation"></i>{{ errorCamara() }}</span>
+      }
+      @if (mensajeEspera()) {
+        <span class="vc-pill vc-pill--warning"><i class="vc-dot"></i>{{ mensajeEspera() }}</span>
+      }
+    </div>
+
+    @if (chatAbierto()) {
+      <div class="vc-chat">
+        <div class="vc-chat-mensajes">
+          @if (chatMensajes().length === 0) {
+            <p class="vc-chat-vacio">Puede escribirle al despachador sin hablar en voz alta.</p>
+          }
+          @for (m of chatMensajes(); track $index) {
+            <div class="vc-chat-burbuja" [class.vc-chat-burbuja--propia]="m.propio">
+              <span>{{ m.texto }}</span>
+              <small>{{ m.hora }}</small>
+            </div>
+          }
+        </div>
+        <form class="vc-chat-form" (submit)="enviarChat(); $event.preventDefault()">
+          <input type="text" placeholder="Escriba un mensaje…" [value]="chatTexto()"
+                 (input)="chatTexto.set($any($event.target).value)">
+          <button type="submit" aria-label="Enviar"><i class="fa-solid fa-paper-plane"></i></button>
+        </form>
+      </div>
+    }
+
+    <div class="vc-call-bottom">
+      <button type="button" class="vc-btn-icon" (click)="cambiarCamara()" [disabled]="cambiandoCamara()"
+              aria-label="Cambiar cámara" title="Cambiar cámara">
+        <i class="fa-solid fa-camera-rotate"></i>
+      </button>
+      <button type="button" class="vc-btn-icon" (click)="toggleChat()" aria-label="Chat" title="Chat">
+        <i class="fa-solid fa-comment"></i>
+        @if (!chatAbierto() && chatMensajes().length > 0) { <span class="vc-chat-badge"></span> }
+      </button>
+      <button type="button" class="vc-btn-colgar-round" (click)="colgar()" aria-label="Finalizar" title="Finalizar">
+        <i class="fa-solid fa-phone-slash"></i>
+      </button>
+    </div>
+  </div>
+} @else {
+  <div class="vc-page">
+    <div class="vc-card">
+      <img src="/escudo.png" alt="Policía Nacional" class="vc-escudo">
+      <h1>Videollamada con la Policía</h1>
+
+      @switch (estado()) {
+        @case ('validando') {
+          <p class="vc-msg">Validando enlace…</p>
+        }
+        @case ('invalido') {
+          <p class="vc-msg vc-msg--error">{{ mensajeError() }}</p>
+        }
+        @case ('pidiendo-permiso') {
+          <p class="vc-msg">Este enlace fue enviado por la Policía Nacional para atender su emergencia.</p>
+          <p class="vc-msg">Solicitando acceso a su cámara y micrófono…</p>
+        }
+        @case ('permiso-denegado') {
+          <p class="vc-msg vc-msg--error">
+            {{ mensajeError() || 'No fue posible acceder a su cámara y micrófono. Verifique los permisos del navegador y vuelva a abrir el enlace.' }}
+          </p>
+        }
+        @case ('finalizada') {
+          <p class="vc-msg">La videollamada finalizó. Puede cerrar esta ventana.</p>
+        }
+        @case ('error') {
+          <p class="vc-msg vc-msg--error">{{ mensajeError() || 'Ocurrió un error de conexión.' }}</p>
+        }
+      }
+    </div>
+  </div>
+}

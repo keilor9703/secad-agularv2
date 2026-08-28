@@ -1,0 +1,253 @@
+:host {
+  display: block;
+  min-height: 100vh;
+  background: #0b1e33;
+}
+
+.vc-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.vc-card {
+  width: 100%;
+  max-width: 420px;
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 28px 24px;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+
+  h1 {
+    font-size: 1.15rem;
+    margin: 12px 0 18px;
+    color: #0b1e33;
+  }
+}
+
+.vc-escudo {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+}
+
+.vc-msg {
+  margin: 6px 0;
+  color: #374151;
+  font-size: 0.95rem;
+
+  &--error { color: #b91c1c; font-weight: 600; }
+  &--ok    { color: #15803d; font-weight: 600; }
+}
+
+// El propio video del ciudadano: mientras la llamada está activa ('esperando'
+// o 'conectada'), es el fondo a pantalla completa detrás de .vc-call; en
+// cualquier otro estado permanece montado pero fuera de pantalla (no con
+// display:none, para no perder el srcObject/reproducción).
+.vc-video-local {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: #000;
+  z-index: 0;
+
+  &:not(.vc-video-local--activo) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  // Espejo solo para la cámara frontal (selfie) — la trasera se muestra tal cual.
+  &--frontal { transform: scaleX(-1); }
+}
+
+// ─── Vista de llamada en curso (pantalla completa, controles superpuestos) ──
+.vc-call {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  pointer-events: none;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0) 18%, rgba(0,0,0,0) 70%, rgba(0,0,0,0.55) 100%);
+}
+
+.vc-call-top {
+  padding: max(16px, env(safe-area-inset-top)) 16px 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+.vc-pill {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #fff;
+  background: rgba(17, 24, 39, 0.55);
+  backdrop-filter: blur(6px);
+
+  &--live .vc-dot { background: #22c55e; }
+  &--warning .vc-dot { background: #f59e0b; }
+  &--info { background: rgba(0, 82, 204, 0.55); }
+}
+
+.vc-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #9ca3af;
+  flex-shrink: 0;
+}
+
+.vc-call-bottom {
+  pointer-events: auto;
+  padding: 0 24px max(24px, env(safe-area-inset-bottom));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+}
+
+.vc-btn-icon {
+  position: relative;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+  font-size: 1.15rem;
+  backdrop-filter: blur(6px);
+  cursor: pointer;
+
+  &:hover { background: rgba(255, 255, 255, 0.28); }
+  &:disabled { opacity: 0.5; cursor: default; }
+}
+
+.vc-chat-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #ef4444;
+  border: 2px solid rgba(0, 0, 0, 0.4);
+}
+
+// El chat lo usa el ciudadano, no un operador entrenado — a menudo desde un
+// celular, a veces con dificultad para ver de cerca (letra pequeña, poca luz,
+// estrés de la emergencia). Todo el panel es notoriamente más grande que un
+// chat "de operador": más texto, más espacio, botones más fáciles de tocar.
+.vc-chat {
+  pointer-events: auto;
+  margin: 0 16px 12px;
+  max-height: 52vh;
+  display: flex;
+  flex-direction: column;
+  background: rgba(17, 24, 39, 0.82);
+  backdrop-filter: blur(8px);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.vc-chat-mensajes {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.vc-chat-vacio {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 1.05rem;
+  text-align: center;
+}
+
+.vc-chat-burbuja {
+  align-self: flex-start;
+  max-width: 88%;
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  padding: 10px 16px;
+  border-radius: 14px;
+  font-size: 1.1rem;
+  line-height: 1.4;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  small { opacity: 0.7; font-size: 0.8rem; }
+
+  &--propia {
+    align-self: flex-end;
+    background: #2563eb;
+  }
+}
+
+.vc-chat-form {
+  display: flex;
+  gap: 10px;
+  padding: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+
+  input {
+    flex: 1;
+    border: none;
+    border-radius: 999px;
+    padding: 14px 18px;
+    background: rgba(255, 255, 255, 0.14);
+    color: #fff;
+    font-size: 1.1rem;
+
+    &::placeholder { color: rgba(255, 255, 255, 0.55); }
+    &:focus { outline: 2px solid rgba(255, 255, 255, 0.45); }
+  }
+
+  button {
+    width: 52px;
+    height: 52px;
+    flex-shrink: 0;
+    border: none;
+    border-radius: 50%;
+    background: #2563eb;
+    color: #fff;
+    font-size: 1.2rem;
+    cursor: pointer;
+
+    &:hover { background: #1d4ed8; }
+  }
+}
+
+.vc-btn-colgar-round {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: none;
+  background: #dc2626;
+  color: #fff;
+  font-size: 1.3rem;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(220, 38, 38, 0.5);
+
+  &:hover { background: #b91c1c; }
+}

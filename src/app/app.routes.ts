@@ -13,6 +13,17 @@ export const routes: Routes = [
     path: 'login',
     loadChildren: () => import('./features/auth/auth.routes').then((m) => m.authRoutes),
   },
+  // ─── Página pública del ciudadano (videollamada) ──────────────────────────
+  // Va fuera del layout y sin authGuard a propósito: el ciudadano no tiene
+  // usuario en SECAD, su única credencial es el token firmado que trae el
+  // enlace que le llega por SMS. Ver video-ciudadano-page.component.ts.
+  {
+    path: 'video/:token',
+    loadComponent: () =>
+      import(
+        './features/operacion/pages/video-ciudadano-page/video-ciudadano-page.component'
+      ).then((m) => m.VideoCiudadanoPageComponent),
+  },
   {
     path: '',
     loadComponent: () =>
@@ -44,6 +55,12 @@ export const routes: Routes = [
             (m) => m.administracionRoutes,
           ),
         data: { breadcrumb: 'Administración' },
+      },
+      {
+        path: 'operacion',
+        loadChildren: () =>
+          import('./features/operacion/operacion.routes').then((m) => m.operacionRoutes),
+        data: { breadcrumb: 'Operación' },
       },
       {
         path: 'gestion-documental',
