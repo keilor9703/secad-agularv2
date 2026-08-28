@@ -1,0 +1,330 @@
+<div class="mapa-wrapper">
+
+  <!-- ══════════════════════════════════════════════════════════════════════
+  BARRA SUPERIOR — Título + Filtros + Búsqueda
+  ═══════════════════════════════════════════════════════════════════════ -->
+  <div class="mapa-topbar">
+
+    <!-- Título e indicadores de carga -->
+    <div class="topbar-titulo">
+      <i class="fa-solid fa-map-location-dot"></i>
+      <span>Mapa de Incidentes</span>
+      @if (cargando()) {
+        <span class="spinner-border spinner-border-sm text-light ms-2" role="status"></span>
+      }
+      @if (errorCarga()) {
+        <span class="badge bg-danger ms-2">
+          <i class="fa-solid fa-triangle-exclamation"></i> Error de conexión
+        </span>
+      }
+    </div>
+
+    <!-- Estadísticas rápidas -->
+    <div class="topbar-stats">
+      <div class="stat-chip flash">
+        <i class="fa-solid fa-bolt"></i> {{ totalFlash }} Flash
+      </div>
+      <div class="stat-chip inmediata">
+        <i class="fa-solid fa-circle-exclamation"></i> {{ totalActivos }} Activos
+      </div>
+      <div class="stat-chip pendiente">
+        <i class="fa-solid fa-hourglass-half"></i> {{ totalPendientes }} Pend.
+      </div>
+      <div class="stat-chip proceso">
+        <i class="fa-solid fa-spinner"></i> {{ totalEnProceso }} En proceso
+      </div>
+      <div class="stat-chip total">
+        <i class="fa-solid fa-list"></i> {{ incidentes().length }} Total
+      </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="topbar-filtros">
+      <select [(ngModel)]="filtroEstado" (ngModelChange)="aplicarFiltros()" class="filtro-select">
+        <option value="">Todos los estados</option>
+        <option value="A">Activo</option>
+        <option value="P">Pendiente</option>
+        <option value="EP">En proceso</option>
+      </select>
+
+      <select [(ngModel)]="filtroPrioridad" (ngModelChange)="aplicarFiltros()" class="filtro-select">
+        <option value="">Todas las prioridades</option>
+        <option value="FLASH">Flash</option>
+        <option value="INMEDIATA">Inmediata</option>
+        <option value="RUTINA">Rutina</option>
+      </select>
+
+      <!-- Filtro por canal — clave compuesta código::fuerza (el código solo no es
+      único entre fuerzas); re-consulta el backend -->
+      @if (canalesDisponibles().length > 0) {
+        <select [ngModel]="canalKey(filtroCanal, filtroCanalFuerzaId)" (ngModelChange)="onCanalKeyChange($event)"
+          class="filtro-select">
+          <option [ngValue]="canalKey(0, 0)">Todos los canales</option>
+          @for (c of canalesDisponibles(); track c) {
+            <option [ngValue]="canalKey(c.codigo, c.fuerzaId)">
+              {{ c.descripcion }} ({{ c.fuerzaDesc }})
+            </option>
+          }
+        </select>
+      }
+
+      <input
+        [(ngModel)]="filtroTexto"
+        (ngModelChange)="aplicarFiltros()"
+        type="text"
+        placeholder="Buscar caso, dirección..."
+        class="filtro-input"
+        />
+
+      @if (filtroEstado || filtroPrioridad || filtroTexto || filtroCanal) {
+        <button
+          (click)="limpiarFiltros()"
+          class="btn-limpiar"
+          title="Limpiar todos los filtros"
+          aria-label="Limpiar todos los filtros">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      }
+    </div>
+
+    <!-- Buscar dirección en el mapa -->
+    <div class="topbar-geocode">
+      <input
+        [(ngModel)]="direccionBusqueda"
+        (keyup)="onBusquedaKeyup($event)"
+        type="text"
+        placeholder="Ir a dirección..."
+        class="geocode-input"
+        />
+      <button (click)="geocodificarDireccion()" class="btn-geocode" title="Buscar en el mapa"
+        aria-label="Buscar dirección en el mapa">
+        <i class="fa-solid fa-magnifying-glass"></i>
+      </button>
+    </div>
+
+  </div>
+  <!-- /topbar -->
+
+  <!-- ══════════════════════════════════════════════════════════════════════
+  CONTENIDO PRINCIPAL — Mapa + Panel lateral
+  ═══════════════════════════════════════════════════════════════════════ -->
+  <div class="mapa-contenido">
+
+    <!-- MAPA -->
+    <div class="mapa-container" [class.panel-abierto]="panelAbierto()">
+      <div id="mapaIncidentesDiv" class="mapa-leaflet" role="application"
+      aria-label="Mapa de incidentes activos"></div>
+
+      @if (mapaNoDisponible()) {
+        <div class="mapa-no-disponible" role="alert">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+          No se pudo cargar el mapa. Recargue la página o contacte a soporte.
+        </div>
+      }
+
+      <!-- Leyenda flotante -->
+      <div class="mapa-leyenda">
+        <div class="leyenda-titulo">Prioridad</div>
+        <div class="leyenda-item">
+          <span class="dot flash"></span> Flash
+        </div>
+        <div class="leyenda-item">
+          <span class="dot inmediata"></span> Inmediata
+        </div>
+        <div class="leyenda-item">
+          <span class="dot rutina"></span> Rutina
+        </div>
+        <hr style="border-color:#ddd;margin:6px 0" />
+        <div class="leyenda-titulo">Capas</div>
+        <div class="leyenda-item">
+          <span class="line municipio"></span> Municipio
+        </div>
+        <div class="leyenda-item">
+          <span class="line cuadrante"></span> Cuadrantes
+        </div>
+      </div>
+
+    </div>
+    <!-- /mapa-container -->
+
+    <!-- PANEL LATERAL — Detalle del incidente seleccionado -->
+    <div class="panel-detalle" [class.visible]="panelAbierto()">
+
+      <div class="panel-header">
+        <div class="panel-header-titulo">
+          <i class="fa-solid fa-circle-info"></i>
+          Detalle del Incidente
+        </div>
+        <button (click)="cerrarPanel()" class="btn-cerrar-panel" title="Cerrar panel"
+          aria-label="Cerrar panel de detalle">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      @if (incidenteSeleccionado(); as inc) {
+        <div class="panel-body">
+          <!-- Badge de prioridad y estado -->
+          <div class="detalle-badges">
+            <span class="badge-prioridad" [style.background-color]="colorPorPrioridad(inc.prioridad)">
+              {{ labelPrioridad(inc.prioridad) }}
+            </span>
+            <span class="badge-estado" [ngClass]="claseEstado(inc.estado)">
+              {{ labelEstado(inc.estado) }}
+            </span>
+          </div>
+          <!-- Caso principal -->
+          <div class="detalle-seccion">
+            <div class="detalle-label">Tipo de caso</div>
+            <div class="detalle-valor bold">{{ inc.codiPedido }} — {{ inc.descPedido || 'Sin descripción' }}</div>
+            @if (inc.codiPedido2) {
+              <div class="detalle-valor secondary">
+                {{ inc.codiPedido2 }} — {{ inc.descPedido2 || '' }}
+              </div>
+            }
+          </div>
+          <!-- Ubicación -->
+          <div class="detalle-seccion">
+            <div class="detalle-label"><i class="fa-solid fa-location-dot"></i> Ubicación</div>
+            <div class="detalle-valor">{{ inc.direCaso || '—' }}</div>
+            @if (inc.barrio || inc.ciudad) {
+              <div class="detalle-valor secondary">
+                {{ inc.barrio }}{{ (inc.barrio && inc.ciudad) ? ' · ' : '' }}{{ inc.ciudad }}
+              </div>
+            }
+            <div class="detalle-valor secondary coords">
+              Lat: {{ inc.latitudCaso }} · Lng: {{ inc.longitudCaso }}
+            </div>
+          </div>
+          <!-- Tiempo y operador -->
+          <div class="detalle-seccion">
+            <div class="detalle-label"><i class="fa-regular fa-clock"></i> Recibido</div>
+            <div class="detalle-valor">{{ inc.horaCaso || '—' }}</div>
+          </div>
+          <div class="detalle-seccion">
+            <div class="detalle-label"><i class="fa-solid fa-user"></i> Operador</div>
+            <div class="detalle-valor">{{ inc.usernameCreacion || '—' }}</div>
+          </div>
+          <!-- Canal de atención -->
+          <div class="detalle-seccion">
+            <div class="detalle-label"><i class="fa-solid fa-headset"></i> Canal de atención</div>
+            <div class="detalle-valor bold">
+              {{ inc.canalDescripcion || '—' }}
+              @if (inc.canalCodigo) {
+                <span class="detalle-chip">Cód. {{ inc.canalCodigo }}</span>
+              }
+            </div>
+          </div>
+          <div class="detalle-seccion">
+            <div class="detalle-label"><i class="fa-solid fa-tower-broadcast"></i> Origen del registro</div>
+            <div class="detalle-valor">{{ labelOrigen(inc.origen) }}</div>
+          </div>
+          <!-- Unidades -->
+          <div class="detalle-seccion">
+            <div class="detalle-label"><i class="fa-solid fa-car-side"></i> Unidades asignadas</div>
+            <div class="detalle-valor" [class.verde]="inc.totalActuaciones > 0">
+              {{ inc.totalActuaciones > 0 ? inc.totalActuaciones + ' unidad(es) activa(s)' : 'Sin unidades asignadas' }}
+            </div>
+          </div>
+          <!-- ── IDs de trazabilidad ─────────────────────────────────────────── -->
+          <div class="detalle-seccion trazabilidad">
+            <div class="detalle-label"><i class="fa-solid fa-fingerprint"></i> Identificadores</div>
+            <div class="ids-grid">
+              <div class="id-item">
+                <span class="id-label">ID Pedido (SECAD)</span>
+                <span class="id-valor" title="Snowflake ID de cad_pedidos">{{ inc.id }}</span>
+              </div>
+              @if (inc.numeLlamada) {
+                <div class="id-item">
+                  <span class="id-label">N° Llamada PlantaTel</span>
+                  <span class="id-valor">{{ inc.numeLlamada }}</span>
+                </div>
+              }
+              @if (inc.numeEvento) {
+                <div class="id-item">
+                  <span class="id-label">ID Evento (despacho)</span>
+                  <span class="id-valor" title="Snowflake ID de cad_eventos">{{ inc.numeEvento }}</span>
+                </div>
+              }
+              <div class="id-item">
+                <span class="id-label">Sitio CAD</span>
+                <span class="id-valor">{{ inc.sitioGraba }}</span>
+              </div>
+            </div>
+          </div>
+          <!-- Acciones -->
+          <div class="detalle-acciones">
+            <button (click)="irAPedido(inc.id)" class="btn-accion primario">
+              <i class="fa-solid fa-arrow-up-right-from-square"></i>
+              Ver expediente completo
+            </button>
+          </div>
+        </div>
+      }
+      <!-- /panel-body -->
+
+    </div>
+    <!-- /panel-detalle -->
+
+  </div>
+  <!-- /mapa-contenido -->
+
+  <!-- ══════════════════════════════════════════════════════════════════════
+  LISTA INFERIOR — Incidentes con coordenadas (scroll horizontal)
+  ═══════════════════════════════════════════════════════════════════════ -->
+  <div class="mapa-lista">
+    <div class="lista-header">
+      <span>Incidentes en mapa</span>
+      <span class="lista-conteo">{{ incidentesFiltrados().length }} de {{ incidentes().length }}</span>
+    </div>
+
+    <div class="lista-scroll">
+
+      <!-- Estado vacío -->
+      @if (incidentesFiltrados().length === 0 && !cargando()) {
+        <div class="lista-vacia">
+          <i class="fa-solid fa-map-location-dot fa-2x" style="color:#ccc"></i>
+          <div>No hay incidentes activos con coordenadas que coincidan con los filtros.</div>
+        </div>
+      }
+
+      <!-- Tarjetas de incidentes -->
+      @for (inc of incidentesFiltrados(); track inc) {
+        <div
+          class="lista-card"
+          [class.seleccionado]="incidenteSeleccionado()?.id === inc.id"
+          (click)="seleccionarIncidente(inc)"
+          >
+          <!-- Barra lateral de color según prioridad -->
+          <div class="card-barra" [style.background-color]="colorPorPrioridad(inc.prioridad)"></div>
+          <div class="card-contenido">
+            <div class="card-cabecera">
+              <span class="card-codigo">{{ inc.codiPedido }}</span>
+              <span class="badge-estado-mini" [ngClass]="claseEstado(inc.estado)">
+                {{ labelEstado(inc.estado) }}
+              </span>
+            </div>
+            <div class="card-desc">{{ inc.descPedido || 'Sin descripción' }}</div>
+            <div class="card-dir">
+              <i class="fa-solid fa-location-dot"></i>
+              {{ inc.direCaso || '—' }}
+              {{ inc.barrio ? '· ' + inc.barrio : '' }}
+            </div>
+            <div class="card-footer">
+              <span><i class="fa-regular fa-clock"></i> {{ inc.horaCaso }}</span>
+              @if (inc.totalActuaciones > 0) {
+                <span class="card-unidades">
+                  <i class="fa-solid fa-car-side"></i> {{ inc.totalActuaciones }}
+                </span>
+              }
+            </div>
+          </div>
+        </div>
+      }
+
+    </div>
+    <!-- /lista-scroll -->
+  </div>
+  <!-- /mapa-lista -->
+
+</div>
+<!-- /mapa-wrapper -->

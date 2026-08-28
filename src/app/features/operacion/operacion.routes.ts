@@ -16,5 +16,13 @@ export const operacionRoutes: Routes = [
       ),
     data: { breadcrumb: 'Bitácora de Turno' },
   },
-  // Pendientes de portar: recepción, eventos, pedido, turnos, reportes y mapas.
+  {
+    path: 'mapa-incidentes',
+    loadComponent: () =>
+      import('./pages/mapa-incidentes-page/mapa-incidentes-page.component').then(
+        (m) => m.MapaIncidentesPageComponent,
+      ),
+    data: { breadcrumb: 'Mapa de Incidentes' },
+  },
+  // Pendientes de portar: recepción, eventos, pedido, turnos, reportes y mapa estadístico.
 ];

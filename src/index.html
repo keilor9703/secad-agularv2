@@ -7,9 +7,46 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src 'self' data: https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob: http: https:; media-src 'self' blob: mediastream: https://radio.policia.gov.co:8080 https://live.truckers.fm; connect-src 'self' http://srvdockergusof.policia.gov.co:8088 https://srvdockergusof.policia.gov.co:8088 ws: wss: stun: turn: turns:; frame-src 'self' https://www.youtube.com https://player.vimeo.com http://srvdockergusof.policia.gov.co:8088 https://srvdockergusof.policia.gov.co:8088; trusted-types angular angular#unsafe-bypass; require-trusted-types-for 'script';"
+      content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src 'self' data: https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob: http: https:; media-src 'self' blob: mediastream: https://radio.policia.gov.co:8080 https://live.truckers.fm; connect-src 'self' http://srvdockergusof.policia.gov.co:8088 https://srvdockergusof.policia.gov.co:8088 ws: wss: stun: turn: turns: https://services3.arcgis.com https://nominatim.openstreetmap.org; frame-src 'self' https://www.youtube.com https://player.vimeo.com http://srvdockergusof.policia.gov.co:8088 https://srvdockergusof.policia.gov.co:8088; trusted-types angular angular#unsafe-bypass default; require-trusted-types-for 'script';"
     />
     <link rel="icon" type="image/x-icon" href="oftic-bandera.ico" />
+
+    <!--
+      Política por defecto de Trusted Types, necesaria para Leaflet.
+
+      La CSP de arriba exige require-trusted-types-for 'script', que bloquea
+      toda asignación cruda a innerHTML. Angular cumple con su propia política
+      ('angular'), pero Leaflet no soporta Trusted Types: arma sus controles,
+      sus divIcon y el contenido de los popups asignando innerHTML directo, y
+      sin esto el mapa ni se dibuja ("This document requires 'TrustedHTML'").
+
+      Va aquí y no en un módulo de TypeScript por dos razones: tiene que estar
+      instalada ANTES de que cargue cualquier bundle, y desde un módulo el
+      empaquetador puede descartar la llamada por tree-shaking (ya pasó).
+
+      EL COMPROMISO, DICHO CLARO: una política por defecto que deja pasar el
+      HTML aplica a TODA la página, no solo a Leaflet. El navegador deja de ser
+      la última barrera y la seguridad pasa a depender de que el código escape
+      lo que interpola. En las pantallas de mapa eso está cubierto —cada campo
+      de texto libre pasa por escapeHtml() antes de entrar al popup, ver
+      mapa-incidentes-page.component.ts—, pero si alguien interpola datos sin
+      escapar en un innerHTML, esto ya no lo frena.
+
+      Solo createHTML. createScript y createScriptURL se dejan fuera a
+      propósito: Leaflet no los necesita y son los dos que convierten una
+      inyección en ejecución de código.
+    -->
+    <script>
+      (function () {
+        var tt = window.trustedTypes;
+        if (!tt || tt.defaultPolicy) return;
+        try {
+          tt.createPolicy('default', { createHTML: function (s) { return s; } });
+        } catch (e) {
+          console.error('[TrustedTypes] no se pudo crear la política por defecto:', e);
+        }
+      })();
+    </script>
   </head>
   <body>
     <app-root></app-root>
