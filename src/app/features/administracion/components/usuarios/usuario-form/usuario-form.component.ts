@@ -28,6 +28,7 @@ import {
   UserRole,
 } from '../../../interfaces/usuario-admin-view.interface';
 import { DtoRolCatalogo } from '../../../services/usuario-admin.service';
+import { UsuarioOperacionComponent } from '../usuario-operacion/usuario-operacion.component';
 
 @Component({
   selector: 'app-usuario-form',
@@ -41,6 +42,7 @@ import { DtoRolCatalogo } from '../../../services/usuario-admin.service';
     UiTabsComponent,
     UiToggleComponent,
     UsuarioRolesPanelComponent,
+    UsuarioOperacionComponent,
   ],
   templateUrl: './usuario-form.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,

@@ -16,7 +16,6 @@ import { AuthService } from '../../../../core/auth/auth.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { AlertService } from '../../../../shared/services/alert.service';
 import { UsuarioDeleteModalComponent } from '../../components/usuarios/usuario-delete-modal/usuario-delete-modal.component';
-import { UsuarioOperacionComponent } from '../../components/usuarios/usuario-operacion/usuario-operacion.component';
 import { UsuarioFormComponent } from '../../components/usuarios/usuario-form/usuario-form.component';
 
 import { UsuariosTableComponent } from '../../components/usuarios/usuarios-table/usuarios-table.component';
@@ -42,7 +41,6 @@ import {
     UsuarioDeleteModalComponent,
     UsuarioFormComponent,
     UsuariosTableComponent,
-    UsuarioOperacionComponent,
   ],
   templateUrl: './usuarios-page.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,

@@ -54,7 +54,7 @@
     </aside>
     <section class="right-column">
       <app-ui-tabs
-        [class.has-form-footer]="activeTab !== 'roles'"
+        [class.has-form-footer]="activeTab === 'datos'"
         variant="navigation"
         size="md"
         ariaLabel="Administración del usuario"
@@ -220,8 +220,15 @@
             (eliminarRol)="eliminarRol.emit($event)"
           ></app-usuario-roles-panel>
         </app-ui-tab>
+        <app-ui-tab
+          id="operacion"
+          label="Asignación operativa"
+          icon="fa-solid fa-radio"
+        >
+          <app-usuario-operacion [idUsuario]="user?.idUsuario ?? null" />
+        </app-ui-tab>
       </app-ui-tabs>
-      @if (activeTab !== 'roles') {
+      @if (activeTab === 'datos') {
         <footer class="form-footer">
           <app-ui-button
             type="button"
