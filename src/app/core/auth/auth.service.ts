@@ -21,6 +21,23 @@ interface LoginResponse {
 
 type JwtPayload = Record<string, unknown>;
 
+/** Claims que el backend de SECAD firma en el JWT (ver LoginController). */
+export interface JwtClaims {
+  sitioGraba: number;
+  acd: number;
+  fuerzaId: number;
+  canalId: number;
+  /** CAD contra el que se consulta ahora mismo. */
+  codDane: string;
+  /** CAD de origen del usuario; distinto de codDane solo si conmutó contexto. */
+  homeCodDane: string;
+  usuario: string;
+  idUsuario: number;
+  esAdmin: boolean;
+  esSuperAdmin: boolean;
+  nombreCad: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly tokenKey = 'sisge_token';
@@ -99,6 +116,96 @@ export class AuthService {
 
   getUsuario(): string {
     return localStorage.getItem(this.userKey) ?? 'Usuario';
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  //  Multi-tenant (traído de secad_angular)
+  //
+  //  SECAD no es una sola instalación: cada CAD (Bogotá, Cali, …) tiene su
+  //  propia base de datos, y el backend decide contra cuál consultar leyendo el
+  //  claim cod_dane del JWT. Sin esta capa, cualquier módulo de operación queda
+  //  sin saber a qué CAD pertenece lo que pide.
+  //
+  //  Un SuperAdministrador puede además "entrar" al contexto de otro CAD: ahí
+  //  cod_dane cambia mientras home_cod_dane conserva su CAD de origen.
+  // ══════════════════════════════════════════════════════════════════════════
+
+  getJwtClaims(): JwtClaims {
+    const vacio: JwtClaims = {
+      sitioGraba: 0, acd: 0, fuerzaId: 0, canalId: 0,
+      codDane: '', homeCodDane: '', usuario: '', idUsuario: 0,
+      esAdmin: false, esSuperAdmin: false, nombreCad: '',
+    };
+
+    const token = this.getToken();
+    if (!token) return vacio;
+
+    const p = this.decodeJwtPayload(token);
+    if (!p) return vacio;
+
+    const nameKey = 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name';
+    const codDane = String(p?.['cod_dane'] ?? '');
+
+    return {
+      sitioGraba:   Number(p?.['sitio_graba'] ?? 0),
+      acd:          Number(p?.['acd'] ?? 0),
+      fuerzaId:     Number(p?.['fuerza_id'] ?? 0),
+      canalId:      Number(p?.['canal_id'] ?? 0),
+      codDane,
+      homeCodDane:  String(p?.['home_cod_dane'] ?? codDane),
+      idUsuario:    Number(p?.['id_usuario'] ?? p?.['nameid'] ?? 0),
+      usuario:      String(p?.[nameKey] ?? p?.['unique_name'] ?? p?.['name'] ?? ''),
+      esAdmin:      p?.['es_admin'] === 'true',
+      esSuperAdmin: p?.['es_super_admin'] === 'true',
+      nombreCad:    String(p?.['nombre_cad'] ?? ''),
+    };
+  }
+
+  /** true cuando el JWT pertenece a un SuperAdministrador. */
+  esSuperAdmin(): boolean {
+    return this.getJwtClaims().esSuperAdmin;
+  }
+
+  /** true cuando el JWT pertenece a un Administrador o SuperAdministrador. */
+  esAdmin(): boolean {
+    return this.getJwtClaims().esAdmin;
+  }
+
+  /** CAD de origen del usuario. No cambia al conmutar de contexto. */
+  getHomeCodDane(): string {
+    return this.getJwtClaims().homeCodDane;
+  }
+
+  /** CAD activo ahora mismo. Difiere del de origen si un SuperAdmin conmutó contexto. */
+  getActiveCodDane(): string {
+    return this.getJwtClaims().codDane;
+  }
+
+  /** true cuando un SuperAdmin está operando dentro del contexto de otro CAD. */
+  isContextSwitched(): boolean {
+    const { esSuperAdmin, codDane, homeCodDane } = this.getJwtClaims();
+    return esSuperAdmin && codDane !== homeCodDane && !!homeCodDane;
+  }
+
+  /** Reemplaza el JWT guardado. Lo usa la conmutación de contexto, que devuelve uno nuevo. */
+  setToken(token: string): void {
+    localStorage.setItem(this.tokenKey, token);
+    const userId = this.extractUserIdFromToken(token);
+    if (userId !== null) localStorage.setItem(this.userIdKey, String(userId));
+  }
+
+  /**
+   * Persiste el JWT y los metadatos de sesión tras completar 2FA. Lo llama el
+   * login cuando el backend devuelve el token definitivo — el de login() es
+   * provisional mientras el segundo factor no se resuelve.
+   */
+  storeLoginData(token: string, usuario: string): void {
+    localStorage.setItem(this.tokenKey, token);
+    const userId = this.extractUserIdFromToken(token);
+    if (userId !== null) localStorage.setItem(this.userIdKey, String(userId));
+    localStorage.setItem(this.authKey, '1');
+    localStorage.setItem(this.userKey, usuario);
+    sessionStorage.removeItem('modales_vistos');
   }
 
   getUserId(): number | null {

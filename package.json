@@ -32,8 +32,15 @@
     "@angular/platform-browser": "^22.1.1",
     "@angular/router": "^22.1.1",
     "@fortawesome/fontawesome-free": "^7.1.0",
+    "@microsoft/signalr": "^8.0.29",
+    "@policia/mfa": "file:dist-libs/policia-mfa-1.0.0.tgz",
     "@sweetalert2/ngx-sweetalert2": "15.0.0",
+    "chart.js": "^4.5.1",
+    "exceljs": "^4.4.0",
     "flatpickr": "^4.6.13",
+    "leaflet": "^1.9.4",
+    "leaflet.heat": "^0.2.0",
+    "leaflet.markercluster": "^1.5.3",
     "ngx-editor": "^19.0.0-beta.1",
     "rxjs": "~7.8.0",
     "sweetalert2": "11.26.25",
@@ -44,6 +51,8 @@
     "@angular/build": "^22.1.3",
     "@angular/cli": "^22.1.3",
     "@angular/compiler-cli": "^22.1.1",
+    "@types/leaflet": "^1.9.22",
+    "@types/leaflet.markercluster": "^1.5.6",
     "@vitest/coverage-v8": "^4.1.10",
     "jsdom": "^30.0.1",
     "patch-package": "^8.0.1",
@@ -59,5 +68,8 @@
     "esbuild@0.28.1": true,
     "lmdb@3.5.6": true,
     "msgpackr-extract@3.0.4": true
+  },
+  "engines": {
+    "node": "^22.22.3 || ^24.15.0 || >=26.0.0"
   }
 }
