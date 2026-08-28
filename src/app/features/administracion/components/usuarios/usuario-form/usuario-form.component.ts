@@ -65,6 +65,8 @@ export class UsuarioFormComponent implements OnChanges {
   @Output() consultar = new EventEmitter<string>();
   @Output() guardarDatos = new EventEmitter<UserProfile>();
   @Output() nuevoUsuario = new EventEmitter<void>();
+  /** Abre el alta de usuario civil; la resuelve la pantalla, no el formulario. */
+  @Output() nuevoUsuarioCivil = new EventEmitter<void>();
   @Output() guardarRol = new EventEmitter<NewRoleForm>();
   @Output() eliminarRol = new EventEmitter<RemoveRoleCommand>();
 

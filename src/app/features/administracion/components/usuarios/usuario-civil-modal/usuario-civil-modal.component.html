@@ -1,0 +1,116 @@
+<app-ui-modal
+  [open]="abierto"
+  title="Nuevo usuario civil"
+  subtitle="Para personal de otras entidades que no existe en PIP"
+  icon="fa-solid fa-user-plus"
+  size="lg"
+  (closeRequested)="onCerrar()"
+>
+  <form modal-body [formGroup]="form" class="civil-form">
+
+    <p class="civil-form__nota">
+      <i class="fa-solid fa-circle-info"></i>
+      El usuario institucional se consulta por cédula contra PIP y su clave la
+      valida OUD. Un usuario civil —bomberos, tránsito, cruz roja— no está en
+      PIP, así que se crea aquí con usuario y contraseña propios.
+    </p>
+
+    <div class="civil-form__fila">
+      <app-ui-input
+        formControlName="username"
+        label="Nombre de usuario"
+        placeholder="Ej: jperez.bomberos"
+        autocomplete="off"
+        required
+        [error]="errorUsername()"
+      />
+      <app-ui-input
+        formControlName="password"
+        label="Contraseña"
+        [type]="verPassword() ? 'text' : 'password'"
+        autocomplete="new-password"
+        hint="Mínimo 8 caracteres."
+        required
+        [error]="errorPassword()"
+      />
+      <app-ui-button
+        class="civil-form__ojo"
+        variant="secondary"
+        appearance="ghost"
+        [icon]="verPassword() ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye'"
+        iconOnly
+        [ariaLabel]="verPassword() ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+        [tooltip]="verPassword() ? 'Ocultar' : 'Mostrar'"
+        (buttonClick)="toggleVerPassword()"
+      />
+    </div>
+
+    <div class="civil-form__fila">
+      <app-ui-input
+        formControlName="nombres"
+        label="Nombres"
+        required
+        [error]="errorNombres()"
+      />
+      <app-ui-input
+        formControlName="apellidos"
+        label="Apellidos"
+        required
+        [error]="errorApellidos()"
+      />
+    </div>
+
+    <div class="civil-form__fila">
+      <app-ui-input
+        formControlName="identificacion"
+        label="Identificación"
+        hint="Opcional."
+      />
+      <app-ui-input
+        formControlName="email"
+        label="Correo"
+        type="email"
+        hint="Opcional."
+      />
+    </div>
+
+    <div class="civil-form__fila">
+      <app-ui-input
+        formControlName="entidad"
+        label="Entidad"
+        placeholder="Ej: Bomberos Bogotá"
+        hint="Opcional."
+      />
+      <app-ui-input
+        formControlName="cargo"
+        label="Cargo"
+        hint="Opcional."
+      />
+      <app-ui-select
+        class="civil-form__estado"
+        formControlName="activo"
+        label="Estado"
+        [options]="opcionesEstado"
+        [clearable]="false"
+        [searchable]="false"
+      />
+    </div>
+  </form>
+
+  <div modal-actions class="civil-form__acciones">
+    <app-ui-button
+      variant="secondary"
+      appearance="ghost"
+      icon="fa-solid fa-xmark"
+      [disabled]="guardando()"
+      (buttonClick)="onCerrar()"
+    >Cancelar</app-ui-button>
+    <app-ui-button
+      variant="primary"
+      icon="fa-solid fa-floppy-disk"
+      [loading]="guardando()"
+      [disabled]="guardando()"
+      (buttonClick)="guardar()"
+    >{{ guardando() ? 'Guardando…' : 'Crear usuario' }}</app-ui-button>
+  </div>
+</app-ui-modal>

@@ -287,3 +287,14 @@
       0 8px 20px rgba(0, 0, 0, 0.22);
   }
 }
+
+// Vía alterna en el estado vacío: crear a alguien que no está en PIP.
+.empty-state__civil {
+  display:     flex;
+  align-items: center;
+  gap:         8px;
+  flex-wrap:   wrap;
+  margin:      14px 0 0;
+  font-size:   calc(12px * var(--font-size-scale, 1));
+  color:       var(--ui-text-muted, #6b7280);
+}

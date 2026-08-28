@@ -127,6 +127,20 @@ export type UsuarioConsultaOrigen =
   | 'LINEA_MANDO'
   | 'CONSULTA_DIRECTA';
 
+
+/** Alta de usuario civil / de otra entidad, que no existe en PIP. */
+export interface DtoCivilUsuarioRequest {
+  username: string;
+  password: string;
+  identificacion?: string;
+  nombres: string;
+  apellidos: string;
+  email?: string;
+  entidad?: string;
+  cargo?: string;
+  activo: boolean;
+}
+
 @Injectable({ providedIn: 'root' })
 export class UsuarioAdminService {
   private readonly baseUrl = `${environment.apiBaseUrl}/Usuario`;
@@ -215,6 +229,23 @@ export class UsuarioAdminService {
     // El retiro es un comando con motivo obligatorio; POST evita depender de
     // cuerpos DELETE, que algunos proxies empresariales descartan.
     return this.http.post<EliminarRolResponse>(`${this.baseUrl}/Roles/${rolId}/Retiro`, payload);
+  }
+
+  /**
+   * Crea (o actualiza) un usuario civil directamente en ctr_usuarios.
+   *
+   * El alta institucional pasa por PIP y su clave la valida OUD; un usuario de
+   * otra entidad no está en PIP, así que se guarda aquí con credenciales
+   * propias. Si password llega vacío el backend conserva el hash existente,
+   * que es lo que permite editar sin obligar a recambiar la contraseña.
+   */
+  createCivilUsuario(payload: DtoCivilUsuarioRequest): Observable<SaveUsuarioResponse> {
+    return this.http.post<SaveUsuarioResponse>(`${this.baseUrl}/Civil`, payload);
+  }
+
+  /** Lee un usuario desde ctr_usuarios, sin pasar por PIP. Para usuarios civiles. */
+  getLocalUsuario(username: string): Observable<unknown> {
+    return this.http.get(`${this.baseUrl}/Local`, { params: { username: username.trim() } });
   }
 
   eliminarUsuario(idUsuario: number, observacion: string): Observable<EliminarUsuarioResponse> {

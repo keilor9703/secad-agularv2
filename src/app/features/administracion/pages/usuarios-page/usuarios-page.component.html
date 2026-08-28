@@ -40,6 +40,7 @@
             (consultar)="consultarUsuario($event)"
             (guardarDatos)="guardarDatosUsuario($event)"
             (nuevoUsuario)="prepararNuevoUsuario()"
+            (nuevoUsuarioCivil)="abrirModalUsuarioCivil()"
             (guardarRol)="guardarRoles($event)"
             (eliminarRol)="eliminarRol($event)"
           ></app-usuario-form>
@@ -69,5 +70,10 @@
       (close)="cerrarModalEliminarUsuario()"
       (confirm)="confirmarEliminarUsuario($event)"
     ></app-usuario-delete-modal>
+    <app-usuario-civil-modal
+      [abierto]="showCivilModal"
+      (cerrar)="cerrarModalUsuarioCivil()"
+      (guardado)="onUsuarioCivilGuardado()"
+    />
   </section>
 }

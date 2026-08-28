@@ -16,6 +16,7 @@ import { AuthService } from '../../../../core/auth/auth.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { AlertService } from '../../../../shared/services/alert.service';
 import { UsuarioDeleteModalComponent } from '../../components/usuarios/usuario-delete-modal/usuario-delete-modal.component';
+import { UsuarioCivilModalComponent } from '../../components/usuarios/usuario-civil-modal/usuario-civil-modal.component';
 import { UsuarioFormComponent } from '../../components/usuarios/usuario-form/usuario-form.component';
 
 import { UsuariosTableComponent } from '../../components/usuarios/usuarios-table/usuarios-table.component';
@@ -41,6 +42,7 @@ import {
     UsuarioDeleteModalComponent,
     UsuarioFormComponent,
     UsuariosTableComponent,
+    UsuarioCivilModalComponent,
   ],
   templateUrl: './usuarios-page.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
@@ -68,6 +70,8 @@ export class UsuariosPageComponent implements OnInit, OnDestroy {
   private readonly deletingRoleIdState = signal<number | null>(null);
   private readonly deletingUserState = signal(false);
   private readonly loadingListadoState = signal(false);
+  /** Alta de usuario civil: va en modal para no alterar el flujo institucional. */
+  private readonly showCivilModalState = signal(false);
   private readonly showDeleteUserModalState = signal(false);
   private readonly deletingTargetState = signal<UsuarioListadoItem | null>(null);
   private readonly searchNombreListadoState = signal('');
@@ -146,6 +150,10 @@ export class UsuariosPageComponent implements OnInit, OnDestroy {
 
   set loadingListado(value: boolean) {
     this.loadingListadoState.set(value);
+  }
+
+  get showCivilModal(): boolean {
+    return this.showCivilModalState();
   }
 
   get showDeleteUserModal(): boolean {
@@ -1035,4 +1043,17 @@ export class UsuariosPageComponent implements OnInit, OnDestroy {
       .trim()
       .toLocaleLowerCase('es-CO');
   }
+  abrirModalUsuarioCivil(): void {
+    this.showCivilModalState.set(true);
+  }
+
+  cerrarModalUsuarioCivil(): void {
+    this.showCivilModalState.set(false);
+  }
+
+  /** Tras crear un civil, el listado debe reflejarlo sin recargar la pantalla. */
+  onUsuarioCivilGuardado(): void {
+    this.cargarListadoUsuarios();
+  }
+
 }

@@ -275,5 +275,18 @@
         (search)="onConsultar($event)"
       ></app-ui-search-input>
     </form>
+
+    <!-- La consulta de arriba va contra PIP por cédula, así que no encuentra a
+         quien no es funcionario. Para esos está esta otra vía. -->
+    <p class="empty-state__civil">
+      ¿Es personal de otra entidad y no aparece en PIP?
+      <app-ui-button
+        variant="secondary"
+        appearance="ghost"
+        size="sm"
+        icon="fa-solid fa-user-plus"
+        (buttonClick)="nuevoUsuarioCivil.emit()"
+      >Crear usuario civil</app-ui-button>
+    </p>
   </div>
 }

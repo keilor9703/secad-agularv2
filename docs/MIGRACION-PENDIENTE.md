@@ -95,7 +95,7 @@ origen.
 | `linea-mando` | 736 | 1.822 | ✅ completa |
 | `cuentas-email` | 742 | 805 | ✅ completa |
 | `administracion-inicio` | 104 | 297 | ✅ completa |
-| `usuarios` | 2.265 | 4.069 | ⚠️ falta el flujo de usuario civil |
+| `usuarios` | 2.265 | 4.069 | ✅ completa |
 
 Dos falsas alarmas que conviene dejar anotadas, porque el método las produce:
 
@@ -108,7 +108,7 @@ Dos falsas alarmas que conviene dejar anotadas, porque el método las produce:
 Moraleja: comparar por nombre de campo detecta huecos, pero también inventa
 algunos. Cada "falta" hay que confirmarla mirando el archivo.
 
-### Usuarios: la asignación operativa ya está; falta el usuario civil
+### Usuarios: cerrada
 
 La versión de la plantilla **no tiene la sección "Asignación de Fuerza, Canal y
 ACD"** que sí tiene secad_angular (`usuarios.html`, línea 311). Sin ella no se
@@ -124,7 +124,7 @@ hubo que devolverle `idUsuario` a `DtoFuncionario` y a `UserProfile`: el backend
 lo devuelve pero la plantilla lo descartaba al mapear, y sin él ningún endpoint
 que opere sobre el usuario (y no sobre la persona) tiene a quién apuntar.
 
-⬜ **Pendiente: el flujo de usuario civil.** Faltan los campos `username`,
+✅ **Resuelto: el flujo de usuario civil.** Faltan los campos `username`,
 `password` y `entidad`, y en el servicio faltan `createCivilUsuario`,
 `getLocalUsuario` y `eliminarRol`. La plantilla solo contempla el usuario
 institucional (el que valida contra OUD con `usuarioEmpresarial`); no se puede
@@ -143,7 +143,7 @@ Faltan 8, y varios bloquean pantallas de la lista de arriba:
 | Servicio | Bloquea |
 |---|---|
 | ~~`fuerza.service.ts`~~ | ✅ portado |
-| `usuario-admin.service.ts` | Usuarios (la plantilla usa el suyo) |
+| ~~`usuario-admin.service.ts`~~ | ✅ completado (createCivilUsuario, getLocalUsuario) |
 | `roles-admin.service.ts` | Roles (idem) |
 | `camara-integracion.service.ts` | Integraciones |
 | `caso.service.ts` | Casos |

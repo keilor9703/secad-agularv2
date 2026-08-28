@@ -1,0 +1,45 @@
+// Alta de usuario civil. Modal, campos y botones vienen del kit; aquí solo la
+// disposición del formulario.
+.civil-form {
+  display:        flex;
+  flex-direction: column;
+  gap:            14px;
+
+  &__nota {
+    display:       flex;
+    gap:           8px;
+    margin:        0;
+    padding:       9px 12px;
+    border-radius: 8px;
+    background:    rgba(8, 166, 203, .08);
+    font-size:     calc(11.5px * var(--font-size-scale, 1));
+    color:         var(--ui-text-muted, #6b7280);
+    line-height:   1.45;
+
+    i { color: #0e7490; margin-top: 2px; }
+  }
+
+  &__fila {
+    display:     flex;
+    gap:         12px;
+    align-items: flex-start;
+
+    > *:not(.civil-form__ojo):not(.civil-form__estado) { flex: 1 1 0; min-width: 0; }
+
+    @media (max-width: 720px) { flex-direction: column; }
+  }
+
+  // El ojo de la contraseña se alinea con la caja del campo, no con su etiqueta.
+  &__ojo   { flex: 0 0 auto; margin-top: 18px; }
+  &__estado { flex: 0 0 150px; }
+
+  &__acciones {
+    display:         flex;
+    gap:             8px;
+    justify-content: flex-end;
+  }
+}
+
+html.dark-mode {
+  .civil-form__nota { background: rgba(8, 166, 203, .14); }
+}
