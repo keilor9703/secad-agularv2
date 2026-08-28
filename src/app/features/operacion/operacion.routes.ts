@@ -8,6 +8,13 @@ import { Routes } from '@angular/router';
  * layout y del authGuard. Ver videoCiudadanoRoute más abajo.
  */
 export const operacionRoutes: Routes = [
-  // Las pantallas del despachador se irán agregando aquí conforme se porten:
-  // recepción, eventos, pedido, turnos, reportes y mapas.
+  {
+    path: 'anotaciones-turno',
+    loadComponent: () =>
+      import('./pages/anotaciones-turno-page/anotaciones-turno-page.component').then(
+        (m) => m.AnotacionesTurnoPageComponent,
+      ),
+    data: { breadcrumb: 'Bitácora de Turno' },
+  },
+  // Pendientes de portar: recepción, eventos, pedido, turnos, reportes y mapas.
 ];

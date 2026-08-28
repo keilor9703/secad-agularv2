@@ -1,0 +1,214 @@
+<section class="anot-page">
+
+  <app-ui-page-header
+    title="Bitácora de Turno"
+    icon="fa-solid fa-book-open-reader"
+    description="Anotaciones generales, novedades y comunicados registrados durante el turno (§ 6.15)."
+    [minimizable]="false"
+  />
+
+  <div class="anot-layout">
+
+    <!-- ═══ Formulario ═══════════════════════════════════════════════════ -->
+    <aside class="anot-form-panel">
+      <app-ui-panel-header
+        [title]="modoEdicion() ? 'Editar anotación' : 'Nueva anotación'"
+        [icon]="modoEdicion() ? 'fa-solid fa-pen' : 'fa-solid fa-plus'"
+        appearance="soft"
+      />
+
+      <form [formGroup]="form" class="anot-form">
+
+        <!-- El selector de tipo se queda a medida: son botones con el color
+             propio de cada tipo, algo que ningún componente del kit cubre. -->
+        <div class="anot-campo">
+          <span class="anot-campo__label">Tipo <span class="anot-req">*</span></span>
+          <div class="anot-tipos">
+            @for (t of tipos; track t.valor) {
+              <button
+                type="button"
+                class="anot-tipo"
+                [class.anot-tipo--activo]="form.controls.tipo.value === t.valor"
+                [style.--tipo-color]="t.color"
+                (click)="setTipoForm(t.valor)"
+              >
+                <i class="fa-solid" [ngClass]="t.icono"></i>
+                <span>{{ t.label }}</span>
+              </button>
+            }
+          </div>
+        </div>
+
+        <app-ui-input
+          formControlName="titulo"
+          label="Título"
+          hint="Opcional."
+          placeholder="Ej: Comunicado No. 015 — Restricción de movimiento"
+          [maxlength]="200"
+        />
+
+        <app-ui-input
+          formControlName="descripcion"
+          label="Descripción"
+          placeholder="Detalle la anotación, novedad, comunicado o actividad registrada durante el turno…"
+          [maxlength]="4000"
+          [hint]="form.controls.descripcion.value.length + ' / 4000'"
+          required
+          [error]="errorDescripcion()"
+          multiline
+          [rows]="6"
+        />
+
+        <div class="anot-form__acciones">
+          @if (modoEdicion()) {
+            <app-ui-button
+              variant="secondary" appearance="ghost" icon="fa-solid fa-xmark"
+              [disabled]="guardando()" (buttonClick)="cancelar()"
+            >Cancelar</app-ui-button>
+          }
+          <app-ui-button
+            variant="primary" icon="fa-solid fa-floppy-disk"
+            [loading]="guardando()" [disabled]="guardando()" (buttonClick)="guardar()"
+          >{{ guardando() ? 'Guardando…' : (modoEdicion() ? 'Actualizar' : 'Registrar') }}</app-ui-button>
+        </div>
+      </form>
+    </aside>
+
+    <!-- ═══ Listado ══════════════════════════════════════════════════════ -->
+    <div class="anot-list-panel">
+
+      <div class="anot-filtros">
+        <app-ui-input class="anot-filtros__fecha" type="date" label="Desde"
+                      [ngModel]="filtroDesde" (ngModelChange)="filtroDesde = $event"
+                      [ngModelOptions]="{ standalone: true }" />
+        <app-ui-input class="anot-filtros__fecha" type="date" label="Hasta"
+                      [ngModel]="filtroHasta" (ngModelChange)="filtroHasta = $event"
+                      [ngModelOptions]="{ standalone: true }" />
+        <app-ui-button
+          variant="primary" icon="fa-solid fa-magnifying-glass"
+          [loading]="cargando()" [disabled]="cargando()" (buttonClick)="cargar()"
+        >Buscar</app-ui-button>
+      </div>
+
+      <!-- Filtro rápido por tipo. Solo aparecen los tipos con registros. -->
+      <div class="anot-chips">
+        <button type="button" class="anot-chip" [class.anot-chip--activo]="filtroTipo === ''"
+                (click)="irFiltro('')">
+          Todos <span class="anot-chip__n">{{ anotaciones().length }}</span>
+        </button>
+        @for (t of tipos; track t.valor) {
+          @if (contarPorTipo(t.valor) > 0) {
+            <button type="button" class="anot-chip"
+                    [class.anot-chip--activo]="filtroTipo === t.valor"
+                    [style.--tipo-color]="t.color" (click)="irFiltro(t.valor)">
+              <i class="fa-solid" [ngClass]="t.icono"></i>
+              {{ t.label }} <span class="anot-chip__n">{{ contarPorTipo(t.valor) }}</span>
+            </button>
+          }
+        }
+      </div>
+
+      @if (cargando()) {
+        <app-ui-spinner label="Cargando bitácora…" contained />
+      }
+
+      @if (errorCarga() && !cargando()) {
+        <div class="anot-aviso anot-aviso--error">
+          <i class="fa-solid fa-circle-exclamation"></i> {{ errorCarga() }}
+        </div>
+      }
+
+      @if (posibleTruncamiento() && !cargando()) {
+        <div class="anot-aviso anot-aviso--alerta">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+          Se muestran los 500 registros más recientes del rango — puede haber más.
+          Reduzca el rango de fechas para verlos todos.
+        </div>
+      }
+
+      @if (!cargando() && !errorCarga() && anotacionesFiltradas().length === 0) {
+        <div class="anot-vacio">
+          <i class="fa-solid fa-book-open"></i>
+          <p>No hay anotaciones para este período.</p>
+          <small>Registre la primera anotación del turno.</small>
+        </div>
+      }
+
+      @if (!cargando() && paginadas().length > 0) {
+        <div class="anot-cards">
+          @for (a of paginadas(); track a.id) {
+            <article class="anot-card" [style.--tipo-color]="getTipoInfo(a.tipo).color">
+              <header class="anot-card__head">
+                <span class="anot-card__tipo">
+                  <i class="fa-solid" [ngClass]="getTipoInfo(a.tipo).icono"></i>
+                  {{ getTipoInfo(a.tipo).label }}
+                </span>
+                <span class="anot-card__id"><i class="fa-solid fa-hashtag"></i>{{ a.id }}</span>
+                <div class="anot-card__acciones">
+                  <app-ui-button variant="secondary" appearance="ghost" size="sm"
+                                 icon="fa-solid fa-pen-to-square" iconOnly
+                                 ariaLabel="Editar anotación" tooltip="Editar"
+                                 (buttonClick)="editar(a)" />
+                  <app-ui-button variant="danger" appearance="ghost" size="sm"
+                                 icon="fa-solid fa-trash" iconOnly
+                                 ariaLabel="Eliminar anotación" tooltip="Eliminar"
+                                 (buttonClick)="solicitarEliminar(a)" />
+                </div>
+              </header>
+
+              @if (a.titulo) { <h3 class="anot-card__titulo">{{ a.titulo }}</h3> }
+              <p class="anot-card__texto">{{ a.descripcion }}</p>
+
+              <footer class="anot-card__meta">
+                <span><i class="fa-solid fa-user"></i> {{ a.nombreCompleto || a.usernameCreacion || '–' }}</span>
+                <span><i class="fa-solid fa-clock"></i> {{ a.fechaCreacion }}</span>
+                @if (a.canalDesc) {
+                  <span><i class="fa-solid fa-tower-broadcast"></i> {{ a.canalDesc }}</span>
+                }
+                @if (a.fechaModifica) {
+                  <span class="anot-card__mod"><i class="fa-solid fa-pen-to-square"></i> Modificado {{ a.fechaModifica }}</span>
+                }
+              </footer>
+            </article>
+          }
+        </div>
+      }
+
+      @if (anotacionesFiltradas().length > pageSize) {
+        <app-ui-pagination
+          [total]="anotacionesFiltradas().length"
+          [page]="p()"
+          [pageSize]="pageSize"
+          (pageChange)="p.set($event)"
+        />
+      }
+
+    </div>
+  </div>
+</section>
+
+<!-- ═══ Confirmación de borrado ════════════════════════════════════════ -->
+<app-ui-modal
+  [open]="itemAEliminar() !== null"
+  title="¿Eliminar anotación?"
+  icon="fa-solid fa-triangle-exclamation"
+  size="sm"
+  (closeRequested)="cancelarEliminar()"
+>
+  @if (itemAEliminar(); as item) {
+    <p modal-body class="anot-confirmar">
+      Se eliminará permanentemente la anotación
+      <strong>{{ item.titulo || ('ID: ' + item.id) }}</strong>.
+      Esta acción no se puede deshacer.
+    </p>
+  }
+  <div modal-actions class="anot-form__acciones">
+    <app-ui-button variant="secondary" appearance="ghost"
+                   [disabled]="eliminando()" (buttonClick)="cancelarEliminar()"
+    >Cancelar</app-ui-button>
+    <app-ui-button variant="danger" icon="fa-solid fa-trash"
+                   [loading]="eliminando()" [disabled]="eliminando()"
+                   (buttonClick)="confirmarEliminar()"
+    >{{ eliminando() ? 'Eliminando…' : 'Sí, eliminar' }}</app-ui-button>
+  </div>
+</app-ui-modal>

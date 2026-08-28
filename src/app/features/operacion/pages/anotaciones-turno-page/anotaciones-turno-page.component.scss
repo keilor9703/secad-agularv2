@@ -1,0 +1,278 @@
+// ══════════════════════════════════════════════════════════════════════════
+//  Bitácora de Turno
+//
+//  Panel, encabezados, botones, campos, spinner, modal y paginación los
+//  resuelven los componentes de shared/components/ui-*. Aquí queda solo lo
+//  propio: la rejilla de dos columnas, el selector de tipo por color y las
+//  tarjetas de anotación.
+//
+//  --tipo-color lo inyecta la plantilla por fila desde el catálogo de tipos
+//  (TIPOS_ANOTACION), así que los colores no se repiten aquí.
+// ══════════════════════════════════════════════════════════════════════════
+
+.anot-page {
+  display:        flex;
+  flex-direction: column;
+  gap:            16px;
+  padding:        16px;
+}
+
+// Formulario fijo a la izquierda; el listado toma el resto.
+.anot-layout {
+  display:               grid;
+  grid-template-columns: 380px minmax(0, 1fr);
+  gap:                   16px;
+  align-items:           start;
+
+  @media (max-width: 1000px) { grid-template-columns: minmax(0, 1fr); }
+}
+
+// ── Formulario ────────────────────────────────────────────────────────────
+.anot-form-panel {
+  border:        1px solid rgba(21, 27, 59, 0.12);
+  border-radius: 10px;
+  overflow:      hidden;
+  background:    var(--ui-surface, #fff);
+  position:      sticky;
+  top:           12px;
+
+  @media (max-width: 1000px) { position: static; }
+}
+
+.anot-form {
+  display:        flex;
+  flex-direction: column;
+  gap:            14px;
+  padding:        14px;
+}
+
+.anot-campo {
+  display:        flex;
+  flex-direction: column;
+  gap:            6px;
+
+  &__label {
+    font-size:   calc(11px * var(--font-size-scale, 1));
+    font-weight: 700;
+    color:       var(--ui-text-muted, #6b7280);
+  }
+}
+
+.anot-req { color: #dc2626; }
+
+.anot-tipos {
+  display:               grid;
+  grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+  gap:                   6px;
+}
+
+// Botón de tipo: en reposo es neutro; activo toma el color del tipo.
+.anot-tipo {
+  display:         flex;
+  align-items:     center;
+  gap:             6px;
+  padding:         7px 9px;
+  border:          1px solid rgba(21, 27, 59, 0.14);
+  border-radius:   8px;
+  background:      transparent;
+  cursor:          pointer;
+  font-size:       calc(11px * var(--font-size-scale, 1));
+  color:           var(--ui-text);
+  text-align:      left;
+  transition:      background .12s, border-color .12s, color .12s;
+
+  i { color: var(--tipo-color, var(--ui-text-muted, #6b7280)); width: 14px; text-align: center; }
+
+  &:hover { border-color: var(--tipo-color, #9ca3af); }
+
+  &--activo {
+    border-color: var(--tipo-color, #0e7490);
+    background:   color-mix(in srgb, var(--tipo-color, #0e7490) 12%, transparent);
+    font-weight:  700;
+  }
+}
+
+.anot-form__acciones {
+  display:         flex;
+  gap:             8px;
+  justify-content: flex-end;
+}
+
+// ── Listado ───────────────────────────────────────────────────────────────
+.anot-list-panel {
+  display:        flex;
+  flex-direction: column;
+  gap:            12px;
+  min-width:      0;
+}
+
+.anot-filtros {
+  display:     flex;
+  align-items: flex-end;
+  gap:         10px;
+  flex-wrap:   wrap;
+
+  &__fecha { flex: 0 0 170px; }
+}
+
+.anot-chips {
+  display:   flex;
+  flex-wrap: wrap;
+  gap:       6px;
+}
+
+.anot-chip {
+  display:       inline-flex;
+  align-items:   center;
+  gap:           6px;
+  padding:       4px 10px;
+  border:        1px solid rgba(21, 27, 59, 0.14);
+  border-radius: 999px;
+  background:    transparent;
+  cursor:        pointer;
+  font-size:     calc(11px * var(--font-size-scale, 1));
+  color:         var(--ui-text);
+
+  i { color: var(--tipo-color, var(--ui-text-muted, #6b7280)); }
+
+  &--activo {
+    border-color: var(--tipo-color, #0e7490);
+    background:   color-mix(in srgb, var(--tipo-color, #0e7490) 14%, transparent);
+    font-weight:  700;
+  }
+
+  &__n {
+    background:    rgba(21, 27, 59, 0.08);
+    border-radius: 999px;
+    padding:       0 6px;
+    font-size:     calc(10px * var(--font-size-scale, 1));
+  }
+}
+
+// ── Avisos y vacío ────────────────────────────────────────────────────────
+.anot-aviso {
+  display:       flex;
+  align-items:   center;
+  gap:           8px;
+  padding:       9px 12px;
+  border-radius: 8px;
+  font-size:     calc(12px * var(--font-size-scale, 1));
+
+  &--error  { background: rgba(220, 38, 38, 0.10);  color: #b91c1c; }
+  &--alerta { background: rgba(245, 158, 11, 0.12); color: #b45309; }
+}
+
+.anot-vacio {
+  display:         flex;
+  flex-direction:  column;
+  align-items:     center;
+  gap:             6px;
+  padding:         36px 16px;
+  color:           var(--ui-text-muted, #6b7280);
+  text-align:      center;
+
+  i { font-size: 2rem; opacity: .35; }
+  p { margin: 0; font-size: calc(13px * var(--font-size-scale, 1)); }
+}
+
+// ── Tarjetas ──────────────────────────────────────────────────────────────
+// Rejilla fluida: en un puesto CAD ancho entran varias por fila sin que
+// ninguna se estire hasta perder legibilidad.
+.anot-cards {
+  display:               grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap:                   12px;
+}
+
+.anot-card {
+  display:        flex;
+  flex-direction: column;
+  gap:            7px;
+  padding:        12px 14px;
+  border:         1px solid rgba(21, 27, 59, 0.12);
+  border-left:    3px solid var(--tipo-color, #0e7490);
+  border-radius:  10px;
+  background:     var(--ui-surface, #fff);
+
+  &__head {
+    display:     flex;
+    align-items: center;
+    gap:         8px;
+  }
+
+  &__tipo {
+    display:        inline-flex;
+    align-items:    center;
+    gap:            5px;
+    font-size:      calc(10px * var(--font-size-scale, 1));
+    font-weight:    800;
+    text-transform: uppercase;
+    letter-spacing: .3px;
+    color:          var(--tipo-color, #0e7490);
+  }
+
+  &__id {
+    display:     inline-flex;
+    align-items: center;
+    gap:         3px;
+    font-size:   calc(10px * var(--font-size-scale, 1));
+    color:       var(--ui-text-muted, #6b7280);
+  }
+
+  &__acciones {
+    display:     flex;
+    gap:         2px;
+    margin-left: auto;
+  }
+
+  &__titulo {
+    margin:      0;
+    font-size:   calc(13px * var(--font-size-scale, 1));
+    font-weight: 700;
+    color:       var(--ui-text);
+  }
+
+  &__texto {
+    margin:      0;
+    font-size:   calc(12.5px * var(--font-size-scale, 1));
+    color:       var(--ui-text);
+    white-space: pre-wrap;
+    word-break:  break-word;
+  }
+
+  &__meta {
+    display:   flex;
+    flex-wrap: wrap;
+    gap:       4px 12px;
+    font-size: calc(10.5px * var(--font-size-scale, 1));
+    color:     var(--ui-text-muted, #6b7280);
+
+    span { display: inline-flex; align-items: center; gap: 4px; }
+  }
+
+  &__mod { font-style: italic; }
+}
+
+.anot-confirmar {
+  margin:    0;
+  font-size: calc(13px * var(--font-size-scale, 1));
+  color:     var(--ui-text);
+}
+
+// ── Modo oscuro ───────────────────────────────────────────────────────────
+html.dark-mode {
+  .anot-form-panel,
+  .anot-card {
+    background:   rgba(255, 255, 255, .03);
+    border-color: rgba(255, 255, 255, .12);
+  }
+  .anot-card { border-left-color: var(--tipo-color, #0e7490); }
+  .anot-tipo,
+  .anot-chip {
+    border-color: rgba(255, 255, 255, .14);
+    color:        rgba(228, 231, 235, .92);
+  }
+  .anot-chip__n { background: rgba(255, 255, 255, .10); }
+  .anot-card__titulo,
+  .anot-card__texto { color: rgba(228, 231, 235, .92); }
+}

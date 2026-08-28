@@ -3,6 +3,7 @@
       "target": "http://localhost:5224",
       "secure": false,
       "changeOrigin": true,
+      "ws": true,
       "logLevel": "debug"
     },
     "/uploads": {
