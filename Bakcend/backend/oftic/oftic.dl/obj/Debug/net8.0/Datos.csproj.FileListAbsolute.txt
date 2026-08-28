@@ -1,0 +1,16 @@
+D:\Disco E\SECAD_SEPT\SECAD_NET8.0\MODERNIZACION\SecadAngular\backend\oftic\oftic.dl\bin\Debug\net8.0\Datos.deps.json
+D:\Disco E\SECAD_SEPT\SECAD_NET8.0\MODERNIZACION\SecadAngular\backend\oftic\oftic.dl\bin\Debug\net8.0\Datos.dll
+D:\Disco E\SECAD_SEPT\SECAD_NET8.0\MODERNIZACION\SecadAngular\backend\oftic\oftic.dl\bin\Debug\net8.0\Datos.pdb
+D:\Disco E\SECAD_SEPT\SECAD_NET8.0\MODERNIZACION\SecadAngular\backend\oftic\oftic.dl\bin\Debug\net8.0\Comun.dll
+D:\Disco E\SECAD_SEPT\SECAD_NET8.0\MODERNIZACION\SecadAngular\backend\oftic\oftic.dl\bin\Debug\net8.0\Comun.pdb
+D:\Disco E\SECAD_SEPT\SECAD_NET8.0\MODERNIZACION\SecadAngular\backend\oftic\oftic.dl\obj\Debug\net8.0\Datos.csproj.AssemblyReference.cache
+D:\Disco E\SECAD_SEPT\SECAD_NET8.0\MODERNIZACION\SecadAngular\backend\oftic\oftic.dl\obj\Debug\net8.0\Datos.GeneratedMSBuildEditorConfig.editorconfig
+D:\Disco E\SECAD_SEPT\SECAD_NET8.0\MODERNIZACION\SecadAngular\backend\oftic\oftic.dl\obj\Debug\net8.0\Datos.AssemblyInfoInputs.cache
+D:\Disco E\SECAD_SEPT\SECAD_NET8.0\MODERNIZACION\SecadAngular\backend\oftic\oftic.dl\obj\Debug\net8.0\Datos.AssemblyInfo.cs
+D:\Disco E\SECAD_SEPT\SECAD_NET8.0\MODERNIZACION\SecadAngular\backend\oftic\oftic.dl\obj\Debug\net8.0\Datos.csproj.CoreCompileInputs.cache
+D:\Disco E\SECAD_SEPT\SECAD_NET8.0\MODERNIZACION\SecadAngular\backend\oftic\oftic.dl\obj\Debug\net8.0\Datos.sourcelink.json
+D:\Disco E\SECAD_SEPT\SECAD_NET8.0\MODERNIZACION\SecadAngular\backend\oftic\oftic.dl\obj\Debug\net8.0\Datos.csproj.Up2Date
+D:\Disco E\SECAD_SEPT\SECAD_NET8.0\MODERNIZACION\SecadAngular\backend\oftic\oftic.dl\obj\Debug\net8.0\Datos.dll
+D:\Disco E\SECAD_SEPT\SECAD_NET8.0\MODERNIZACION\SecadAngular\backend\oftic\oftic.dl\obj\Debug\net8.0\refint\Datos.dll
+D:\Disco E\SECAD_SEPT\SECAD_NET8.0\MODERNIZACION\SecadAngular\backend\oftic\oftic.dl\obj\Debug\net8.0\Datos.pdb
+D:\Disco E\SECAD_SEPT\SECAD_NET8.0\MODERNIZACION\SecadAngular\backend\oftic\oftic.dl\obj\Debug\net8.0\ref\Datos.dll

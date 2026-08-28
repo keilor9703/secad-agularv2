@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "dgSpecHash": "Rz5CdMnFw1o=",
+  "success": true,
+  "projectFilePath": "D:\\Disco E\\SECAD_SEPT\\SECAD_NET8.0\\MODERNIZACION\\Plantilla_Mejorada\\plantilla-angular-ponal\\Bakcend\\backend\\edge-plantatel-service\\EdgePlantaTelService.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\ke.martinez\\.nuget\\packages\\microsoft.extensions.dependencyinjection.abstractions\\8.0.0\\microsoft.extensions.dependencyinjection.abstractions.8.0.0.nupkg.sha512",
+    "C:\\Users\\ke.martinez\\.nuget\\packages\\microsoft.extensions.logging.abstractions\\8.0.0\\microsoft.extensions.logging.abstractions.8.0.0.nupkg.sha512",
+    "C:\\Users\\ke.martinez\\.nuget\\packages\\npgsql\\8.0.5\\npgsql.8.0.5.nupkg.sha512"
+  ],
+  "logs": []
+}
