@@ -43,6 +43,10 @@
             (guardarRol)="guardarRoles($event)"
             (eliminarRol)="eliminarRol($event)"
           ></app-usuario-form>
+
+          <!-- Asignación operativa: se guarda por separado (endpoint propio) y
+               es lo que determina qué casos recibe el usuario en el CAD. -->
+          <app-usuario-operacion [idUsuario]="user?.idUsuario ?? null" />
         </div>
       }
     </div>

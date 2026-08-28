@@ -1,0 +1,54 @@
+// Asignación operativa del usuario. Encabezado, selectores, campo y botón los
+// resuelven los componentes de shared/components/ui-*; aquí solo la disposición.
+.usr-op {
+  display:        flex;
+  flex-direction: column;
+  gap:            12px;
+
+  &__aviso {
+    display:     flex;
+    align-items: center;
+    gap:         8px;
+    margin:      0;
+    font-size:   calc(12px * var(--font-size-scale, 1));
+    color:       var(--ui-text-muted, #6b7280);
+  }
+
+  // Resumen de lo asignado hoy.
+  &__actual {
+    display:       flex;
+    flex-wrap:     wrap;
+    gap:           6px 18px;
+    padding:       8px 12px;
+    border-radius: 8px;
+    background:    rgba(8, 166, 203, .08);
+    font-size:     calc(12px * var(--font-size-scale, 1));
+
+    span { display: inline-flex; align-items: center; gap: 6px; }
+    i    { color: #0e7490; }
+  }
+
+  // Fuerza y canal ocupan lo mismo; el ACD es corto y no debe estirarse.
+  &__form {
+    display: flex;
+    gap:     12px;
+
+    > *:not(.usr-op__acd) { flex: 1 1 0; min-width: 0; }
+  }
+
+  &__acd { flex: 0 0 130px; }
+
+  &__acciones {
+    display:         flex;
+    justify-content: flex-end;
+  }
+
+  @media (max-width: 720px) {
+    &__form { flex-direction: column; }
+    &__acd  { flex: 1 1 auto; }
+  }
+}
+
+html.dark-mode {
+  .usr-op__actual { background: rgba(8, 166, 203, .14); }
+}

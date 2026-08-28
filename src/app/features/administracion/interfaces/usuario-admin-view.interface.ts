@@ -22,6 +22,13 @@ export interface RemoveRoleCommand {
 }
 
 export interface UserProfile {
+  /**
+   * Id interno del usuario (Snowflake, serializado como string). Distinto de
+   * `identificacion`, que es la cédula. Lo necesitan los endpoints que operan
+   * sobre el usuario y no sobre la persona — entre ellos la asignación de
+   * fuerza, canal y ACD. El backend lo devuelve; antes se descartaba al mapear.
+   */
+  idUsuario: string;
   identificacion: string;
   nombres: string;
   apellidos: string;

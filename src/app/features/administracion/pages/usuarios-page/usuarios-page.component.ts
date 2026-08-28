@@ -16,6 +16,7 @@ import { AuthService } from '../../../../core/auth/auth.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { AlertService } from '../../../../shared/services/alert.service';
 import { UsuarioDeleteModalComponent } from '../../components/usuarios/usuario-delete-modal/usuario-delete-modal.component';
+import { UsuarioOperacionComponent } from '../../components/usuarios/usuario-operacion/usuario-operacion.component';
 import { UsuarioFormComponent } from '../../components/usuarios/usuario-form/usuario-form.component';
 
 import { UsuariosTableComponent } from '../../components/usuarios/usuarios-table/usuarios-table.component';
@@ -37,7 +38,12 @@ import {
 @Component({
   selector: 'app-usuarios',
   standalone: true,
-  imports: [UsuarioDeleteModalComponent, UsuarioFormComponent, UsuariosTableComponent],
+  imports: [
+    UsuarioDeleteModalComponent,
+    UsuarioFormComponent,
+    UsuariosTableComponent,
+    UsuarioOperacionComponent,
+  ],
   templateUrl: './usuarios-page.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./usuarios-page.component.scss'],
@@ -279,6 +285,7 @@ export class UsuariosPageComponent implements OnInit, OnDestroy {
         const nombreCompleto = `${nombres} ${apellidos}`.trim() || 'SIN NOMBRE';
 
         this.user = {
+          idUsuario: String(funcionario.idUsuario ?? '0'),
           identificacion: (funcionario.identificacion ?? documento).trim(),
           nombres,
           apellidos,

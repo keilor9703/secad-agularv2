@@ -22,6 +22,13 @@ export interface DtoFuncionario {
   codigoCargo?: string | null;
   cargo?: string | null;
   activo?: boolean;
+  /**
+   * Id local en ctr_usuarios (Snowflake, como string para no perder precisión
+   * en JS). El backend lo devuelve; el DTO no lo declaraba, así que se perdía
+   * al mapear y dejaba sin id a todo lo que opera sobre el usuario —entre
+   * ello la asignación de fuerza, canal y ACD.
+   */
+  idUsuario?: string | null;
 }
 
 export interface DtoRolAsignado {

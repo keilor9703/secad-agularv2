@@ -1,0 +1,76 @@
+<div class="usr-op">
+
+  <app-ui-section-header
+    title="Asignación de Fuerza, Canal y ACD"
+    icon="fa-solid fa-radio"
+    description="Determina qué casos recibe este usuario en el CAD y con qué extensión de la planta telefónica trabaja."
+  />
+
+  @if (!hayUsuario) {
+    <p class="usr-op__aviso">
+      <i class="fa-solid fa-circle-info"></i>
+      Consulte un usuario para ver o modificar su asignación operativa.
+    </p>
+  } @else if (cargando()) {
+    <app-ui-spinner label="Cargando asignación…" contained />
+  } @else {
+
+    <!-- Lo asignado hoy, en texto: el selector puede tardar en tener catálogo,
+         y el operador necesita ver de inmediato qué hay puesto. -->
+    <div class="usr-op__actual">
+      <span>
+        <i class="fa-solid fa-shield-halved"></i>
+        Fuerza: <strong>{{ actual().fuerzaDescripcion || 'sin asignar' }}</strong>
+      </span>
+      <span>
+        <i class="fa-solid fa-tower-broadcast"></i>
+        Canal: <strong>{{ actual().canalDescripcion || 'sin asignar' }}</strong>
+      </span>
+      <span>
+        <i class="fa-solid fa-phone"></i>
+        ACD: <strong>{{ form.controls.acd.value || '—' }}</strong>
+      </span>
+    </div>
+
+    <form [formGroup]="form" class="usr-op__form">
+      <app-ui-select
+        formControlName="cadcanaFuerzaId"
+        label="Fuerza / Entidad"
+        [options]="opcionesFuerza()"
+        [clearable]="false"
+        (ngModelChange)="onFuerzaChange()"
+        hint="Se listan solo las fuerzas vigentes."
+      />
+
+      <!-- En cascada: sin fuerza no hay canales que elegir. -->
+      <app-ui-select
+        formControlName="cadcanaCodigo"
+        label="Canal de Despacho"
+        [options]="opcionesCanal()"
+        [clearable]="false"
+        [disabled]="!hayFuerza"
+        [hint]="!hayFuerza
+                  ? 'Elija primero una fuerza.'
+                  : (canales().length === 0 ? 'Esta fuerza no tiene canales vigentes.' : '')"
+      />
+
+      <app-ui-input
+        class="usr-op__acd"
+        formControlName="acd"
+        label="ACD"
+        type="number"
+        hint="Extensión en la planta telefónica."
+      />
+    </form>
+
+    <div class="usr-op__acciones">
+      <app-ui-button
+        variant="primary"
+        icon="fa-solid fa-floppy-disk"
+        [loading]="guardando()"
+        [disabled]="guardando()"
+        (buttonClick)="guardar()"
+      >{{ guardando() ? 'Guardando…' : 'Guardar asignación' }}</app-ui-button>
+    </div>
+  }
+</div>
