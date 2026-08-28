@@ -1,0 +1,114 @@
+# Migración secad_angular → secad-agularv2: qué falta
+
+Inventario completo y verificado contra el código de los dos repositorios.
+Se actualiza a medida que se porta cada cosa.
+
+> **Por qué el menú muestra "Operación" y "Super Admin" vacíos**
+>
+> El menú lateral **se arma desde la base de datos** (`navigation-menu.service.ts`
+> lee de `MenuService`), no desde las rutas de Angular. Las migraciones sembraron
+> los ítems padre y sus hijos, así que el menú los pinta; pero al hacer clic no
+> hay nada porque el componente todavía no está portado. Es decir: lo que se ve
+> en el menú es lo que la base dice que debería existir, no lo que ya existe.
+>
+> Por eso el menú es una buena lista de verificación: cuando todos los ítems de
+> abajo estén portados, el menú dejará de tener huecos.
+
+---
+
+## Operación — 3 de 9
+
+| Pantalla | Estado | Líneas |
+|---|---|---|
+| `video-ciudadano` | ✅ portada | 773 |
+| `anotaciones-turno` | ✅ portada | 1.076 |
+| `mapa-incidentes` | ✅ portada | 1.655 |
+| `mapa-estadistico` | ⬜ pendiente | 2.044 |
+| `reportes` | ⬜ pendiente | 2.405 |
+| `turnos` | ⬜ pendiente | 2.763 |
+| `recepcion` | ⬜ pendiente | 4.073 |
+| `pedido` | ⬜ pendiente | 5.053 |
+| `eventos` | ⬜ pendiente | 8.896 |
+
+Los 12 servicios de `core/services/operacion/` sí están portados completos.
+
+**Pendiente: 25.234 líneas.** `eventos` y `pedido` son más de la mitad.
+
+---
+
+## Super Admin — 0 de 1
+
+| Pantalla | Estado | Líneas |
+|---|---|---|
+| `super/salud-cads` | ⬜ pendiente | — |
+
+Falta también `super-admin.service.ts` y el `super-admin.guard`.
+
+---
+
+## Administración — 9 de 16
+
+Estas 9 ya existen en la plantilla, reconstruidas: `administracion-inicio`,
+`configuracion-sistema`, `cuentas-email`, `dominio`, `formularios`,
+`linea-mando`, `menu-admin`, `roles-admin`, `usuarios`.
+
+Faltan 7 por portar:
+
+| Pantalla | Estado |
+|---|---|
+| `agencias-externas` | ⬜ pendiente |
+| `asistente` | ⬜ pendiente |
+| `casos` | ⬜ pendiente |
+| `config-sms` | ⬜ pendiente |
+| `entidades` | ⬜ pendiente |
+| `integraciones` | ⬜ pendiente |
+| `tenants` | ⬜ pendiente |
+
+### ⚠️ Usuarios: existe pero está incompleta
+
+La versión de la plantilla **no tiene la sección "Asignación de Fuerza, Canal y
+ACD"** que sí tiene secad_angular (`usuarios.html`, línea 311). Sin ella no se
+puede asignar a un usuario su fuerza, su canal de despacho ni su ACD — y esos
+son justamente los datos que el backend usa para decidir qué ve cada despachador.
+
+Incluye un selector en cascada: al elegir fuerza se cargan sus canales.
+Depende de `fuerza.service.ts`, que tampoco está portado.
+
+**Este es el caso a vigilar en el resto de pantallas de administración que "ya
+existen":** que estén no significa que estén completas. Hay que revisar una por
+una si perdieron funcionalidad específica del CAD.
+
+---
+
+## Servicios de administración — 11 de 20
+
+Faltan 9, y varios bloquean pantallas de la lista de arriba:
+
+| Servicio | Bloquea |
+|---|---|
+| `fuerza.service.ts` | la sección de operación en Usuarios |
+| `usuario-admin.service.ts` | Usuarios (la plantilla usa el suyo) |
+| `roles-admin.service.ts` | Roles (idem) |
+| `camara-integracion.service.ts` | Integraciones |
+| `caso.service.ts` | Casos |
+| `config-sms.service.ts` | Proveedor SMS |
+| `cuenta-email.service.ts` | Cuentas de correo |
+| `dominio.service.ts` | Dominio |
+| `integraciones.service.ts` | Integraciones |
+
+---
+
+## Resumen
+
+| Área | Portado | Total |
+|---|---|---|
+| Servicios de operación | 12 | 12 |
+| Pantallas de operación | 3 | 9 |
+| Pantallas de administración | 9 | 16 |
+| Servicios de administración | 11 | 20 |
+| Super Admin | 0 | 1 |
+
+**Cimientos ya resueltos** (no hay que repetirlos): multi-tenant en
+`auth.service`, dependencias (SignalR 8, Leaflet, Chart.js, ExcelJS,
+`@policia/mfa`), CSP ampliada, política de Trusted Types para Leaflet, proxy con
+`ws:true`, y las 55 migraciones en `docs/sql/master/`.
