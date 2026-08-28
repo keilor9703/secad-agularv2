@@ -35,3 +35,11 @@ Thumbs.db
 # IDE local noise
 *.swp
 *.swo
+
+# ── Artefactos de compilación del backend .NET ────────────────────────────
+# Se versionaron por accidente al subir el backend (57 MB entre obj/, bin/ y
+# publish/). Esto evita que crezcan más. Para dejar de rastrear los que ya
+# están: git rm -r --cached Bakcend/backend/**/{obj,bin,publish}
+**/obj/
+**/bin/
+**/publish/
