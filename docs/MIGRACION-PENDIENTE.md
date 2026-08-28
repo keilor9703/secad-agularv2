@@ -3,6 +3,20 @@
 Inventario completo y verificado contra el código de los dos repositorios.
 Se actualiza a medida que se porta cada cosa.
 
+> ## ⚠️ Al portar una pantalla hay que tocar DOS sitios
+>
+> 1. El `*.routes.ts` que corresponda.
+> 2. **`core/navigation/app-route-catalog.ts`.**
+>
+> El menú se arma desde la base, pero pasa cada ítem por `isKnownAppRoute()`
+> contra ese catálogo. Si la ruta no está ahí, el ítem **se descarta en
+> silencio** y el grupo sale vacío, aunque en la base esté sembrado, vigente y
+> otorgado al rol. El síntoma parece un problema de permisos o de datos, y no
+> lo es.
+>
+> Es a propósito —evita que el menú publique enlaces que darían 404— y por eso
+> las pantallas aún no portadas deben seguir fuera del catálogo.
+
 > **Por qué el menú muestra "Operación" y "Super Admin" vacíos**
 >
 > El menú lateral **se arma desde la base de datos** (`navigation-menu.service.ts`

@@ -10,6 +10,16 @@ export interface AppRouteCatalogItem {
  * Administración de Menú consume esta lista para evitar guardar enlaces que
  * terminarían en el 404. Agregar una opción aquí no crea una pantalla: la ruta
  * debe estar declarada primero en el archivo *.routes.ts correspondiente.
+ *
+ * ⚠️ OJO AL PORTAR UNA PANTALLA: además del *.routes.ts hay que agregarla AQUÍ.
+ * El menú lateral se arma desde la base (ctr_menu) pero pasa cada ítem por
+ * isKnownAppRoute(): si la ruta no está en esta lista, el ítem se descarta en
+ * silencio y el grupo aparece vacío aunque en la base esté sembrado, vigente y
+ * otorgado al rol. Es a propósito —evita enlaces rotos— pero es fácil de pasar
+ * por alto, porque el síntoma parece un problema de permisos o de datos.
+ *
+ * Las pantallas de operación que aún no se han portado NO deben estar aquí:
+ * mientras no existan, el menú debe seguir ocultándolas.
  */
 export const APP_ROUTE_CATALOG: readonly AppRouteCatalogItem[] = [
   { route: '/home', label: 'Inicio', area: 'General' },
@@ -27,6 +37,17 @@ export const APP_ROUTE_CATALOG: readonly AppRouteCatalogItem[] = [
   { route: '/administracion/linea-mando', label: 'Línea de mando', area: 'Administración' },
   { route: '/administracion/dominio', label: 'Dominios', area: 'Administración' },
   { route: '/administracion/cuentas-email', label: 'Cuentas de correo', area: 'Administración' },
+  // ── Operación ────────────────────────────────────────────────────────────
+  // Solo lo ya portado. Al portar recepción, eventos, pedido, turnos, reportes
+  // o el mapa estadístico, agregarlos aquí o no aparecerán en el menú.
+  { route: '/operacion', label: 'Operación', area: 'Operación' },
+  {
+    route: '/operacion/anotaciones-turno',
+    label: 'Bitácora de turno',
+    area: 'Operación',
+  },
+  { route: '/operacion/mapa-incidentes', label: 'Mapa de incidentes', area: 'Operación' },
+
   { route: '/gestion-documental', label: 'Gestión documental', area: 'Gestión documental' },
   {
     route: '/gestion-documental/gestion-correos-electronicos',
@@ -49,6 +70,10 @@ const ROUTE_ALIASES: Readonly<Record<string, string>> = {
   '/dominio': '/administracion/dominio',
   '/cuentas-email': '/administracion/cuentas-email',
   '/correos-electronicos': '/gestion-documental/gestion-correos-electronicos',
+  // La base trae '/operacion/anotaciones' (sembrado por V47), pero la pantalla
+  // se llama anotaciones-turno como en secad_angular. Se resuelve con un alias
+  // para no tener que migrar el dato en cada instalación.
+  '/operacion/anotaciones': '/operacion/anotaciones-turno',
 };
 
 const KNOWN_INTERNAL_ROUTES = new Set(APP_ROUTE_CATALOG.map((item) => item.route));
