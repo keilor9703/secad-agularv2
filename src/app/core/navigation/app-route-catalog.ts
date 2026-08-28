@@ -35,6 +35,11 @@ export const APP_ROUTE_CATALOG: readonly AppRouteCatalogItem[] = [
     area: 'Administración',
   },
   { route: '/administracion/linea-mando', label: 'Línea de mando', area: 'Administración' },
+  {
+    route: '/administracion/entidades',
+    label: 'Entidades / Fuerzas',
+    area: 'Administración',
+  },
   { route: '/administracion/dominio', label: 'Dominios', area: 'Administración' },
   { route: '/administracion/cuentas-email', label: 'Cuentas de correo', area: 'Administración' },
   // ── Operación ────────────────────────────────────────────────────────────

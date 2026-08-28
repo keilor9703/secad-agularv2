@@ -19,6 +19,14 @@ export const administracionRoutes: Routes = [
     data: { breadcrumb: 'Inicio' },
   },
   {
+    path: 'entidades',
+    loadComponent: () =>
+      import('./pages/entidades-page/entidades-page.component').then(
+        (m) => m.EntidadesPageComponent,
+      ),
+    data: { breadcrumb: 'Entidades / Fuerzas' },
+  },
+  {
     path: 'formularios',
     loadComponent: () =>
       import('./pages/formularios-page/formularios-page.component').then(

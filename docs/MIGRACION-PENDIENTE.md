@@ -60,13 +60,13 @@ Falta también `super-admin.service.ts` y el `super-admin.guard`.
 
 ---
 
-## Administración — 9 de 16
+## Administración — 10 de 16
 
 Estas 9 ya existen en la plantilla, reconstruidas: `administracion-inicio`,
 `configuracion-sistema`, `cuentas-email`, `dominio`, `formularios`,
 `linea-mando`, `menu-admin`, `roles-admin`, `usuarios`.
 
-Faltan 7 por portar:
+Faltan 6 por portar:
 
 | Pantalla | Estado |
 |---|---|
@@ -74,9 +74,30 @@ Faltan 7 por portar:
 | `asistente` | ⬜ pendiente |
 | `casos` | ⬜ pendiente |
 | `config-sms` | ⬜ pendiente |
-| `entidades` | ⬜ pendiente |
 | `integraciones` | ⬜ pendiente |
 | `tenants` | ⬜ pendiente |
+
+**`entidades` — portada.** Maestro–detalle: a la izquierda la lista de fuerzas
+(código, nombre, abreviatura y contadores de canales/usuarios); a la derecha el
+detalle con pestañas Canales y Usuarios. Alta y edición de fuerzas y de canales,
+y activar/desactivar ambos. Es la pantalla que da de alta las fuerzas y canales
+que consume la pestaña de asignación operativa de `usuarios`.
+
+HTML 418 → 244 líneas y SCSS 441 → 234 apoyándose en `ui-page-header`,
+`ui-panel-header`, `ui-section-header`, `ui-tabs`, `ui-input`, `ui-select`,
+`ui-button`, `ui-badge`, `ui-chip` y `ui-spinner`. Las tres listas (fuerzas,
+canales, usuarios) se dejaron como listas y no como `ui-table`: son filas con
+acciones, no tablas ordenables ni paginadas.
+
+Dos correcciones respecto del origen, verificadas en el navegador:
+
+- Al editar una fuerza el origen dejaba visible su detalle sin haber cargado
+  canales ni usuarios, así que mostraba «esta fuerza no tiene canales» en
+  fuerzas que sí los tenían. Ahora `editarFuerza()` carga las dos listas y el
+  detalle queda oculto mientras el formulario está abierto.
+- La lista de fuerzas partía el nombre en tres líneas en nombres largos
+  («POLICIA METROPOLITANA DE BOGOTA»). Ahora cada fila son dos líneas: nombre
+  arriba, abreviatura y contadores abajo.
 
 ### Auditoría de las 9 pantallas que ya existen — hecha
 

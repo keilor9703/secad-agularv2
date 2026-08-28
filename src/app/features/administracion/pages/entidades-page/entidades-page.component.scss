@@ -1,0 +1,251 @@
+// ══════════════════════════════════════════════════════════════════════════
+//  Entidades / Fuerzas
+//
+//  Encabezados, pestañas, campos, botones, insignias y spinner los resuelven
+//  los componentes de shared/components/ui-*. Aquí queda la rejilla maestro–
+//  detalle y las tres listas propias (fuerzas, canales, usuarios), que son
+//  listas y no tablas: forzarlas a ui-table costaría más de lo que da.
+// ══════════════════════════════════════════════════════════════════════════
+
+.ent-page {
+  display:        flex;
+  flex-direction: column;
+  gap:            16px;
+  padding:        16px;
+}
+
+// Maestro a la izquierda, detalle a la derecha.
+.ent-layout {
+  display:               grid;
+  grid-template-columns: 420px minmax(0, 1fr);
+  gap:                   16px;
+  align-items:           start;
+
+  @media (max-width: 1000px) { grid-template-columns: minmax(0, 1fr); }
+}
+
+.ent-fuerzas,
+.ent-detalle-card,
+.ent-form-card {
+  border:        1px solid rgba(21, 27, 59, .12);
+  border-radius: 10px;
+  overflow:      hidden;
+  background:    var(--ui-surface, #fff);
+}
+
+.ent-detalle {
+  display:        flex;
+  flex-direction: column;
+  gap:            16px;
+  min-width:      0;
+}
+
+// ── Lista de fuerzas ──────────────────────────────────────────────────────
+.ent-lista {
+  list-style: none;
+  margin:     0;
+  padding:    0;
+  max-height: 620px;
+  overflow-y: auto;
+}
+
+// Dos filas: el nombre se lleva una línea entera —hay fuerzas con nombres
+// largos— y debajo van abreviatura y contadores. Las acciones ocupan las dos.
+.ent-item {
+  display:     grid;
+  grid-template-columns: 30px minmax(0, 1fr) auto;
+  grid-template-areas:
+    "cod texto acciones"
+    "cod nums  acciones";
+  align-items: center;
+  column-gap:  10px;
+  row-gap:     2px;
+  width:       100%;
+  padding:     9px 12px;
+  border:      0;
+  border-left: 3px solid transparent;
+  border-bottom: 1px solid rgba(21, 27, 59, .07);
+  background:  transparent;
+  cursor:      pointer;
+  text-align:  left;
+  font:        inherit;
+
+  &:hover { background: rgba(8, 166, 203, .06); }
+
+  &--activa {
+    border-left-color: #0e7490;
+    background:        rgba(8, 166, 203, .10);
+  }
+
+  // Una fuerza dada de baja sigue listada —hay que poder reactivarla— pero se
+  // atenúa para que no se confunda con las que sí despachan.
+  &--inactiva { opacity: .55; }
+
+  &__cod {
+    grid-area:   cod;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size:   calc(11px * var(--font-size-scale, 1));
+    color:       var(--ui-text-muted, #6b7280);
+  }
+
+  &__texto {
+    grid-area: texto;
+    min-width: 0;
+    font-size: calc(12.5px * var(--font-size-scale, 1));
+    font-weight: 600;
+    line-height: 1.25;
+  }
+
+  &__nums {
+    grid-area: nums;
+    display:   flex;
+    flex-wrap: wrap;
+    gap:       4px 10px;
+    font-size: calc(10.5px * var(--font-size-scale, 1));
+    color:     var(--ui-text-muted, #6b7280);
+
+    span { display: inline-flex; align-items: center; gap: 3px; }
+  }
+
+  &__abrev {
+    padding:       0 6px;
+    border-radius: 999px;
+    background:    rgba(21, 27, 59, .07);
+    font-family:   ui-monospace, SFMono-Regular, Menlo, monospace;
+    letter-spacing:.02em;
+  }
+
+  &__acciones { grid-area: acciones; display: flex; gap: 2px; }
+}
+
+// ── Formularios ───────────────────────────────────────────────────────────
+.ent-form {
+  display:   flex;
+  flex-wrap: wrap;
+  gap:       12px;
+  padding:   14px;
+
+  > *          { flex: 1 1 220px; min-width: 0; }
+  &__corto     { flex: 0 0 150px; }
+
+  &--canal {
+    align-items:   flex-end;
+    border-bottom: 1px dashed rgba(21, 27, 59, .12);
+  }
+
+  &__acciones {
+    display:         flex;
+    gap:             8px;
+    justify-content: flex-end;
+    padding:         0 14px 14px;
+
+    &--inline { flex: 0 0 auto; padding: 0; }
+  }
+}
+
+// ── Canales y usuarios ────────────────────────────────────────────────────
+// El panel de ui-tabs ya trae su propio relleno; aquí solo separamos el
+// encabezado de sección de la lista que le sigue.
+.ent-tab {
+  display:        flex;
+  flex-direction: column;
+  gap:            10px;
+}
+
+.ent-canales,
+.ent-usuarios {
+  list-style: none;
+  margin:     0;
+  padding:    0;
+  display:        flex;
+  flex-direction: column;
+  gap:            6px;
+}
+
+.ent-canal,
+.ent-usuario {
+  display:       grid;
+  align-items:   center;
+  gap:           10px;
+  padding:       8px 12px;
+  border:        1px solid rgba(21, 27, 59, .10);
+  border-radius: 8px;
+}
+
+.ent-canal {
+  grid-template-columns: 34px minmax(0, 1fr) auto auto;
+
+  &--inactivo { opacity: .6; }
+
+  &__cod {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size:   calc(11px * var(--font-size-scale, 1));
+    color:       var(--ui-text-muted, #6b7280);
+  }
+
+  &__desc     { font-size: calc(12.5px * var(--font-size-scale, 1)); }
+  &__acciones { display: flex; gap: 2px; }
+}
+
+.ent-usuario {
+  grid-template-columns: 18px minmax(0, 1fr) auto auto;
+  font-size: calc(12px * var(--font-size-scale, 1));
+
+  > i { color: var(--ui-text-muted, #6b7280); }
+
+  &__nombre {
+    display:        flex;
+    flex-direction: column;
+    min-width:      0;
+    small { font-size: calc(10.5px * var(--font-size-scale, 1)); color: var(--ui-text-muted, #6b7280); }
+  }
+
+  &__canal,
+  &__acd {
+    display:     inline-flex;
+    align-items: center;
+    gap:         5px;
+    font-size:   calc(11px * var(--font-size-scale, 1));
+    color:       var(--ui-text-muted, #6b7280);
+  }
+}
+
+// ── Vacíos ────────────────────────────────────────────────────────────────
+.ent-vacio {
+  margin:     0;
+  padding:    18px 14px;
+  font-size:  calc(12px * var(--font-size-scale, 1));
+  font-style: italic;
+  color:      var(--ui-text-muted, #6b7280);
+
+  &--grande {
+    display:        flex;
+    flex-direction: column;
+    align-items:    center;
+    gap:            10px;
+    padding:        60px 20px;
+    border:         1px dashed rgba(21, 27, 59, .16);
+    border-radius:  10px;
+    font-style:     normal;
+    text-align:     center;
+
+    i { font-size: 2.2rem; opacity: .3; }
+  }
+}
+
+// ── Modo oscuro ───────────────────────────────────────────────────────────
+html.dark-mode {
+  .ent-fuerzas,
+  .ent-detalle-card,
+  .ent-form-card {
+    background:   rgba(255, 255, 255, .03);
+    border-color: rgba(255, 255, 255, .12);
+  }
+  .ent-item        { border-bottom-color: rgba(255, 255, 255, .08); }
+  .ent-item:hover  { background: rgba(8, 166, 203, .12); }
+  .ent-item--activa { background: rgba(8, 166, 203, .18); }
+  .ent-canal,
+  .ent-usuario     { border-color: rgba(255, 255, 255, .12); }
+  .ent-item__abrev { background: rgba(255, 255, 255, .10); }
+  .ent-vacio--grande { border-color: rgba(255, 255, 255, .18); }
+}

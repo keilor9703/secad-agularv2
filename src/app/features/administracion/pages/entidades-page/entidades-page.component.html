@@ -1,0 +1,259 @@
+<div class="ent-page">
+
+  <app-ui-page-header
+    title="Entidades / Fuerzas"
+    icon="fa-solid fa-shield-halved"
+    description="Fuerzas que despachan en este CAD y los canales de cada una. Es de aquí de donde salen las opciones de la asignación operativa de cada usuario."
+    [minimizable]="false"
+  >
+    <app-ui-button
+      page-header-actions
+      variant="primary"
+      icon="fa-solid fa-plus"
+      (buttonClick)="nuevaFuerza()"
+    >Nueva fuerza</app-ui-button>
+  </app-ui-page-header>
+
+  <div class="ent-layout">
+
+    <!-- ═══ Fuerzas ══════════════════════════════════════════════════════ -->
+    <aside class="ent-fuerzas">
+      <app-ui-panel-header
+        title="Fuerzas"
+        icon="fa-solid fa-sitemap"
+        appearance="soft"
+      >
+        <app-ui-chip
+          panel-header-actions
+          [value]="fuerzas().length"
+          label="registradas"
+          variant="info"
+          appearance="soft"
+          size="xs"
+        />
+      </app-ui-panel-header>
+
+      @if (loading()) {
+        <app-ui-spinner label="Cargando fuerzas…" contained />
+      } @else if (fuerzas().length === 0) {
+        <p class="ent-vacio">Aún no hay fuerzas registradas.</p>
+      } @else {
+        <ul class="ent-lista">
+          @for (f of fuerzas(); track f.id) {
+            <li>
+              <button
+                type="button"
+                class="ent-item"
+                [class.ent-item--activa]="estaSeleccionada(f)"
+                [class.ent-item--inactiva]="f.vigente !== 'S'"
+                (click)="seleccionarFuerza(f)"
+              >
+                <span class="ent-item__cod">{{ f.id }}</span>
+                <span class="ent-item__texto">{{ f.descripcion }}</span>
+                <span class="ent-item__nums">
+                  @if (f.abreviatura) { <span class="ent-item__abrev">{{ f.abreviatura }}</span> }
+                  <span title="Canales"><i class="fa-solid fa-tower-broadcast"></i> {{ f.totalCanales }}</span>
+                  <span title="Usuarios"><i class="fa-solid fa-user"></i> {{ f.totalUsuarios }}</span>
+                </span>
+                <span class="ent-item__acciones">
+                  <app-ui-button
+                    variant="secondary" appearance="ghost" size="sm"
+                    icon="fa-solid fa-pen" iconOnly
+                    ariaLabel="Editar fuerza" tooltip="Editar"
+                    (buttonClick)="editarFuerza(f, $event)"
+                  />
+                  <app-ui-button
+                    [variant]="f.vigente === 'S' ? 'secondary' : 'primary'"
+                    appearance="ghost" size="sm"
+                    [icon]="f.vigente === 'S' ? 'fa-solid fa-ban' : 'fa-solid fa-circle-check'"
+                    iconOnly
+                    [ariaLabel]="f.vigente === 'S' ? 'Desactivar fuerza' : 'Activar fuerza'"
+                    [tooltip]="f.vigente === 'S' ? 'Desactivar' : 'Activar'"
+                    (buttonClick)="toggleFuerza(f, $event)"
+                  />
+                </span>
+              </button>
+            </li>
+          }
+        </ul>
+      }
+    </aside>
+
+    <!-- ═══ Detalle ══════════════════════════════════════════════════════ -->
+    <section class="ent-detalle">
+
+      <!-- Alta / edición de fuerza -->
+      @if (modoFuerza() !== 'ninguno') {
+        <div class="ent-form-card">
+          <app-ui-section-header
+            [title]="modoFuerza() === 'nueva' ? 'Nueva fuerza' : 'Editar fuerza'"
+            icon="fa-solid fa-shield-halved"
+          />
+          <form [formGroup]="formFuerza" class="ent-form">
+            <!-- El código lo define quien administra y no cambia después: es la
+                 clave con la que el resto del sistema referencia a la fuerza. -->
+            <app-ui-input
+              class="ent-form__corto"
+              formControlName="id"
+              label="Código"
+              type="number"
+              [readonly]="modoFuerza() === 'editando'"
+              required
+            />
+            <app-ui-input formControlName="descripcion" label="Descripción" required />
+            <app-ui-input class="ent-form__corto" formControlName="abreviatura" label="Abreviatura" />
+            <app-ui-select
+              class="ent-form__corto"
+              formControlName="vigente"
+              label="Estado"
+              [options]="opcionesVigencia"
+              [clearable]="false"
+              [searchable]="false"
+            />
+          </form>
+          <div class="ent-form__acciones">
+            <app-ui-button variant="secondary" appearance="ghost" icon="fa-solid fa-xmark"
+                           [disabled]="saving()" (buttonClick)="cancelarFuerza()">Cancelar</app-ui-button>
+            <app-ui-button variant="primary" icon="fa-solid fa-floppy-disk"
+                           [loading]="saving()" [disabled]="saving()"
+                           (buttonClick)="guardarFuerza()">Guardar fuerza</app-ui-button>
+          </div>
+        </div>
+      }
+
+      <!-- Mientras se edita o crea una fuerza no se muestra su detalle: los
+           canales y usuarios se cargan al seleccionarla, no al editarla, y
+           dejarlos a la vista mostraría "0 canales" en fuerzas que sí tienen. -->
+      @if (fuerzaSeleccionada(); as f) {
+        @if (modoFuerza() === 'ninguno') {
+        <div class="ent-detalle-card">
+          <app-ui-panel-header
+            [title]="f.descripcion"
+            [description]="'Código ' + f.id + (f.abreviatura ? ' · ' + f.abreviatura : '')"
+            icon="fa-solid fa-shield-halved"
+            appearance="soft"
+          />
+
+          <app-ui-tabs
+            variant="navigation"
+            size="md"
+            ariaLabel="Detalle de la fuerza"
+            [activeTabId]="tabDetalle()"
+            (selectionChange)="setTab($any($event.id))"
+          >
+            <!-- ── Canales ─────────────────────────────────────────────── -->
+            <app-ui-tab id="canales" label="Canales" icon="fa-solid fa-tower-broadcast">
+              <div class="ent-tab">
+                <app-ui-section-header
+                  title="Canales"
+                  icon="fa-solid fa-tower-broadcast"
+                  [description]="canales().length + ' canal(es) configurado(s) en esta fuerza'"
+                  appearance="divider"
+                >
+                  <app-ui-button header-actions variant="primary" size="sm" icon="fa-solid fa-plus"
+                                 (buttonClick)="nuevoCanal()">Nuevo canal</app-ui-button>
+                </app-ui-section-header>
+
+                @if (modoCanal() !== 'ninguno') {
+                  <form [formGroup]="formCanal" class="ent-form ent-form--canal">
+                    <app-ui-input formControlName="descripcion" label="Descripción del canal" required />
+                    <app-ui-select
+                      class="ent-form__corto"
+                      formControlName="vigente"
+                      label="Estado"
+                      [options]="opcionesVigencia"
+                      [clearable]="false"
+                      [searchable]="false"
+                    />
+                    <div class="ent-form__acciones ent-form__acciones--inline">
+                      <app-ui-button variant="secondary" appearance="ghost" size="sm"
+                                     [disabled]="saving()" (buttonClick)="cancelarCanal()">Cancelar</app-ui-button>
+                      <app-ui-button variant="primary" size="sm" icon="fa-solid fa-floppy-disk"
+                                     [loading]="saving()" [disabled]="saving()"
+                                     (buttonClick)="guardarCanal()">Guardar</app-ui-button>
+                    </div>
+                  </form>
+                }
+
+                @if (loadingCanales()) {
+                  <app-ui-spinner label="Cargando canales…" contained />
+                } @else if (canales().length === 0) {
+                  <p class="ent-vacio">Esta fuerza no tiene canales. Cree el primero para poder asignarle despachadores.</p>
+                } @else {
+                  <ul class="ent-canales">
+                    @for (c of canales(); track c.codigo) {
+                      <li class="ent-canal" [class.ent-canal--inactivo]="c.vigente !== 'S'">
+                        <span class="ent-canal__cod">{{ c.codigo }}</span>
+                        <span class="ent-canal__desc">{{ c.descripcion }}</span>
+                        <app-ui-badge
+                          [label]="c.vigente === 'S' ? 'Vigente' : 'Inactivo'"
+                          [variant]="c.vigente === 'S' ? 'success' : 'danger'"
+                          size="xs"
+                        />
+                        <span class="ent-canal__acciones">
+                          <app-ui-button variant="secondary" appearance="ghost" size="sm"
+                                         icon="fa-solid fa-pen" iconOnly
+                                         ariaLabel="Editar canal" tooltip="Editar"
+                                         (buttonClick)="editarCanal(c)" />
+                          <app-ui-button
+                            [variant]="c.vigente === 'S' ? 'secondary' : 'primary'"
+                            appearance="ghost" size="sm"
+                            [icon]="c.vigente === 'S' ? 'fa-solid fa-ban' : 'fa-solid fa-circle-check'"
+                            iconOnly
+                            [ariaLabel]="c.vigente === 'S' ? 'Desactivar canal' : 'Activar canal'"
+                            [tooltip]="c.vigente === 'S' ? 'Desactivar' : 'Activar'"
+                            (buttonClick)="toggleCanal(c)" />
+                        </span>
+                      </li>
+                    }
+                  </ul>
+                }
+              </div>
+            </app-ui-tab>
+
+            <!-- ── Usuarios ────────────────────────────────────────────── -->
+            <app-ui-tab id="usuarios" label="Usuarios" icon="fa-solid fa-user-group">
+              <div class="ent-tab">
+                <app-ui-section-header
+                  title="Usuarios asignados"
+                  icon="fa-solid fa-user-group"
+                  [description]="usuariosEnFuerza().length + ' despachador(es) con esta fuerza asignada'"
+                  appearance="divider"
+                />
+
+                @if (loadingUsuarios()) {
+                  <app-ui-spinner label="Cargando usuarios…" contained />
+                } @else if (usuariosEnFuerza().length === 0) {
+                  <p class="ent-vacio">Ningún usuario está asignado a esta fuerza todavía.</p>
+                } @else {
+                  <ul class="ent-usuarios">
+                    @for (u of usuariosEnFuerza(); track u.idUsuario) {
+                      <li class="ent-usuario">
+                        <i class="fa-solid fa-user"></i>
+                        <span class="ent-usuario__nombre">
+                          <strong>{{ u.nombreCompleto }}</strong>
+                          <small>{{ u.username }}</small>
+                        </span>
+                        <span class="ent-usuario__canal">
+                          <i class="fa-solid fa-tower-broadcast"></i>
+                          {{ u.canalDescripcion || ('Canal ' + u.canalCodigo) }}
+                        </span>
+                        <span class="ent-usuario__acd"><i class="fa-solid fa-phone"></i> {{ u.acd || '—' }}</span>
+                      </li>
+                    }
+                  </ul>
+                }
+              </div>
+            </app-ui-tab>
+          </app-ui-tabs>
+        </div>
+        }
+      } @else if (modoFuerza() === 'ninguno') {
+        <div class="ent-vacio ent-vacio--grande">
+          <i class="fa-solid fa-shield-halved"></i>
+          <p>Seleccione una fuerza para ver sus canales y sus usuarios.</p>
+        </div>
+      }
+    </section>
+  </div>
+</div>
