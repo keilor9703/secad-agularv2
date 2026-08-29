@@ -1,0 +1,85 @@
+@if (esSuperAdmin()) {
+  <div class="tenant-switcher">
+    <button
+      class="tenant-trigger"
+      [class.is-switched]="contextoCambiado()"
+      type="button"
+      [disabled]="cambiando()"
+      [attr.aria-expanded]="abierto()"
+      aria-haspopup="menu"
+      [attr.aria-label]="'CAD activo: ' + (nombreCad() || codDaneActivo()) + '. Cambiar de CAD'"
+      (click)="alternar($event)"
+    >
+      <span class="tenant-trigger__icon" aria-hidden="true">
+        @if (cambiando()) {
+          <i class="fa-solid fa-spinner fa-spin"></i>
+        } @else {
+          <i class="fa-solid fa-building-shield"></i>
+        }
+      </span>
+
+      <span class="tenant-trigger__text">
+        <span class="tenant-trigger__label">
+          {{ contextoCambiado() ? 'Administrando otro CAD' : 'CAD activo' }}
+        </span>
+        <span class="tenant-trigger__cad">{{ nombreCad() || codDaneActivo() }}</span>
+      </span>
+
+      <i class="fa-solid fa-chevron-down tenant-trigger__chevron" aria-hidden="true"></i>
+    </button>
+
+    @if (abierto()) {
+      <div class="tenant-dropdown" role="menu">
+        <div class="tenant-dropdown__head">
+          <span>Seleccionar CAD</span>
+          <small>{{ tenants().length }} activos</small>
+        </div>
+
+        <!-- Con media docena de CADs la lista ya no se recorre de un vistazo, y
+             en producción son bastantes más. -->
+        @if (tenants().length >= 6) {
+          <div class="tenant-dropdown__buscar">
+            <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+            <input
+              type="search"
+              placeholder="Buscar por nombre o DANE…"
+              aria-label="Buscar CAD"
+              [value]="filtro()"
+              (input)="onFiltro($event)"
+            />
+          </div>
+        }
+
+        <div class="tenant-dropdown__lista">
+          @for (t of tenantsFiltrados(); track t.codDane) {
+            <button
+              class="tenant-item"
+              [class.is-active]="t.codDane === codDaneActivo()"
+              type="button"
+              role="menuitem"
+              (click)="cambiarA(t.codDane)"
+            >
+              <span class="tenant-item__nombre">{{ t.nombre }}</span>
+              <span class="tenant-item__dane">{{ t.codDane }}</span>
+              @if (t.codDane === codDaneActivo()) {
+                <i class="fa-solid fa-check tenant-item__check" aria-hidden="true"></i>
+              }
+            </button>
+          } @empty {
+            <p class="tenant-dropdown__vacio">
+              {{ tenants().length ? 'Ningún CAD coincide con la búsqueda.' : 'No se pudo cargar la lista de CADs.' }}
+            </p>
+          }
+        </div>
+
+        @if (contextoCambiado()) {
+          <span class="tenant-dropdown__divisor" aria-hidden="true"></span>
+          <button class="tenant-volver" type="button" role="menuitem" (click)="volverAMiCad()">
+            <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
+            Volver a mi CAD
+          </button>
+        }
+      </div>
+    }
+  </div>
+}

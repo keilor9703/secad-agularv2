@@ -586,7 +586,7 @@ $radius:         6px;
 // de las demás páginas de Operación, quedaba con fondo/texto claros fijos
 // (ilegible o con salto visual brusco cuando el resto del layout oscurece).
 
-html.dark-mode {
+:host-context(html.dark-mode) {
   .mapa-wrapper { background: var(--ui-bg); }
 
   .mapa-no-disponible {

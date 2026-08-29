@@ -15,8 +15,12 @@
           aria-label="Registros por página"
           (change)="changePageSize($event)"
         >
+          <!-- [selected] en cada opción, no sólo [value] en el select: las
+               opciones se pintan después de aplicar el value, y el navegador
+               deja seleccionada la primera cuando aún no existe la que
+               coincide. Se veía «5» con un tamaño de página real de 10. -->
           @for (size of pageSizeOptionsList(); track size) {
-            <option [value]="size">{{ size }}</option>
+            <option [value]="size" [selected]="size === normalizedPageSize()">{{ size }}</option>
           }
         </select>
 

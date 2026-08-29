@@ -17,6 +17,17 @@ Se actualiza a medida que se porta cada cosa.
 > Es a propósito —evita que el menú publique enlaces que darían 404— y por eso
 > las pantallas aún no portadas deben seguir fuera del catálogo.
 
+> **Modo oscuro: `:host-context()`, nunca `html.dark-mode` a secas**
+>
+> En un SCSS de componente, `html.dark-mode { .foo { … } }` compila a
+> `html.dark-mode[_ngcontent-x] .foo[_ngcontent-x]`. El elemento `<html>` nunca
+> lleva ese atributo, así que **la regla no se aplica jamás** — y no falla el
+> build ni avisa nada: simplemente el modo oscuro se queda a medias.
+>
+> La plantilla ya usa `:host-context(html.dark-mode)` en todos sus componentes.
+> Al portar una pantalla desde secad_angular hay que convertirlo, porque allí
+> funcionaba por venir de hojas globales.
+
 > **Por qué el menú muestra "Operación" y "Super Admin" vacíos**
 >
 > El menú lateral **se arma desde la base de datos** (`navigation-menu.service.ts`
@@ -50,13 +61,41 @@ Los 12 servicios de `core/services/operacion/` sí están portados completos.
 
 ---
 
-## Super Admin — 0 de 1
+## Super Admin — completo
 
-| Pantalla | Estado | Líneas |
-|---|---|---|
-| `super/salud-cads` | ⬜ pendiente | — |
+| Pantalla | Estado |
+|---|---|
+| `super/tenants` | ✅ portada |
+| `super/salud-cads` | ✅ portada |
 
-Falta también `super-admin.service.ts` y el `super-admin.guard`.
+Con ellas van `super-admin.service.ts`, `super-admin.guard` y el **selector de
+CAD** del superadministrador, que faltaba por completo aunque la capa
+multi-tenant de `auth.service` ya estuviera portada.
+
+**Selector de CAD** (`core/layout/topbar/topbar-tenant-switcher/`). El backend
+elige la base de datos según el claim `cod_dane` del JWT, así que cambiar de CAD
+es pedir un token nuevo a `POST /super/switch-context` y recargar: cualquier dato
+ya cargado pertenece al CAD anterior. Vive en la barra superior junto al menú de
+usuario y sólo pinta algo para el superadministrador. Cuando el contexto está
+cambiado el disparador se marca en amarillo institucional y dice «Administrando
+otro CAD» — administrar datos de otra unidad sin darse cuenta es el riesgo real
+de esta función, no el clic de más.
+
+En el origen esto era un `context-banner` con estilos propios; aquí reutiliza el
+lenguaje de `.profile-trigger` / `.user-dropdown` del menú de usuario.
+
+**Corregido respecto del origen:** `takeUntilDestroyed()` se llamaba dentro de
+`ngOnInit` y del manejador de clic sin `DestroyRef`. Fuera de un contexto de
+inyección eso lanza NG0203, es decir el cambio de CAD habría fallado siempre.
+Aquí el `DestroyRef` se captura como campo y se le pasa.
+
+**`salud-cads` reescrita sobre el kit.** El origen traía 387 líneas de SCSS y las
+clases globales `ui-panel` / `ui-btn` / `ui-control` de secad_angular, que en la
+plantilla no existen. Ahora usa `ui-page-header`, `ui-search-input`, `ui-select`,
+`ui-badge`, `ui-spinner`, y el historial pasó de ser un segundo panel con tabla
+a mano a un `ui-modal` con `ui-table`. Otra corrección: el aviso de CADs en
+alerta se disparaba en cada refresco, o sea dos toasts por minuto mientras un
+CAD siguiera caído; ahora sólo avisa por los que acaban de degradarse.
 
 ---
 
@@ -183,7 +222,7 @@ Faltan 8, y varios bloquean pantallas de la lista de arriba:
 | Pantallas de operación | 3 | 9 |
 | Pantallas de administración | 9 | 16 |
 | Servicios de administración | 12 | 20 |
-| Super Admin | 0 | 1 |
+| Super Admin | 2 | 2 |
 
 **Cimientos ya resueltos** (no hay que repetirlos): multi-tenant en
 `auth.service`, dependencias (SignalR 8, Leaflet, Chart.js, ExcelJS,

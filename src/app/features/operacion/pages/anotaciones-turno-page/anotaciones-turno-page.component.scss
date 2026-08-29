@@ -260,7 +260,7 @@
 }
 
 // ── Modo oscuro ───────────────────────────────────────────────────────────
-html.dark-mode {
+:host-context(html.dark-mode) {
   .anot-form-panel,
   .anot-card {
     background:   rgba(255, 255, 255, .03);

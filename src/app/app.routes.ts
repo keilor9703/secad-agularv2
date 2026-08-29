@@ -57,6 +57,11 @@ export const routes: Routes = [
         data: { breadcrumb: 'Administración' },
       },
       {
+        path: 'super',
+        loadChildren: () => import('./features/super/super.routes').then((m) => m.superRoutes),
+        data: { breadcrumb: 'Super Admin' },
+      },
+      {
         path: 'operacion',
         loadChildren: () =>
           import('./features/operacion/operacion.routes').then((m) => m.operacionRoutes),

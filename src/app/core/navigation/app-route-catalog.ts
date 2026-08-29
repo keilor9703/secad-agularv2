@@ -42,6 +42,12 @@ export const APP_ROUTE_CATALOG: readonly AppRouteCatalogItem[] = [
   },
   { route: '/administracion/dominio', label: 'Dominios', area: 'Administración' },
   { route: '/administracion/cuentas-email', label: 'Cuentas de correo', area: 'Administración' },
+  // ── Super Admin ──────────────────────────────────────────────────────────
+  // El menú las descarta igual si el usuario no es superadministrador: quien
+  // filtra por rol es la base (ctr_menu_roles) y, en la ruta, superAdminGuard.
+  { route: '/super/tenants', label: 'Gestión de Tenants', area: 'Super Admin' },
+  { route: '/super/salud-cads', label: 'Salud de CADs', area: 'Super Admin' },
+
   // ── Operación ────────────────────────────────────────────────────────────
   // Solo lo ya portado. Al portar recepción, eventos, pedido, turnos, reportes
   // o el mapa estadístico, agregarlos aquí o no aparecerán en el menú.

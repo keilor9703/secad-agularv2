@@ -1,0 +1,295 @@
+// ══════════════════════════════════════════════════════════════════════════
+//  Selector de CAD (tenant) del superadministrador
+//
+//  Vive en la barra superior, sobre el azul institucional, así que reutiliza
+//  el mismo lenguaje de .profile-trigger / .user-dropdown del menú de usuario:
+//  disparador de vidrio esmerilado arriba, panel blanco desplegado abajo.
+// ══════════════════════════════════════════════════════════════════════════
+
+:host {
+  display: block;
+}
+
+.tenant-switcher {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.tenant-trigger {
+  display: grid;
+  min-width: 0;
+  max-width: min(320px, 30vw);
+  min-height: 50px;
+  grid-template-columns: 26px minmax(0, 1fr) 14px;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 11px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 12px;
+  appearance: none;
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  cursor: pointer;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease;
+
+  &:hover,
+  &:focus-visible,
+  &[aria-expanded='true'] {
+    border-color: rgba(200, 255, 0, 0.42);
+    background: rgba(255, 255, 255, 0.2);
+  }
+
+  &:focus-visible {
+    outline: 3px solid rgba(200, 255, 0, 0.35);
+    outline-offset: 2px;
+  }
+
+  &:disabled {
+    cursor: progress;
+    opacity: 0.75;
+  }
+
+  // Estar administrando un CAD ajeno tiene que verse siempre, no sólo al
+  // abrir el desplegable: es la diferencia entre mirar y tocar datos de otra
+  // unidad.
+  &.is-switched {
+    border-color: var(--policia-acento, #c8ff00);
+    background: rgba(200, 255, 0, 0.18);
+  }
+
+  &__icon {
+    display: grid;
+    width: 26px;
+    height: 26px;
+    place-items: center;
+    border-radius: 8px;
+    background: var(--policia-acento, #c8ff00);
+    color: var(--policia-oscuro, #151b3b);
+    font-size: calc(0.78rem * var(--font-size-scale, 1));
+  }
+
+  &__text {
+    display: grid;
+    min-width: 0;
+    gap: 1px;
+    text-align: left;
+  }
+
+  &__label {
+    overflow: hidden;
+    color: rgba(255, 255, 255, 0.72);
+    font-size: calc(0.62rem * var(--font-size-scale, 1));
+    letter-spacing: 0.04em;
+    text-overflow: ellipsis;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  &__cad {
+    overflow: hidden;
+    font-size: calc(0.8rem * var(--font-size-scale, 1));
+    font-weight: 720;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__chevron {
+    font-size: calc(0.68rem * var(--font-size-scale, 1));
+    opacity: 0.8;
+  }
+}
+
+.tenant-dropdown {
+  position: absolute;
+  top: calc(100% + 9px);
+  right: 0;
+  display: grid;
+  width: max-content;
+  min-width: 290px;
+  max-width: min(380px, calc(100vw - 24px));
+  overflow: hidden;
+  border: 1px solid rgba(8, 166, 203, 0.16);
+  border-radius: 10px;
+  background: #ffffff;
+  box-shadow: 0 18px 38px rgba(2, 6, 23, 0.22);
+  z-index: 1300;
+
+  &__head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 10px 14px 8px;
+    border-bottom: 1px solid rgba(21, 27, 59, 0.1);
+    color: var(--policia-oscuro, #151b3b);
+    font-size: calc(0.7rem * var(--font-size-scale, 1));
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+
+    small {
+      color: var(--ui-text-muted, #6b7280);
+      font-size: calc(0.64rem * var(--font-size-scale, 1));
+      font-weight: 600;
+      text-transform: none;
+    }
+  }
+
+  &__buscar {
+    display: grid;
+    grid-template-columns: 16px minmax(0, 1fr);
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    border-bottom: 1px solid rgba(21, 27, 59, 0.08);
+    color: var(--ui-text-muted, #6b7280);
+
+    input {
+      width: 100%;
+      padding: 5px 0;
+      border: 0;
+      background: transparent;
+      color: var(--policia-oscuro, #151b3b);
+      font: inherit;
+      font-size: calc(0.78rem * var(--font-size-scale, 1));
+
+      &:focus {
+        outline: none;
+      }
+    }
+  }
+
+  // La lista puede tener decenas de CADs: se desplaza dentro del panel en vez
+  // de estirarlo fuera de la pantalla.
+  &__lista {
+    display: grid;
+    max-height: 320px;
+    overflow-y: auto;
+  }
+
+  &__vacio {
+    margin: 0;
+    padding: 16px 14px;
+    color: var(--ui-text-muted, #6b7280);
+    font-size: calc(0.76rem * var(--font-size-scale, 1));
+    font-style: italic;
+  }
+
+  &__divisor {
+    height: 1px;
+    background: rgba(21, 27, 59, 0.1);
+  }
+}
+
+.tenant-item {
+  display: grid;
+  width: 100%;
+  min-height: 44px;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  border: 0;
+  background: transparent;
+  color: var(--policia-oscuro, #151b3b);
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+
+  &:hover,
+  &:focus-visible {
+    background: rgba(8, 166, 203, 0.08);
+  }
+
+  &.is-active {
+    background: rgba(8, 166, 203, 0.12);
+    font-weight: 800;
+  }
+
+  &__nombre {
+    overflow: hidden;
+    font-size: calc(0.78rem * var(--font-size-scale, 1));
+    font-weight: 700;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__dane {
+    color: var(--ui-text-muted, #6b7280);
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: calc(0.68rem * var(--font-size-scale, 1));
+  }
+
+  &__check {
+    color: #0e7490;
+    font-size: calc(0.72rem * var(--font-size-scale, 1));
+  }
+}
+
+.tenant-volver {
+  display: flex;
+  width: 100%;
+  min-height: 42px;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border: 0;
+  background: transparent;
+  color: var(--policia-medio, #002a66);
+  cursor: pointer;
+  font: inherit;
+  font-size: calc(0.78rem * var(--font-size-scale, 1));
+  font-weight: 720;
+  text-align: left;
+
+  &:hover,
+  &:focus-visible {
+    background: rgba(8, 166, 203, 0.08);
+  }
+}
+
+// En pantallas estrechas el disparador se reduce al icono: el nombre del CAD
+// se lee al abrir el panel.
+@media (max-width: 860px) {
+  .tenant-trigger {
+    grid-template-columns: 26px 14px;
+
+    &__text {
+      display: none;
+    }
+  }
+}
+
+:host-context(html.dark-mode) {
+  .tenant-dropdown {
+    border-color: rgba(255, 255, 255, 0.14);
+    background: #131a2e;
+  }
+  .tenant-dropdown__head,
+  .tenant-item {
+    color: #e5e7eb;
+  }
+  .tenant-dropdown__head,
+  .tenant-dropdown__buscar {
+    border-bottom-color: rgba(255, 255, 255, 0.1);
+  }
+  .tenant-dropdown__buscar input {
+    color: #e5e7eb;
+  }
+  .tenant-dropdown__divisor {
+    background: rgba(255, 255, 255, 0.1);
+  }
+  .tenant-item:hover,
+  .tenant-item:focus-visible {
+    background: rgba(8, 166, 203, 0.16);
+  }
+  .tenant-item.is-active {
+    background: rgba(8, 166, 203, 0.22);
+  }
+  .tenant-volver {
+    color: #7dd3fc;
+  }
+}

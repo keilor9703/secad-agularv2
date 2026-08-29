@@ -40,6 +40,6 @@
   }
 }
 
-html.dark-mode {
+:host-context(html.dark-mode) {
   .civil-form__nota { background: rgba(8, 166, 203, .14); }
 }

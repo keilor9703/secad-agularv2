@@ -1,0 +1,199 @@
+<div class="tn-page">
+
+  <app-ui-page-header
+    title="Gestión de Tenants / CADs"
+    icon="fa-solid fa-server"
+    description="Registra y administra los nodos CAD conectados al sistema SECAD."
+    [minimizable]="false"
+  >
+    <app-ui-button
+      page-header-actions
+      variant="primary"
+      icon="fa-solid fa-plus"
+      (buttonClick)="openCreate()"
+    >
+      Nuevo Tenant
+    </app-ui-button>
+  </app-ui-page-header>
+
+  <app-ui-table
+    [columns]="columns"
+    [rows]="tenants()"
+    [actions]="acciones"
+    [loading]="loading()"
+    loadingMessage="Cargando tenants…"
+    emptyMessage="No hay tenants registrados."
+    actionDisplay="row-hover"
+    actionsPosition="right"
+    actionMenuLabel="Acciones del tenant"
+    (actionClick)="onAccion($event)"
+  />
+
+  <ng-template #celdaNombre let-row="row">
+    <strong>{{ row.nombre }}</strong>
+    @if (row.codUnidad) {
+      <div class="tn-sub">{{ row.codUnidad }}</div>
+    }
+  </ng-template>
+
+  <ng-template #celdaUbicacion let-row="row">
+    {{ row.departamento }}
+    @if (row.municipio) {
+      <div class="tn-sub">{{ row.municipio }}</div>
+    }
+  </ng-template>
+
+  <!-- La salud lleva insignia + latencia debajo, así que necesita plantilla. -->
+  <ng-template #celdaSalud let-row="row">
+    <app-ui-badge
+      [label]="nivelLabel(row.nivelOperacion)"
+      [variant]="nivelVariant(row.nivelOperacion)"
+      [icon]="'fa-solid ' + nivelIcon(row.nivelOperacion)"
+      iconPosition="start"
+    />
+    @if (row.latenciaMs != null) {
+      <div class="tn-sub">{{ row.latenciaMs }} ms</div>
+    }
+  </ng-template>
+
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     Registrar / editar CAD
+     ══════════════════════════════════════════════════════════════════════ -->
+<app-ui-modal
+  [open]="showModal()"
+  [title]="modalMode() === 'create' ? 'Registrar nuevo CAD' : 'Editar CAD'"
+  [icon]="modalMode() === 'create' ? 'fa-solid fa-plus-circle' : 'fa-solid fa-pen-to-square'"
+  size="lg"
+  (closeRequested)="closeModal()"
+>
+  <form modal-body [formGroup]="form" class="tn-form">
+
+    <div class="tn-row">
+      <app-ui-input
+        formControlName="codDane"
+        label="Código DANE"
+        placeholder="Ej: 11001"
+        [maxlength]="10"
+        [readonly]="modalMode() === 'edit'"
+        required
+        [error]="errorCodDane()"
+      />
+      <app-ui-input
+        formControlName="codUnidad"
+        label="Código Unidad (SILOG)"
+        placeholder="Ej: MEBOG"
+        [maxlength]="30"
+      />
+    </div>
+
+    <app-ui-input
+      formControlName="nombre"
+      label="Nombre del CAD"
+      placeholder="Ej: CAD Bogotá D.C."
+      [maxlength]="100"
+      required
+      [error]="errorNombre()"
+    />
+
+    <div class="tn-row">
+      <app-ui-input formControlName="departamento" label="Departamento" [maxlength]="50" />
+      <app-ui-input formControlName="municipio"    label="Municipio"    [maxlength]="100" />
+    </div>
+
+    <div class="tn-row">
+      <app-ui-select
+        formControlName="categoria"
+        label="Categoría"
+        [options]="opcionesCategoria"
+        [clearable]="false"
+        [searchable]="false"
+      />
+      <app-ui-select
+        formControlName="activo"
+        label="Estado"
+        [options]="opcionesEstado"
+        [clearable]="false"
+        [searchable]="false"
+      />
+    </div>
+
+    <app-ui-section-header
+      title="Sitio de grabación"
+      icon="fa-solid fa-tower-broadcast"
+    />
+
+    <app-ui-input
+      class="tn-medio"
+      formControlName="sitioGraba"
+      label="Código del sitio de grabación"
+      type="number"
+      placeholder="Ej: 1"
+      hint="Identifica el sitio principal de este CAD. Debe coincidir con un registro
+            de cad_sitios_grabacion en la base de datos del tenant."
+    />
+
+    <app-ui-section-header
+      title="Conexión a base de datos"
+      icon="fa-solid fa-database"
+      [description]="modalMode() === 'edit' ? 'Deje vacío para mantener el valor actual' : ''"
+    />
+
+    <div class="tn-row">
+      <app-ui-input
+        formControlName="dbHost"
+        label="Host BD"
+        [placeholder]="modalMode() === 'edit' ? '(mantener existente)' : 'Ej: 192.168.1.10'"
+        [maxlength]="100"
+        [required]="modalMode() === 'create'"
+        [error]="errorDbHost()"
+      />
+      <app-ui-input
+        class="tn-corto"
+        formControlName="dbPort"
+        label="Puerto BD"
+        type="number"
+      />
+    </div>
+
+    <div class="tn-row">
+      <app-ui-input
+        formControlName="dbName"
+        label="Nombre BD"
+        [placeholder]="modalMode() === 'edit' ? '(mantener existente)' : 'secad_bogota'"
+        [maxlength]="100"
+        [required]="modalMode() === 'create'"
+        [error]="errorDbName()"
+      />
+      <app-ui-input
+        formControlName="dbUsername"
+        label="Usuario BD"
+        [placeholder]="modalMode() === 'edit' ? '(mantener existente)' : 'postgres'"
+        [maxlength]="50"
+        [required]="modalMode() === 'create'"
+        [error]="errorDbUsuario()"
+      />
+    </div>
+
+    <app-ui-input
+      formControlName="dbPassword"
+      label="Contraseña BD"
+      type="password"
+      autocomplete="new-password"
+      [placeholder]="modalMode() === 'edit' ? '••••••••' : 'Contraseña segura'"
+      [hint]="modalMode() === 'edit' ? 'Vacío = mantener la contraseña existente.' : ''"
+      [required]="modalMode() === 'create'"
+      [error]="errorDbPassword()"
+    />
+
+  </form>
+
+  <div modal-actions class="tn-acciones">
+    <app-ui-button variant="secondary" appearance="ghost" icon="fa-solid fa-xmark"
+                   (buttonClick)="closeModal()">Cancelar</app-ui-button>
+    <app-ui-button variant="primary" icon="fa-solid fa-floppy-disk"
+                   [loading]="saving()" [disabled]="saving()"
+                   (buttonClick)="save()">{{ saving() ? 'Guardando…' : 'Guardar' }}</app-ui-button>
+  </div>
+</app-ui-modal>

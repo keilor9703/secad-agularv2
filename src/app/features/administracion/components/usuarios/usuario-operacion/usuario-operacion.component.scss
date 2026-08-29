@@ -49,6 +49,6 @@
   }
 }
 
-html.dark-mode {
+:host-context(html.dark-mode) {
   .usr-op__actual { background: rgba(8, 166, 203, .14); }
 }

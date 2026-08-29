@@ -234,7 +234,7 @@
 }
 
 // ── Modo oscuro ───────────────────────────────────────────────────────────
-html.dark-mode {
+:host-context(html.dark-mode) {
   .ent-fuerzas,
   .ent-detalle-card,
   .ent-form-card {

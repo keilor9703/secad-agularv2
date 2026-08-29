@@ -344,46 +344,46 @@
   }
 }
 
-html.dark-mode .ui-table-action-trigger,
-html.dark-mode .ui-table-action-menu {
+:host-context(html.dark-mode) .ui-table-action-trigger,
+:host-context(html.dark-mode) .ui-table-action-menu {
   border-color: rgba(255, 255, 255, 0.28);
   background: var(--ui-surface);
   color: var(--ui-text);
 }
 
-html.dark-mode .ui-table-action-menu__item,
-html.dark-mode .ui-table-action-menu__icon {
+:host-context(html.dark-mode) .ui-table-action-menu__item,
+:host-context(html.dark-mode) .ui-table-action-menu__icon {
   color: var(--ui-text);
 }
 
-html.dark-mode .ui-table-action-menu__item:hover:not(:disabled),
-html.dark-mode .ui-table-action-menu__item:focus-visible,
-html.dark-mode .ui-table-action-trigger:hover,
-html.dark-mode .ui-table-action-trigger[aria-expanded='true'] {
+:host-context(html.dark-mode) .ui-table-action-menu__item:hover:not(:disabled),
+:host-context(html.dark-mode) .ui-table-action-menu__item:focus-visible,
+:host-context(html.dark-mode) .ui-table-action-trigger:hover,
+:host-context(html.dark-mode) .ui-table-action-trigger[aria-expanded='true'] {
   background: rgba(255, 255, 255, 0.1);
   color: #ffffff;
 }
 
-html.dark-mode .ui-table-inline-action {
+:host-context(html.dark-mode) .ui-table-inline-action {
   border-color: rgba(255, 255, 255, 0.16);
   background: rgba(255, 255, 255, 0.07);
   color: var(--ui-text);
 }
 
-html.dark-mode .ui-table-inline-trigger {
+:host-context(html.dark-mode) .ui-table-inline-trigger {
   border-color: transparent;
   background: transparent;
   color: var(--ui-text);
 }
 
-html.dark-mode .ui-table-inline-actions {
+:host-context(html.dark-mode) .ui-table-inline-actions {
   border-color: rgba(255, 255, 255, 0.16);
   background: var(--ui-surface, #1e2840);
   box-shadow: 0 9px 22px rgba(0, 0, 0, 0.3);
 }
 
-html.dark-mode .ui-table-inline-action:hover:not(:disabled),
-html.dark-mode .ui-table-inline-action:focus-visible {
+:host-context(html.dark-mode) .ui-table-inline-action:hover:not(:disabled),
+:host-context(html.dark-mode) .ui-table-inline-action:focus-visible {
   background: rgba(255, 255, 255, 0.13);
   color: #ffffff;
 }

@@ -1,0 +1,48 @@
+// ══════════════════════════════════════════════════════════════════════════
+//  Gestión de Tenants / CADs
+//
+//  Tarjeta, tabla, insignias, modal, botones, campos y estado vacío los
+//  resuelven los componentes de shared/components/ui-*. Aquí solo queda la
+//  rejilla del formulario y el subtexto de las celdas.
+// ══════════════════════════════════════════════════════════════════════════
+
+.tn-page {
+  display:        flex;
+  flex-direction: column;
+  gap:            16px;
+  padding:        16px;
+}
+
+.tn-sub {
+  font-size: calc(11px * var(--font-size-scale, 1));
+  color:     var(--ui-text-muted, #6b7280);
+}
+
+.tn-form {
+  display:        flex;
+  flex-direction: column;
+  gap:            14px;
+}
+
+// Dos campos por línea; en móvil se apilan.
+.tn-row {
+  display: flex;
+  gap:     12px;
+
+  > * { flex: 1 1 0; min-width: 0; }
+
+  .tn-corto { flex: 0 0 140px; }
+
+  @media (max-width: 640px) {
+    flex-direction: column;
+    .tn-corto { flex: 1 1 auto; }
+  }
+}
+
+.tn-medio { max-width: 340px; }
+
+.tn-acciones {
+  display:         flex;
+  gap:             8px;
+  justify-content: flex-end;
+}
