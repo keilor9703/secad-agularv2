@@ -1,0 +1,300 @@
+<div class="as-page">
+
+  <app-ui-page-header
+    title="Asistente inteligente"
+    icon="fa-solid fa-robot"
+    description="Categorías de incidente y las preguntas que el asistente le hace al operador en cada una."
+    [minimizable]="false"
+  />
+
+  <div class="as-layout">
+
+    <!-- ═══ Categorías ═══════════════════════════════════════════════════ -->
+    <aside class="as-panel">
+      <app-ui-panel-header title="Categorías" icon="fa-solid fa-layer-group" appearance="soft">
+        <app-ui-chip
+          panel-header-actions
+          [value]="categorias().length"
+          label="registradas"
+          variant="info"
+          appearance="soft"
+          size="xs"
+        />
+      </app-ui-panel-header>
+
+      @if (loading()) {
+        <app-ui-spinner label="Cargando categorías…" contained />
+      } @else if (categorias().length === 0) {
+        <p class="as-vacio">Todavía no hay categorías. Cree la primera con el formulario de abajo.</p>
+      } @else {
+        <ul class="as-lista">
+          @for (c of categorias(); track c.id) {
+            <li>
+              <button
+                type="button"
+                class="as-item"
+                [class.as-item--activa]="estaSeleccionada(c)"
+                [class.as-item--inactiva]="!c.activo"
+                (click)="seleccionarCategoria(c)"
+              >
+                <i class="as-item__icono" [class]="c.icono" aria-hidden="true"></i>
+                <span class="as-item__texto">{{ c.descripcion }}</span>
+                <span class="as-item__meta">
+                  <span class="as-item__cod">{{ c.codigo }}</span>
+                  <span title="Preguntas">
+                    <i class="fa-solid fa-circle-question" aria-hidden="true"></i> {{ c.totalPreguntas }}
+                  </span>
+                </span>
+                <span class="as-item__acciones">
+                  <app-ui-button
+                    variant="secondary" appearance="ghost" size="sm"
+                    icon="fa-solid fa-pen" iconOnly
+                    ariaLabel="Editar categoría" tooltip="Editar"
+                    (buttonClick)="editarCategoria(c, $event)"
+                  />
+                  <app-ui-button
+                    variant="danger" appearance="ghost" size="sm"
+                    icon="fa-solid fa-trash" iconOnly
+                    ariaLabel="Eliminar categoría" tooltip="Eliminar"
+                    (buttonClick)="pedirBorrarCategoria(c, $event)"
+                  />
+                </span>
+              </button>
+            </li>
+          }
+        </ul>
+      }
+
+      <app-ui-section-header
+        [title]="editandoCategoriaId() ? 'Editar categoría' : 'Nueva categoría'"
+        icon="fa-solid fa-layer-group"
+        appearance="divider"
+      >
+        @if (editandoCategoriaId()) {
+          <app-ui-button
+            header-actions
+            variant="secondary" appearance="ghost" size="sm"
+            icon="fa-solid fa-xmark"
+            (buttonClick)="nuevaCategoria()"
+          >Cancelar</app-ui-button>
+        }
+      </app-ui-section-header>
+
+      <form [formGroup]="formCategoria" class="as-form">
+        <div class="as-form__par">
+          <app-ui-input
+            formControlName="codigo"
+            label="Código"
+            placeholder="Ej: HURTO"
+            hint="Se guarda en mayúsculas."
+            required
+            [error]="errorCodigo()"
+          />
+          <app-ui-input
+            class="as-form__corto"
+            formControlName="orden"
+            label="Orden"
+            type="number"
+          />
+        </div>
+        <app-ui-input
+          formControlName="descripcion"
+          label="Descripción"
+          placeholder="Ej: Delitos contra el patrimonio"
+          required
+          [error]="errorDescripcion()"
+        />
+        <app-ui-icon-picker formControlName="icono" label="Icono" [clearable]="false" />
+        <app-ui-toggle formControlName="activo" label="Activa" showStateText />
+
+        <div class="as-form__acciones">
+          <app-ui-button
+            variant="primary"
+            icon="fa-solid fa-floppy-disk"
+            [loading]="saving()"
+            [disabled]="saving()"
+            (buttonClick)="guardarCategoria()"
+          >{{ editandoCategoriaId() ? 'Guardar cambios' : 'Crear categoría' }}</app-ui-button>
+        </div>
+      </form>
+    </aside>
+
+    <!-- ═══ Preguntas ════════════════════════════════════════════════════ -->
+    <section class="as-detalle">
+      @if (categoriaSeleccionada(); as cat) {
+        <div class="as-panel">
+          <app-ui-panel-header
+            [title]="'Preguntas de ' + cat.descripcion"
+            [description]="'Se le muestran al operador en este orden cuando tipifica un incidente de ' + cat.codigo + '.'"
+            icon="fa-solid fa-circle-question"
+            appearance="soft"
+          />
+
+          @if (loadingPreguntas()) {
+            <app-ui-spinner label="Cargando preguntas…" contained />
+          } @else if (preguntas().length === 0) {
+            <p class="as-vacio">Esta categoría no tiene preguntas. Cree la primera abajo.</p>
+          } @else {
+            <ul class="as-preguntas">
+              @for (p of preguntas(); track p.id) {
+                <li class="as-pregunta" [class.as-pregunta--inactiva]="!p.activo">
+                  <span class="as-pregunta__orden">{{ p.orden }}</span>
+
+                  <div class="as-pregunta__cuerpo">
+                    <p class="as-pregunta__texto">{{ p.pregunta }}</p>
+                    @if (p.ayuda) {
+                      <p class="as-pregunta__ayuda">{{ p.ayuda }}</p>
+                    }
+                    @if (opcionesDe(p).length) {
+                      <ul class="as-opciones">
+                        @for (o of opcionesDe(p); track o) {
+                          <li>{{ o }}</li>
+                        }
+                      </ul>
+                    }
+                  </div>
+
+                  <span class="as-pregunta__marcas">
+                    <app-ui-badge
+                      [label]="tipoLabel(p.tipoRespuesta)"
+                      [icon]="tipoIcono(p.tipoRespuesta)"
+                      iconPosition="start"
+                      variant="info"
+                      size="xs"
+                    />
+                    @if (p.obligatoria) {
+                      <app-ui-badge label="Obligatoria" variant="warning" size="xs" />
+                    }
+                    @if (!p.activo) {
+                      <app-ui-badge label="Inactiva" variant="danger" size="xs" />
+                    }
+                  </span>
+
+                  <span class="as-pregunta__acciones">
+                    <app-ui-button
+                      variant="secondary" appearance="ghost" size="sm"
+                      icon="fa-solid fa-pen" iconOnly
+                      ariaLabel="Editar pregunta" tooltip="Editar"
+                      (buttonClick)="editarPregunta(p)"
+                    />
+                    <app-ui-button
+                      variant="danger" appearance="ghost" size="sm"
+                      icon="fa-solid fa-trash" iconOnly
+                      ariaLabel="Eliminar pregunta" tooltip="Eliminar"
+                      (buttonClick)="pedirBorrarPregunta(p)"
+                    />
+                  </span>
+                </li>
+              }
+            </ul>
+          }
+
+          <app-ui-section-header
+            [title]="editandoPreguntaId() ? 'Editar pregunta' : 'Nueva pregunta'"
+            icon="fa-solid fa-circle-question"
+            appearance="divider"
+          >
+            @if (editandoPreguntaId()) {
+              <app-ui-button
+                header-actions
+                variant="secondary" appearance="ghost" size="sm"
+                icon="fa-solid fa-xmark"
+                (buttonClick)="nuevaPregunta()"
+              >Cancelar</app-ui-button>
+            }
+          </app-ui-section-header>
+
+          <form [formGroup]="formPregunta" class="as-form">
+            <app-ui-input
+              formControlName="pregunta"
+              label="Pregunta"
+              placeholder="Ej: ¿El agresor sigue en el lugar?"
+              required
+              [error]="errorPregunta()"
+            />
+            <app-ui-input
+              formControlName="ayuda"
+              label="Texto de ayuda"
+              placeholder="Aclaración que verá el operador bajo la pregunta"
+            />
+
+            <div class="as-form__par">
+              <app-ui-select
+                formControlName="tipoRespuesta"
+                label="Tipo de respuesta"
+                [options]="opcionesTipo"
+                [clearable]="false"
+                [searchable]="false"
+              />
+              <app-ui-input
+                class="as-form__corto"
+                formControlName="orden"
+                label="Orden"
+                type="number"
+              />
+            </div>
+
+            @if (esSeleccion()) {
+              <label class="as-campo">
+                <span class="as-campo__lbl">Opciones <em>*</em></span>
+                <!-- Una opción por línea: es lo más rápido de escribir y de
+                     revisar cuando son diez o quince. -->
+                <textarea
+                  class="as-campo__area"
+                  rows="5"
+                  placeholder="Una opción por línea&#10;Sí&#10;No&#10;No sabe"
+                  [value]="opcionesTexto()"
+                  (input)="onOpciones($event)"
+                ></textarea>
+                <span class="as-campo__pie" [class.as-campo__pie--error]="errorOpciones()">
+                  {{ errorOpciones() || totalOpciones() + ' opción(es)' }}
+                </span>
+              </label>
+            }
+
+            <div class="as-form__par">
+              <app-ui-toggle formControlName="obligatoria" label="Obligatoria" showStateText />
+              <app-ui-toggle formControlName="activo" label="Activa" showStateText />
+            </div>
+
+            <div class="as-form__acciones">
+              <app-ui-button
+                variant="primary"
+                icon="fa-solid fa-floppy-disk"
+                [loading]="saving()"
+                [disabled]="saving()"
+                (buttonClick)="guardarPregunta()"
+              >{{ editandoPreguntaId() ? 'Guardar cambios' : 'Crear pregunta' }}</app-ui-button>
+            </div>
+          </form>
+        </div>
+      } @else {
+        <div class="as-vacio as-vacio--grande">
+          <i class="fa-solid fa-robot" aria-hidden="true"></i>
+          <p>Elija una categoría para ver y editar sus preguntas.</p>
+        </div>
+      }
+    </section>
+  </div>
+</div>
+
+<!-- ═══ Confirmar borrado ══════════════════════════════════════════════════ -->
+@if (borradoPendiente(); as b) {
+  <app-ui-modal
+    [open]="true"
+    [title]="b.titulo"
+    icon="fa-solid fa-triangle-exclamation"
+    size="sm"
+    (closeRequested)="cancelarBorrado()"
+  >
+    <p modal-body class="as-confirmar">{{ b.detalle }}</p>
+    <div modal-actions class="as-form__acciones">
+      <app-ui-button variant="secondary" appearance="ghost" (buttonClick)="cancelarBorrado()">
+        Cancelar
+      </app-ui-button>
+      <app-ui-button variant="danger" icon="fa-solid fa-trash" (buttonClick)="confirmarBorrado()">
+        Eliminar
+      </app-ui-button>
+    </div>
+  </app-ui-modal>
+}

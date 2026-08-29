@@ -1,0 +1,291 @@
+// ══════════════════════════════════════════════════════════════════════════
+//  Asistente inteligente
+//
+//  Encabezados, campos, selector de icono, interruptores, insignias, botones,
+//  spinner y modal los resuelven los componentes de shared/components/ui-*.
+//  Aquí quedan la rejilla maestro–detalle y las dos listas propias.
+// ══════════════════════════════════════════════════════════════════════════
+
+.as-page {
+  display:        flex;
+  flex-direction: column;
+  gap:            16px;
+  padding:        16px;
+}
+
+.as-layout {
+  display:               grid;
+  grid-template-columns: 420px minmax(0, 1fr);
+  gap:                   16px;
+  align-items:           start;
+
+  @media (max-width: 1100px) { grid-template-columns: minmax(0, 1fr); }
+}
+
+.as-panel {
+  display:        flex;
+  flex-direction: column;
+  border:         1px solid rgba(21, 27, 59, .12);
+  border-radius:  10px;
+  overflow:       hidden;
+  background:     var(--ui-surface, #fff);
+}
+
+.as-detalle { min-width: 0; }
+
+// ── Lista de categorías ───────────────────────────────────────────────────
+.as-lista {
+  list-style: none;
+  margin:     0;
+  padding:    0;
+  max-height: 380px;
+  overflow-y: auto;
+}
+
+// Dos filas: la descripción ocupa una línea entera y debajo van el código y el
+// número de preguntas; las acciones abarcan las dos.
+.as-item {
+  display:      grid;
+  grid-template-columns: 26px minmax(0, 1fr) auto;
+  grid-template-areas:
+    "icono texto acciones"
+    "icono meta  acciones";
+  align-items:  center;
+  column-gap:   10px;
+  row-gap:      2px;
+  width:        100%;
+  padding:      9px 12px;
+  border:       0;
+  border-left:  3px solid transparent;
+  border-bottom: 1px solid rgba(21, 27, 59, .07);
+  background:   transparent;
+  cursor:       pointer;
+  text-align:   left;
+  font:         inherit;
+
+  &:hover { background: rgba(8, 166, 203, .06); }
+
+  &--activa {
+    border-left-color: #0e7490;
+    background:        rgba(8, 166, 203, .10);
+  }
+
+  // Una categoría inactiva sigue listada —hay que poder reactivarla— pero se
+  // atenúa para que no se confunda con las que el asistente sí usa.
+  &--inactiva { opacity: .55; }
+
+  &__icono {
+    grid-area: icono;
+    color:     #0e7490;
+    font-size: calc(14px * var(--font-size-scale, 1));
+    text-align: center;
+  }
+
+  &__texto {
+    grid-area:   texto;
+    min-width:   0;
+    font-size:   calc(12.5px * var(--font-size-scale, 1));
+    font-weight: 600;
+    line-height: 1.25;
+  }
+
+  &__meta {
+    grid-area: meta;
+    display:   flex;
+    flex-wrap: wrap;
+    gap:       4px 10px;
+    color:     var(--ui-text-muted, #6b7280);
+    font-size: calc(10.5px * var(--font-size-scale, 1));
+
+    span { display: inline-flex; align-items: center; gap: 3px; }
+  }
+
+  &__cod {
+    padding:       0 6px;
+    border-radius: 999px;
+    background:    rgba(21, 27, 59, .07);
+    font-family:   ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+
+  &__acciones { grid-area: acciones; display: flex; gap: 2px; }
+}
+
+// ── Formularios ───────────────────────────────────────────────────────────
+.as-form {
+  display:        flex;
+  flex-direction: column;
+  gap:            12px;
+  padding:        14px;
+
+  &__par {
+    display:   flex;
+    gap:       12px;
+    flex-wrap: wrap;
+
+    > * { flex: 1 1 200px; min-width: 0; }
+  }
+
+  &__corto { flex: 0 0 110px !important; }
+
+  &__acciones {
+    display:         flex;
+    gap:             8px;
+    justify-content: flex-end;
+  }
+}
+
+// Campo de opciones: el kit no trae textarea, así que va a mano pero con los
+// mismos tokens que ui-input.
+.as-campo {
+  display:        flex;
+  flex-direction: column;
+  gap:            4px;
+
+  &__lbl {
+    color:       var(--policia-medio, #002a66);
+    font-size:   calc(11.5px * var(--font-size-scale, 1));
+    font-weight: 700;
+
+    em { color: #dc2626; font-style: normal; }
+  }
+
+  &__area {
+    padding:       9px 11px;
+    border:        1px solid rgba(21, 27, 59, .2);
+    border-radius: 8px;
+    background:    transparent;
+    color:         inherit;
+    font:          inherit;
+    font-size:     calc(12.5px * var(--font-size-scale, 1));
+    resize:        vertical;
+
+    &:focus {
+      border-color: #0e7490;
+      outline:      2px solid rgba(8, 166, 203, .25);
+      outline-offset: 1px;
+    }
+  }
+
+  &__pie {
+    color:     var(--ui-text-muted, #6b7280);
+    font-size: calc(10.5px * var(--font-size-scale, 1));
+
+    &--error { color: #dc2626; }
+  }
+}
+
+// ── Lista de preguntas ────────────────────────────────────────────────────
+.as-preguntas {
+  list-style: none;
+  display:        flex;
+  flex-direction: column;
+  gap:            8px;
+  margin:         0;
+  padding:        12px 14px;
+}
+
+.as-pregunta {
+  display:       grid;
+  grid-template-columns: 30px minmax(0, 1fr) auto auto;
+  align-items:   start;
+  gap:           10px;
+  padding:       10px 12px;
+  border:        1px solid rgba(21, 27, 59, .10);
+  border-radius: 8px;
+
+  &--inactiva { opacity: .6; }
+
+  &__orden {
+    padding-top: 2px;
+    color:       var(--ui-text-muted, #6b7280);
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size:   calc(11px * var(--font-size-scale, 1));
+    text-align:  center;
+  }
+
+  &__cuerpo { min-width: 0; }
+
+  &__texto {
+    margin:      0;
+    font-size:   calc(12.5px * var(--font-size-scale, 1));
+    font-weight: 600;
+    line-height: 1.35;
+  }
+
+  &__ayuda {
+    margin:    2px 0 0;
+    color:     var(--ui-text-muted, #6b7280);
+    font-size: calc(11px * var(--font-size-scale, 1));
+  }
+
+  &__marcas {
+    display:         flex;
+    flex-wrap:       wrap;
+    gap:             4px;
+    justify-content: flex-end;
+    padding-top:     1px;
+  }
+
+  &__acciones { display: flex; gap: 2px; }
+}
+
+.as-opciones {
+  display:    flex;
+  flex-wrap:  wrap;
+  gap:        4px;
+  margin:     6px 0 0;
+  padding:    0;
+  list-style: none;
+
+  li {
+    padding:       1px 8px;
+    border:        1px solid rgba(21, 27, 59, .14);
+    border-radius: 999px;
+    font-size:     calc(10.5px * var(--font-size-scale, 1));
+  }
+}
+
+// ── Vacíos y confirmación ─────────────────────────────────────────────────
+.as-vacio {
+  margin:     0;
+  padding:    18px 14px;
+  color:      var(--ui-text-muted, #6b7280);
+  font-size:  calc(12px * var(--font-size-scale, 1));
+  font-style: italic;
+
+  &--grande {
+    display:        flex;
+    flex-direction: column;
+    align-items:    center;
+    gap:            10px;
+    padding:        60px 20px;
+    border:         1px dashed rgba(21, 27, 59, .16);
+    border-radius:  10px;
+    font-style:     normal;
+    text-align:     center;
+
+    i { font-size: 2.2rem; opacity: .3; }
+  }
+}
+
+.as-confirmar {
+  margin:    0;
+  font-size: calc(12.5px * var(--font-size-scale, 1));
+  line-height: 1.5;
+}
+
+// ── Modo oscuro ───────────────────────────────────────────────────────────
+:host-context(html.dark-mode) {
+  .as-panel {
+    background:   rgba(255, 255, 255, .03);
+    border-color: rgba(255, 255, 255, .12);
+  }
+  .as-item          { border-bottom-color: rgba(255, 255, 255, .08); }
+  .as-item:hover    { background: rgba(8, 166, 203, .12); }
+  .as-item--activa  { background: rgba(8, 166, 203, .18); }
+  .as-item__cod     { background: rgba(255, 255, 255, .10); }
+  .as-pregunta      { border-color: rgba(255, 255, 255, .12); }
+  .as-opciones li   { border-color: rgba(255, 255, 255, .16); }
+  .as-campo__area   { border-color: rgba(255, 255, 255, .2); }
+  .as-vacio--grande { border-color: rgba(255, 255, 255, .18); }
+}

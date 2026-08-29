@@ -1,0 +1,317 @@
+// ══════════════════════════════════════════════════════════════════════════
+//  Hub de integraciones
+//
+//  Pestañas, tablas, modales, campos, botones, insignias, spinner y el panel
+//  plegable los resuelven los componentes de shared/components/ui-*. Aquí
+//  quedan la guía de configuración, las tarjetas de canales entrantes y los
+//  bloques de JSON, que no tienen equivalente en el kit.
+// ══════════════════════════════════════════════════════════════════════════
+
+.ig-page {
+  display:        flex;
+  flex-direction: column;
+  gap:            16px;
+  padding:        16px;
+}
+
+.ig-panel {
+  display:        flex;
+  flex-direction: column;
+  gap:            14px;
+}
+
+.ig-subtabs { max-width: 560px; }
+.ig-filtro  { max-width: 260px; }
+
+// ── Texto auxiliar ────────────────────────────────────────────────────────
+.ig-nota {
+  margin:      0;
+  font-size:   calc(12px * var(--font-size-scale, 1));
+  line-height: 1.55;
+
+  code {
+    padding:       1px 5px;
+    border-radius: 4px;
+    background:    rgba(21, 27, 59, .07);
+    font-family:   ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size:     .92em;
+  }
+}
+
+.ig-aviso {
+  display:       flex;
+  gap:           10px;
+  margin:        0;
+  padding:       10px 14px;
+  border:        1px solid rgba(8, 166, 203, .3);
+  border-radius: 10px;
+  background:    rgba(8, 166, 203, .08);
+  font-size:     calc(12px * var(--font-size-scale, 1));
+  line-height:   1.55;
+
+  > i { margin-top: 3px; color: #0e7490; }
+
+  code {
+    padding:       1px 5px;
+    border-radius: 4px;
+    background:    rgba(21, 27, 59, .08);
+    font-family:   ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size:     .92em;
+  }
+}
+
+.ig-sub {
+  color:     var(--ui-text-muted, #6b7280);
+  font-size: calc(11px * var(--font-size-scale, 1));
+
+  &--ok { color: #16a34a; }
+}
+
+// Fragmento de la respuesta de la API dentro de la tabla: una línea, sin
+// romper la fila, y con el texto completo en el title.
+.ig-snippet {
+  display:       inline-block;
+  max-width:     320px;
+  overflow:      hidden;
+  font-family:   ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size:     calc(10.5px * var(--font-size-scale, 1));
+  text-overflow: ellipsis;
+  white-space:   nowrap;
+  vertical-align: bottom;
+
+  &--error { color: #dc2626; }
+}
+
+// ── Guía de configuración ─────────────────────────────────────────────────
+.ig-guia {
+  &__par {
+    display:               grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap:                   16px;
+  }
+
+  &__sub {
+    display:     flex;
+    align-items: center;
+    gap:         6px;
+    margin:      0 0 4px;
+    font-size:   calc(12px * var(--font-size-scale, 1));
+    font-weight: 700;
+
+    i { color: #0e7490; }
+  }
+}
+
+// Los ejemplos son largos y con líneas largas: se desplazan dentro de su caja
+// en vez de estirar la página.
+.ig-pre {
+  max-height:    280px;
+  margin:        0;
+  padding:       12px 14px;
+  overflow:      auto;
+  border:        1px solid rgba(21, 27, 59, .12);
+  border-radius: 8px;
+  background:    rgba(21, 27, 59, .04);
+  font-family:   ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size:     calc(11px * var(--font-size-scale, 1));
+  line-height:   1.55;
+  white-space:   pre;
+}
+
+.ig-visor {
+  max-height:    60vh;
+  margin:        0;
+  padding:       14px;
+  overflow:      auto;
+  border-radius: 8px;
+  background:    rgba(21, 27, 59, .04);
+  font-family:   ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size:     calc(11.5px * var(--font-size-scale, 1));
+  line-height:   1.55;
+  white-space:   pre;
+}
+
+// ── Tarjetas de canales entrantes ─────────────────────────────────────────
+// Anchos acotados: con 1fr cada tarjeta se estira hasta que su contenido queda
+// perdido en el medio.
+.ig-grid {
+  display:               grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 380px));
+  gap:                   12px;
+}
+
+.ig-tarjeta {
+  display:        flex;
+  flex-direction: column;
+  gap:            6px;
+  padding:        14px;
+  border:         1px solid rgba(21, 27, 59, .12);
+  border-radius:  10px;
+  background:     var(--ui-surface, #fff);
+
+  &--inactiva { opacity: .6; }
+
+  &__head {
+    display:         flex;
+    align-items:     center;
+    justify-content: space-between;
+    gap:             10px;
+  }
+
+  &__nombre {
+    margin:      2px 0 0;
+    font-size:   calc(13px * var(--font-size-scale, 1));
+    font-weight: 700;
+    line-height: 1.3;
+  }
+
+  &__desc {
+    margin:    0;
+    color:     var(--ui-text-muted, #6b7280);
+    font-size: calc(11.5px * var(--font-size-scale, 1));
+  }
+
+  &__endpoint {
+    display:     flex;
+    align-items: center;
+    gap:         6px;
+    margin:      2px 0 0;
+    min-width:   0;
+
+    i    { color: var(--ui-text-muted, #6b7280); }
+    code {
+      overflow:      hidden;
+      padding:       1px 6px;
+      border-radius: 4px;
+      background:    rgba(21, 27, 59, .07);
+      font-family:   ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size:     calc(10.5px * var(--font-size-scale, 1));
+      text-overflow: ellipsis;
+      white-space:   nowrap;
+    }
+  }
+
+  &__dato {
+    display:     flex;
+    gap:         6px;
+    margin:      0;
+    color:       var(--ui-text-muted, #6b7280);
+    font-size:   calc(11px * var(--font-size-scale, 1));
+
+    i { margin-top: 2px; }
+  }
+
+  &__pie {
+    display:         flex;
+    align-items:     center;
+    gap:             4px;
+    justify-content: flex-end;
+    margin-top:      auto;
+    padding-top:     6px;
+  }
+}
+
+.ig-vacio {
+  grid-column:   1 / -1;
+  margin:        0;
+  padding:       28px 16px;
+  border:        1px dashed rgba(21, 27, 59, .16);
+  border-radius: 10px;
+  color:         var(--ui-text-muted, #6b7280);
+  font-size:     calc(12.5px * var(--font-size-scale, 1));
+  font-style:    italic;
+  text-align:    center;
+}
+
+// ── Formularios de los modales ────────────────────────────────────────────
+.ig-form {
+  display:        flex;
+  flex-direction: column;
+  gap:            14px;
+
+  &__par {
+    display:   flex;
+    gap:       12px;
+    flex-wrap: wrap;
+
+    > * { flex: 1 1 220px; min-width: 0; }
+  }
+
+  &__medio { flex: 0 0 220px !important; }
+  &__corto { flex: 0 0 130px !important; }
+}
+
+// El kit no trae textarea; este campo replica los tokens de ui-input.
+.ig-campo {
+  display:        flex;
+  flex-direction: column;
+  gap:            4px;
+
+  &__lbl {
+    color:       var(--policia-medio, #002a66);
+    font-size:   calc(11.5px * var(--font-size-scale, 1));
+    font-weight: 700;
+
+    em { color: #dc2626; font-style: normal; }
+  }
+
+  &__area {
+    padding:       9px 11px;
+    border:        1px solid rgba(21, 27, 59, .2);
+    border-radius: 8px;
+    background:    transparent;
+    color:         inherit;
+    font-family:   ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size:     calc(11.5px * var(--font-size-scale, 1));
+    resize:        vertical;
+
+    &:focus {
+      border-color:   #0e7490;
+      outline:        2px solid rgba(8, 166, 203, .25);
+      outline-offset: 1px;
+    }
+  }
+
+  &__pie {
+    color:     var(--ui-text-muted, #6b7280);
+    font-size: calc(10.5px * var(--font-size-scale, 1));
+
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+  }
+}
+
+.ig-acciones {
+  display:         flex;
+  align-items:     center;
+  gap:             8px;
+  justify-content: flex-end;
+
+  &--repartidas { width: 100%; }
+
+  &__hueco { flex: 1; }
+
+  &__nota {
+    color:     var(--ui-text-muted, #6b7280);
+    font-size: calc(10.5px * var(--font-size-scale, 1));
+  }
+}
+
+// ── Modo oscuro ───────────────────────────────────────────────────────────
+:host-context(html.dark-mode) {
+  .ig-tarjeta {
+    background:   rgba(255, 255, 255, .03);
+    border-color: rgba(255, 255, 255, .12);
+  }
+  .ig-pre,
+  .ig-visor          { background: rgba(255, 255, 255, .05); }
+  .ig-pre            { border-color: rgba(255, 255, 255, .12); }
+  .ig-nota code,
+  .ig-aviso code,
+  .ig-tarjeta__endpoint code { background: rgba(255, 255, 255, .1); }
+  .ig-aviso          { background: rgba(8, 166, 203, .14); border-color: rgba(8, 166, 203, .35); }
+  .ig-aviso > i      { color: #7dd3fc; }
+  .ig-campo__area    { border-color: rgba(255, 255, 255, .2); }
+  .ig-vacio          { border-color: rgba(255, 255, 255, .18); }
+}

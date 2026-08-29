@@ -1,0 +1,824 @@
+<div class="ig-page">
+
+  <app-ui-page-header
+    title="Hub de integraciones"
+    icon="fa-solid fa-plug-circle-bolt"
+    description="Todo lo que entra y sale de SECAD hacia otros sistemas: agencias externas, canales de recepción, cámaras y el registro de lo intercambiado."
+    [minimizable]="false"
+  />
+
+  <app-ui-segmented-tabs
+    [items]="pestanas()"
+    [activeId]="tab()"
+    ariaLabel="Secciones del hub de integraciones"
+    (selectionChange)="setTab($any($event.id))"
+  />
+
+  <!-- ═══ Salientes ════════════════════════════════════════════════════════ -->
+  @if (tab() === 'salientes') {
+    <section class="ig-panel">
+      <app-ui-section-header
+        title="Integraciones salientes"
+        icon="fa-solid fa-arrow-up-right-from-square"
+        description="Sistemas externos a los que SECAD envía casos por API REST: Bomberos, Cruz Roja, Tránsito, Defensa Civil…"
+        appearance="divider"
+      >
+        <app-ui-button
+          header-actions
+          variant="primary"
+          size="sm"
+          icon="fa-solid fa-plus"
+          (buttonClick)="openCreateSal()"
+        >Nueva agencia</app-ui-button>
+      </app-ui-section-header>
+
+      <!-- Guía de configuración: larga y de consulta puntual, así que va
+           plegada. Es lo que evita que cada nueva agencia acabe en soporte. -->
+      <app-ui-expansion-panel
+        class="ig-guia"
+        title="¿Cómo se configura una agencia saliente?"
+        icon="fa-solid fa-circle-question"
+        description="Ejemplo completo por modo de autenticación, cabeceras y mapeo de campos."
+      >
+        <p class="ig-nota">
+          Una <strong>agencia saliente</strong> es un sistema externo al que SECAD
+          <strong>envía el caso automáticamente</strong> vía API REST cuando el despachador
+          decide notificarlo.
+        </p>
+
+        <app-ui-segmented-tabs
+          [items]="pestanasAuth"
+          [activeId]="formSalAuthExampleTab()"
+          size="sm"
+          ariaLabel="Modo de autenticación del ejemplo"
+          [showBadges]="false"
+          (selectionChange)="formSalAuthExampleTab.set($any($event.id))"
+        />
+
+        @switch (formSalAuthExampleTab()) {
+          @case ('NONE') {
+            <p class="ig-nota">
+              La agencia <strong>no exige autenticación</strong>: SECAD envía el caso sin cabecera
+              <code>Authorization</code>. Solo tiene sentido en redes internas cerradas o con
+              lista blanca de IP.
+            </p>
+            <pre class="ig-pre">{{ ejNone }}</pre>
+          }
+          @case ('BEARER') {
+            <p class="ig-nota">
+              La agencia entrega un <strong>token JWT o API Key estático</strong> que va en cada
+              petición como <code>Authorization: Bearer &lt;token&gt;</code>. Es el modo más común.
+            </p>
+            <pre class="ig-pre">{{ ejBearer }}</pre>
+          }
+          @case ('BASIC') {
+            <p class="ig-nota">
+              La agencia exige <strong>usuario y contraseña</strong>. SECAD los codifica en Base64
+              y los envía como <code>Authorization: Basic &lt;base64&gt;</code>.
+            </p>
+            <pre class="ig-pre">{{ ejBasic }}</pre>
+          }
+          @case ('OAUTH2') {
+            <p class="ig-nota">
+              La agencia tiene un <strong>servidor OAuth2</strong>. Antes de enviar el caso SECAD
+              pide un token con <code>client_credentials</code> y luego lo usa como
+              <code>Bearer</code>. Configure la URL del endpoint de token, el
+              <em>client_id</em> como usuario y el <em>client_secret</em> como contraseña.
+            </p>
+            <pre class="ig-pre">{{ ejOAuth2 }}</pre>
+          }
+          @case ('API_KEY') {
+            <p class="ig-nota">
+              La agencia usa una <strong>API Key en una cabecera propia</strong>, no Bearer.
+              Configure el nombre del header (por ejemplo <code>X-Api-Key</code>) y su valor.
+            </p>
+            <pre class="ig-pre">{{ ejApiKey }}</pre>
+          }
+          @case ('CREDS_BODY') {
+            <p class="ig-nota">
+              La agencia <strong>no usa cabecera de autorización</strong>: espera el usuario y la
+              contraseña dentro del <em>body</em> JSON, junto a los datos del caso. Configure los
+              nombres de campo que espera.
+            </p>
+            <pre class="ig-pre">{{ ejCredsBody }}</pre>
+          }
+          @case ('PIP_TOKEN') {
+            <p class="ig-aviso">
+              <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
+              <span>
+                <strong>Canal institucional PIP.</strong> SECAD reutiliza el token técnico que ya
+                obtiene del PIP al arrancar: no hay credenciales que configurar aquí. Basta con la
+                URL del endpoint PIP de esa integración.
+              </span>
+            </p>
+            <pre class="ig-pre">{{ ejPip }}</pre>
+          }
+        }
+
+        <div class="ig-guia__par">
+          <div>
+            <h4 class="ig-guia__sub"><i class="fa-solid fa-code" aria-hidden="true"></i> Cabeceras HTTP adicionales</h4>
+            <p class="ig-nota">
+              Las que la agencia exija además de <code>Authorization</code>. JSON válido; si no hace
+              falta ninguna, se deja vacío.
+            </p>
+            <pre class="ig-pre">{{ ejemploSalCabeceras }}</pre>
+          </div>
+          <div>
+            <h4 class="ig-guia__sub"><i class="fa-solid fa-shuffle" aria-hidden="true"></i> Mapeo de campos</h4>
+            <p class="ig-nota">
+              Traduce los nombres de SECAD a los de la agencia, con el formato
+              <code>"campoSECAD": "campoAgencia"</code>. Lo que no se mapea viaja con su nombre original.
+            </p>
+            <pre class="ig-pre">{{ ejemploSalMapeo }}</pre>
+          </div>
+        </div>
+      </app-ui-expansion-panel>
+
+      <app-ui-table
+        [columns]="columnasSalientes"
+        [rows]="salientes()"
+        [actions]="accionesSalientes"
+        [loading]="loadingSal()"
+        loadingMessage="Cargando agencias…"
+        emptyMessage="No hay agencias externas configuradas."
+        actionDisplay="row-hover"
+        actionsPosition="right"
+        actionMenuLabel="Acciones de la agencia"
+        (actionClick)="onAccionSaliente($event)"
+      />
+
+    </section>
+  }
+
+  <!-- ═══ Entrantes ════════════════════════════════════════════════════════ -->
+  @if (tab() === 'entrantes') {
+    <section class="ig-panel">
+      <app-ui-section-header
+        title="Integraciones entrantes"
+        icon="fa-solid fa-inbox"
+        description="Endpoints que SECAD expone para recibir casos de sistemas externos: chat, SMS, aplicaciones…"
+        appearance="divider"
+      >
+        <app-ui-button
+          header-actions
+          variant="primary"
+          size="sm"
+          icon="fa-solid fa-plus"
+          (buttonClick)="openCreateEnt()"
+        >Nueva integración</app-ui-button>
+      </app-ui-section-header>
+
+      <p class="ig-aviso">
+        <i class="fa-solid fa-key" aria-hidden="true"></i>
+        <span>
+          <strong>Autenticación:</strong> la API Key vive en
+          <code>appsettings.json → RecepcionExterna:ApiKey</code>. Los sistemas externos la envían en
+          la cabecera <code>X-Api-Key</code>, junto con <code>X-Cod-Dane</code> (el CAD destino).
+        </span>
+      </p>
+
+      @if (loadingEnt()) {
+        <app-ui-spinner label="Cargando integraciones…" contained />
+      } @else {
+        <div class="ig-grid">
+          @for (e of entrantes(); track e.id) {
+            <article class="ig-tarjeta" [class.ig-tarjeta--inactiva]="!e.activa">
+              <header class="ig-tarjeta__head">
+                <app-ui-badge
+                  [label]="getTipoCanalLabel(e.tipoCanal)"
+                  [icon]="'fa-solid ' + getTipoCanalIcon(e.tipoCanal)"
+                  iconPosition="start"
+                  variant="info"
+                  size="xs"
+                />
+                <app-ui-badge
+                  [label]="e.activa ? 'Activa' : 'Inactiva'"
+                  [variant]="e.activa ? 'success' : 'danger'"
+                  size="xs"
+                />
+              </header>
+
+              <h3 class="ig-tarjeta__nombre">{{ e.nombre }}</h3>
+              @if (e.descripcion) {
+                <p class="ig-tarjeta__desc">{{ e.descripcion }}</p>
+              }
+
+              <p class="ig-tarjeta__endpoint">
+                <i class="fa-solid fa-link" aria-hidden="true"></i>
+                <code>{{ e.endpointRelativo }}</code>
+              </p>
+
+              @if (e.sitioGrabaDefecto > 0) {
+                <p class="ig-tarjeta__dato">
+                  <i class="fa-solid fa-location-dot" aria-hidden="true"></i>
+                  Sitio de grabación por defecto: <strong>{{ e.sitioGrabaDefecto }}</strong>
+                </p>
+              }
+              @if (e.notas) {
+                <p class="ig-tarjeta__dato">
+                  <i class="fa-solid fa-note-sticky" aria-hidden="true"></i> {{ e.notas }}
+                </p>
+              }
+
+              <footer class="ig-tarjeta__pie">
+                @if (e.ejemploPayload) {
+                  <app-ui-button
+                    variant="secondary" appearance="ghost" size="sm"
+                    icon="fa-solid fa-code"
+                    (buttonClick)="verEjemplo(e)"
+                  >Ejemplo</app-ui-button>
+                }
+                <app-ui-button
+                  variant="secondary" appearance="ghost" size="sm"
+                  icon="fa-solid fa-pen" iconOnly
+                  ariaLabel="Editar integración" tooltip="Editar"
+                  (buttonClick)="openEditEnt(e)"
+                />
+                <app-ui-button
+                  [variant]="e.activa ? 'secondary' : 'primary'"
+                  appearance="ghost" size="sm"
+                  [icon]="e.activa ? 'fa-solid fa-ban' : 'fa-solid fa-circle-check'"
+                  iconOnly
+                  [ariaLabel]="e.activa ? 'Desactivar' : 'Activar'"
+                  [tooltip]="e.activa ? 'Desactivar' : 'Activar'"
+                  (buttonClick)="toggleEnt(e)"
+                />
+              </footer>
+            </article>
+          } @empty {
+            <p class="ig-vacio">No hay integraciones entrantes configuradas.</p>
+          }
+        </div>
+      }
+    </section>
+  }
+
+  <!-- ═══ Cámaras ══════════════════════════════════════════════════════════ -->
+  @if (tab() === 'camaras') {
+    <section class="ig-panel">
+      <app-ui-section-header
+        title="Cámaras (VMS)"
+        icon="fa-solid fa-video"
+        description="Conexiones a sistemas de video para ver cámaras cercanas a un evento. Se elige el driver de la marca y se configura la conexión, sin tocar código."
+        appearance="divider"
+      >
+        <app-ui-button
+          header-actions
+          variant="primary"
+          size="sm"
+          icon="fa-solid fa-plus"
+          (buttonClick)="openCreateCam()"
+        >Nueva integración</app-ui-button>
+      </app-ui-section-header>
+
+      <app-ui-table
+        [columns]="columnasCamaras"
+        [rows]="camaras()"
+        [actions]="accionesCamaras"
+        [loading]="loadingCam()"
+        loadingMessage="Cargando integraciones…"
+        emptyMessage="No hay integraciones de cámaras configuradas."
+        actionDisplay="row-hover"
+        actionsPosition="right"
+        actionMenuLabel="Acciones de la integración"
+        (actionClick)="onAccionCamara($event)"
+      />
+
+    </section>
+  }
+
+  <!-- ═══ Auditoría ════════════════════════════════════════════════════════ -->
+  @if (tab() === 'auditoria') {
+    <section class="ig-panel">
+      <app-ui-section-header
+        title="Auditoría"
+        icon="fa-solid fa-clock-rotate-left"
+        description="Todo lo que SECAD ha enviado y recibido, con el payload y la respuesta de cada intercambio."
+        appearance="divider"
+      >
+        <app-ui-button
+          header-actions
+          variant="secondary" appearance="ghost" size="sm"
+          icon="fa-solid fa-arrows-rotate"
+          [loading]="loadingAud()"
+          (buttonClick)="loadAuditoria()"
+        >Actualizar</app-ui-button>
+      </app-ui-section-header>
+
+      <app-ui-segmented-tabs
+        class="ig-subtabs"
+        [items]="pestanasAuditoria()"
+        [activeId]="audTab()"
+        size="sm"
+        ariaLabel="Sentido del intercambio"
+        (selectionChange)="setAudTab($any($event.id))"
+      />
+
+      @if (audTab() === 'salientes') {
+        <app-ui-table
+          [columns]="columnasAudSal"
+          [rows]="audSalientes()"
+          [actions]="accionesAudSal"
+          [loading]="loadingAud()"
+          loadingMessage="Cargando auditoría…"
+          emptyMessage="No hay despachos registrados todavía."
+          actionDisplay="row-hover"
+          actionsPosition="right"
+          actionMenuLabel="Detalles del despacho"
+          (actionClick)="onAccionAudSal($event)"
+        />
+
+      } @else {
+        <app-ui-select
+          class="ig-filtro"
+          label="Filtrar por canal"
+          [options]="opcionesCanalAuditoria"
+          [clearable]="false"
+          [searchable]="false"
+          [(ngModel)]="audCanalFiltro"
+          (ngModelChange)="loadAudEntrantes()"
+        />
+
+        <app-ui-table
+          [columns]="columnasAudEnt"
+          [rows]="audEntrantes()"
+          [actions]="accionesAudEnt"
+          [loading]="loadingAud()"
+          loadingMessage="Cargando auditoría…"
+          emptyMessage="No hay recepciones registradas todavía."
+          actionDisplay="row-hover"
+          actionsPosition="right"
+          actionMenuLabel="Detalles de la recepción"
+          (actionClick)="onAccionAudEnt($event)"
+        />
+
+      }
+    </section>
+  }
+  <!-- Las plantillas de celda viven fuera de los @if: ViewChild({static:true})
+       se resuelve antes de que se pinte cualquier bloque condicional, y dentro
+       de uno llegarían siempre indefinidas. -->
+  <ng-template #celdaAgencia let-row="row">
+    <strong>{{ row.nombre }}</strong>
+    @if (row.descripcion) {
+      <div class="ig-sub">{{ row.descripcion }}</div>
+    }
+  </ng-template>
+
+  <ng-template #celdaAuth let-row="row">
+    <app-ui-badge [label]="labelAuthMode(row.tipoAuth ?? 'BEARER')" variant="info" size="xs" />
+    @if (row.apiUsuario) {
+      <div class="ig-sub">{{ row.apiUsuario }}</div>
+    } @else if (row.tieneCredencial) {
+      <div class="ig-sub ig-sub--ok">
+        <i class="fa-solid fa-lock" aria-hidden="true"></i> Credencial configurada
+      </div>
+    }
+  </ng-template>
+
+  <ng-template #celdaCamara let-row="row">
+    <strong>{{ row.nombre }}</strong>
+    @if (row.descripcion) {
+      <div class="ig-sub">{{ row.descripcion }}</div>
+    }
+  </ng-template>
+
+  <ng-template #celdaRespuesta let-row="row">
+    @if (row.respuestaApi) {
+      <span class="ig-snippet" [class.ig-snippet--error]="!row.exitoso">
+        {{ snippetRespuesta(row.respuestaApi) }}
+      </span>
+    } @else if (!row.exitoso && !row.httpStatus) {
+      <span class="ig-snippet ig-snippet--error">Sin respuesta — tiempo agotado o error de red</span>
+    } @else {
+      —
+    }
+  </ng-template>
+
+  <ng-template #celdaErrorEnt let-row="row">
+    @if (row.error) {
+      <span class="ig-snippet ig-snippet--error" [title]="row.error">
+        {{ snippetRespuesta(row.error, 60) }}
+      </span>
+    } @else {
+      —
+    }
+  </ng-template>
+
+</div>
+
+<!-- ═══ Agencia saliente ═══════════════════════════════════════════════════ -->
+<app-ui-modal
+  [open]="modal() === 'saliente-create' || modal() === 'saliente-edit'"
+  [title]="modal() === 'saliente-create' ? 'Nueva agencia saliente' : 'Editar agencia'"
+  icon="fa-solid fa-building-shield"
+  size="lg"
+  (closeRequested)="closeModal()"
+>
+  <form modal-body [formGroup]="formSal" class="ig-form">
+    <div class="ig-form__par">
+      <app-ui-input formControlName="nombre" label="Nombre" placeholder="Ej: Bomberos Bogotá" required />
+      <app-ui-select
+        class="ig-form__medio"
+        formControlName="tipoAgencia"
+        label="Tipo"
+        [options]="opcionesTipoAgencia"
+        [clearable]="false"
+      />
+    </div>
+
+    <app-ui-input formControlName="descripcion" label="Descripción" placeholder="Opcional" />
+
+    <div class="ig-form__par">
+      <app-ui-input
+        formControlName="apiUrl"
+        label="URL del endpoint externo"
+        type="url"
+        placeholder="https://api.agencia.gov.co/recibir-caso"
+      />
+      <app-ui-select
+        class="ig-form__corto"
+        formControlName="apiMetodo"
+        label="Método"
+        [options]="opcionesMetodo"
+        [clearable]="false"
+        [searchable]="false"
+      />
+    </div>
+
+    <app-ui-select
+      formControlName="tipoAuth"
+      label="Modo de autenticación"
+      [options]="opcionesAuth"
+      [clearable]="false"
+      [searchable]="false"
+      required
+    />
+
+    <!-- Cada modo pide credenciales distintas; se muestran solo las suyas. -->
+    @if (authSeleccionado() === 'BEARER') {
+      <app-ui-input
+        formControlName="apiToken"
+        label="Bearer token"
+        type="password"
+        autocomplete="new-password"
+        placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9…"
+        [hint]="modal() === 'saliente-edit' ? 'Déjelo vacío para conservar el token guardado.' : ''"
+      />
+    }
+
+    @if (authSeleccionado() === 'BASIC' || authSeleccionado() === 'OAUTH2' || authSeleccionado() === 'CREDS_BODY') {
+      <div class="ig-form__par">
+        <app-ui-input
+          formControlName="apiUsuario"
+          [label]="authSeleccionado() === 'OAUTH2' ? 'Usuario (client_id)' : 'Usuario'"
+          autocomplete="off"
+          placeholder="usuario_secad"
+        />
+        <app-ui-input
+          formControlName="apiPassword"
+          [label]="authSeleccionado() === 'OAUTH2' ? 'Contraseña (client_secret)' : 'Contraseña'"
+          type="password"
+          autocomplete="new-password"
+          placeholder="••••••••"
+          [hint]="modal() === 'saliente-edit' ? 'Vacío = conservar la actual.' : ''"
+        />
+      </div>
+    }
+
+    @if (authSeleccionado() === 'OAUTH2') {
+      <app-ui-input
+        label="URL del endpoint de token"
+        type="url"
+        placeholder="https://auth.agencia.gov.co/oauth2/token"
+        hint="SECAD hará POST con grant_type=client_credentials y usará el access_token que reciba."
+        required
+        [ngModel]="formSalTokenUrl()"
+        (ngModelChange)="formSalTokenUrl.set($event)"
+        [ngModelOptions]="{ standalone: true }"
+      />
+    }
+
+    @if (authSeleccionado() === 'API_KEY') {
+      <div class="ig-form__par">
+        <app-ui-input
+          class="ig-form__medio"
+          label="Nombre del header"
+          placeholder="X-Api-Key"
+          [ngModel]="formSalKeyHeader()"
+          (ngModelChange)="formSalKeyHeader.set($event)"
+          [ngModelOptions]="{ standalone: true }"
+        />
+        <app-ui-input
+          formControlName="apiToken"
+          label="Valor del API Key"
+          type="password"
+          autocomplete="new-password"
+          placeholder="sk-xxxxxxxxxxxxxxxx"
+          [hint]="modal() === 'saliente-edit' ? 'Vacío = conservar el actual.' : ''"
+        />
+      </div>
+    }
+
+    @if (authSeleccionado() === 'CREDS_BODY') {
+      <div class="ig-form__par">
+        <app-ui-input
+          label="Campo de usuario en el body"
+          placeholder="usuario"
+          [ngModel]="formSalBodyUserField()"
+          (ngModelChange)="formSalBodyUserField.set($event)"
+          [ngModelOptions]="{ standalone: true }"
+        />
+        <app-ui-input
+          label="Campo de contraseña en el body"
+          placeholder="contrasena"
+          hint="Ambos se añaden al JSON del caso que se envía."
+          [ngModel]="formSalBodyPassField()"
+          (ngModelChange)="formSalBodyPassField.set($event)"
+          [ngModelOptions]="{ standalone: true }"
+        />
+      </div>
+    }
+
+    <label class="ig-campo">
+      <span class="ig-campo__lbl">Cabeceras HTTP adicionales</span>
+      <textarea
+        class="ig-campo__area"
+        rows="3"
+        placeholder='{ "X-Sistema-Origen": "SECAD-POLICIA" }'
+        [value]="formSalCabeceras()"
+        (input)="formSalCabeceras.set(valorDe($event))"
+      ></textarea>
+      <span class="ig-campo__pie">JSON válido. Vacío si la agencia no exige ninguna.</span>
+    </label>
+
+    <label class="ig-campo">
+      <span class="ig-campo__lbl">Mapeo de campos</span>
+      <textarea
+        class="ig-campo__area"
+        rows="4"
+        placeholder='{ "direCaso": "direccion", "codiPedido": "tipo_incidente" }'
+        [value]="formSalMapeo()"
+        (input)="formSalMapeo.set(valorDe($event))"
+      ></textarea>
+      <span class="ig-campo__pie">
+        <code>"campoSECAD": "campoAgencia"</code>. Lo no mapeado viaja con su nombre original.
+      </span>
+    </label>
+
+    <app-ui-select
+      formControlName="formatoPayload"
+      label="Formato del payload"
+      [options]="opcionesFormato"
+      [clearable]="false"
+      [searchable]="false"
+      hint="La mayoría de agencias esperan el formato plano; el estructurado es para integraciones SECAD a SECAD."
+    />
+
+    <app-ui-toggle formControlName="activa" label="Agencia activa" showStateText />
+  </form>
+
+  <div modal-actions class="ig-acciones">
+    <app-ui-button variant="secondary" appearance="ghost" (buttonClick)="closeModal()">Cancelar</app-ui-button>
+    <app-ui-button
+      variant="primary"
+      icon="fa-solid fa-floppy-disk"
+      [loading]="saving()"
+      [disabled]="saving()"
+      (buttonClick)="saveSal()"
+    >Guardar</app-ui-button>
+  </div>
+</app-ui-modal>
+
+<!-- ═══ Integración entrante ═══════════════════════════════════════════════ -->
+<app-ui-modal
+  [open]="modal() === 'entrante-create' || modal() === 'entrante-edit'"
+  [title]="modal() === 'entrante-create' ? 'Nueva integración entrante' : 'Editar integración'"
+  icon="fa-solid fa-inbox"
+  size="lg"
+  (closeRequested)="closeModal()"
+>
+  <form modal-body [formGroup]="formEnt" class="ig-form">
+    <div class="ig-form__par">
+      <app-ui-input
+        formControlName="nombre"
+        label="Nombre"
+        placeholder="Ej: WhatsApp canal principal"
+        required
+      />
+      <app-ui-select
+        class="ig-form__medio"
+        formControlName="tipoCanal"
+        label="Tipo de canal"
+        [options]="opcionesTipoCanal"
+        [clearable]="false"
+      />
+    </div>
+
+    <app-ui-input formControlName="descripcion" label="Descripción" placeholder="Opcional" />
+
+    <div class="ig-form__par">
+      <app-ui-input
+        formControlName="endpointRelativo"
+        label="Endpoint relativo"
+        placeholder="/api/RecepcionExterna/chat"
+        required
+      />
+      <app-ui-input
+        class="ig-form__corto"
+        formControlName="sitioGrabaDefecto"
+        label="Sitio grabación"
+        type="number"
+      />
+    </div>
+
+    <label class="ig-campo">
+      <span class="ig-campo__lbl">Headers requeridos</span>
+      <textarea
+        class="ig-campo__area"
+        rows="3"
+        placeholder='{ "X-Api-Key": "…", "X-Cod-Dane": "11001" }'
+        [value]="formEntHeaders()"
+        (input)="formEntHeaders.set(valorDe($event))"
+      ></textarea>
+      <span class="ig-campo__pie">Los que debe enviar el sistema externo, en JSON.</span>
+    </label>
+
+    <label class="ig-campo">
+      <span class="ig-campo__lbl">Payload de ejemplo</span>
+      <textarea
+        class="ig-campo__area"
+        rows="6"
+        placeholder='{ "sitioGraba": 1, "nombreReportante": "…" }'
+        [value]="formEntPayload()"
+        (input)="formEntPayload.set(valorDe($event))"
+      ></textarea>
+      <span class="ig-campo__pie">JSON de referencia para quien integre desde el otro lado.</span>
+    </label>
+
+    <app-ui-input
+      formControlName="notas"
+      label="Notas"
+      placeholder="Instrucciones para el equipo técnico"
+    />
+
+    <app-ui-toggle formControlName="activa" label="Integración activa" showStateText />
+  </form>
+
+  <div modal-actions class="ig-acciones">
+    <app-ui-button variant="secondary" appearance="ghost" (buttonClick)="closeModal()">Cancelar</app-ui-button>
+    <app-ui-button
+      variant="primary"
+      icon="fa-solid fa-floppy-disk"
+      [loading]="saving()"
+      [disabled]="saving()"
+      (buttonClick)="saveEnt()"
+    >Guardar</app-ui-button>
+  </div>
+</app-ui-modal>
+
+<!-- ═══ Integración de cámaras (formulario según el driver) ════════════════ -->
+<app-ui-modal
+  [open]="modal() === 'camara-create' || modal() === 'camara-edit'"
+  [title]="modal() === 'camara-edit' ? 'Editar integración de cámaras' : 'Nueva integración de cámaras'"
+  icon="fa-solid fa-video"
+  size="lg"
+  (closeRequested)="closeModal()"
+>
+  <div modal-body class="ig-form">
+    <app-ui-input
+      label="Nombre"
+      placeholder="Ej: HikCentral Tunja"
+      required
+      [ngModel]="camNombre()"
+      (ngModelChange)="camNombre.set($event)"
+      [ngModelOptions]="{ standalone: true }"
+    />
+    <app-ui-input
+      label="Descripción"
+      placeholder="Opcional"
+      [ngModel]="camDescripcion()"
+      (ngModelChange)="camDescripcion.set($event)"
+      [ngModelOptions]="{ standalone: true }"
+    />
+
+    <!-- El driver no se cambia al editar: los campos guardados pertenecen a él. -->
+    <app-ui-select
+      label="Proveedor / driver"
+      placeholder="Elija el VMS"
+      [options]="opcionesDriver()"
+      [clearable]="false"
+      [disabled]="modal() === 'camara-edit'"
+      required
+      [ngModel]="camDriver()?.driver ?? ''"
+      (ngModelChange)="onCamDriverChange($event)"
+      [ngModelOptions]="{ standalone: true }"
+      [hint]="camDriver()?.descripcion ?? ''"
+    />
+
+    @if (camDriver()?.requiereGateway) {
+      <p class="ig-aviso">
+        <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
+        <span>Este driver necesita un media gateway (go2rtc o MediaMTX) para llevar el video al navegador.</span>
+      </p>
+    }
+
+    <!-- Campos declarados por el driver: cada VMS pide lo suyo. -->
+    @if (camDriver()) {
+      @for (campo of camCampos; track campo.key) {
+        @if (campo.tipo === 'select') {
+          <app-ui-select
+            [label]="campo.nombre"
+            [options]="[]"
+            [required]="!!campo.requerido"
+            [(ngModel)]="camForm[campo.key]"
+            [ngModelOptions]="{ standalone: true }"
+            [hint]="campo.ayuda ?? ''"
+          />
+        } @else if (campo.tipo === 'textarea') {
+          <label class="ig-campo">
+            <span class="ig-campo__lbl">
+              {{ campo.nombre }}@if (campo.requerido) { <em>*</em> }
+            </span>
+            <textarea
+              class="ig-campo__area"
+              rows="2"
+              [placeholder]="campo.ejemplo || ''"
+              [(ngModel)]="camForm[campo.key]"
+              [ngModelOptions]="{ standalone: true }"
+            ></textarea>
+            @if (campo.ayuda) { <span class="ig-campo__pie">{{ campo.ayuda }}</span> }
+          </label>
+        } @else {
+          <app-ui-input
+            [label]="campo.nombre"
+            [type]="campo.tipo === 'password' ? 'password' : (campo.tipo === 'number' ? 'number' : 'text')"
+            [placeholder]="campo.ejemplo || ''"
+            [autocomplete]="campo.secreto ? 'new-password' : 'off'"
+            [required]="!!campo.requerido"
+            [(ngModel)]="camForm[campo.key]"
+            [ngModelOptions]="{ standalone: true }"
+            [hint]="campo.secreto && modal() === 'camara-edit'
+                      ? 'Vacío = conservar el valor actual.'
+                      : (campo.ayuda ?? '')"
+          />
+        }
+      }
+    }
+
+    <app-ui-toggle
+      label="Integración activa"
+      showStateText
+      [ngModel]="camActiva()"
+      (ngModelChange)="camActiva.set($event)"
+      [ngModelOptions]="{ standalone: true }"
+    />
+
+    @if (camPrueba()) {
+      <p class="ig-aviso">
+        <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+        <span>{{ camPrueba() }}</span>
+      </p>
+    }
+  </div>
+
+  <div modal-actions class="ig-acciones ig-acciones--repartidas">
+    <app-ui-button
+      variant="secondary"
+      appearance="ghost"
+      icon="fa-solid fa-vial-circle-check"
+      [disabled]="!camDriver()"
+      (buttonClick)="probarCam()"
+    >Validar configuración</app-ui-button>
+    <span class="ig-acciones__hueco"></span>
+    <app-ui-button variant="secondary" appearance="ghost" (buttonClick)="closeModal()">Cancelar</app-ui-button>
+    <app-ui-button
+      variant="primary"
+      icon="fa-solid fa-floppy-disk"
+      [loading]="saving()"
+      [disabled]="saving() || !camDriver()"
+      (buttonClick)="saveCam()"
+    >Guardar</app-ui-button>
+  </div>
+</app-ui-modal>
+
+<!-- ═══ Visor de payload ═══════════════════════════════════════════════════ -->
+<app-ui-modal
+  [open]="modal() === 'payload-viewer'"
+  [title]="payloadViewerTitle()"
+  icon="fa-solid fa-file-code"
+  size="lg"
+  (closeRequested)="closeModal()"
+>
+  <pre modal-body class="ig-visor">{{ payloadViewer() }}</pre>
+  <div modal-actions class="ig-acciones ig-acciones--repartidas">
+    @if (payloadViewerTitle().startsWith('Payload que SECAD')) {
+      <span class="ig-acciones__nota">
+        Datos de ejemplo con el mapeo real aplicado; los valores salen del caso en el despacho.
+      </span>
+    }
+    <span class="ig-acciones__hueco"></span>
+    <app-ui-button variant="secondary" appearance="ghost" (buttonClick)="closeModal()">Cerrar</app-ui-button>
+  </div>
+</app-ui-modal>

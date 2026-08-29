@@ -43,6 +43,22 @@ export const administracionRoutes: Routes = [
     data: { breadcrumb: 'Proveedor SMS' },
   },
   {
+    path: 'asistente',
+    loadComponent: () =>
+      import('./pages/asistente-page/asistente-page.component').then(
+        (m) => m.AsistentePageComponent,
+      ),
+    data: { breadcrumb: 'Asistente inteligente' },
+  },
+  {
+    path: 'integraciones',
+    loadComponent: () =>
+      import('./pages/integraciones-page/integraciones-page.component').then(
+        (m) => m.IntegracionesPageComponent,
+      ),
+    data: { breadcrumb: 'Hub de integraciones' },
+  },
+  {
     path: 'casos',
     loadComponent: () =>
       import('./pages/casos-page/casos-page.component').then((m) => m.CasosPageComponent),

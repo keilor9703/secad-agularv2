@@ -99,19 +99,28 @@ CAD siguiera caído; ahora sólo avisa por los que acaban de degradarse.
 
 ---
 
-## Administración — 13 de 16
+## Administración — completa (16 de 16)
 
 Estas 9 ya existen en la plantilla, reconstruidas: `administracion-inicio`,
 `configuracion-sistema`, `cuentas-email`, `dominio`, `formularios`,
 `linea-mando`, `menu-admin`, `roles-admin`, `usuarios`.
 
-Faltan 3 por portar:
+Ya no falta ninguna; `tenants` quedó bajo Super Admin.
 
-| Pantalla | Estado |
-|---|---|
-| `asistente` | ⬜ pendiente |
-| `integraciones` | ⬜ pendiente |
-| `tenants` | ✅ portada (quedó en Super Admin) |
+**`asistente` — reescrita sobre el kit.** Maestro–detalle: categorías a la
+izquierda con su formulario, y a la derecha las preguntas de la elegida. El
+icono de la categoría pasó de un campo de texto libre a `ui-icon-picker`. Dos
+correcciones respecto del origen: los `confirm()` del navegador para borrar
+—bloquean el hilo y no respetan el tema ni la escala de fuente— ahora son un
+`ui-modal`, y los errores de validación, que salían por toast al pulsar
+guardar, se muestran en el campo que falla.
+
+**`integraciones` (Hub) — reescrita sobre el kit.** Es la pantalla más grande
+de administración: 876 líneas de TS, 1.149 de HTML y 925 de SCSS, con cuatro
+pestañas (salientes, entrantes, cámaras VMS y auditoría) y cuatro modales. La
+lógica se porta 1:1; el HTML baja a 409 líneas y el SCSS a 300 apoyándose en
+`ui-segmented-tabs`, `ui-table`, `ui-modal`, `ui-expansion-panel` —la guía de
+configuración, que antes era un desplegable a mano— y los campos del kit.
 
 **`agencias-externas` — portada.** Ya venía sobre el kit desde el repo
 congelado, así que solo hubo que adaptar rutas y quitar el `CommonModule` que
@@ -234,8 +243,8 @@ Faltan 8, y varios bloquean pantallas de la lista de arriba:
 |---|---|---|
 | Servicios de operación | 12 | 12 |
 | Pantallas de operación | 3 | 9 |
-| Pantallas de administración | 13 | 16 |
-| Servicios de administración | 15 | 20 |
+| Pantallas de administración | 16 | 16 |
+| Servicios de administración | 18 | 20 |
 | Super Admin | 2 | 2 |
 
 **Cimientos ya resueltos** (no hay que repetirlos): multi-tenant en
