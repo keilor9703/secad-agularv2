@@ -59,3 +59,28 @@ WHERE  m.vigente = 1
          JOIN ctr_usuarios u ON u.id_usuario = ur.id_usuario
          WHERE u.identificacion = '1234188418')
 ORDER  BY m.descripcion;
+
+\echo ''
+\echo '=== 6. Las rutas que YA tienen pantalla: ¿por qué no se ven? ==='
+-- Estas son las rutas que el catálogo de Angular ya resuelve. Si alguna sale
+-- con presente=NO, la migración del menú no llegó a esta base; si sale
+-- vigente=NO o roles=0, es dato, no código. Cualquier otra ruta que no aparezca
+-- en el menú es una pantalla todavía sin portar y se descarta a propósito.
+WITH portadas(detalle) AS (VALUES
+  ('/administracion'), ('/administracion/usuarios'), ('/administracion/roles'),
+  ('/administracion/menu'), ('/administracion/configuracion-sistema'),
+  ('/administracion/linea-mando'), ('/administracion/entidades'),
+  ('/administracion/dominio'), ('/administracion/cuentas-email'),
+  ('/administracion/formularios'),
+  ('/operacion/anotaciones'), ('/operacion/mapa-incidentes'),
+  ('/super/tenants'), ('/super/salud-cads'),
+  ('/gestion-documental/gestion-correos-electronicos')
+)
+SELECT p.detalle,
+       CASE WHEN m.id_menu IS NULL THEN 'NO' ELSE 'sí' END      AS presente,
+       CASE WHEN m.vigente = 1     THEN 'sí' ELSE 'NO' END      AS vigente,
+       COALESCE((SELECT COUNT(*) FROM ctr_menu_roles r
+                 WHERE r.id_menu = m.id_menu), 0)               AS roles
+FROM portadas p
+LEFT JOIN ctr_menu m ON m.detalle = p.detalle
+ORDER BY presente, vigente, p.detalle;
