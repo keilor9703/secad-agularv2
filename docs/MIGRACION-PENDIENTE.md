@@ -99,22 +99,36 @@ CAD siguiera caído; ahora sólo avisa por los que acaban de degradarse.
 
 ---
 
-## Administración — 10 de 16
+## Administración — 13 de 16
 
 Estas 9 ya existen en la plantilla, reconstruidas: `administracion-inicio`,
 `configuracion-sistema`, `cuentas-email`, `dominio`, `formularios`,
 `linea-mando`, `menu-admin`, `roles-admin`, `usuarios`.
 
-Faltan 6 por portar:
+Faltan 3 por portar:
 
 | Pantalla | Estado |
 |---|---|
-| `agencias-externas` | ⬜ pendiente |
 | `asistente` | ⬜ pendiente |
-| `casos` | ⬜ pendiente |
-| `config-sms` | ⬜ pendiente |
 | `integraciones` | ⬜ pendiente |
-| `tenants` | ⬜ pendiente |
+| `tenants` | ✅ portada (quedó en Super Admin) |
+
+**`agencias-externas` — portada.** Ya venía sobre el kit desde el repo
+congelado, así que solo hubo que adaptar rutas y quitar el `CommonModule` que
+importaba sin usar ninguna pipe.
+
+**`config-sms` (Proveedor SMS) — reescrita sobre el kit.** El origen usaba las
+clases globales `ui-card` / `ui-btn` / `ui-control`, que en la plantilla no
+existen. Además imprimía `fechaModifica` cruda —una marca ISO— y ahora se
+formatea. El campo de proveedor se replica en una señal porque un `valueChanges`
+del formulario no repinta por sí solo un componente `OnPush`.
+
+**`casos` (Códigos de caso) — reescrita sobre el kit.** El origen llevaba la
+paginación a mano (señales de página, rango, recorte y botones propios); ahora
+la resuelve `ui-table`. La importación de Excel pasó de un `<input type=file>`
+oculto a `ui-file-upload`, y el resultado muestra creados/actualizados con la
+lista de errores en un bloque con desplazamiento propio: una importación de
+cientos de filas puede fallar en muchas y no debe empujar la página.
 
 **`entidades` — portada.** Maestro–detalle: a la izquierda la lista de fuerzas
 (código, nombre, abreviatura y contadores de canales/usuarios); a la derecha el
@@ -220,8 +234,8 @@ Faltan 8, y varios bloquean pantallas de la lista de arriba:
 |---|---|---|
 | Servicios de operación | 12 | 12 |
 | Pantallas de operación | 3 | 9 |
-| Pantallas de administración | 9 | 16 |
-| Servicios de administración | 12 | 20 |
+| Pantallas de administración | 13 | 16 |
+| Servicios de administración | 15 | 20 |
 | Super Admin | 2 | 2 |
 
 **Cimientos ya resueltos** (no hay que repetirlos): multi-tenant en

@@ -27,6 +27,28 @@ export const administracionRoutes: Routes = [
     data: { breadcrumb: 'Entidades / Fuerzas' },
   },
   {
+    path: 'agencias-externas',
+    loadComponent: () =>
+      import('./pages/agencias-externas-page/agencias-externas-page.component').then(
+        (m) => m.AgenciasExternasPageComponent,
+      ),
+    data: { breadcrumb: 'Agencias externas' },
+  },
+  {
+    path: 'sms',
+    loadComponent: () =>
+      import('./pages/config-sms-page/config-sms-page.component').then(
+        (m) => m.ConfigSmsPageComponent,
+      ),
+    data: { breadcrumb: 'Proveedor SMS' },
+  },
+  {
+    path: 'casos',
+    loadComponent: () =>
+      import('./pages/casos-page/casos-page.component').then((m) => m.CasosPageComponent),
+    data: { breadcrumb: 'Códigos de caso' },
+  },
+  {
     path: 'formularios',
     loadComponent: () =>
       import('./pages/formularios-page/formularios-page.component').then(

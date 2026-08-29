@@ -40,6 +40,13 @@ export const APP_ROUTE_CATALOG: readonly AppRouteCatalogItem[] = [
     label: 'Entidades / Fuerzas',
     area: 'Administración',
   },
+  {
+    route: '/administracion/agencias-externas',
+    label: 'Agencias externas',
+    area: 'Administración',
+  },
+  { route: '/administracion/casos', label: 'Códigos de caso', area: 'Administración' },
+  { route: '/administracion/sms', label: 'Proveedor SMS', area: 'Administración' },
   { route: '/administracion/dominio', label: 'Dominios', area: 'Administración' },
   { route: '/administracion/cuentas-email', label: 'Cuentas de correo', area: 'Administración' },
   // ── Super Admin ──────────────────────────────────────────────────────────

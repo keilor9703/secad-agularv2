@@ -1,0 +1,86 @@
+// ══════════════════════════════════════════════════════════════════════════
+//  Códigos de caso
+//
+//  Encabezados, tabla, paginación, modal, campos, botones y la subida de
+//  archivo los resuelven los componentes de shared/components/ui-*. Aquí solo
+//  queda la tarjeta de importación y el resumen de resultados.
+// ══════════════════════════════════════════════════════════════════════════
+
+.cs-page {
+  display:        flex;
+  flex-direction: column;
+  gap:            16px;
+  padding:        16px;
+}
+
+.cs-card {
+  display:        flex;
+  flex-direction: column;
+  border:         1px solid rgba(21, 27, 59, .12);
+  border-radius:  10px;
+  overflow:       hidden;
+  background:     var(--ui-surface, #fff);
+}
+
+.cs-importar {
+  display:   flex;
+  flex-wrap: wrap;
+  gap:       16px;
+  padding:   16px;
+
+  &__campo { flex: 0 1 380px; min-width: 0; }
+}
+
+.cs-resultado {
+  flex:          1 1 320px;
+  min-width:     0;
+  padding:       12px 14px;
+  border:        1px solid rgba(22, 163, 74, .35);
+  border-radius: 8px;
+  background:    rgba(22, 163, 74, .08);
+
+  &--error {
+    border-color: rgba(220, 38, 38, .35);
+    background:   rgba(220, 38, 38, .08);
+  }
+
+  &__cifras {
+    margin:    0;
+    font-size: calc(12.5px * var(--font-size-scale, 1));
+  }
+
+  // Con cientos de filas la lista de errores no puede empujar la página.
+  &__errores {
+    max-height: 160px;
+    margin:     8px 0 0;
+    padding:    0 0 0 18px;
+    overflow-y: auto;
+    color:      var(--ui-text-muted, #6b7280);
+    font-size:  calc(11.5px * var(--font-size-scale, 1));
+  }
+}
+
+.cs-buscar { max-width: 420px; }
+
+.cs-inactivo {
+  color:           var(--ui-text-muted, #6b7280);
+  text-decoration: line-through;
+}
+
+.cs-form {
+  display:        flex;
+  flex-direction: column;
+  gap:            14px;
+
+  &__corto { max-width: 200px; }
+}
+
+.cs-modal-acciones {
+  display:         flex;
+  gap:             8px;
+  justify-content: flex-end;
+}
+
+:host-context(html.dark-mode) {
+  .cs-card { background: rgba(255, 255, 255, .03); border-color: rgba(255, 255, 255, .12); }
+}

@@ -1,0 +1,63 @@
+// ══════════════════════════════════════════════════════════════════════════
+//  Proveedor SMS
+//
+//  Encabezados, campos, botones y spinner los resuelven los componentes de
+//  shared/components/ui-*. Aquí solo quedan las dos tarjetas y sus rejillas.
+// ══════════════════════════════════════════════════════════════════════════
+
+.cs-page {
+  display:        flex;
+  flex-direction: column;
+  gap:            16px;
+  padding:        16px;
+}
+
+.cs-card {
+  display:        flex;
+  flex-direction: column;
+  border:         1px solid rgba(21, 27, 59, .12);
+  border-radius:  10px;
+  overflow:       hidden;
+  background:     var(--ui-surface, #fff);
+}
+
+// Formulario de una sola columna y ancho acotado: son cuatro campos, no una
+// rejilla; estirarlos a todo lo ancho de la pantalla los vuelve ilegibles.
+.cs-form {
+  display:        flex;
+  flex-direction: column;
+  gap:            14px;
+  max-width:      620px;
+  padding:        16px;
+
+  &__medio { max-width: 300px; }
+}
+
+.cs-pie {
+  display:         flex;
+  align-items:     center;
+  justify-content: space-between;
+  gap:             12px;
+  flex-wrap:       wrap;
+  padding:         0 16px 16px;
+}
+
+.cs-meta {
+  margin:    0;
+  color:     var(--ui-text-muted, #6b7280);
+  font-size: calc(11.5px * var(--font-size-scale, 1));
+}
+
+.cs-prueba {
+  display:     flex;
+  align-items: flex-end;
+  flex-wrap:   wrap;
+  gap:         12px;
+  padding:     16px;
+
+  &__num { flex: 0 1 320px; min-width: 0; }
+}
+
+:host-context(html.dark-mode) {
+  .cs-card { background: rgba(255, 255, 255, .03); border-color: rgba(255, 255, 255, .12); }
+}

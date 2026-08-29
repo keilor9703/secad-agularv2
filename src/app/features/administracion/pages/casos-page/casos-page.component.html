@@ -1,0 +1,154 @@
+<div class="cs-page">
+
+  <app-ui-page-header
+    title="Códigos de caso"
+    icon="fa-solid fa-list-check"
+    description="Catálogo de códigos con el que se tipifica cada incidente, y su categoría en el asistente inteligente."
+    [minimizable]="false"
+  >
+    <app-ui-button
+      page-header-actions
+      variant="primary"
+      icon="fa-solid fa-plus"
+      (buttonClick)="abrirCreacion()"
+    >Nuevo código</app-ui-button>
+  </app-ui-page-header>
+
+  <!-- ═══ Importación masiva ═══════════════════════════════════════════════ -->
+  <section class="cs-card">
+    <app-ui-section-header
+      title="Importar desde Excel"
+      icon="fa-solid fa-file-arrow-up"
+      description="Primera hoja del archivo: columna A el código, columna B la descripción, y la fila 1 como encabezado."
+      appearance="divider"
+    >
+      <app-ui-button
+        header-actions
+        variant="secondary"
+        appearance="ghost"
+        size="sm"
+        icon="fa-solid fa-download"
+        (buttonClick)="descargarPlantilla()"
+      >Descargar plantilla</app-ui-button>
+    </app-ui-section-header>
+
+    <div class="cs-importar">
+      <app-ui-file-upload
+        class="cs-importar__campo"
+        label="Archivo de códigos"
+        accept=".xlsx"
+        buttonText="Elegir archivo…"
+        emptyText="Ningún archivo seleccionado"
+        hint="Solo .xlsx; importa al elegirlo."
+        [fileName]="nombreArchivo()"
+        [loading]="importando()"
+        (fileSelected)="onArchivo($event)"
+        (clearRequested)="limpiarArchivo()"
+      />
+
+      @if (resultadoImport(); as r) {
+        <div class="cs-resultado" [class.cs-resultado--error]="!r.success">
+          <p class="cs-resultado__cifras">
+            <strong>{{ r.creados }}</strong> creados ·
+            <strong>{{ r.actualizados }}</strong> actualizados
+            @if (r.errores.length) {
+              · <strong>{{ r.errores.length }}</strong> con error
+            }
+          </p>
+          @if (r.errores.length) {
+            <!-- Los errores van uno por línea y con desplazamiento propio: una
+                 importación de cientos de filas puede fallar en muchas. -->
+            <ul class="cs-resultado__errores">
+              @for (e of r.errores; track e) {
+                <li>{{ e }}</li>
+              }
+            </ul>
+          }
+        </div>
+      }
+    </div>
+  </section>
+
+  <!-- ═══ Catálogo ═════════════════════════════════════════════════════════ -->
+  <app-ui-search-input
+    class="cs-buscar"
+    label="Buscar"
+    placeholder="Código o descripción…"
+    (search)="buscar($event)"
+    (cleared)="buscar('')"
+  />
+
+  <app-ui-table
+    [columns]="columns"
+    [rows]="casos()"
+    [actions]="acciones"
+    [loading]="loading()"
+    loadingMessage="Cargando catálogo…"
+    emptyMessage="No hay códigos de caso que coincidan."
+    actionDisplay="row-hover"
+    actionsPosition="right"
+    actionMenuLabel="Acciones del código"
+    (actionClick)="onAccion($event)"
+  />
+
+  <ng-template #celdaDescripcion let-row="row">
+    <span [class.cs-inactivo]="!row.vigente">{{ row.descripcion }}</span>
+  </ng-template>
+</div>
+
+<!-- ═══ Alta / edición ═════════════════════════════════════════════════════ -->
+<app-ui-modal
+  [open]="showModal()"
+  [title]="modalMode() === 'create' ? 'Nuevo código de caso' : 'Editar código de caso'"
+  [icon]="modalMode() === 'create' ? 'fa-solid fa-plus-circle' : 'fa-solid fa-pen-to-square'"
+  size="md"
+  (closeRequested)="cerrarModal()"
+>
+  <form modal-body [formGroup]="form" class="cs-form">
+    <!-- El código identifica el caso en el resto del sistema: se fija al crear
+         y no se cambia después. -->
+    <app-ui-input
+      class="cs-form__corto"
+      formControlName="codigo"
+      label="Código"
+      placeholder="Ej: 904"
+      [readonly]="modalMode() === 'edit'"
+      required
+    />
+    <app-ui-input
+      formControlName="descripcion"
+      label="Descripción"
+      placeholder="Ej: Hurto calificado"
+      required
+    />
+    <app-ui-select
+      formControlName="idCategoriaAsistente"
+      label="Categoría del asistente"
+      [options]="opcionesCategoria()"
+      [clearable]="false"
+      hint="Agrupa el código para las sugerencias del asistente inteligente."
+    />
+    <app-ui-toggle
+      formControlName="vigente"
+      label="Vigente"
+      hint="Un código inactivo deja de ofrecerse al tipificar, pero no se borra."
+      showStateText
+    />
+  </form>
+
+  <div modal-actions class="cs-modal-acciones">
+    <app-ui-button
+      variant="secondary"
+      appearance="ghost"
+      [disabled]="saving()"
+      (buttonClick)="cerrarModal()"
+    >Cancelar</app-ui-button>
+    <app-ui-button
+      variant="primary"
+      icon="fa-solid fa-floppy-disk"
+      [loading]="saving()"
+      [disabled]="saving()"
+      (buttonClick)="guardar()"
+    >Guardar</app-ui-button>
+  </div>
+</app-ui-modal>

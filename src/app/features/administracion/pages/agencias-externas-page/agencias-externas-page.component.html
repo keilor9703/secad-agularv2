@@ -1,0 +1,188 @@
+<div class="ae-page">
+
+  <app-ui-page-header
+    title="Agencias externas — Despacho interagencial"
+    icon="fa-solid fa-building-shield"
+    description="Configura las agencias que reciben casos por API REST (Bomberos, Cruz Roja,
+                 Tránsito, etc.). Las agencias que usan SECAD se gestionan desde la selección
+                 de canales en Recepción."
+    [minimizable]="false"
+  >
+    <app-ui-button
+      page-header-actions
+      variant="primary"
+      icon="fa-solid fa-plus"
+      (buttonClick)="openCreate()"
+    >
+      Nueva agencia
+    </app-ui-button>
+  </app-ui-page-header>
+
+  <!-- ui-table resuelve por dentro el estado de carga, el vacío y las acciones
+       por fila: desaparecen los @if de loading, el <table> a mano y la columna
+       de botones que había antes. -->
+  <app-ui-table
+    [columns]="columns"
+    [rows]="agencias()"
+    [actions]="acciones"
+    [loading]="loading()"
+    loadingMessage="Cargando agencias…"
+    emptyMessage="No hay agencias externas configuradas."
+    actionDisplay="row-hover"
+    actionsPosition="right"
+    actionMenuLabel="Acciones de la agencia"
+    (actionClick)="onAccion($event)"
+  />
+
+  <!-- Las dos únicas celdas que necesitan marcado propio. El resto de columnas
+       se resuelven con value()/badge() desde el TS. -->
+  <ng-template #celdaNombre let-row="row">
+    <strong>{{ row.nombre }}</strong>
+    @if (row.descripcion) {
+      <div class="ae-sub">{{ row.descripcion }}</div>
+    }
+  </ng-template>
+
+  <ng-template #celdaUrl let-row="row">
+    @if (row.apiUrl) {
+      <code class="ae-url">{{ row.apiUrl }}</code>
+    } @else {
+      <span class="ae-sub">Sin configurar</span>
+    }
+  </ng-template>
+
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     Crear / editar agencia
+     ══════════════════════════════════════════════════════════════════════ -->
+<app-ui-modal
+  [open]="showModal()"
+  [title]="modalMode() === 'create' ? 'Nueva agencia externa' : 'Editar agencia'"
+  [icon]="modalMode() === 'create' ? 'fa-solid fa-plus-circle' : 'fa-solid fa-pen-to-square'"
+  size="lg"
+  (closeRequested)="closeModal()"
+>
+  <form modal-body [formGroup]="form" class="ae-form">
+
+    <div class="ae-row">
+      <app-ui-input
+        class="ae-row__grow"
+        formControlName="nombre"
+        label="Nombre"
+        placeholder="Ej: Bomberos Bogotá"
+        [maxlength]="100"
+        required
+        [error]="errorNombre()"
+      />
+      <app-ui-select
+        class="ae-row__side"
+        formControlName="tipoAgencia"
+        label="Tipo de agencia"
+        [options]="opcionesTipo"
+        [clearable]="false"
+      />
+    </div>
+
+    <app-ui-input
+      formControlName="descripcion"
+      label="Descripción"
+      placeholder="Descripción opcional"
+      [maxlength]="255"
+    />
+
+    <app-ui-section-header
+      title="Configuración de API"
+      icon="fa-solid fa-plug"
+    />
+
+    <div class="ae-row">
+      <app-ui-input
+        class="ae-row__grow"
+        formControlName="apiUrl"
+        label="URL del endpoint"
+        placeholder="https://api.agencia.gov.co/incidentes"
+        [maxlength]="500"
+      />
+      <app-ui-select
+        class="ae-row__side"
+        formControlName="apiMetodo"
+        label="Método"
+        [options]="opcionesMetodo"
+        [clearable]="false"
+        [searchable]="false"
+      />
+    </div>
+
+    <app-ui-input
+      formControlName="apiToken"
+      label="Token de autenticación (Bearer)"
+      type="password"
+      autocomplete="new-password"
+      [placeholder]="modalMode() === 'edit' ? '••••••••' : 'Token de autenticación'"
+      [hint]="modalMode() === 'edit' ? 'Deje vacío para mantener el token existente.' : ''"
+    />
+
+    <app-ui-section-header
+      title="Configuración avanzada (JSON)"
+      description="Opcional"
+      icon="fa-solid fa-code"
+    />
+
+    <app-ui-input
+      [ngModel]="formCabeceras()"
+      (ngModelChange)="formCabeceras.set($event)"
+      [ngModelOptions]="{ standalone: true }"
+      label="Cabeceras HTTP adicionales"
+      hint="Formato: clave / valor en JSON."
+      placeholder='{&quot;X-Api-Key&quot;: &quot;abc123&quot;}'
+      [error]="errorCabeceras()"
+      multiline
+      [rows]="2"
+    />
+
+    <app-ui-input
+      [ngModel]="formMapeo()"
+      (ngModelChange)="formMapeo.set($event)"
+      [ngModelOptions]="{ standalone: true }"
+      label="Mapeo de campos"
+      hint="JSON: campo SECAD → campo de la agencia destino. Campos: id · codiPedido ·
+            codiPedido2 · direCaso · ciudad · barrio · latitud · longitud · prioridad ·
+            nombLlamante · descripcion · horaCaso"
+      placeholder='{&quot;codiPedido&quot;: &quot;tipo_incidente&quot;}'
+      [error]="errorMapeo()"
+      multiline
+      [rows]="3"
+    />
+
+    <app-ui-select
+      class="ae-estado"
+      formControlName="activa"
+      label="Estado"
+      [options]="opcionesEstado"
+      [clearable]="false"
+      [searchable]="false"
+    />
+
+  </form>
+
+  <div modal-actions class="ae-acciones">
+    <app-ui-button
+      variant="secondary"
+      appearance="ghost"
+      icon="fa-solid fa-xmark"
+      (buttonClick)="closeModal()"
+    >
+      Cancelar
+    </app-ui-button>
+    <app-ui-button
+      variant="primary"
+      icon="fa-solid fa-floppy-disk"
+      [loading]="saving()"
+      [disabled]="saving()"
+      (buttonClick)="save()"
+    >
+      {{ saving() ? 'Guardando…' : 'Guardar' }}
+    </app-ui-button>
+  </div>
+</app-ui-modal>

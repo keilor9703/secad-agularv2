@@ -1,0 +1,56 @@
+// ══════════════════════════════════════════════════════════════════════════
+//  Agencias externas
+//
+//  Casi todo lo que había aquí (tarjeta, tabla, insignias, modal, botones,
+//  campos de formulario, estado vacío, spinner) lo resuelven ahora los
+//  componentes de shared/components/ui-*. Lo único que queda es lo propio de
+//  esta pantalla: la rejilla del formulario y dos detalles de celda.
+// ══════════════════════════════════════════════════════════════════════════
+
+.ae-page {
+  display:        flex;
+  flex-direction: column;
+  gap:            16px;
+  padding:        16px;
+}
+
+// ── Celdas con marcado propio ─────────────────────────────────────────────
+.ae-sub {
+  font-size: calc(11px * var(--font-size-scale, 1));
+  color:     var(--ui-text-muted, #6b7280);
+}
+
+.ae-url {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size:   calc(11px * var(--font-size-scale, 1));
+  word-break:  break-all;
+}
+
+// ── Formulario del modal ──────────────────────────────────────────────────
+.ae-form {
+  display:        flex;
+  flex-direction: column;
+  gap:            14px;
+}
+
+// Campo ancho + campo angosto en la misma línea (nombre|tipo, url|método).
+.ae-row {
+  display: flex;
+  gap:     12px;
+
+  &__grow { flex: 1 1 auto; min-width: 0; }
+  &__side { flex: 0 0 190px; }
+
+  @media (max-width: 640px) {
+    flex-direction: column;
+    &__side { flex: 1 1 auto; }
+  }
+}
+
+.ae-estado { max-width: 220px; }
+
+.ae-acciones {
+  display:         flex;
+  gap:             8px;
+  justify-content: flex-end;
+}
