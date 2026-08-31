@@ -1,0 +1,749 @@
+// ══════════════════════════════════════════════════════════════════════════
+//  Recepción de llamadas
+//
+//  Encabezados, campos, botones, insignias, spinner, modal y la subida de
+//  archivo los resuelven los componentes de shared/components/ui-*. Aquí queda
+//  la rejilla de dos columnas, el aviso de duplicados, el autocompletado de
+//  casos, las preguntas del asistente, la parrilla de canales y la galería.
+// ══════════════════════════════════════════════════════════════════════════
+
+.rc-page {
+  display:        flex;
+  flex-direction: column;
+  gap:            16px;
+  padding:        16px;
+}
+
+.rc-panel {
+  display:        flex;
+  flex-direction: column;
+  border:         1px solid rgba(21, 27, 59, .12);
+  border-radius:  10px;
+  overflow:       hidden;
+  background:     var(--ui-surface, #fff);
+}
+
+// El caso a la izquierda, dónde y a quién a la derecha. Se apila cuando el
+// mapa deja de tener ancho útil.
+.rc-layout {
+  display:               grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+  gap:                   16px;
+  align-items:           start;
+
+  @media (max-width: 1180px) { grid-template-columns: minmax(0, 1fr); }
+}
+
+.rc-col {
+  display:        flex;
+  flex-direction: column;
+  gap:            16px;
+  min-width:      0;
+}
+
+// ── Estado de la planta telefónica ────────────────────────────────────────
+.rc-plantatel {
+  display:       inline-flex;
+  align-items:   center;
+  gap:           6px;
+  padding:       4px 12px;
+  border:        1px solid rgba(255, 255, 255, .3);
+  border-radius: 999px;
+  color:         #fff;
+  font-size:     calc(11px * var(--font-size-scale, 1));
+  font-weight:   700;
+
+  // Los modificadores los pone plantaTelEstado en el componente.
+  &--ok    { border-color: rgba(74, 222, 128, .6); background: rgba(22, 163, 74, .3); }
+  &--lento { border-color: rgba(251, 191, 36, .6); background: rgba(230, 115, 0, .3); }
+  &--caido { border-color: rgba(248, 113, 113, .6); background: rgba(220, 38, 38, .32); }
+}
+
+// ── Cierres rápidos ───────────────────────────────────────────────────────
+.rc-rapidos {
+  flex-direction: row;
+  flex-wrap:      wrap;
+  align-items:    center;
+  gap:            6px;
+  padding:        10px 14px;
+
+  &__lbl {
+    margin-right: 6px;
+    color:        var(--ui-text-muted, #6b7280);
+    font-size:    calc(11.5px * var(--font-size-scale, 1));
+    font-weight:  700;
+  }
+}
+
+// ── Avisos ────────────────────────────────────────────────────────────────
+.rc-aviso {
+  display:       flex;
+  align-items:   center;
+  gap:           10px;
+  margin:        0;
+  padding:       10px 14px;
+  border:        1px solid rgba(8, 166, 203, .3);
+  border-radius: 10px;
+  background:    rgba(8, 166, 203, .08);
+  font-size:     calc(12px * var(--font-size-scale, 1));
+}
+
+.rc-nota {
+  display:     flex;
+  align-items: center;
+  gap:         8px;
+  margin:      0;
+  padding:     10px 14px;
+  color:       var(--ui-text-muted, #6b7280);
+  font-size:   calc(11.5px * var(--font-size-scale, 1));
+
+  i { color: #0e7490; }
+}
+
+// ── Posibles duplicados ───────────────────────────────────────────────────
+// Es el aviso más importante de la pantalla: evita abrir dos casos para el
+// mismo hecho, así que va en ámbar y ocupa todo el ancho.
+.rc-dupl {
+  border-color: rgba(230, 115, 0, .4);
+  background:   rgba(230, 115, 0, .06);
+
+  &__head {
+    display:       flex;
+    align-items:   flex-start;
+    gap:           10px;
+    padding:       12px 14px;
+    border-bottom: 1px solid rgba(230, 115, 0, .25);
+    font-size:     calc(12.5px * var(--font-size-scale, 1));
+    line-height:   1.5;
+
+    > i { margin-top: 2px; color: #b45309; font-size: 1.1rem; }
+    > app-ui-button { margin-left: auto; }
+  }
+
+  &__lista {
+    display:        flex;
+    flex-direction: column;
+    max-height:     260px;
+    margin:         0;
+    padding:        0;
+    overflow-y:     auto;
+    list-style:     none;
+  }
+
+  &__item {
+    display:       grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items:   center;
+    gap:           12px;
+    padding:       10px 14px;
+
+    &:not(:last-child) { border-bottom: 1px solid rgba(230, 115, 0, .18); }
+  }
+
+  &__marcas {
+    display:        flex;
+    flex-direction: column;
+    gap:            3px;
+  }
+
+  &__txt {
+    display:        flex;
+    flex-direction: column;
+    min-width:      0;
+
+    strong { font-size: calc(12.5px * var(--font-size-scale, 1)); }
+    small  { color: var(--ui-text-muted, #6b7280); font-size: calc(10.5px * var(--font-size-scale, 1)); }
+  }
+}
+
+// ── Rejilla de campos ─────────────────────────────────────────────────────
+// Doce columnas como el origen, pero con nombres cortos: rc-c3, rc-c6…
+.rc-campos {
+  display:               grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap:                   12px;
+  padding:               14px;
+}
+
+.rc-c3  { grid-column: span 3;  }
+.rc-c4  { grid-column: span 4;  }
+.rc-c6  { grid-column: span 6;  }
+.rc-c8  { grid-column: span 8;  }
+.rc-c9  { grid-column: span 9;  }
+.rc-c12 { grid-column: span 12; }
+
+@media (max-width: 720px) {
+  .rc-c3, .rc-c4, .rc-c6, .rc-c8, .rc-c9 { grid-column: span 12; }
+}
+
+.rc-lbl {
+  display:     block;
+  margin-bottom: 5px;
+  color:       var(--policia-medio, #002a66);
+  font-size:   calc(11.5px * var(--font-size-scale, 1));
+  font-weight: 700;
+
+  em { color: #dc2626; font-style: normal; }
+}
+
+// El kit no trae textarea; replica los tokens de ui-input.
+.rc-campo {
+  display:        flex;
+  flex-direction: column;
+
+  &__area {
+    padding:       9px 11px;
+    border:        1px solid rgba(21, 27, 59, .2);
+    border-radius: 8px;
+    background:    transparent;
+    color:         inherit;
+    font:          inherit;
+    font-size:     calc(12.5px * var(--font-size-scale, 1));
+    resize:        vertical;
+
+    &:focus {
+      border-color:   #0e7490;
+      outline:        2px solid rgba(8, 166, 203, .25);
+      outline-offset: 1px;
+    }
+  }
+
+  &__pie {
+    margin-top: 4px;
+    color:      var(--ui-text-muted, #6b7280);
+    font-size:  calc(10.5px * var(--font-size-scale, 1));
+
+    &--error { color: #dc2626; }
+  }
+}
+
+// ── Autocompletado de casos ───────────────────────────────────────────────
+.rc-auto {
+  position: relative;
+
+  &__lista {
+    position:      absolute;
+    top:           100%;
+    left:          0;
+    right:         0;
+    z-index:       40;
+    max-height:    260px;
+    margin:        4px 0 0;
+    padding:       0;
+    overflow-y:    auto;
+    border:        1px solid rgba(21, 27, 59, .16);
+    border-radius: 8px;
+    background:    var(--ui-surface, #fff);
+    box-shadow:    0 12px 28px rgba(2, 6, 23, .18);
+    list-style:    none;
+
+    button {
+      display:               grid;
+      grid-template-columns: 62px minmax(0, 1fr);
+      align-items:           center;
+      gap:                   10px;
+      width:                 100%;
+      padding:               8px 12px;
+      border:                0;
+      background:            transparent;
+      cursor:                pointer;
+      font:                  inherit;
+      text-align:            left;
+
+      &:hover, &:focus-visible { background: rgba(8, 166, 203, .08); }
+    }
+  }
+
+  &__cod {
+    padding:       1px 7px;
+    border-radius: 999px;
+    background:    rgba(21, 27, 59, .07);
+    font-family:   ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size:     calc(10.5px * var(--font-size-scale, 1));
+    text-align:    center;
+  }
+
+  &__desc { font-size: calc(12px * var(--font-size-scale, 1)); }
+
+  // La categoría avisa de qué asistente se activará al elegir el caso.
+  &__cat {
+    grid-column: 2;
+    display:     flex;
+    align-items: center;
+    gap:         5px;
+    color:       #0e7490;
+    font-size:   calc(10.5px * var(--font-size-scale, 1));
+  }
+}
+
+// ── Asistente ─────────────────────────────────────────────────────────────
+.rc-panel--asistente { border-color: rgba(8, 166, 203, .35); }
+
+.rc-asis {
+  border-top: 1px solid rgba(21, 27, 59, .08);
+  background: rgba(8, 166, 203, .04);
+
+  &__head {
+    display:         flex;
+    align-items:     center;
+    justify-content: space-between;
+    gap:             10px;
+    padding:         9px 14px;
+    font-size:       calc(12px * var(--font-size-scale, 1));
+    font-weight:     700;
+
+    i { color: #0e7490; }
+  }
+
+  &__cat { display: block; padding: 0 14px 10px; max-width: 420px; }
+
+  &__lista {
+    display:        flex;
+    flex-direction: column;
+    gap:            10px;
+    margin:         0;
+    padding:        0 14px 14px 34px;
+
+    li {
+      display:        flex;
+      flex-direction: column;
+      gap:            4px;
+      padding-left:   6px;
+    }
+  }
+
+  // Una pregunta ya respondida se marca en verde: con diez preguntas hay que
+  // ver de un vistazo cuáles faltan.
+  &__item--ok::marker { color: #16a34a; }
+
+  &__q {
+    font-size:   calc(12px * var(--font-size-scale, 1));
+    font-weight: 600;
+    line-height: 1.4;
+
+    em { color: #dc2626; font-style: normal; }
+  }
+
+  &__ayuda {
+    color:     var(--ui-text-muted, #6b7280);
+    font-size: calc(10.5px * var(--font-size-scale, 1));
+
+    i { color: #0e7490; }
+  }
+
+  &__resp { max-width: 280px; }
+}
+
+.rc-sino {
+  display: flex;
+  gap:     6px;
+
+  &__opt {
+    padding:       5px 18px;
+    border:        1px solid rgba(21, 27, 59, .2);
+    border-radius: 999px;
+    background:    transparent;
+    color:         inherit;
+    cursor:        pointer;
+    font:          inherit;
+    font-size:     calc(11.5px * var(--font-size-scale, 1));
+    font-weight:   700;
+
+    &:hover { background: rgba(8, 166, 203, .08); }
+
+    &--sel {
+      border-color: #0e7490;
+      background:   #0e7490;
+      color:        #fff;
+    }
+  }
+}
+
+// ── Relato ────────────────────────────────────────────────────────────────
+.rc-relato {
+  border-top: 1px solid rgba(21, 27, 59, .08);
+
+  &__head {
+    display:         flex;
+    align-items:     center;
+    justify-content: space-between;
+    gap:             10px;
+    padding:         9px 14px;
+    font-size:       calc(12px * var(--font-size-scale, 1));
+    font-weight:     700;
+
+    i { color: #0e7490; }
+  }
+
+  // El relato puede ser largo: se desplaza dentro de su caja en vez de
+  // estirar el panel.
+  &__txt {
+    max-height:  240px;
+    margin:      0;
+    padding:     12px 14px;
+    overflow:    auto;
+    background:  rgba(21, 27, 59, .04);
+    font-family: inherit;
+    font-size:   calc(12px * var(--font-size-scale, 1));
+    line-height: 1.6;
+    white-space: pre-wrap;
+  }
+}
+
+// ── Canal de origen ───────────────────────────────────────────────────────
+.rc-origen {
+  display:               grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap:                   6px;
+
+  &__opt {
+    display:       flex;
+    align-items:   center;
+    gap:           8px;
+    padding:       8px 11px;
+    border:        1px solid rgba(21, 27, 59, .16);
+    border-radius: 8px;
+    background:    transparent;
+    color:         inherit;
+    cursor:        pointer;
+    font:          inherit;
+    font-size:     calc(11.5px * var(--font-size-scale, 1));
+    text-align:    left;
+
+    i { color: #0e7490; }
+
+    &:hover { background: rgba(8, 166, 203, .07); }
+
+    &--sel {
+      border-color: #0e7490;
+      background:   rgba(8, 166, 203, .14);
+      font-weight:  700;
+    }
+  }
+}
+
+// ── Asociar llamada ───────────────────────────────────────────────────────
+.rc-asociar {
+  display:     flex;
+  align-items: flex-start;
+  gap:         10px;
+
+  > app-ui-input { flex: 1; min-width: 0; }
+  > app-ui-button { margin-top: 22px; }
+}
+
+.rc-asociar-modal { min-height: 120px; }
+
+.rc-asociar-lista {
+  display:        flex;
+  flex-direction: column;
+  gap:            6px;
+  max-height:     50vh;
+  margin:         0;
+  padding:        0;
+  overflow-y:     auto;
+  list-style:     none;
+
+  button {
+    display:               grid;
+    grid-template-columns: 92px minmax(0, 1fr) auto;
+    align-items:           center;
+    gap:                   12px;
+    width:                 100%;
+    padding:               9px 12px;
+    border:                1px solid rgba(21, 27, 59, .12);
+    border-radius:         8px;
+    background:            transparent;
+    color:                 inherit;
+    cursor:                pointer;
+    font:                  inherit;
+    text-align:            left;
+
+    &:hover, &:focus-visible { background: rgba(8, 166, 203, .08); }
+  }
+
+  &__id {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size:   calc(11px * var(--font-size-scale, 1));
+  }
+
+  &__txt {
+    display:        flex;
+    flex-direction: column;
+    min-width:      0;
+
+    strong { font-size: calc(12px * var(--font-size-scale, 1)); }
+    small  { color: var(--ui-text-muted, #6b7280); font-size: calc(10.5px * var(--font-size-scale, 1)); }
+  }
+
+  &__fecha {
+    color:     var(--ui-text-muted, #6b7280);
+    font-size: calc(10.5px * var(--font-size-scale, 1));
+  }
+}
+
+// ── Mapa ──────────────────────────────────────────────────────────────────
+.rc-mapa-cuerpo {
+  display:        flex;
+  flex-direction: column;
+  gap:            12px;
+  padding:        14px;
+}
+
+.rc-buscar {
+  display:     flex;
+  align-items: flex-start;
+  gap:         10px;
+
+  > app-ui-input  { flex: 1; min-width: 0; }
+  > app-ui-button { margin-top: 22px; }
+}
+
+.rc-mapa {
+  height:        clamp(280px, 34vh, 420px);
+  border:        1px solid rgba(21, 27, 59, .14);
+  border-radius: 10px;
+}
+
+.rc-coords {
+  display: flex;
+  gap:     12px;
+
+  > * { flex: 1; min-width: 0; }
+}
+
+// ── Canales y agencias ────────────────────────────────────────────────────
+.rc-canales {
+  display:        flex;
+  flex-direction: column;
+  gap:            10px;
+  padding:        14px;
+}
+
+.rc-grupo {
+  border:        1px solid rgba(21, 27, 59, .12);
+  border-radius: 10px;
+  overflow:      hidden;
+
+  &--externo { border-color: rgba(230, 115, 0, .35); }
+
+  &__head {
+    display:       flex;
+    align-items:   center;
+    gap:           8px;
+    padding:       8px 12px;
+    border-bottom: 1px solid rgba(21, 27, 59, .08);
+    background:    rgba(21, 27, 59, .03);
+  }
+
+  &__nombre {
+    flex:        1;
+    font-size:   calc(11.5px * var(--font-size-scale, 1));
+    font-weight: 700;
+  }
+
+  // Anchos fijos: con 1fr un grupo de dos canales los estira a media pantalla.
+  &__canales {
+    display:               grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 190px));
+    gap:                   6px;
+    padding:               10px 12px;
+  }
+}
+
+.rc-canal {
+  display:       flex;
+  align-items:   center;
+  gap:           7px;
+  padding:       7px 11px;
+  border:        1px solid rgba(21, 27, 59, .16);
+  border-radius: 8px;
+  background:    transparent;
+  color:         inherit;
+  cursor:        pointer;
+  font:          inherit;
+  font-size:     calc(11.5px * var(--font-size-scale, 1));
+  text-align:    left;
+
+  &:hover { background: rgba(8, 166, 203, .07); }
+
+  &--sel {
+    border-color: #0e7490;
+    background:   rgba(8, 166, 203, .16);
+    font-weight:  700;
+  }
+
+  &--externo:not(.rc-canal--sel):hover { background: rgba(230, 115, 0, .08); }
+  &--externo.rc-canal--sel {
+    border-color: #b45309;
+    background:   rgba(230, 115, 0, .16);
+  }
+}
+
+// ── Fotos ─────────────────────────────────────────────────────────────────
+.rc-fotos {
+  display:        flex;
+  flex-direction: column;
+  gap:            12px;
+  padding:        14px;
+}
+
+.rc-galeria {
+  display:        flex;
+  flex-direction: column;
+  gap:            8px;
+  margin:         0;
+  padding:        0;
+  list-style:     none;
+}
+
+.rc-foto {
+  display:               grid;
+  grid-template-columns: 54px minmax(0, 1fr) auto;
+  align-items:           center;
+  gap:                   10px;
+  padding:               8px;
+  border:                1px solid rgba(21, 27, 59, .12);
+  border-radius:         8px;
+
+  img {
+    width:         54px;
+    height:        44px;
+    border-radius: 6px;
+    object-fit:    cover;
+  }
+
+  &__info {
+    display:        flex;
+    flex-direction: column;
+    min-width:      0;
+
+    strong {
+      overflow:      hidden;
+      font-size:     calc(11.5px * var(--font-size-scale, 1));
+      text-overflow: ellipsis;
+      white-space:   nowrap;
+    }
+    small { color: var(--ui-text-muted, #6b7280); font-size: calc(10px * var(--font-size-scale, 1)); }
+  }
+
+  &__acciones { display: flex; align-items: center; gap: 2px; }
+
+  &__ver {
+    display:       grid;
+    width:         30px;
+    height:        30px;
+    place-items:   center;
+    border-radius: 7px;
+    color:         var(--policia-medio, #002a66);
+
+    &:hover { background: rgba(8, 166, 203, .1); }
+  }
+}
+
+// ── Enviar ────────────────────────────────────────────────────────────────
+// Barra de envío: ocupa el ancho completo y se queda pegada al borde inferior
+// mientras el operador recorre el formulario, que mide más de dos pantallas.
+.rc-enviar {
+  position:        sticky;
+  bottom:          0;
+  z-index:         20;
+  flex-direction:  row;
+  align-items:     center;
+  gap:             10px;
+  padding:         14px 16px;
+  margin-top:      16px;
+  backdrop-filter: blur(6px);
+  box-shadow:      0 -4px 16px rgb(15 23 42 / 10%);
+}
+
+.rc-enviar__aviso {
+  display:     flex;
+  align-items: center;
+  gap:         8px;
+  flex:        1 1 auto;
+  min-width:   0;
+  font-size:   .82rem;
+  line-height: 1.3;
+  color:       var(--color-warning-700, #b45309);
+
+  i { flex: 0 0 auto; }
+
+  span {
+    overflow:      hidden;
+    text-overflow: ellipsis;
+    white-space:   nowrap;
+  }
+}
+
+:host-context(html.dark-mode) .rc-enviar__aviso {
+  color: var(--color-warning-300, #fcd34d);
+}
+
+:host-context(html.dark-mode) .rc-enviar {
+  box-shadow: 0 -4px 16px rgb(0 0 0 / 45%);
+}
+
+@media (max-width: 720px) {
+  // En pantallas estrechas el aviso se lleva su propia línea: recortado a una
+  // sola línea junto a los botones no se alcanzaba a leer qué faltaba.
+  .rc-enviar { flex-wrap: wrap; }
+  .rc-enviar__aviso { flex: 1 0 100%; span { white-space: normal; } }
+}
+
+.rc-acciones {
+  display:         flex;
+  gap:             8px;
+  justify-content: flex-end;
+}
+
+// ── Modo oscuro ───────────────────────────────────────────────────────────
+:host-context(html.dark-mode) {
+  .rc-panel {
+    background:   rgba(255, 255, 255, .03);
+    border-color: rgba(255, 255, 255, .12);
+  }
+  .rc-dupl        { background: rgba(230, 115, 0, .1); border-color: rgba(230, 115, 0, .45); }
+  .rc-dupl__head  { border-bottom-color: rgba(230, 115, 0, .3); }
+  .rc-dupl__head > i { color: #fbbf24; }
+  .rc-dupl__item:not(:last-child) { border-bottom-color: rgba(230, 115, 0, .22); }
+  .rc-aviso       { background: rgba(8, 166, 203, .14); border-color: rgba(8, 166, 203, .35); }
+  .rc-asis        { background: rgba(8, 166, 203, .07); border-top-color: rgba(255, 255, 255, .1); }
+  .rc-relato      { border-top-color: rgba(255, 255, 255, .1); }
+  .rc-relato__txt { background: rgba(255, 255, 255, .05); }
+  .rc-auto__lista { background: #131a2e; border-color: rgba(255, 255, 255, .14); }
+  .rc-auto__cod   { background: rgba(255, 255, 255, .1); }
+  // El :not(--sel) es imprescindible: :host-context añade [_nghost] al selector,
+  // así que esta regla pesa más que .rc-canal--sel / .rc-origen__opt--sel /
+  // .rc-sino__opt--sel y, sin él, en oscuro les borraba el borde de color y
+  // dejaba la selección marcada sólo por la negrita.
+  .rc-campo__area,
+  .rc-origen__opt:not(.rc-origen__opt--sel),
+  .rc-canal:not(.rc-canal--sel),
+  .rc-sino__opt:not(.rc-sino__opt--sel),
+  .rc-foto,
+  .rc-grupo,
+  .rc-asociar-lista button { border-color: rgba(255, 255, 255, .16); }
+
+  // Selección: sobre fondo oscuro los tonos claros del tema pierden contraste,
+  // así que se suben el borde y el velo de fondo.
+  .rc-canal--sel {
+    border-color: #22d3ee;
+    background:   rgba(34, 211, 238, .18);
+  }
+  .rc-canal--externo.rc-canal--sel {
+    border-color: #fbbf24;
+    background:   rgba(251, 191, 36, .18);
+  }
+  .rc-origen__opt--sel {
+    border-color: #22d3ee;
+    background:   rgba(34, 211, 238, .18);
+  }
+  .rc-sino__opt--sel {
+    border-color: #22d3ee;
+    background:   #0e7490;
+    color:        #fff;
+  }
+  .rc-grupo__head { background: rgba(255, 255, 255, .04); border-bottom-color: rgba(255, 255, 255, .1); }
+  .rc-mapa        { border-color: rgba(255, 255, 255, .16); }
+}

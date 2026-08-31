@@ -46,5 +46,13 @@ export const operacionRoutes: Routes = [
       import('./pages/turnos-page/turnos-page.component').then((m) => m.TurnosPageComponent),
     data: { breadcrumb: 'Turnos de Vigilancia' },
   },
-  // Pendientes de portar: recepción, eventos y pedido.
+  {
+    path: 'recepcion',
+    loadComponent: () =>
+      import('./pages/recepcion-page/recepcion-page.component').then(
+        (m) => m.RecepcionPageComponent,
+      ),
+    data: { breadcrumb: 'Recepción de Llamadas' },
+  },
+  // Pendientes de portar: eventos y pedido.
 ];

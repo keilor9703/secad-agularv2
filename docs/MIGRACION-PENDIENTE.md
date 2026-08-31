@@ -41,7 +41,7 @@ Se actualiza a medida que se porta cada cosa.
 
 ---
 
-## Operación — 6 de 9
+## Operación — 7 de 9
 
 | Pantalla | Estado | Líneas |
 |---|---|---|
@@ -51,13 +51,52 @@ Se actualiza a medida que se porta cada cosa.
 | `mapa-estadistico` | ✅ portada | 2.044 |
 | `reportes` | ✅ portada | 2.405 |
 | `turnos` | ✅ portada | 2.763 |
-| `recepcion` | ⬜ pendiente | 4.073 |
+| `recepcion` | ✅ portada | 4.073 |
 | `pedido` | ⬜ pendiente | 5.053 |
 | `eventos` | ⬜ pendiente | 8.896 |
 
 Los 12 servicios de `core/services/operacion/` sí están portados completos.
 
-**Pendiente: 18.022 líneas** entre `recepcion`, `pedido` y `eventos`.
+**Pendiente: 13.949 líneas** entre `pedido` y `eventos`.
+
+**`recepcion` — portada.** La toma del incidente: cierres rápidos sin caso,
+detección de duplicados, identificación de la llamada, tipificación con
+autocompletado de casos y asistente de preguntas orientadoras, relato armado
+solo, datos del caso con canal de origen, mapa Leaflet con búsqueda de
+dirección y geocodificación inversa, canales SECAD agrupados por fuerza,
+agencias externas, prioridad e importancia, galería de fotos y asociación con
+otra llamada. HTML 1.105 → 672 líneas y SCSS 1.407 → 741 apoyándose en
+`ui-page-header`, `ui-section-header`, `ui-input`, `ui-select`, `ui-textarea`,
+`ui-file-upload`, `ui-modal`, `ui-badge`, `ui-chip`, `ui-spinner` y
+`ui-button`. Se quedan a medida los chips de canal, las preguntas del
+asistente, el aviso de duplicados y la galería.
+
+Correcciones respecto del origen:
+
+- El mapa se montaba con `L.map('mapaDiv')` buscando el `id` en todo el
+  documento, y `L` venía de un `declare const` sobre un script de CDN que el
+  CSP de la plantilla bloquea. Ahora Leaflet es un import real y el contenedor
+  se resuelve con `viewChild.required`, así que dos instancias de la pantalla
+  no se pisan.
+- La barra de envío vivía dentro de la columna derecha: en un formulario de dos
+  pantallas y media, el botón principal quedaba a media página, encima de
+  campos todavía sin llenar. Ahora ocupa el ancho completo y se queda pegada al
+  borde inferior.
+- La validación devolvía un aviso por vez, así que el operador descubría los
+  campos faltantes de a uno y volvía a subir el formulario en cada intento. La
+  barra resume ahora todo lo que falta; `validarYGuardar()` sigue validando
+  igual.
+- El estado de los pedidos cercanos se mostraba con el código crudo del
+  backend; ahora se traduce, igual que la prioridad.
+
+**Un aviso sobre `styles.scss`.** La regla genérica de botones del modo oscuro
+(`html.dark-mode button:not(...)`) lleva cinco `:not()` de atributo, así que
+pesa más que cualquier regla de componente —`:host-context` sólo suma un
+atributo—. Le borraba el color a los chips seleccionados de esta pantalla y
+dejaba la selección marcada sólo por la negrita. Se le añadió
+`:not([class*='--sel'])`: una regla general no debe pisar un estado
+seleccionado que el componente define aparte. Si al portar otra pantalla un
+estado marcado se ve igual que uno sin marcar en oscuro, es esto.
 
 **`turnos` — portada.** Tres columnas encadenadas —turnos del día, unidades del
 turno, medios de la unidad— y seis modales: crear turno, copiarlo a otra
@@ -315,7 +354,7 @@ Faltan 8, y varios bloquean pantallas de la lista de arriba:
 | Área | Portado | Total |
 |---|---|---|
 | Servicios de operación | 12 | 12 |
-| Pantallas de operación | 6 | 9 |
+| Pantallas de operación | 7 | 9 |
 | Pantallas de administración | 16 | 16 |
 | Servicios de administración | 18 | 20 |
 | Super Admin | 2 | 2 |

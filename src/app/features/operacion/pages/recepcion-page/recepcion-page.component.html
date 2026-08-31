@@ -1,0 +1,679 @@
+<div class="rc-page">
+
+  <app-ui-page-header
+    title="Recepción de llamadas"
+    icon="fa-solid fa-phone-volume"
+    description="Toma del incidente: quién llama, qué pasa, dónde y a quién se le despacha."
+    [minimizable]="false"
+  >
+    <ng-container page-header-actions>
+      <span
+        class="rc-plantatel"
+        [class]="'rc-plantatel--' + plantaTelEstado"
+        [title]="plantaTelEstadoLabel"
+      >
+        <i class="fa-solid fa-satellite-dish" aria-hidden="true"></i>
+        {{ plantaTelEstadoLabel }}
+      </span>
+    </ng-container>
+  </app-ui-page-header>
+
+  <!-- ═══ Cierres rápidos ══════════════════════════════════════════════════
+       Seis motivos que cierran la llamada sin abrir caso. Van arriba porque
+       son la salida más frecuente de una llamada entrante. -->
+  <section class="rc-panel rc-rapidos">
+    <span class="rc-rapidos__lbl">Cerrar sin caso:</span>
+    <app-ui-button variant="secondary" appearance="ghost" size="sm" icon="fa-solid fa-circle-info"
+                   tooltip="Solicitando información" (buttonClick)="cerrarRapido('INFORMACION')">Info</app-ui-button>
+    <app-ui-button variant="warning" appearance="ghost" size="sm" icon="fa-solid fa-user-xmark"
+                   tooltip="Persona molestando" (buttonClick)="cerrarRapido('PERSONAMOLESTANDO')">Molestia</app-ui-button>
+    <app-ui-button variant="warning" appearance="ghost" size="sm" icon="fa-solid fa-child"
+                   tooltip="Niño molestando" (buttonClick)="cerrarRapido('NINOMOLESTADO')">Niño</app-ui-button>
+    <app-ui-button variant="danger" appearance="ghost" size="sm" icon="fa-solid fa-comment-slash"
+                   tooltip="Llamada insultante" (buttonClick)="cerrarRapido('LLAMADAINSULTANTE')">Insultos</app-ui-button>
+    <app-ui-button variant="danger" appearance="ghost" size="sm" icon="fa-solid fa-phone-slash"
+                   tooltip="No hablan o colgaron" (buttonClick)="cerrarRapido('COLGARON')">Colgaron</app-ui-button>
+    <app-ui-button variant="secondary" appearance="ghost" size="sm" icon="fa-solid fa-rotate-left"
+                   tooltip="Llamada equivocada" (buttonClick)="cerrarRapido('EQUIVOCADA')">Equivocada</app-ui-button>
+  </section>
+
+  <!-- ═══ Posibles duplicados ══════════════════════════════════════════════ -->
+  @if (verificandoDuplicados()) {
+    <p class="rc-aviso">
+      <app-ui-spinner size="sm" />
+      <span>Buscando eventos activos cerca de esta ubicación…</span>
+    </p>
+  }
+
+  @if (showDuplicados() && duplicados().length > 0) {
+    <section class="rc-panel rc-dupl">
+      <header class="rc-dupl__head">
+        <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
+        <span>
+          <strong>Posible duplicado.</strong>
+          Hay {{ duplicados().length }} evento(s) activo(s) a menos de {{ DUPL_RADIO }} m
+          en los últimos {{ DUPL_MINUTOS }} min. Compruebe si es el mismo hecho antes de
+          crear otro caso.
+        </span>
+        <app-ui-button
+          variant="secondary" appearance="ghost" size="sm"
+          icon="fa-solid fa-xmark" iconOnly
+          ariaLabel="Descartar el aviso y seguir como caso nuevo"
+          tooltip="Descartar y seguir"
+          (buttonClick)="cerrarAlertaDuplicados()"
+        />
+      </header>
+
+      <ul class="rc-dupl__lista">
+        @for (p of duplicados(); track p.id) {
+          <li class="rc-dupl__item">
+            <span class="rc-dupl__marcas">
+              <app-ui-badge [label]="p.distanciaMetros + ' m'" variant="info" size="xs" />
+              <app-ui-badge [label]="getEstadoLabelDupl(p.estado)" variant="warning" size="xs" />
+              @if (p.prioridad) {
+                <app-ui-badge [label]="getPrioridadLabel(p.prioridad)" variant="danger" size="xs" />
+              }
+            </span>
+            <span class="rc-dupl__txt">
+              <strong>{{ p.codiPedido || 'Sin tipificar' }}</strong>
+              <small>{{ p.direCaso }}{{ p.barrio ? ' · ' + p.barrio : '' }}</small>
+              <small>hace {{ p.minutosAtras }} min · {{ p.nombLlamante || 'sin llamante' }}</small>
+            </span>
+            <app-ui-button
+              variant="primary" size="sm" icon="fa-solid fa-link"
+              tooltip="Asociar esta llamada al evento existente"
+              (buttonClick)="vincularConDuplicado(p)"
+            >Es el mismo</app-ui-button>
+          </li>
+        }
+      </ul>
+    </section>
+  }
+
+  <!-- ═══ Formulario | mapa y despacho ═════════════════════════════════════ -->
+  <div class="rc-layout">
+
+    <!-- ── Columna izquierda: el caso ─────────────────────────────────── -->
+    <div class="rc-col">
+
+      <!-- Identificación -->
+      <section class="rc-panel">
+        <app-ui-section-header title="Identificación de la llamada" icon="fa-solid fa-id-badge" appearance="divider" />
+        <div class="rc-campos">
+          <app-ui-input class="rc-c3" label="Fecha de ingreso" readonly
+                        placeholder="Automático al recibir la llamada" [ngModel]="txtFechaIngreso()" />
+          <app-ui-input class="rc-c6" label="ID de llamada" readonly placeholder="—" [ngModel]="txtNumeLlamada()" />
+          <app-ui-input class="rc-c3" label="ACD" readonly placeholder="—" [(ngModel)]="txtAcd" />
+          <app-ui-input class="rc-c6" label="Usuario" readonly placeholder="—" [ngModel]="usuario" />
+          <app-ui-input class="rc-c6" label="Sitio de grabación" readonly placeholder="—" [ngModel]="sitioGraba" />
+        </div>
+      </section>
+
+      <!-- Datos de la llamada -->
+      <section class="rc-panel">
+        <app-ui-section-header title="Datos de la llamada" icon="fa-solid fa-phone" appearance="divider" />
+        <div class="rc-campos">
+          <app-ui-input
+            class="rc-c4"
+            label="Abonado"
+            inputmode="tel"
+            placeholder="Ej: 3001234567"
+            required
+            [error]="txtAbonado().trim() ? '' : 'Obligatorio.'"
+            [ngModel]="txtAbonado()"
+            (ngModelChange)="onAbonadoChange($event)"
+            (keydown.enter)="onAbonadoEnter()"
+          />
+          <app-ui-input
+            class="rc-c8"
+            label="Propietario de la línea"
+            placeholder="No hay consulta automática de titularidad; anótelo si lo indica quien llama"
+            [ngModel]="txtPropAbonado()"
+            (ngModelChange)="txtPropAbonado.set($event)"
+          />
+          <app-ui-input class="rc-c12" label="Medio de comunicación" readonly
+                        placeholder="Se detecta al escribir el abonado" [ngModel]="txtDispTelefonico()" />
+          <app-ui-input
+            class="rc-c6"
+            label="Llamante"
+            placeholder="Nombre de quien llama"
+            required
+            [error]="txtNombreLlamante().trim() ? '' : 'Obligatorio.'"
+            [ngModel]="txtNombreLlamante()"
+            (ngModelChange)="txtNombreLlamante.set($event)"
+          />
+          <app-ui-input class="rc-c6" label="Dirección de quien llama" placeholder="Dirección del llamante"
+                        [ngModel]="txtDireLlamante()" (ngModelChange)="txtDireLlamante.set($event)" />
+        </div>
+      </section>
+
+      <!-- Tipificación + asistente -->
+      <section class="rc-panel" [class.rc-panel--asistente]="asistenteAutoActivado()">
+        <app-ui-section-header title="Tipificación del incidente" icon="fa-solid fa-file-shield" appearance="divider">
+          @if (asistenteAutoActivado()) {
+            <app-ui-badge
+              header-actions
+              [label]="'Asistente activo · ' + asistenteCategoriaDescripcion()"
+              icon="fa-solid fa-robot"
+              iconPosition="start"
+              variant="info"
+              size="xs"
+            />
+          }
+        </app-ui-section-header>
+
+        <div class="rc-campos">
+          <app-ui-input
+            class="rc-c3"
+            label="Código de caso"
+            placeholder="Ej: 120"
+            required
+            [error]="txtCodigCaso().trim() ? '' : 'Obligatorio.'"
+            [ngModel]="txtCodigCaso()"
+            (ngModelChange)="txtCodigCaso.set($event)"
+            (keydown.enter)="buscarCasoPorCodigo(txtCodigCaso(), 1)"
+          />
+          <!-- Autocompletado propio: el desplegable muestra código, descripción
+               y la categoría del asistente que se activará al elegirlo. -->
+          <div class="rc-c9 rc-auto">
+            <app-ui-input
+              label="Descripción del caso"
+              placeholder="Escriba para buscar (mínimo 3 letras)…"
+              [ngModel]="txtDescaso()"
+              (ngModelChange)="onDescaso1Change($event)"
+              (blur)="cerrarSugerencias()"
+            />
+            @if (casosSugeridos1().length > 0) {
+              <ul class="rc-auto__lista">
+                @for (c of casosSugeridos1(); track c.CODIGO_CASO) {
+                  <li>
+                    <button type="button" (mousedown)="seleccionarSugerencia(c, 1)">
+                      <span class="rc-auto__cod">{{ c.CODIGO_CASO }}</span>
+                      <span class="rc-auto__desc">{{ c.DESCRIPCION_CASO }}</span>
+                      @if (c.CATEGORIA_DESCRIPCION) {
+                        <span class="rc-auto__cat">
+                          <i class="fa-solid fa-robot" aria-hidden="true"></i> {{ c.CATEGORIA_DESCRIPCION }}
+                        </span>
+                      }
+                    </button>
+                  </li>
+                }
+              </ul>
+            }
+          </div>
+
+          <app-ui-input
+            class="rc-c3"
+            label="Código de caso 2"
+            placeholder="Opcional"
+            [ngModel]="txtCodigCaso2()"
+            (ngModelChange)="txtCodigCaso2.set($event)"
+            (keydown.enter)="buscarCasoPorCodigo(txtCodigCaso2(), 2)"
+          />
+          <div class="rc-c9 rc-auto">
+            <app-ui-input
+              label="Descripción del caso 2"
+              placeholder="Escriba para buscar…"
+              [ngModel]="txtDescaso2()"
+              (ngModelChange)="onDescaso2Change($event)"
+              (blur)="cerrarSugerencias()"
+            />
+            @if (casosSugeridos2().length > 0) {
+              <ul class="rc-auto__lista">
+                @for (c of casosSugeridos2(); track c.CODIGO_CASO) {
+                  <li>
+                    <button type="button" (mousedown)="seleccionarSugerencia(c, 2)">
+                      <span class="rc-auto__cod">{{ c.CODIGO_CASO }}</span>
+                      <span class="rc-auto__desc">{{ c.DESCRIPCION_CASO }}</span>
+                    </button>
+                  </li>
+                }
+              </ul>
+            }
+          </div>
+        </div>
+
+        <!-- Preguntas orientadoras -->
+        @if (asistenteAutoActivado() || asistenteAbierto()) {
+          <div class="rc-asis">
+            <header class="rc-asis__head">
+              <span>
+                <i class="fa-solid fa-circle-question" aria-hidden="true"></i>
+                Preguntas orientadoras
+              </span>
+              <app-ui-button
+                variant="secondary" appearance="ghost" size="sm"
+                [icon]="asistenteAbierto() ? 'fa-solid fa-chevron-up' : 'fa-solid fa-chevron-down'"
+                iconOnly
+                [ariaLabel]="asistenteAbierto() ? 'Contraer las preguntas' : 'Desplegar las preguntas'"
+                [tooltip]="asistenteAbierto() ? 'Contraer' : 'Desplegar'"
+                (buttonClick)="toggleAsistente()"
+              />
+            </header>
+
+            @if (asistenteAbierto()) {
+              @if (!asistenteAutoActivado()) {
+                @if (asistenteLoadingCat()) {
+                  <app-ui-spinner label="Cargando categorías…" contained />
+                } @else {
+                  <app-ui-select
+                    class="rc-asis__cat"
+                    label="Tipo de incidente"
+                    [options]="opcionesCategoriaAsistente()"
+                    [clearable]="false"
+                    [ngModel]="asistenteCategoriaSel()"
+                    (ngModelChange)="onAsistenteCategoriaChange($event)"
+                  />
+                }
+              }
+
+              @if (asistenteLoadingPreg()) {
+                <app-ui-spinner label="Cargando preguntas…" contained />
+              } @else if (asistenteCategoriaSel() && asistentePreguntas().length === 0) {
+                <p class="rc-nota">Esta categoría no tiene preguntas configuradas.</p>
+              } @else if (asistentePreguntas().length > 0) {
+                <ol class="rc-asis__lista">
+                  @for (preg of asistentePreguntas(); track preg.id) {
+                    <li [class.rc-asis__item--ok]="respuestas()[preg.id]">
+                      <span class="rc-asis__q">
+                        {{ preg.pregunta }}
+                        @if (preg.obligatoria) { <em title="Obligatoria">*</em> }
+                      </span>
+                      @if (preg.ayuda) {
+                        <span class="rc-asis__ayuda">
+                          <i class="fa-solid fa-circle-info" aria-hidden="true"></i> {{ preg.ayuda }}
+                        </span>
+                      }
+
+                      @switch (preg.tipoRespuesta) {
+                        @case ('SINO') {
+                          <span class="rc-sino">
+                            <button
+                              type="button"
+                              class="rc-sino__opt"
+                              [class.rc-sino__opt--sel]="respuestas()[preg.id] === 'si'"
+                              [attr.aria-pressed]="respuestas()[preg.id] === 'si'"
+                              (click)="onRespuestaChange(preg.id, 'si')"
+                            >Sí</button>
+                            <button
+                              type="button"
+                              class="rc-sino__opt"
+                              [class.rc-sino__opt--sel]="respuestas()[preg.id] === 'no'"
+                              [attr.aria-pressed]="respuestas()[preg.id] === 'no'"
+                              (click)="onRespuestaChange(preg.id, 'no')"
+                            >No</button>
+                          </span>
+                        }
+                        @case ('NUMERO') {
+                          <app-ui-input
+                            class="rc-asis__resp"
+                            type="number"
+                            [ariaLabel]="preg.pregunta"
+                            placeholder="0"
+                            [ngModel]="respuestas()[preg.id]"
+                            (ngModelChange)="onRespuestaChange(preg.id, $event)"
+                          />
+                        }
+                        @case ('SELECCION') {
+                          <app-ui-select
+                            class="rc-asis__resp"
+                            [ariaLabel]="preg.pregunta"
+                            [options]="opcionesPregunta(preg)"
+                            [clearable]="false"
+                            [ngModel]="respuestas()[preg.id]"
+                            (ngModelChange)="onRespuestaChange(preg.id, $event)"
+                          />
+                        }
+                        @default {
+                          <app-ui-input
+                            class="rc-asis__resp"
+                            [ariaLabel]="preg.pregunta"
+                            placeholder="Respuesta…"
+                            [ngModel]="respuestas()[preg.id]"
+                            (ngModelChange)="onRespuestaChange(preg.id, $event)"
+                          />
+                        }
+                      }
+                    </li>
+                  }
+                </ol>
+              }
+            }
+          </div>
+        }
+
+        <!-- El relato queda fuera del bloque plegable: es lo que se guarda. -->
+        @if (relatoAutomatico()) {
+          <div class="rc-relato">
+            <header class="rc-relato__head">
+              <span><i class="fa-solid fa-file-lines" aria-hidden="true"></i> Relato del incidente</span>
+              <app-ui-button
+                variant="secondary" appearance="ghost" size="sm" icon="fa-solid fa-rotate"
+                tooltip="Rehacer el relato con lo que hay ahora en el formulario"
+                (buttonClick)="construirRelato()"
+              >Actualizar</app-ui-button>
+            </header>
+            <pre class="rc-relato__txt">{{ relatoAutomatico() }}</pre>
+          </div>
+        }
+      </section>
+
+      <!-- Datos del caso -->
+      <section class="rc-panel">
+        <app-ui-section-header title="Datos del caso" icon="fa-solid fa-map-pin" appearance="divider" />
+
+        <div class="rc-campos">
+          <div class="rc-c12">
+            <span class="rc-lbl">Canal de origen <em>*</em></span>
+            <div class="rc-origen" role="group" aria-label="Canal de origen del incidente">
+              @for (co of canalesOrigen; track co.value) {
+                <button
+                  type="button"
+                  class="rc-origen__opt"
+                  [class.rc-origen__opt--sel]="canalOrigenUI() === co.value"
+                  [attr.aria-pressed]="canalOrigenUI() === co.value"
+                  (click)="canalOrigenUI.set(co.value)"
+                >
+                  <i [class]="'fa-solid ' + co.icon" aria-hidden="true"></i>
+                  <span>{{ co.label }}</span>
+                </button>
+              }
+            </div>
+          </div>
+
+          <app-ui-input class="rc-c6" label="Ciudad o municipio" placeholder="Ciudad del caso"
+                        [ngModel]="txtCiudadCaso()" (ngModelChange)="txtCiudadCaso.set($event)" />
+          <app-ui-input class="rc-c6" label="Barrio" placeholder="Barrio del caso"
+                        [ngModel]="txtBarrioCaso()" (ngModelChange)="txtBarrioCaso.set($event)" />
+          <app-ui-input
+            class="rc-c12"
+            label="Dirección del caso"
+            placeholder="Dirección exacta del incidente"
+            required
+            [error]="txtDireCaso().trim() ? '' : 'Obligatorio.'"
+            [ngModel]="txtDireCaso()"
+            (ngModelChange)="txtDireCaso.set($event)"
+          />
+
+          <div class="rc-c12 rc-asociar">
+            <app-ui-input
+              label="Asociar a otra llamada"
+              readonly
+              placeholder="Sin asociar"
+              hint="Use el botón para buscar la llamada con la que se relaciona."
+              [ngModel]="txtAsociarLlamada()"
+            />
+            <app-ui-button
+              variant="secondary" icon="fa-solid fa-link"
+              tooltip="Buscar la llamada a asociar"
+              (buttonClick)="abrirModalAsociar()"
+            >Buscar</app-ui-button>
+          </div>
+
+          <app-ui-select class="rc-c6" label="Tipo de llamada" [options]="opcionesTipoPedido()" [clearable]="false"
+                         [ngModel]="tipoPedido()" (ngModelChange)="tipoPedido.set($event)" />
+          <app-ui-select class="rc-c6" label="Calidad de la llamada" [options]="opcionesCaliPedido()" [clearable]="false"
+                         [ngModel]="caliPedido()" (ngModelChange)="caliPedido.set($event)" />
+
+          <label class="rc-c12 rc-campo">
+            <span class="rc-lbl">
+              @if (asistenteAutoActivado() && asistentePreguntas().length > 0) {
+                Observaciones adicionales
+              } @else {
+                Descripción de los hechos <em>*</em>
+              }
+            </span>
+            <textarea
+              class="rc-campo__area"
+              rows="5"
+              [ngModel]="notasAdicionales()"
+              (ngModelChange)="notasAdicionales.set($event)"
+              [placeholder]="(asistenteAutoActivado() && asistentePreguntas().length > 0)
+                ? 'Añada lo que las preguntas no cubran…'
+                : 'Describa con detalle el incidente reportado…'"
+            ></textarea>
+            @if (asistenteAutoActivado() && asistentePreguntas().length > 0 && !notasAdicionales().trim()) {
+              <span class="rc-campo__pie">
+                El relato principal sale de las preguntas orientadoras; este campo es opcional.
+              </span>
+            } @else if (!notasAdicionales().trim() && !relatoAutomatico().trim()) {
+              <span class="rc-campo__pie rc-campo__pie--error">Obligatorio.</span>
+            }
+          </label>
+        </div>
+      </section>
+    </div>
+
+    <!-- ── Columna derecha: dónde y a quién ───────────────────────────── -->
+    <div class="rc-col">
+
+      <!-- Mapa -->
+      <section class="rc-panel">
+        <app-ui-section-header title="Ubicación del incidente" icon="fa-solid fa-map-location-dot" appearance="divider" />
+        <div class="rc-mapa-cuerpo">
+          <div class="rc-buscar">
+            <app-ui-input
+              label="Buscar dirección en el mapa"
+              placeholder="Escriba una dirección y pulse Enter…"
+              [(ngModel)]="direccionBusqueda"
+              (keydown.enter)="geocodificarDireccion()"
+            />
+            <app-ui-button
+              variant="secondary" icon="fa-solid fa-magnifying-glass"
+              tooltip="Buscar en el mapa"
+              (buttonClick)="geocodificarDireccion()"
+            >Buscar</app-ui-button>
+          </div>
+
+          <!-- Al hacer clic en el mapa se rellenan dirección, barrio y ciudad
+               por geocodificación inversa. -->
+          <div #mapaDiv class="rc-mapa"></div>
+
+          <div class="rc-coords">
+            <app-ui-input label="Latitud" readonly placeholder="—" [ngModel]="latitudCaso()" />
+            <app-ui-input label="Longitud" readonly placeholder="—" [ngModel]="longitudCaso()" />
+          </div>
+        </div>
+      </section>
+
+      <!-- Canales SECAD -->
+      @if (gruposCanalesOrdenados.length > 0) {
+        <section class="rc-panel">
+          <app-ui-section-header title="Canales de atención" icon="fa-solid fa-tower-broadcast" appearance="divider" />
+          <div class="rc-canales">
+            @for (grupo of gruposCanalesOrdenados; track grupo.fuerza) {
+              <div class="rc-grupo" [class.rc-grupo--externo]="esGrupoExterno(grupo)">
+                <header class="rc-grupo__head">
+                  <span class="rc-grupo__nombre">{{ grupo.fuerza }}</span>
+                  @if (esGrupoExterno(grupo)) {
+                    <app-ui-badge label="Otra agencia" icon="fa-solid fa-building-shield"
+                                  iconPosition="start" variant="warning" size="xs" />
+                  }
+                  <app-ui-chip [value]="grupo.canales.length" variant="info" appearance="soft" size="xs" />
+                </header>
+                <div class="rc-grupo__canales">
+                  @for (c of grupo.canales; track c.codigo) {
+                    <button
+                      type="button"
+                      class="rc-canal"
+                      [class.rc-canal--sel]="c.seleccionado"
+                      [class.rc-canal--externo]="esGrupoExterno(grupo)"
+                      [attr.aria-pressed]="c.seleccionado"
+                      (click)="toggleCanal(c)"
+                    >{{ c.descripcion }}</button>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        </section>
+      }
+
+      <!-- Agencias externas -->
+      @if (agenciasExternas().length > 0) {
+        <section class="rc-panel">
+          <app-ui-section-header
+            title="Notificar a agencias externas"
+            icon="fa-solid fa-building-shield"
+            description="Al guardar se envían los datos del caso a la API de cada agencia marcada."
+            appearance="divider"
+          />
+          <div class="rc-canales">
+            <div class="rc-grupo rc-grupo--externo">
+              <div class="rc-grupo__canales">
+                @for (ag of agenciasExternas(); track ag.id) {
+                  <button
+                    type="button"
+                    class="rc-canal rc-canal--externo"
+                    [class.rc-canal--sel]="agenciasSeleccionadas().has(ag.id)"
+                    [attr.aria-pressed]="agenciasSeleccionadas().has(ag.id)"
+                    (click)="toggleAgenciaExterna(ag.id)"
+                  >
+                    <i [class]="'fa-solid ' + getAgenciaIcon(ag.tipoAgencia)" aria-hidden="true"></i>
+                    {{ ag.nombre }}
+                  </button>
+                }
+              </div>
+            </div>
+          </div>
+          @if (agenciasSeleccionadas().size > 0) {
+            <p class="rc-nota">
+              <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+              {{ agenciasSeleccionadas().size }} agencia(s) recibirán el caso al guardar.
+            </p>
+          }
+        </section>
+      }
+
+      <!-- Prioridad -->
+      <section class="rc-panel">
+        <app-ui-section-header title="Prioridad e importancia" icon="fa-solid fa-gauge-high" appearance="divider" />
+        <div class="rc-campos">
+          <app-ui-select class="rc-c6" label="Prioridad" [options]="opcionesPrioridad" [clearable]="false"
+                         [searchable]="false" [ngModel]="prioridad()" (ngModelChange)="prioridad.set($event)" />
+          <app-ui-select class="rc-c6" label="Importancia" [options]="opcionesImportancia" [clearable]="false"
+                         [searchable]="false" [ngModel]="importancia()" (ngModelChange)="importancia.set($event)" />
+        </div>
+      </section>
+
+      <!-- Fotos -->
+      <section class="rc-panel">
+        <app-ui-section-header
+          title="Fotos del caso"
+          icon="fa-solid fa-camera"
+          description="JPG, PNG o WEBP, hasta 8 MB cada una."
+          appearance="divider"
+        >
+          @if (adjuntos().length > 0) {
+            <app-ui-chip header-actions [value]="adjuntos().length" label="fotos"
+                         variant="info" appearance="soft" size="xs" />
+          }
+        </app-ui-section-header>
+
+        <div class="rc-fotos">
+          <!-- Sin ID de llamada no hay caso al que colgar la foto. -->
+          <app-ui-file-upload
+            label="Añadir foto"
+            accept=".jpg,.jpeg,.png,.webp"
+            buttonText="Elegir foto…"
+            emptyText="Ninguna foto seleccionada"
+            [hint]="txtNumeLlamada() ? 'También puede arrastrarla aquí.' : 'Genere primero un ID de llamada.'"
+            [disabled]="!txtNumeLlamada()"
+            [loading]="adjuntosSubiendo()"
+            (fileSelected)="subirFotoDesdeKit($event)"
+          />
+
+          @if (adjuntos().length > 0) {
+            <ul class="rc-galeria">
+              @for (adj of adjuntos(); track adj.id) {
+                <li class="rc-foto">
+                  <img [src]="adj.urlPublica" [alt]="adj.nombreOriginal" loading="lazy" />
+                  <span class="rc-foto__info">
+                    <strong [title]="adj.nombreOriginal">{{ adj.nombreOriginal }}</strong>
+                    <small>
+                      {{ formatBytes(adj.tamanioBytes) }}
+                      @if (adj.fechaSubida) { · {{ adj.fechaSubida }} }
+                    </small>
+                  </span>
+                  <span class="rc-foto__acciones">
+                    <a [href]="adj.urlPublica" target="_blank" rel="noopener"
+                       class="rc-foto__ver" title="Ver la foto en otra pestaña"
+                       [attr.aria-label]="'Ver ' + adj.nombreOriginal">
+                      <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i>
+                    </a>
+                    <app-ui-button
+                      variant="danger" appearance="ghost" size="sm"
+                      icon="fa-solid fa-trash-can" iconOnly
+                      ariaLabel="Eliminar la foto" tooltip="Eliminar"
+                      (buttonClick)="eliminarFoto(adj)"
+                    />
+                  </span>
+                </li>
+              }
+            </ul>
+          }
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- ═══ Enviar ═══════════════════════════════════════════════════════════
+       Fuera de las dos columnas y pegada al borde inferior: el formulario mide
+       más de dos pantallas, y con la barra dentro de la columna derecha la
+       acción principal quedaba a media página, por encima de campos todavía
+       sin llenar. -->
+  <section class="rc-panel rc-enviar">
+    <span class="rc-enviar__aviso">
+      @if (camposObligatoriosFaltantes(); as faltan) {
+        <i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i>
+        <span>Faltan datos obligatorios: {{ faltan }}</span>
+      }
+    </span>
+    <app-ui-button
+      variant="secondary" appearance="ghost" icon="fa-solid fa-eraser"
+      [disabled]="saving()"
+      tooltip="Vaciar el formulario"
+      (buttonClick)="limpiarFormulario()"
+    >Limpiar</app-ui-button>
+    <app-ui-button
+      variant="primary" size="lg" icon="fa-solid fa-paper-plane"
+      [loading]="saving()" [disabled]="saving()"
+      (buttonClick)="validarYGuardar()"
+    >Validar y enviar</app-ui-button>
+  </section>
+</div>
+
+<!-- ═══ Asociar llamada ════════════════════════════════════════════════════ -->
+<app-ui-modal
+  [open]="showModalAsociar()"
+  title="Asociar a otra llamada"
+  icon="fa-solid fa-link"
+  size="lg"
+  (closeRequested)="cerrarModalAsociar()"
+>
+  <div modal-body class="rc-asociar-modal">
+    @if (llamadasParaAsociar().length === 0) {
+      <p class="rc-nota">No hay llamadas recientes con las que asociar.</p>
+    } @else {
+      <ul class="rc-asociar-lista">
+        @for (ll of llamadasParaAsociar(); track ll.NUME_LLAMADA) {
+          <li>
+            <button type="button" (click)="seleccionarAsociada(ll)">
+              <span class="rc-asociar-lista__id">{{ ll.NUME_LLAMADA }}</span>
+              <span class="rc-asociar-lista__txt">
+                <strong>{{ ll.CODI_PEDIDO }}</strong>
+                <small>{{ ll.DIRE_CASO }}</small>
+                <small>{{ ll.NOMB_LLAMANTE }} · {{ ll.CIUDAD }}</small>
+              </span>
+              <span class="rc-asociar-lista__fecha">{{ ll.HORA_CASO }}</span>
+            </button>
+          </li>
+        }
+      </ul>
+    }
+  </div>
+
+  <div modal-actions class="rc-acciones">
+    <app-ui-button variant="secondary" appearance="ghost" (buttonClick)="cerrarModalAsociar()">Cerrar</app-ui-button>
+  </div>
+</app-ui-modal>

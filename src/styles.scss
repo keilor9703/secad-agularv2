@@ -255,10 +255,15 @@ html.dark-mode {
     }
   }
 
-  /* Botones genéricos */
+  /* Botones genéricos.
+     El :not([class*='--sel']) evita que esta regla general pise el estado
+     seleccionado que un componente define por su cuenta: con cinco :not() de
+     atributo pesa más que cualquier regla de componente (:host-context sólo
+     suma un atributo), así que en oscuro dejaba los chips marcados idénticos
+     a los no marcados y la selección se perdía. */
   button:not([class*='btn-primary']):not([class*='btn-success']):not([class*='btn-danger']):not(
       [class*='btn-warning']
-    ):not([class*='sidebar-action']) {
+    ):not([class*='sidebar-action']):not([class*='--sel']) {
     background: #252f45;
     color: var(--ui-text);
     border-color: var(--ui-border);
