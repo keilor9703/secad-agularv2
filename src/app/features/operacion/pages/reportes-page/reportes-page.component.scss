@@ -1,0 +1,422 @@
+// ══════════════════════════════════════════════════════════════════════════
+//  Reportes y estadísticas
+//
+//  Encabezados, pestañas, campos, botones, insignias, spinner y las tres
+//  tablas los resuelven los componentes de shared/components/ui-*. Aquí quedan
+//  los KPI, las tarjetas de tiempos, los aros de SLA y las listas con barra,
+//  que no tienen equivalente en el kit.
+// ══════════════════════════════════════════════════════════════════════════
+
+.rep-page {
+  display:        flex;
+  flex-direction: column;
+  gap:            16px;
+  padding:        16px;
+}
+
+.rep-panel {
+  border:        1px solid rgba(21, 27, 59, .12);
+  border-radius: 10px;
+  overflow:      hidden;
+  background:    var(--ui-surface, #fff);
+}
+
+// Dos paneles en paralelo; se apilan cuando dejan de caber cómodos.
+.rep-par {
+  display:               grid;
+  grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+  gap:                   16px;
+  align-items:           start;
+}
+
+.rep-subtabs { max-width: 900px; }
+
+// ── Filtros ───────────────────────────────────────────────────────────────
+.rep-filtros {
+  display:        flex;
+  flex-direction: column;
+  gap:            12px;
+  padding:        14px;
+
+  &__rangos {
+    display: flex;
+    gap:     6px;
+  }
+
+  &__campos {
+    display:     flex;
+    flex-wrap:   wrap;
+    align-items: flex-end;
+    gap:         12px;
+  }
+
+  &__fecha  { flex: 0 0 170px; }
+  &__fuerza { flex: 1 1 240px; min-width: 0; max-width: 320px; }
+  &__turno  { flex: 1 1 220px; min-width: 0; max-width: 280px; }
+}
+
+.rep-filtro-corto { width: 210px; }
+
+.rep-turno {
+  display:       inline-flex;
+  align-items:   center;
+  gap:           6px;
+  margin-bottom: 6px;
+  padding:       5px 12px;
+  border-radius: 999px;
+  color:         #fff;
+  font-size:     calc(11px * var(--font-size-scale, 1));
+  font-weight:   700;
+}
+
+.rep-error {
+  display:       flex;
+  align-items:   center;
+  gap:           8px;
+  margin:        0;
+  padding:       10px 14px;
+  border:        1px solid rgba(220, 38, 38, .35);
+  border-radius: 10px;
+  background:    rgba(220, 38, 38, .08);
+  color:         #b91c1c;
+  font-size:     calc(12.5px * var(--font-size-scale, 1));
+}
+
+// ── KPI ───────────────────────────────────────────────────────────────────
+// Anchos acotados: con 1fr seis tarjetas se estiran hasta que la cifra queda
+// perdida en medio de la tarjeta.
+.rep-kpis {
+  display:               grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 240px));
+  gap:                   12px;
+  margin:                0;
+  padding:               0;
+  list-style:            none;
+}
+
+.rep-kpi {
+  display:        flex;
+  flex-direction: column;
+  gap:            3px;
+  padding:        13px 15px;
+  border:         1px solid rgba(21, 27, 59, .12);
+  border-left:    4px solid var(--rep-acento, #94a3b8);
+  border-radius:  10px;
+  background:     var(--ui-surface, #fff);
+
+  &__val {
+    font-size:            calc(25px * var(--font-size-scale, 1));
+    font-weight:          800;
+    line-height:          1.1;
+    font-variant-numeric: tabular-nums;
+    color:                var(--rep-acento, inherit);
+  }
+
+  &__lbl {
+    display:     inline-flex;
+    align-items: center;
+    gap:         6px;
+    color:       var(--ui-text-muted, #6b7280);
+    font-size:   calc(11.5px * var(--font-size-scale, 1));
+  }
+
+  &__barra {
+    height:        5px;
+    margin-top:    4px;
+    border-radius: 999px;
+    background:    rgba(21, 27, 59, .08);
+    overflow:      hidden;
+  }
+
+  &__fill {
+    display:       block;
+    height:        100%;
+    border-radius: 999px;
+    background:    var(--rep-acento, #94a3b8);
+  }
+
+  &--total      { --rep-acento: #002a66; }
+  &--activos    { --rep-acento: #0e7490; }
+  &--cerrados   { --rep-acento: #16a34a; }
+  &--flash      { --rep-acento: #cc0000; }
+  &--inmediatos { --rep-acento: #e67300; }
+  &--pendientes { --rep-acento: #7c3aed; }
+}
+
+// ── Tiempos ───────────────────────────────────────────────────────────────
+.rep-tiempos {
+  display:               grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap:                   12px;
+  margin:                0;
+  padding:               14px;
+  list-style:            none;
+}
+
+.rep-tiempo {
+  display:               grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  grid-template-areas:
+    "icono val"
+    "icono lbl"
+    "icono sub";
+  align-items:   center;
+  column-gap:    12px;
+  padding:       12px 14px;
+  border:        1px solid rgba(21, 27, 59, .10);
+  border-radius: 10px;
+
+  &__i {
+    grid-area:     icono;
+    display:       grid;
+    width:         42px;
+    height:        42px;
+    place-items:   center;
+    border-radius: 10px;
+    background:    rgba(8, 166, 203, .12);
+    color:         #0e7490;
+    font-size:     calc(16px * var(--font-size-scale, 1));
+
+    &--despacho { background: rgba(230, 115, 0, .12);  color: #e67300; }
+    &--cierre   { background: rgba(22, 163, 74, .12);  color: #16a34a; }
+    &--flash    { background: rgba(204, 0, 0, .12);    color: #cc0000; }
+  }
+
+  &__val {
+    grid-area:            val;
+    font-size:            calc(19px * var(--font-size-scale, 1));
+    font-weight:          800;
+    line-height:          1.15;
+    font-variant-numeric: tabular-nums;
+  }
+
+  &__lbl {
+    grid-area:   lbl;
+    font-size:   calc(12px * var(--font-size-scale, 1));
+    font-weight: 700;
+  }
+
+  &__sub {
+    grid-area:   sub;
+    color:       var(--ui-text-muted, #6b7280);
+    font-size:   calc(10.5px * var(--font-size-scale, 1));
+    line-height: 1.35;
+  }
+
+  &--flash { border-color: rgba(204, 0, 0, .28); }
+}
+
+// ── Gráficas ──────────────────────────────────────────────────────────────
+.rep-grafica {
+  position: relative;
+  height:   200px;
+  padding:  12px 14px;
+
+  &--alta { height: 260px; }
+}
+
+.rep-origenes,
+.rep-prio {
+  margin:     0;
+  padding:    0 14px 14px;
+  list-style: none;
+}
+
+.rep-origenes li {
+  display:               grid;
+  grid-template-columns: 12px minmax(0, 1fr) 52px 52px;
+  align-items:           center;
+  gap:                   8px;
+  padding:               4px 0;
+  font-size:             calc(11.5px * var(--font-size-scale, 1));
+
+  &:not(:last-child) { border-bottom: 1px solid rgba(21, 27, 59, .06); }
+}
+
+.rep-origenes__lbl { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rep-origenes__num { font-weight: 700; text-align: right; font-variant-numeric: tabular-nums; }
+.rep-origenes__pct { color: var(--ui-text-muted, #6b7280); text-align: right; }
+
+.rep-prio {
+  display:   flex;
+  flex-wrap: wrap;
+  gap:       14px;
+
+  li {
+    display:     inline-flex;
+    align-items: center;
+    gap:         6px;
+    font-size:   calc(11.5px * var(--font-size-scale, 1));
+  }
+}
+
+.rep-punto {
+  display:       inline-block;
+  width:         11px;
+  height:        11px;
+  border-radius: 50%;
+}
+
+// ── SLA ───────────────────────────────────────────────────────────────────
+.rep-sla {
+  display:               grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 280px));
+  gap:                   12px;
+  margin:                0;
+  padding:               14px;
+  list-style:            none;
+
+  &__card {
+    display:        flex;
+    flex-direction: column;
+    align-items:    center;
+    gap:            8px;
+    padding:        14px;
+    border:         1px solid rgba(21, 27, 59, .10);
+    border-radius:  10px;
+  }
+
+  &__head {
+    display:         flex;
+    align-items:     baseline;
+    justify-content: space-between;
+    gap:             10px;
+    width:           100%;
+  }
+
+  &__nombre { font-size: calc(12.5px * var(--font-size-scale, 1)); font-weight: 700; }
+  &__umbral { color: var(--ui-text-muted, #6b7280); font-size: calc(10.5px * var(--font-size-scale, 1)); }
+
+  &__aro {
+    position: relative;
+    width:    108px;
+    height:   108px;
+
+    svg { width: 100%; height: 100%; }
+  }
+
+  // currentColor sobre la pista: así el aro de fondo sigue al tema sin
+  // necesitar una variable propia.
+  &__pista { color: rgba(21, 27, 59, .1); }
+
+  &__pct {
+    position:             absolute;
+    inset:                0;
+    display:              grid;
+    place-items:          center;
+    font-size:            calc(18px * var(--font-size-scale, 1));
+    font-weight:          800;
+    font-variant-numeric: tabular-nums;
+  }
+
+  &__stats {
+    display:        flex;
+    flex-direction: column;
+    gap:            2px;
+    width:          100%;
+    font-size:      calc(11px * var(--font-size-scale, 1));
+  }
+
+  &__ok  { color: #16a34a; }
+  &__bad { color: #dc2626; }
+}
+
+// ── Listas con barra (top casos, fuerzas, calidad, códigos) ───────────────
+.rep-ranking {
+  display:        flex;
+  flex-direction: column;
+  gap:            6px;
+  margin:         0;
+  padding:        14px;
+  list-style:     none;
+
+  &--pad { padding-bottom: 6px; }
+
+  li {
+    display:               grid;
+    grid-template-columns: auto minmax(0, 1fr) 120px 56px 48px;
+    align-items:           center;
+    gap:                   10px;
+    font-size:             calc(11.5px * var(--font-size-scale, 1));
+  }
+
+  &__pos {
+    display:       grid;
+    width:         22px;
+    height:        22px;
+    place-items:   center;
+    border-radius: 6px;
+    background:    rgba(21, 27, 59, .07);
+    font-size:     calc(10.5px * var(--font-size-scale, 1));
+    font-weight:   800;
+  }
+
+  &__txt {
+    display:        flex;
+    flex-direction: column;
+    min-width:      0;
+
+    strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    small  { color: var(--ui-text-muted, #6b7280); font-size: calc(10px * var(--font-size-scale, 1)); }
+
+    &--ancho { grid-column: span 1; }
+  }
+
+  &__marcas { display: flex; gap: 4px; margin-top: 3px; }
+
+  &__barra {
+    height:        7px;
+    border-radius: 999px;
+    background:    rgba(21, 27, 59, .08);
+    overflow:      hidden;
+  }
+
+  &__fill {
+    display:       block;
+    height:        100%;
+    border-radius: 999px;
+    background:    var(--policia-medio, #002a66);
+  }
+
+  &__num { font-weight: 700; text-align: right; font-variant-numeric: tabular-nums; }
+  &__pct { color: var(--ui-text-muted, #6b7280); text-align: right; }
+
+  // En pantallas estrechas la barra estorba más de lo que aporta.
+  @media (max-width: 720px) {
+    li { grid-template-columns: auto minmax(0, 1fr) 56px 48px; }
+    &__barra { display: none; }
+  }
+}
+
+.rep-total {
+  margin:    0;
+  padding:   0 14px 14px;
+  color:     var(--ui-text-muted, #6b7280);
+  font-size: calc(11.5px * var(--font-size-scale, 1));
+}
+
+.rep-vacio {
+  margin:     0;
+  padding:    24px 16px;
+  color:      var(--ui-text-muted, #6b7280);
+  font-size:  calc(12.5px * var(--font-size-scale, 1));
+  font-style: italic;
+  text-align: center;
+}
+
+// ── Modo oscuro ───────────────────────────────────────────────────────────
+:host-context(html.dark-mode) {
+  .rep-panel,
+  .rep-kpi {
+    background:   rgba(255, 255, 255, .03);
+    border-color: rgba(255, 255, 255, .12);
+  }
+  .rep-tiempo,
+  .rep-sla__card       { border-color: rgba(255, 255, 255, .12); }
+  .rep-kpi__barra,
+  .rep-ranking__barra  { background: rgba(255, 255, 255, .1); }
+  .rep-ranking__pos    { background: rgba(255, 255, 255, .1); }
+  .rep-origenes li     { border-bottom-color: rgba(255, 255, 255, .08); }
+  .rep-sla__pista      { color: rgba(255, 255, 255, .14); }
+  .rep-error           { background: rgba(220, 38, 38, .14); color: #fca5a5; }
+}

@@ -1,0 +1,484 @@
+<div class="rep-page">
+
+  <app-ui-page-header
+    title="Reportes y estadísticas"
+    icon="fa-solid fa-chart-bar"
+    [description]="datos()
+      ? 'Período ' + datos()!.resumen.fechaDesde + ' — ' + datos()!.resumen.fechaHasta
+      : 'Actividad del CAD en el período: volumen, tiempos de atención, cumplimiento de SLA y trabajo por operador.'"
+    [minimizable]="false"
+  >
+    <app-ui-button
+      page-header-actions
+      variant="primary"
+      icon="fa-solid fa-arrows-rotate"
+      [loading]="cargando()"
+      [disabled]="cargando()"
+      (buttonClick)="cargar()"
+    >Actualizar</app-ui-button>
+  </app-ui-page-header>
+
+  <app-ui-segmented-tabs
+    [items]="pestanas"
+    [activeId]="seccion"
+    ariaLabel="Vista de los reportes"
+    [showBadges]="false"
+    (selectionChange)="setSeccion($any($event.id))"
+  />
+
+  <!-- ═══ Filtros ══════════════════════════════════════════════════════════ -->
+  <section class="rep-panel rep-filtros">
+    <div class="rep-filtros__rangos" role="group" aria-label="Rangos rápidos">
+      <app-ui-button variant="secondary" appearance="ghost" size="sm" (buttonClick)="setRango('hoy')">Hoy</app-ui-button>
+      <app-ui-button variant="secondary" appearance="ghost" size="sm" (buttonClick)="setRango('semana')">Últimos 7 días</app-ui-button>
+      <app-ui-button variant="secondary" appearance="ghost" size="sm" (buttonClick)="setRango('mes')">Mes actual</app-ui-button>
+    </div>
+
+    <div class="rep-filtros__campos">
+      <app-ui-input
+        class="rep-filtros__fecha"
+        label="Desde"
+        type="date"
+        [(ngModel)]="desde"
+        (ngModelChange)="onFiltroChange()"
+      />
+      <app-ui-input
+        class="rep-filtros__fecha"
+        label="Hasta"
+        type="date"
+        [(ngModel)]="hasta"
+        (ngModelChange)="onFiltroChange()"
+      />
+      <app-ui-select
+        class="rep-filtros__fuerza"
+        label="Fuerza"
+        [options]="opcionesFuerza()"
+        [clearable]="false"
+        [(ngModel)]="fuerzaId"
+        (ngModelChange)="onFiltroChange()"
+      />
+      <app-ui-select
+        class="rep-filtros__turno"
+        label="Turno de vigilancia"
+        [options]="opcionesTurno"
+        [clearable]="false"
+        [searchable]="false"
+        [(ngModel)]="turnoVigilancia"
+        (ngModelChange)="onFiltroChange()"
+      />
+      @if (turnoVigilancia > 0) {
+        <span class="rep-turno" [style.background]="svc.turnoBadgeColor(turnoVigilancia)">
+          <i class="fa-solid fa-clock" aria-hidden="true"></i>
+          {{ svc.turnoLabel(turnoVigilancia) }}
+        </span>
+      }
+    </div>
+  </section>
+
+  @if (error()) {
+    <p class="rep-error">
+      <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i> {{ error() }}
+    </p>
+  }
+
+  @if (cargando() && !datos()) {
+    <app-ui-spinner label="Calculando estadísticas…" contained />
+  }
+
+  <!-- ═══ Panel general ════════════════════════════════════════════════════ -->
+  @if (seccion === 'dashboard' && datos()) {
+
+    <ul class="rep-kpis">
+      <li class="rep-kpi rep-kpi--total">
+        <span class="rep-kpi__val">{{ resumen.totalIncidentes }}</span>
+        <span class="rep-kpi__lbl">Total incidentes</span>
+      </li>
+      <li class="rep-kpi rep-kpi--activos">
+        <span class="rep-kpi__val">{{ resumen.activos }}</span>
+        <span class="rep-kpi__lbl">Activos</span>
+        <span class="rep-kpi__barra">
+          <span class="rep-kpi__fill"
+                [style.width.%]="resumen.totalIncidentes ? (resumen.activos / resumen.totalIncidentes * 100) : 0"></span>
+        </span>
+      </li>
+      <li class="rep-kpi rep-kpi--cerrados">
+        <span class="rep-kpi__val">{{ resumen.cerrados }}</span>
+        <span class="rep-kpi__lbl">Cerrados</span>
+        <span class="rep-kpi__barra">
+          <span class="rep-kpi__fill"
+                [style.width.%]="resumen.totalIncidentes ? (resumen.cerrados / resumen.totalIncidentes * 100) : 0"></span>
+        </span>
+      </li>
+      <li class="rep-kpi rep-kpi--flash">
+        <span class="rep-kpi__val">{{ resumen.flash }}</span>
+        <span class="rep-kpi__lbl"><i class="fa-solid fa-bolt" aria-hidden="true"></i> Flash</span>
+      </li>
+      <li class="rep-kpi rep-kpi--inmediatos">
+        <span class="rep-kpi__val">{{ resumen.inmediatos }}</span>
+        <span class="rep-kpi__lbl">Inmediatos</span>
+      </li>
+      <li class="rep-kpi rep-kpi--pendientes">
+        <span class="rep-kpi__val">{{ resumen.pendientes }}</span>
+        <span class="rep-kpi__lbl">Sin despachar</span>
+      </li>
+    </ul>
+
+    <!-- ── Tiempos ─────────────────────────────────────────────────────── -->
+    <section class="rep-panel">
+      <app-ui-section-header
+        title="Tiempos promedio de atención"
+        icon="fa-solid fa-stopwatch"
+        [description]="'Calculados sobre ' + tiempos.cerrados + ' incidente(s) cerrado(s).'"
+        appearance="divider"
+      />
+      <ul class="rep-tiempos">
+        <li class="rep-tiempo">
+          <i class="fa-solid fa-eye rep-tiempo__i" aria-hidden="true"></i>
+          <span class="rep-tiempo__val">{{ formatMin(tiempos.minutosPrimerAccesoPromedio) }}</span>
+          <span class="rep-tiempo__lbl">Primer acceso</span>
+          <span class="rep-tiempo__sub">Desde que entra hasta que el despachador abre el evento</span>
+        </li>
+        <li class="rep-tiempo">
+          <i class="fa-solid fa-truck-fast rep-tiempo__i rep-tiempo__i--despacho" aria-hidden="true"></i>
+          <span class="rep-tiempo__val">{{ formatMin(tiempos.minutosDespachoPromedio) }}</span>
+          <span class="rep-tiempo__lbl">Hasta el despacho</span>
+          <span class="rep-tiempo__sub">{{ tiempos.conDespacho }} incidentes con despacho registrado</span>
+        </li>
+        <li class="rep-tiempo">
+          <i class="fa-solid fa-flag-checkered rep-tiempo__i rep-tiempo__i--cierre" aria-hidden="true"></i>
+          <span class="rep-tiempo__val">{{ formatMin(tiempos.minutosCierrePromedio) }}</span>
+          <span class="rep-tiempo__lbl">Hasta el cierre</span>
+          <span class="rep-tiempo__sub">Desde que entra hasta que se cierra el evento</span>
+        </li>
+        <li class="rep-tiempo rep-tiempo--flash">
+          <i class="fa-solid fa-bolt rep-tiempo__i rep-tiempo__i--flash" aria-hidden="true"></i>
+          <span class="rep-tiempo__val">{{ formatMin(tiempos.minutosFlashPromedio) }}</span>
+          <span class="rep-tiempo__lbl">Despacho Flash</span>
+          <span class="rep-tiempo__sub">Solo los de prioridad Flash</span>
+        </li>
+      </ul>
+    </section>
+
+    <!-- ── Origen y prioridad ──────────────────────────────────────────── -->
+    <div class="rep-par">
+      <section class="rep-panel">
+        <app-ui-section-header title="Canal de origen" icon="fa-solid fa-share-nodes" appearance="divider" />
+        <div class="rep-grafica rep-grafica--alta">
+          @if (porOrigen.length) {
+            <canvas #canvasOrigen role="img" aria-label="Incidentes por canal de origen"></canvas>
+          } @else {
+            <p class="rep-vacio">Sin datos para el período.</p>
+          }
+        </div>
+        @if (porOrigen.length) {
+          <ul class="rep-origenes">
+            @for (o of porOrigen; track o.origen) {
+              <li>
+                <i class="rep-punto" [style.background]="origenClr(o.origen)"></i>
+                <span class="rep-origenes__lbl">{{ origenLbl(o.origen) }}</span>
+                <span class="rep-origenes__num">{{ o.total }}</span>
+                <span class="rep-origenes__pct">{{ o.porcentaje }}%</span>
+              </li>
+            }
+          </ul>
+        }
+      </section>
+
+      <section class="rep-panel">
+        <app-ui-section-header title="Por prioridad" icon="fa-solid fa-gauge-high" appearance="divider" />
+        <div class="rep-grafica">
+          <canvas #canvasPrio role="img" aria-label="Incidentes por prioridad"></canvas>
+        </div>
+        <ul class="rep-prio">
+          <li><i class="fa-solid fa-bolt" style="color:#cc0000" aria-hidden="true"></i> <strong>{{ resumen.flash }}</strong> Flash</li>
+          <li><i class="fa-solid fa-circle-exclamation" style="color:#e67300" aria-hidden="true"></i> <strong>{{ resumen.inmediatos }}</strong> Inmediatos</li>
+          <li><i class="fa-solid fa-circle" style="color:#0066cc" aria-hidden="true"></i> <strong>{{ resumen.rutina }}</strong> Rutina</li>
+        </ul>
+      </section>
+    </div>
+
+    <!-- ── Distribución horaria ────────────────────────────────────────── -->
+    <section class="rep-panel">
+      <app-ui-section-header
+        title="Distribución por hora del día"
+        icon="fa-solid fa-clock"
+        description="El color de cada barra marca la franja de demanda: alta, media o baja."
+        appearance="divider"
+      />
+      <div class="rep-grafica">
+        <canvas #canvasHoras role="img" aria-label="Incidentes por hora del día"></canvas>
+      </div>
+    </section>
+
+    <!-- ── SLA ─────────────────────────────────────────────────────────── -->
+    @if (sla.length) {
+      <section class="rep-panel">
+        <app-ui-section-header
+          title="Cumplimiento de SLA"
+          icon="fa-solid fa-traffic-light"
+          description="Medido sobre el tiempo hasta el primer acceso del despachador."
+          appearance="divider"
+        />
+        <ul class="rep-sla">
+          @for (s of sla; track s.nombre) {
+            <li class="rep-sla__card" [class]="slaClass(s.porcentajeCumplimiento)">
+              <div class="rep-sla__head">
+                <span class="rep-sla__nombre">{{ s.nombre }}</span>
+                <span class="rep-sla__umbral">≤ {{ s.umbralMinutos }} min</span>
+              </div>
+              <!-- El aro es un círculo SVG con stroke-dasharray: el porcentaje
+                   se lee de un vistazo sin depender de leer el número. -->
+              <div class="rep-sla__aro">
+                <svg viewBox="0 0 80 80" aria-hidden="true">
+                  <circle cx="40" cy="40" r="34" fill="none" stroke="currentColor" stroke-width="8" class="rep-sla__pista" />
+                  <circle cx="40" cy="40" r="34" fill="none"
+                          [attr.stroke]="s.colorHex"
+                          stroke-width="8" stroke-linecap="round" stroke-dasharray="213.6"
+                          [attr.stroke-dashoffset]="213.6 - (213.6 * s.porcentajeCumplimiento / 100)"
+                          transform="rotate(-90 40 40)" />
+                </svg>
+                <span class="rep-sla__pct">{{ s.porcentajeCumplimiento }}%</span>
+              </div>
+              <div class="rep-sla__stats">
+                <span class="rep-sla__ok"><i class="fa-solid fa-check" aria-hidden="true"></i> {{ s.cumplieron }} cumplieron</span>
+                <span class="rep-sla__bad"><i class="fa-solid fa-xmark" aria-hidden="true"></i> {{ s.incumplieron }} superaron</span>
+              </div>
+            </li>
+          }
+        </ul>
+      </section>
+    }
+
+    <!-- ── Top casos y fuerzas ─────────────────────────────────────────── -->
+    <div class="rep-par">
+      <section class="rep-panel">
+        <app-ui-section-header title="Tipos de incidente más frecuentes" icon="fa-solid fa-ranking-star" appearance="divider" />
+        @if (!topCasos.length) {
+          <p class="rep-vacio">Sin datos para el período.</p>
+        } @else {
+          <ul class="rep-ranking">
+            @for (c of topCasos; track c.codigoCaso; let i = $index) {
+              <li>
+                <span class="rep-ranking__pos">{{ i + 1 }}</span>
+                <span class="rep-ranking__txt">
+                  <strong>{{ c.descripcion }}</strong>
+                  <small>{{ c.codigoCaso }}</small>
+                </span>
+                <span class="rep-ranking__barra">
+                  <span class="rep-ranking__fill" [style.width.%]="c.porcentaje"></span>
+                </span>
+                <span class="rep-ranking__num">{{ c.total }}</span>
+                <span class="rep-ranking__pct">{{ c.porcentaje }}%</span>
+              </li>
+            }
+          </ul>
+        }
+      </section>
+
+      <section class="rep-panel">
+        <app-ui-section-header title="Por fuerza de despacho" icon="fa-solid fa-shield-halved" appearance="divider" />
+        @if (!porFuerza.length) {
+          <p class="rep-vacio">Sin datos para el período.</p>
+        } @else {
+          <ul class="rep-ranking">
+            @for (f of porFuerza; track f.fuerzaId) {
+              <li>
+                <span class="rep-ranking__txt rep-ranking__txt--ancho">
+                  <strong>{{ f.fuerza }}</strong>
+                  <span class="rep-ranking__marcas">
+                    <app-ui-badge [label]="f.activos + ' activos'" variant="warning" size="xs" />
+                    <app-ui-badge [label]="f.cerrados + ' cerrados'" variant="success" size="xs" />
+                  </span>
+                </span>
+                <span class="rep-ranking__barra">
+                  <span class="rep-ranking__fill" [style.width.%]="f.porcentaje"></span>
+                </span>
+                <span class="rep-ranking__num">{{ f.total }}</span>
+                <span class="rep-ranking__pct">{{ f.porcentaje }}%</span>
+              </li>
+            }
+          </ul>
+        }
+      </section>
+    </div>
+  }
+
+  <!-- ═══ Reportes detallados ══════════════════════════════════════════════ -->
+  @if (seccion === 'detallados') {
+    <app-ui-segmented-tabs
+      class="rep-subtabs"
+      [items]="pestanasReporte"
+      [activeId]="reporteActivo"
+      size="sm"
+      ariaLabel="Reporte detallado"
+      [showBadges]="false"
+      (selectionChange)="setReporteActivo($any($event.id))"
+    />
+
+    <section class="rep-panel">
+
+      <!-- R1 — Calidad -->
+      @if (reporteActivo === 'calidad') {
+        <app-ui-section-header
+          title="Llamadas por calidad"
+          icon="fa-solid fa-tags"
+          description="Cómo se repartieron los pedidos del período según su tipo de calidad."
+          appearance="divider"
+        >
+          <ng-container header-actions>
+            <app-ui-button variant="secondary" appearance="ghost" size="sm" icon="fa-solid fa-arrows-rotate"
+                           [loading]="cargandoCal()" (buttonClick)="cargarCalidad()">Actualizar</app-ui-button>
+            <app-ui-button variant="secondary" appearance="ghost" size="sm" icon="fa-solid fa-file-csv"
+                           [disabled]="!calidad().length" (buttonClick)="exportarCalidad()">Exportar CSV</app-ui-button>
+          </ng-container>
+        </app-ui-section-header>
+
+        @if (cargandoCal()) {
+          <app-ui-spinner label="Cargando…" contained />
+        } @else if (!calidad().length) {
+          <p class="rep-vacio">Sin datos para el período.</p>
+        } @else {
+          <ul class="rep-ranking rep-ranking--pad">
+            @for (c of calidad(); track c.caliPedido) {
+              <li>
+                <i class="rep-punto" [style.background]="calidadClr(c.caliPedido)"></i>
+                <span class="rep-ranking__txt rep-ranking__txt--ancho">{{ c.descripcion }}</span>
+                <span class="rep-ranking__barra">
+                  <span class="rep-ranking__fill"
+                        [style.width.%]="maxCalidad() ? (c.total / maxCalidad() * 100) : 0"
+                        [style.background]="calidadClr(c.caliPedido)"></span>
+                </span>
+                <span class="rep-ranking__num">{{ c.total }}</span>
+                <span class="rep-ranking__pct">{{ c.porcentaje }}%</span>
+              </li>
+            }
+          </ul>
+          <p class="rep-total">Total: <strong>{{ totalCalidad }}</strong> pedidos</p>
+        }
+      }
+
+      <!-- R2 — Pedidos con detalle -->
+      @if (reporteActivo === 'efectivos') {
+        <app-ui-section-header
+          title="Pedidos con detalle"
+          icon="fa-solid fa-list-check"
+          description="Cada pedido con sus tiempos de despacho, llegada y atención."
+          appearance="divider"
+        >
+          <ng-container header-actions>
+            <app-ui-select
+              class="rep-filtro-corto"
+              ariaLabel="Filtrar por calidad"
+              [options]="opcionesCalidadSelect"
+              [clearable]="false"
+              [searchable]="false"
+              [(ngModel)]="filtroCalidad"
+              (ngModelChange)="paginaEfe = 1; cargarEfectivos()"
+            />
+            <app-ui-button variant="secondary" appearance="ghost" size="sm" icon="fa-solid fa-file-csv"
+                           [disabled]="!efectivos()?.data?.length" (buttonClick)="exportarEfectivos()">Exportar CSV</app-ui-button>
+          </ng-container>
+        </app-ui-section-header>
+
+        <!-- Modo external: el backend ya recortó la página, la tabla no debe
+             volver a recortarla. -->
+        <app-ui-table
+          dataMode="external"
+          [columns]="columnasEfectivos"
+          [rows]="efectivos()?.data ?? []"
+          [total]="efectivos()?.total ?? 0"
+          [page]="paginaEfe"
+          [pageSize]="limitEfe"
+          [loading]="cargandoEfe()"
+          loadingMessage="Cargando pedidos…"
+          emptyMessage="Sin datos para el período y el filtro elegidos."
+          (pageChange)="irAPaginaEfe($event)"
+        />
+      }
+
+      <!-- R3 — Tiempos de atención -->
+      @if (reporteActivo === 'tiempos') {
+        <app-ui-section-header
+          title="Tiempos de atención por unidad"
+          icon="fa-solid fa-stopwatch"
+          description="Detalle llamada a llamada de cuánto tardó cada unidad en desplazarse y atender."
+          appearance="divider"
+        >
+          <app-ui-button header-actions variant="secondary" appearance="ghost" size="sm" icon="fa-solid fa-file-csv"
+                         [disabled]="!tiemposDetalle()?.data?.length" (buttonClick)="exportarTiempos()">Exportar CSV</app-ui-button>
+        </app-ui-section-header>
+
+        <app-ui-table
+          dataMode="external"
+          [columns]="columnasTiempos"
+          [rows]="tiemposDetalle()?.data ?? []"
+          [total]="tiemposDetalle()?.total ?? 0"
+          [page]="paginaTieDet"
+          [pageSize]="limitTieDet"
+          [loading]="cargandoTieDet()"
+          loadingMessage="Cargando tiempos…"
+          emptyMessage="Sin datos para el período."
+          (pageChange)="irAPaginaTie($event)"
+        />
+      }
+
+      <!-- R4 — Operadores -->
+      @if (reporteActivo === 'operadores') {
+        <app-ui-section-header
+          title="Trabajo de operadores y despachadores"
+          icon="fa-solid fa-users-between-lines"
+          description="Cuánto atendió, despachó y cerró cada persona en el período."
+          appearance="divider"
+        >
+          <app-ui-button header-actions variant="secondary" appearance="ghost" size="sm" icon="fa-solid fa-file-csv"
+                         [disabled]="!operadores().length" (buttonClick)="exportarOperadores()">Exportar CSV</app-ui-button>
+        </app-ui-section-header>
+
+        <app-ui-table
+          [columns]="columnasOperadores"
+          [rows]="operadores()"
+          [loading]="cargandoOpe()"
+          loadingMessage="Cargando operadores…"
+          emptyMessage="Sin actividad registrada en el período."
+        />
+      }
+
+      <!-- R5 — Códigos -->
+      @if (reporteActivo === 'codigos') {
+        <app-ui-section-header
+          title="Llamadas por código de caso"
+          icon="fa-solid fa-chart-bar"
+          [description]="'Los ' + topCodigos + ' códigos más usados en el período.'"
+          appearance="divider"
+        >
+          <app-ui-button header-actions variant="secondary" appearance="ghost" size="sm" icon="fa-solid fa-file-csv"
+                         [disabled]="!codigos().length" (buttonClick)="exportarCodigos()">Exportar CSV</app-ui-button>
+        </app-ui-section-header>
+
+        @if (cargandoCod()) {
+          <app-ui-spinner label="Cargando…" contained />
+        } @else if (!codigos().length) {
+          <p class="rep-vacio">Sin datos para el período.</p>
+        } @else {
+          <ul class="rep-ranking rep-ranking--pad">
+            @for (c of codigos(); track c.codigoCaso; let i = $index) {
+              <li>
+                <span class="rep-ranking__pos">{{ i + 1 }}</span>
+                <span class="rep-ranking__txt">
+                  <strong>{{ c.descripcion }}</strong>
+                  <small>{{ c.codigoCaso }}</small>
+                </span>
+                <span class="rep-ranking__barra">
+                  <span class="rep-ranking__fill"
+                        [style.width.%]="maxCodigo() ? (c.total / maxCodigo() * 100) : 0"></span>
+                </span>
+                <span class="rep-ranking__num">{{ c.total }}</span>
+                <span class="rep-ranking__pct">{{ c.porcentaje }}%</span>
+              </li>
+            }
+          </ul>
+        }
+      }
+    </section>
+  }
+</div>

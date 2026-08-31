@@ -41,7 +41,7 @@ Se actualiza a medida que se porta cada cosa.
 
 ---
 
-## Operación — 4 de 9
+## Operación — 5 de 9
 
 | Pantalla | Estado | Líneas |
 |---|---|---|
@@ -49,7 +49,7 @@ Se actualiza a medida que se porta cada cosa.
 | `anotaciones-turno` | ✅ portada | 1.076 |
 | `mapa-incidentes` | ✅ portada | 1.655 |
 | `mapa-estadistico` | ✅ portada | 2.044 |
-| `reportes` | ⬜ pendiente | 2.405 |
+| `reportes` | ✅ portada | 2.405 |
 | `turnos` | ⬜ pendiente | 2.763 |
 | `recepcion` | ⬜ pendiente | 4.073 |
 | `pedido` | ⬜ pendiente | 5.053 |
@@ -57,7 +57,29 @@ Se actualiza a medida que se porta cada cosa.
 
 Los 12 servicios de `core/services/operacion/` sí están portados completos.
 
-**Pendiente: 23.190 líneas.** `eventos` y `pedido` son más de la mitad.
+**Pendiente: 20.785 líneas.** `eventos` y `pedido` son más de la mitad.
+
+**`reportes` — portada.** Dos vistas: el panel general (seis KPI, cuatro
+tarjetas de tiempos, tres gráficas, aros de SLA y dos rankings) y cinco
+reportes detallados con exportación a CSV. HTML 825 → 484 líneas y SCSS 994 →
+360 usando `ui-page-header`, `ui-section-header`, `ui-segmented-tabs`,
+`ui-input`, `ui-select`, `ui-badge`, `ui-spinner`, `ui-button` y, sobre todo,
+`ui-table` para las tres tablas. Los KPI, las tarjetas de tiempos, los aros de
+SLA y las listas con barra se quedan a medida.
+
+Correcciones respecto del origen:
+
+- Chart.js llegaba por CDN con `declare const Chart`; con `script-src 'self'`
+  no cargaría. Ahora es importación real, con `Chart.register(...registerables)`
+  porque la v4 no auto-registra escalas.
+- Mismo problema de tema que el GIS: las gráficas se repintan al cambiar de
+  tema. Medido: el texto de los ejes pasa de rgb(14,22,41) a rgb(228,231,235).
+- Las tres tablas tenían barra de paginación propia con botones de anterior y
+  siguiente. Ahora usan `ui-table` en modo `external`, que es lo correcto:
+  quien pagina es el backend y la tabla no debe volver a recortar.
+- El eje del gráfico por prioridad llevaba `stepSize: 1`. Con una decena de
+  incidentes servía; con mil producía treinta y pico de marcas amontonadas y
+  giradas. Sustituido por `maxTicksLimit`.
 
 **`mapa-estadistico` (GIS estadístico) — portada.** Filtros a la izquierda,
 mapa Leaflet con tres capas (calor, grupos y puntos) y cinco gráficas de
@@ -273,7 +295,7 @@ Faltan 8, y varios bloquean pantallas de la lista de arriba:
 | Área | Portado | Total |
 |---|---|---|
 | Servicios de operación | 12 | 12 |
-| Pantallas de operación | 4 | 9 |
+| Pantallas de operación | 5 | 9 |
 | Pantallas de administración | 16 | 16 |
 | Servicios de administración | 18 | 20 |
 | Super Admin | 2 | 2 |

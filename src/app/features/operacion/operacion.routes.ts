@@ -32,5 +32,13 @@ export const operacionRoutes: Routes = [
       ),
     data: { breadcrumb: 'GIS Estadístico' },
   },
-  // Pendientes de portar: recepción, eventos, pedido, turnos y reportes.
+  {
+    path: 'reportes',
+    loadComponent: () =>
+      import('./pages/reportes-page/reportes-page.component').then(
+        (m) => m.ReportesPageComponent,
+      ),
+    data: { breadcrumb: 'Reportes y Estadísticas' },
+  },
+  // Pendientes de portar: recepción, eventos, pedido y turnos.
 ];
