@@ -40,5 +40,11 @@ export const operacionRoutes: Routes = [
       ),
     data: { breadcrumb: 'Reportes y Estadísticas' },
   },
-  // Pendientes de portar: recepción, eventos, pedido y turnos.
+  {
+    path: 'turnos',
+    loadComponent: () =>
+      import('./pages/turnos-page/turnos-page.component').then((m) => m.TurnosPageComponent),
+    data: { breadcrumb: 'Turnos de Vigilancia' },
+  },
+  // Pendientes de portar: recepción, eventos y pedido.
 ];

@@ -41,7 +41,7 @@ Se actualiza a medida que se porta cada cosa.
 
 ---
 
-## Operación — 5 de 9
+## Operación — 6 de 9
 
 | Pantalla | Estado | Líneas |
 |---|---|---|
@@ -50,14 +50,34 @@ Se actualiza a medida que se porta cada cosa.
 | `mapa-incidentes` | ✅ portada | 1.655 |
 | `mapa-estadistico` | ✅ portada | 2.044 |
 | `reportes` | ✅ portada | 2.405 |
-| `turnos` | ⬜ pendiente | 2.763 |
+| `turnos` | ✅ portada | 2.763 |
 | `recepcion` | ⬜ pendiente | 4.073 |
 | `pedido` | ⬜ pendiente | 5.053 |
 | `eventos` | ⬜ pendiente | 8.896 |
 
 Los 12 servicios de `core/services/operacion/` sí están portados completos.
 
-**Pendiente: 20.785 líneas.** `eventos` y `pedido` son más de la mitad.
+**Pendiente: 18.022 líneas** entre `recepcion`, `pedido` y `eventos`.
+
+**`turnos` — portada.** Tres columnas encadenadas —turnos del día, unidades del
+turno, medios de la unidad— y seis modales: crear turno, copiarlo a otra
+franja, agregar unidad, agregar medio, editar medio e importar unidades desde
+la minuta GESPO. HTML 920 → 585 líneas y SCSS 888 → 430 usando
+`ui-page-header`, `ui-panel-header`, `ui-modal`, `ui-input`, `ui-select`,
+`ui-toggle`, `ui-badge`, `ui-chip`, `ui-spinner` y `ui-button`. Las tarjetas de
+turno, unidad y medio se quedan a medida.
+
+Correcciones respecto del origen:
+
+- Tenía un `bloquearScroll()` propio que ponía y quitaba una clase en el
+  `<body>`. `ui-modal` ya lo hace, y duplicarlo dejaba la clase pegada si el
+  modal se cerraba con Escape en vez de con el botón.
+- El estado del turno se pintaba con la letra cruda que manda el backend: `A`,
+  `C` o `V`. Ahora dice Activo, Cerrado o Anulado. Ojo con `V`: es **anulado**,
+  no «vigente».
+- Los seis modales eran `<div class="ui-modal">` con su propio backdrop,
+  `stopPropagation` y botón de cerrar. Ahora son `ui-modal`, que trae el foco
+  atrapado y el cierre con Escape.
 
 **`reportes` — portada.** Dos vistas: el panel general (seis KPI, cuatro
 tarjetas de tiempos, tres gráficas, aros de SLA y dos rankings) y cinco
@@ -295,7 +315,7 @@ Faltan 8, y varios bloquean pantallas de la lista de arriba:
 | Área | Portado | Total |
 |---|---|---|
 | Servicios de operación | 12 | 12 |
-| Pantallas de operación | 5 | 9 |
+| Pantallas de operación | 6 | 9 |
 | Pantallas de administración | 16 | 16 |
 | Servicios de administración | 18 | 20 |
 | Super Admin | 2 | 2 |

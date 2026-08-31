@@ -1,0 +1,587 @@
+<div class="tr-page">
+
+  <app-ui-page-header
+    title="Turnos de vigilancia"
+    icon="fa-solid fa-calendar-check"
+    description="Quién está de servicio y con qué medios: turnos del día, sus unidades y las patrullas de cada una."
+    [minimizable]="false"
+  >
+    <app-ui-button
+      page-header-actions
+      variant="primary"
+      icon="fa-solid fa-plus"
+      [disabled]="!fuerzaFiltro"
+      tooltip="Elija primero una fuerza"
+      (buttonClick)="abrirModalCrear()"
+    >Nuevo turno</app-ui-button>
+  </app-ui-page-header>
+
+  <!-- ═══ Filtros ══════════════════════════════════════════════════════════ -->
+  <section class="tr-panel tr-filtros">
+    <app-ui-select
+      class="tr-filtros__fuerza"
+      label="Fuerza"
+      [options]="opcionesFuerza()"
+      [clearable]="false"
+      [(ngModel)]="fuerzaFiltro"
+    />
+    <app-ui-input class="tr-filtros__fecha" label="Fecha" type="date" [(ngModel)]="fechaBusqueda" />
+    <app-ui-button
+      variant="primary"
+      icon="fa-solid fa-magnifying-glass"
+      [loading]="cargando()"
+      [disabled]="cargando()"
+      (buttonClick)="cargarTurnos()"
+    >Buscar</app-ui-button>
+  </section>
+
+  @if (error()) {
+    <p class="tr-error">
+      <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i> {{ error() }}
+    </p>
+  }
+
+  <!-- ═══ Turnos → unidades → medios ═══════════════════════════════════════ -->
+  <div class="tr-layout">
+
+    <!-- ── Columna 1: turnos ──────────────────────────────────────────── -->
+    <aside class="tr-panel tr-col">
+      <app-ui-panel-header title="Turnos del día" icon="fa-solid fa-clock-rotate-left" appearance="soft">
+        <app-ui-chip
+          panel-header-actions
+          [value]="turnos().length"
+          label="turnos"
+          variant="info"
+          appearance="soft"
+          size="xs"
+        />
+      </app-ui-panel-header>
+
+      <div class="tr-lista">
+        @if (cargando() && turnos().length === 0) {
+          <app-ui-spinner label="Cargando turnos…" contained />
+        } @else if (turnos().length === 0) {
+          <p class="tr-vacio">
+            <i class="fa-solid fa-calendar-xmark" aria-hidden="true"></i>
+            No hay turnos para esta fecha.
+          </p>
+        } @else {
+          @for (t of turnos(); track t.id) {
+            <button
+              type="button"
+              class="tr-item tr-turno"
+              [class.tr-item--activo]="turnoSeleccionado?.id === t.id"
+              (click)="seleccionarTurno(t)"
+            >
+              <span class="tr-clase" [class]="claseTurnoCss(t.claseTurno)">{{ claseTurnoCorto(t.claseTurno) }}</span>
+              <span class="tr-turno__cuerpo">
+                <span class="tr-turno__horario">
+                  <i class="fa-regular fa-clock" aria-hidden="true"></i>
+                  {{ t.horaInicia.slice(11) }} – {{ t.horaTermina.slice(11) }}
+                </span>
+                <span class="tr-turno__fuerza">{{ t.fuerzaDesc || 'Sin fuerza' }}</span>
+                <span class="tr-turno__meta">
+                  <span>{{ t.totalUnidades }} unidades</span>
+                  <span>{{ t.totalMedios }} medios</span>
+                  @if (t.siviccSync) {
+                    <span class="tr-gespo"><i class="fa-solid fa-check-double" aria-hidden="true"></i> GESPO</span>
+                  }
+                </span>
+              </span>
+              <span class="tr-estado" [class]="estadoTurnoCss(t.estado)">
+                {{ estadoTurnoLabel(t.estado) }}
+              </span>
+            </button>
+          }
+        }
+      </div>
+    </aside>
+
+    <!-- ── Columna 2: unidades ────────────────────────────────────────── -->
+    <section class="tr-panel tr-col">
+      @if (!turnoSeleccionado) {
+        <p class="tr-vacio tr-vacio--grande">
+          <i class="fa-solid fa-calendar-check" aria-hidden="true"></i>
+          Elija un turno para ver sus unidades.
+        </p>
+      } @else {
+        <app-ui-panel-header title="Unidades" icon="fa-solid fa-building-shield" appearance="soft">
+          <ng-container panel-header-actions>
+            <app-ui-button variant="primary" size="sm" icon="fa-solid fa-plus"
+                           tooltip="Agregar una unidad a mano"
+                           (buttonClick)="abrirModalUnidad()">Agregar</app-ui-button>
+            <app-ui-button variant="secondary" appearance="ghost" size="sm" icon="fa-solid fa-file-import"
+                           tooltip="Traer las unidades de la minuta GESPO"
+                           (buttonClick)="abrirModalSivicc()">GESPO</app-ui-button>
+          </ng-container>
+        </app-ui-panel-header>
+
+        @if (turnoDetalle(); as detalle) {
+          <div class="tr-resumen">
+            <span class="tr-clase" [class]="claseTurnoCss(detalle.claseTurno)">
+              {{ claseTurnoCorto(detalle.claseTurno) }}
+            </span>
+            <span class="tr-resumen__horario">
+              {{ detalle.horaInicia.slice(11) }} — {{ detalle.horaTermina.slice(11) }}
+            </span>
+            <span class="tr-resumen__fecha">{{ detalle.diaInicia }}</span>
+            @if (detalle.siviccSincronizado) {
+              <span class="tr-gespo"><i class="fa-solid fa-check-double" aria-hidden="true"></i> GESPO</span>
+            }
+            <app-ui-button
+              class="tr-resumen__copiar"
+              variant="secondary" appearance="ghost" size="sm" icon="fa-solid fa-copy"
+              tooltip="Copiar este turno a otra franja horaria"
+              (buttonClick)="abrirModalCopiar()"
+            >Copiar</app-ui-button>
+          </div>
+          @if (detalle.consignas) {
+            <p class="tr-consignas">
+              <i class="fa-solid fa-bullhorn" aria-hidden="true"></i> {{ detalle.consignas }}
+            </p>
+          }
+        }
+
+        <div class="tr-lista">
+          @if (cargandoUnidades()) {
+            <app-ui-spinner label="Cargando unidades…" contained />
+          } @else if (unidades().length === 0) {
+            <p class="tr-vacio">
+              <i class="fa-solid fa-building-shield" aria-hidden="true"></i>
+              Sin unidades. Agréguelas a mano o impórtelas de GESPO.
+            </p>
+          } @else {
+            @for (u of unidades(); track u.id) {
+              <button
+                type="button"
+                class="tr-item tr-unidad"
+                [class.tr-item--activo]="unidadActiva?.id === u.id"
+                (click)="seleccionarUnidad(u)"
+              >
+                <i class="fa-solid fa-building-shield tr-unidad__icono" aria-hidden="true"></i>
+                <span class="tr-unidad__cuerpo">
+                  <strong>{{ u.unidadCodigo }}</strong>
+                  @if (u.unidadDesc) { <span class="tr-unidad__desc">{{ u.unidadDesc }}</span> }
+                  <span class="tr-unidad__meta">
+                    <span>{{ u.totalMedios }} medio(s)</span>
+                    @if (u.origen === 'SIVICC') {
+                      <span class="tr-gespo tr-gespo--sm">GESPO</span>
+                    }
+                  </span>
+                </span>
+                <i class="fa-solid fa-chevron-right tr-unidad__chevron" aria-hidden="true"></i>
+              </button>
+            }
+          }
+        </div>
+      }
+    </section>
+
+    <!-- ── Columna 3: medios ──────────────────────────────────────────── -->
+    <section class="tr-panel tr-col">
+      @if (!unidadActiva) {
+        <p class="tr-vacio tr-vacio--grande">
+          <i class="fa-solid fa-car-side" aria-hidden="true"></i>
+          Elija una unidad para ver sus medios.
+        </p>
+      } @else {
+        <app-ui-panel-header
+          [title]="'Medios de ' + unidadActiva.unidadCodigo"
+          icon="fa-solid fa-car-side"
+          appearance="soft"
+        >
+          <app-ui-button panel-header-actions variant="primary" size="sm" icon="fa-solid fa-plus"
+                         (buttonClick)="abrirModalMedio()">Agregar</app-ui-button>
+        </app-ui-panel-header>
+
+        <!-- Cuántos medios quedan libres ahora mismo; se refresca solo cada
+             15 s mientras la unidad siga seleccionada. -->
+        @if (medios().length > 0) {
+          <p class="tr-libres" [class]="'tr-libres--' + readinessColor">
+            <span class="tr-libres__punto" aria-hidden="true"></span>
+            <span><i class="fa-solid fa-car-side" aria-hidden="true"></i> {{ resumenLibres }} libres</span>
+            @if (readinessHaceTexto) {
+              <span class="tr-libres__hace">actualizado {{ readinessHaceTexto }}</span>
+            }
+          </p>
+        }
+
+        <div class="tr-lista">
+          @if (cargandoMedios()) {
+            <app-ui-spinner label="Cargando medios…" contained />
+          } @else if (medios().length === 0) {
+            <p class="tr-vacio">
+              <i class="fa-solid fa-car-side" aria-hidden="true"></i>
+              Sin medios. Agréguelos a mano.
+            </p>
+          } @else {
+            @for (m of medios(); track m.id) {
+              <article class="tr-medio">
+                <i [class]="iconoTipo(m.tipoMedio) + ' tr-medio__icono'" aria-hidden="true"></i>
+                <div class="tr-medio__cuerpo">
+                  <div class="tr-medio__cabecera">
+                    <strong>{{ m.patrullaCodigo }}</strong>
+                    <span class="tr-estado-medio" [class]="estadoMedioCss(m.estado)">{{ m.estadoDesc }}</span>
+                  </div>
+                  <p class="tr-medio__desc">{{ m.patrullaDesc || m.tipoMedioDesc }}</p>
+                  @if (m.canalDesc) {
+                    <p class="tr-medio__dato">
+                      <i class="fa-solid fa-tower-broadcast" aria-hidden="true"></i> {{ m.canalDesc }}
+                    </p>
+                  }
+                  @if (m.personal.length > 0) {
+                    <p class="tr-medio__dato">
+                      <i class="fa-solid fa-user-shield" aria-hidden="true"></i> {{ formatearPersonal(m.personal) }}
+                    </p>
+                  }
+                </div>
+                <app-ui-button
+                  class="tr-medio__editar"
+                  variant="secondary" appearance="ghost" size="sm"
+                  icon="fa-solid fa-pencil" iconOnly
+                  ariaLabel="Editar datos del medio" tooltip="Editar"
+                  (buttonClick)="abrirModalEditarMedio(m)"
+                />
+              </article>
+            }
+          }
+        </div>
+      }
+    </section>
+  </div>
+</div>
+
+<!-- ═══ Crear turno ════════════════════════════════════════════════════════ -->
+<app-ui-modal
+  [open]="modalCrear()"
+  title="Crear turno de vigilancia"
+  icon="fa-solid fa-calendar-plus"
+  size="md"
+  (closeRequested)="cerrarModalCrear()"
+>
+  <div modal-body class="tr-form">
+    <div class="tr-form__par">
+      <app-ui-select
+        label="Clase de turno"
+        [options]="opcionesClaseTurno"
+        [clearable]="false"
+        [searchable]="false"
+        required
+        hint="Al elegirla se rellenan las horas de la franja."
+        [ngModel]="formCrear.claseTurno"
+        (ngModelChange)="onClaseTurnoCrear($event)"
+      />
+      <app-ui-select
+        label="Fuerza"
+        [options]="opcionesFuerza()"
+        [clearable]="false"
+        [(ngModel)]="formCrear.fuerzaId"
+      />
+    </div>
+    <div class="tr-form__par">
+      <app-ui-input label="Inicio" type="datetime-local" required [(ngModel)]="formCrear._inicio" />
+      <app-ui-input label="Fin" type="datetime-local" required [(ngModel)]="formCrear._fin" />
+    </div>
+    <label class="tr-campo">
+      <span class="tr-campo__lbl">Consignas generales</span>
+      <textarea
+        class="tr-campo__area"
+        rows="3"
+        maxlength="4000"
+        placeholder="Instrucciones para todo el turno…"
+        [(ngModel)]="formCrear.consignas"
+      ></textarea>
+    </label>
+    @if (errorCrear()) {
+      <p class="tr-error"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i> {{ errorCrear() }}</p>
+    }
+  </div>
+
+  <div modal-actions class="tr-acciones">
+    <app-ui-button variant="secondary" appearance="ghost" (buttonClick)="cerrarModalCrear()">Cancelar</app-ui-button>
+    <app-ui-button variant="primary" icon="fa-solid fa-floppy-disk"
+                   [loading]="guardandoCrear()" [disabled]="guardandoCrear()"
+                   (buttonClick)="guardarCrear()">Crear turno</app-ui-button>
+  </div>
+</app-ui-modal>
+
+<!-- ═══ Copiar turno ═══════════════════════════════════════════════════════ -->
+<app-ui-modal
+  [open]="modalCopiar()"
+  title="Copiar turno a otra franja"
+  icon="fa-solid fa-copy"
+  size="md"
+  (closeRequested)="cerrarModalCopiar()"
+>
+  <div modal-body class="tr-form">
+    <p class="tr-aviso">
+      <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+      <span>Se duplicarán todas las unidades, medios y personal del turno hacia la franja nueva.</span>
+    </p>
+    <app-ui-select
+      label="Clase de turno destino"
+      [options]="opcionesClaseTurno"
+      [clearable]="false"
+      [searchable]="false"
+      required
+      [ngModel]="formCopiar.claseTurno"
+      (ngModelChange)="onClaseTurnoCopiar($event)"
+    />
+    <div class="tr-form__par">
+      <app-ui-input label="Inicio" type="datetime-local" required [(ngModel)]="formCopiar._inicio" />
+      <app-ui-input label="Fin" type="datetime-local" required [(ngModel)]="formCopiar._fin" />
+    </div>
+    @if (errorCopiar()) {
+      <p class="tr-error"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i> {{ errorCopiar() }}</p>
+    }
+  </div>
+
+  <div modal-actions class="tr-acciones">
+    <app-ui-button variant="secondary" appearance="ghost" (buttonClick)="cerrarModalCopiar()">Cancelar</app-ui-button>
+    <app-ui-button variant="primary" icon="fa-solid fa-copy"
+                   [loading]="guardandoCopiar()" [disabled]="guardandoCopiar()"
+                   (buttonClick)="guardarCopiar()">Copiar turno</app-ui-button>
+  </div>
+</app-ui-modal>
+
+<!-- ═══ Agregar unidad ═════════════════════════════════════════════════════ -->
+<app-ui-modal
+  [open]="modalUnidad()"
+  title="Agregar unidad"
+  icon="fa-solid fa-building-shield"
+  size="md"
+  (closeRequested)="cerrarModalUnidad()"
+>
+  <div modal-body class="tr-form">
+    <div class="tr-form__par">
+      <app-ui-input
+        class="tr-mayus"
+        label="Código de unidad"
+        placeholder="Ej: EST-01"
+        required
+        [(ngModel)]="formUnidad.unidadCodigo"
+      />
+      <app-ui-input label="Descripción" placeholder="Nombre de la unidad…" [(ngModel)]="formUnidad.unidadDesc" />
+    </div>
+    <label class="tr-campo">
+      <span class="tr-campo__lbl">Consignas específicas</span>
+      <textarea
+        class="tr-campo__area"
+        rows="2"
+        maxlength="2000"
+        placeholder="Consignas solo para esta unidad…"
+        [(ngModel)]="formUnidad.consignas"
+      ></textarea>
+    </label>
+    @if (errorUnidad()) {
+      <p class="tr-error"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i> {{ errorUnidad() }}</p>
+    }
+  </div>
+
+  <div modal-actions class="tr-acciones">
+    <app-ui-button variant="secondary" appearance="ghost" (buttonClick)="cerrarModalUnidad()">Cancelar</app-ui-button>
+    <app-ui-button variant="primary" icon="fa-solid fa-floppy-disk"
+                   [loading]="guardandoUnidad()" [disabled]="guardandoUnidad()"
+                   (buttonClick)="guardarUnidad()">Agregar unidad</app-ui-button>
+  </div>
+</app-ui-modal>
+
+<!-- ═══ Agregar medio ══════════════════════════════════════════════════════ -->
+<app-ui-modal
+  [open]="modalMedio()"
+  title="Agregar medio"
+  icon="fa-solid fa-car-side"
+  size="lg"
+  (closeRequested)="cerrarModalMedio()"
+>
+  <div modal-body class="tr-form">
+    <div class="tr-form__tres">
+      <app-ui-input class="tr-mayus" label="Código de patrulla" placeholder="PAT-01" required
+                    [(ngModel)]="formMedio.patrullaCodigo" />
+      <app-ui-select label="Tipo de medio" [options]="opcionesTipoMedio" [clearable]="false" [searchable]="false"
+                     [(ngModel)]="formMedio.tipoMedio" />
+      <app-ui-select
+        label="Canal de radio"
+        [options]="opcionesCanal()"
+        [clearable]="false"
+        [disabled]="cargandoCanales()"
+        [ngModel]="canalKey(formMedio.canalCodigo, formMedio.canalFuerzaId) ?? ''"
+        (ngModelChange)="onCanalChange($event || undefined)"
+      />
+    </div>
+    <app-ui-input label="Descripción del medio" placeholder="Ej: Toyota Hilux placa ABC-123"
+                  [(ngModel)]="formMedio.patrullaDesc" />
+
+    <!-- Hasta dos policías por medio: es lo que admite la minuta. -->
+    <div class="tr-personal">
+      <span class="tr-personal__num">1</span>
+      <app-ui-input class="tr-personal__cedu" label="Cédula" placeholder="Número de cédula"
+                    [(ngModel)]="formMedio._personal1Cedu" />
+      <app-ui-input label="Nombre" placeholder="Nombre del funcionario…"
+                    [(ngModel)]="formMedio._personal1Nomb" />
+    </div>
+    <div class="tr-personal">
+      <span class="tr-personal__num">2</span>
+      <app-ui-input class="tr-personal__cedu" label="Cédula" placeholder="Número de cédula"
+                    [(ngModel)]="formMedio._personal2Cedu" />
+      <app-ui-input label="Nombre" placeholder="Nombre del funcionario…"
+                    [(ngModel)]="formMedio._personal2Nomb" />
+    </div>
+
+    @if (errorMedio()) {
+      <p class="tr-error"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i> {{ errorMedio() }}</p>
+    }
+  </div>
+
+  <div modal-actions class="tr-acciones">
+    <app-ui-button variant="secondary" appearance="ghost" (buttonClick)="cerrarModalMedio()">Cancelar</app-ui-button>
+    <app-ui-button variant="primary" icon="fa-solid fa-floppy-disk"
+                   [loading]="guardandoMedio()" [disabled]="guardandoMedio()"
+                   (buttonClick)="guardarMedio()">Agregar medio</app-ui-button>
+  </div>
+</app-ui-modal>
+
+<!-- ═══ Editar medio ═══════════════════════════════════════════════════════ -->
+<app-ui-modal
+  [open]="modalEditarMedio()"
+  title="Editar medio"
+  icon="fa-solid fa-pen-to-square"
+  size="lg"
+  (closeRequested)="cerrarModalEditarMedio()"
+>
+  <div modal-body class="tr-form">
+    <div class="tr-form__tres">
+      <app-ui-input class="tr-mayus" label="Código de patrulla" placeholder="PAT-01" required
+                    [(ngModel)]="formEditarMedio.patrullaCodigo" />
+      <app-ui-select label="Tipo de medio" [options]="opcionesTipoMedio" [clearable]="false" [searchable]="false"
+                     [(ngModel)]="formEditarMedio.tipoMedio" />
+      <app-ui-select
+        label="Canal de radio"
+        [options]="opcionesCanal()"
+        [clearable]="false"
+        [disabled]="cargandoCanales()"
+        [ngModel]="canalKey(formEditarMedio.canalCodigo, formEditarMedio.canalFuerzaId) ?? ''"
+        (ngModelChange)="onCanalChangeEditar($event || undefined)"
+      />
+    </div>
+    <app-ui-input label="Descripción del medio" placeholder="Ej: Toyota Hilux placa ABC-123"
+                  [(ngModel)]="formEditarMedio.patrullaDesc" />
+
+    <div class="tr-personal">
+      <span class="tr-personal__num">1</span>
+      <app-ui-input class="tr-personal__cedu" label="Cédula" placeholder="Número de cédula"
+                    [(ngModel)]="formEditarMedio._personal1Cedu" />
+      <app-ui-input label="Nombre" placeholder="Nombre del funcionario…"
+                    [(ngModel)]="formEditarMedio._personal1Nomb" />
+    </div>
+    <div class="tr-personal">
+      <span class="tr-personal__num">2</span>
+      <app-ui-input class="tr-personal__cedu" label="Cédula" placeholder="Número de cédula"
+                    [(ngModel)]="formEditarMedio._personal2Cedu" />
+      <app-ui-input label="Nombre" placeholder="Nombre del funcionario…"
+                    [(ngModel)]="formEditarMedio._personal2Nomb" />
+    </div>
+
+    @if (errorEditarMedio()) {
+      <p class="tr-error"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i> {{ errorEditarMedio() }}</p>
+    }
+  </div>
+
+  <div modal-actions class="tr-acciones">
+    <app-ui-button variant="secondary" appearance="ghost" (buttonClick)="cerrarModalEditarMedio()">Cancelar</app-ui-button>
+    <app-ui-button variant="primary" icon="fa-solid fa-floppy-disk"
+                   [loading]="guardandoEditarMedio()" [disabled]="guardandoEditarMedio()"
+                   (buttonClick)="guardarEditarMedio()">Guardar cambios</app-ui-button>
+  </div>
+</app-ui-modal>
+
+<!-- ═══ Importar desde GESPO ═══════════════════════════════════════════════ -->
+<app-ui-modal
+  [open]="modalSivicc()"
+  title="Importar unidades de GESPO"
+  icon="fa-solid fa-file-import"
+  size="lg"
+  (closeRequested)="cerrarModalSivicc()"
+>
+  <div modal-body class="tr-form">
+    @if (cargandoUnidadesSivicc()) {
+      <app-ui-spinner label="Consultando unidades en GESPO…" contained />
+    } @else if (errorSivicc()) {
+      <p class="tr-error"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i> {{ errorSivicc() }}</p>
+    } @else if (unidadesSivicc().length === 0) {
+      <p class="tr-aviso">
+        <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+        <span>
+          No hay unidades en GESPO para este turno. Compruebe que la sigla de la fuerza y la fecha
+          coinciden con la minuta vigente.
+        </span>
+      </p>
+    } @else {
+      <p class="tr-aviso">
+        <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+        <span>
+          Se encontraron <strong>{{ unidadesSivicc().length }}</strong> unidad(es) en la minuta.
+          Marque las que quiera importar.
+        </span>
+      </p>
+
+      <div class="tr-masivo">
+        <app-ui-button variant="secondary" appearance="ghost" size="sm" icon="fa-solid fa-check-double"
+                       (buttonClick)="toggleTodaSivicc(true)">Marcar todas</app-ui-button>
+        <app-ui-button variant="secondary" appearance="ghost" size="sm" icon="fa-solid fa-xmark"
+                       (buttonClick)="toggleTodaSivicc(false)">Desmarcar todas</app-ui-button>
+      </div>
+
+      <app-ui-select
+        class="tr-canal-defecto"
+        label="Canal de radio por defecto"
+        hint="Solo se aplica a las unidades que no elijan uno propio abajo."
+        [options]="opcionesCanal()"
+        [clearable]="false"
+        [ngModel]="canalKey(siviccCanalCodigo, siviccCanalFuerzaId) ?? ''"
+        (ngModelChange)="onCanalChangeSivicc($event || undefined)"
+      />
+
+      <ul class="tr-gespo-lista">
+        @for (u of unidadesSivicc(); track u.consecutivo) {
+          <li class="tr-gespo-item" [class.tr-gespo-item--existe]="u.existeEnCadMedios">
+            <app-ui-toggle
+              [ariaLabel]="'Importar la unidad ' + u.unidadCodigo"
+              [(ngModel)]="u.seleccionada"
+            />
+            <span class="tr-gespo-item__txt">
+              <strong>{{ u.unidadCodigo }}</strong>
+              <small>{{ u.descripcion }}</small>
+            </span>
+            <app-ui-select
+              class="tr-gespo-item__canal"
+              [ariaLabel]="'Canal de radio para ' + u.unidadCodigo"
+              [options]="opcionesCanalUnidad()"
+              [clearable]="false"
+              [ngModel]="canalKey(u.canalCodigo, u.canalFuerzaId) ?? ''"
+              (ngModelChange)="onCanalChangeSiviccUnidad(u, $event || undefined)"
+            />
+            <app-ui-badge
+              [label]="u.existeEnCadMedios ? 'Ya existe' : 'Nueva'"
+              [icon]="u.existeEnCadMedios ? 'fa-solid fa-rotate' : 'fa-solid fa-plus'"
+              iconPosition="start"
+              [variant]="u.existeEnCadMedios ? 'warning' : 'success'"
+              size="xs"
+            />
+          </li>
+        }
+      </ul>
+    }
+  </div>
+
+  <div modal-actions class="tr-acciones">
+    <app-ui-button variant="secondary" appearance="ghost" (buttonClick)="cerrarModalSivicc()">Cancelar</app-ui-button>
+    <app-ui-button
+      variant="primary"
+      icon="fa-solid fa-file-import"
+      [loading]="guardandoSivicc()"
+      [disabled]="guardandoSivicc() || cargandoUnidadesSivicc() || !algunaSiviccSeleccionada"
+      (buttonClick)="guardarSivicc()"
+    >Importar marcadas</app-ui-button>
+  </div>
+</app-ui-modal>
