@@ -41,14 +41,14 @@ Se actualiza a medida que se porta cada cosa.
 
 ---
 
-## Operación — 3 de 9
+## Operación — 4 de 9
 
 | Pantalla | Estado | Líneas |
 |---|---|---|
 | `video-ciudadano` | ✅ portada | 773 |
 | `anotaciones-turno` | ✅ portada | 1.076 |
 | `mapa-incidentes` | ✅ portada | 1.655 |
-| `mapa-estadistico` | ⬜ pendiente | 2.044 |
+| `mapa-estadistico` | ✅ portada | 2.044 |
 | `reportes` | ⬜ pendiente | 2.405 |
 | `turnos` | ⬜ pendiente | 2.763 |
 | `recepcion` | ⬜ pendiente | 4.073 |
@@ -57,7 +57,38 @@ Se actualiza a medida que se porta cada cosa.
 
 Los 12 servicios de `core/services/operacion/` sí están portados completos.
 
-**Pendiente: 25.234 líneas.** `eventos` y `pedido` son más de la mitad.
+**Pendiente: 23.190 líneas.** `eventos` y `pedido` son más de la mitad.
+
+**`mapa-estadistico` (GIS estadístico) — portada.** Filtros a la izquierda,
+mapa Leaflet con tres capas (calor, grupos y puntos) y cinco gráficas de
+Chart.js debajo, más el informe imprimible. HTML 389 → 318 líneas y SCSS 588 →
+330 usando `ui-page-header`, `ui-section-header`, `ui-input`, `ui-select`,
+`ui-toggle`, `ui-button` y `ui-spinner`. Las leyendas del mapa, el resumen y
+las cajas de las gráficas se quedan a medida: no tienen equivalente en el kit.
+
+Cuatro correcciones respecto del origen, todas verificadas en el navegador:
+
+- Leaflet y Chart.js llegaban por `<script>` de un CDN con `declare const L` /
+  `declare const Chart`. Con `script-src 'self'` esos scripts no cargan: ahora
+  son importaciones reales del paquete, y de paso tipan.
+- Los plugins `leaflet.heat` y `leaflet.markercluster` se enganchan al `L`
+  global, no al módulo. Importarlos arriba no basta —los import se elevan y
+  `window.L` aún no existe—, así que se publica `L` y se cargan bajo demanda
+  con `import()` antes de dibujar la primera capa. Sin esto, calor y grupos
+  lanzaban `L.heatLayer is not a function` y la excepción se llevaba por
+  delante el repintado de las cinco gráficas.
+- El informe traía `<script>window.onload = () => print()</script>` dentro del
+  HTML generado. La ventana hereda la CSP de la que la abre, así que ese script
+  quedaba bloqueado y el informe no se imprimía solo; ahora la impresión se
+  dispara desde la ventana padre.
+- Chart.js fija el color del texto al construir cada gráfica: al cambiar a modo
+  oscuro después de analizar, las etiquetas quedaban invisibles. Ahora se
+  repintan al cambiar el tema. Comprobado midiendo el color de los ejes: pasa
+  de rgb(14,22,41) a rgb(228,231,235).
+
+También se añadió a `angular.json` el CSS de markercluster y el `<div>` del
+mapa dejó de identificarse por un `id` global —que se rompe si dos vistas
+coexisten en una transición de ruta— para usar una referencia de plantilla.
 
 ---
 
@@ -242,7 +273,7 @@ Faltan 8, y varios bloquean pantallas de la lista de arriba:
 | Área | Portado | Total |
 |---|---|---|
 | Servicios de operación | 12 | 12 |
-| Pantallas de operación | 3 | 9 |
+| Pantallas de operación | 4 | 9 |
 | Pantallas de administración | 16 | 16 |
 | Servicios de administración | 18 | 20 |
 | Super Admin | 2 | 2 |

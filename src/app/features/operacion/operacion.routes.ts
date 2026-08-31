@@ -24,5 +24,13 @@ export const operacionRoutes: Routes = [
       ),
     data: { breadcrumb: 'Mapa de Incidentes' },
   },
-  // Pendientes de portar: recepción, eventos, pedido, turnos, reportes y mapa estadístico.
+  {
+    path: 'mapa-estadistico',
+    loadComponent: () =>
+      import('./pages/mapa-estadistico-page/mapa-estadistico-page.component').then(
+        (m) => m.MapaEstadisticoPageComponent,
+      ),
+    data: { breadcrumb: 'GIS Estadístico' },
+  },
+  // Pendientes de portar: recepción, eventos, pedido, turnos y reportes.
 ];

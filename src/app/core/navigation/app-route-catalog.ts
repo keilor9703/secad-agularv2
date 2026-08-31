@@ -66,8 +66,8 @@ export const APP_ROUTE_CATALOG: readonly AppRouteCatalogItem[] = [
   { route: '/super/salud-cads', label: 'Salud de CADs', area: 'Super Admin' },
 
   // ── Operación ────────────────────────────────────────────────────────────
-  // Solo lo ya portado. Al portar recepción, eventos, pedido, turnos, reportes
-  // o el mapa estadístico, agregarlos aquí o no aparecerán en el menú.
+  // Solo lo ya portado. Al portar recepción, eventos, pedido, turnos o
+  // reportes, agregarlos aquí o no aparecerán en el menú.
   { route: '/operacion', label: 'Operación', area: 'Operación' },
   {
     route: '/operacion/anotaciones-turno',
@@ -75,6 +75,11 @@ export const APP_ROUTE_CATALOG: readonly AppRouteCatalogItem[] = [
     area: 'Operación',
   },
   { route: '/operacion/mapa-incidentes', label: 'Mapa de incidentes', area: 'Operación' },
+  {
+    route: '/operacion/mapa-estadistico',
+    label: 'GIS estadístico',
+    area: 'Operación',
+  },
 
   { route: '/gestion-documental', label: 'Gestión documental', area: 'Gestión documental' },
   {

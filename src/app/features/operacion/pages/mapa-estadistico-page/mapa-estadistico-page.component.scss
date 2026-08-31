@@ -1,0 +1,392 @@
+// ══════════════════════════════════════════════════════════════════════════
+//  GIS estadístico delincuencial
+//
+//  Encabezados, campos, interruptores, botones y spinner los resuelven los
+//  componentes de shared/components/ui-*. Aquí quedan la rejilla filtros–mapa,
+//  las leyendas superpuestas al mapa, el resumen y las cajas de las gráficas.
+// ══════════════════════════════════════════════════════════════════════════
+
+.gis-page {
+  display:        flex;
+  flex-direction: column;
+  gap:            16px;
+  padding:        16px;
+}
+
+// Filtros a la izquierda con ancho fijo; el mapa y las gráficas se llevan el
+// resto. Por debajo de 1150px se apila: el mapa necesita ancho para servir.
+.gis-layout {
+  display:               grid;
+  grid-template-columns: 340px minmax(0, 1fr);
+  gap:                   16px;
+  align-items:           start;
+
+  @media (max-width: 1150px) { grid-template-columns: minmax(0, 1fr); }
+}
+
+.gis-panel {
+  border:        1px solid rgba(21, 27, 59, .12);
+  border-radius: 10px;
+  overflow:      hidden;
+  background:    var(--ui-surface, #fff);
+}
+
+.gis-main {
+  display:        flex;
+  flex-direction: column;
+  gap:            16px;
+  min-width:      0;
+}
+
+// ── Filtros ───────────────────────────────────────────────────────────────
+.gis-filtros {
+  &__campos {
+    display:        flex;
+    flex-direction: column;
+    gap:            12px;
+    padding:        14px;
+  }
+
+  &__par {
+    display: flex;
+    gap:     10px;
+
+    > * { flex: 1 1 0; min-width: 0; }
+  }
+
+  &__acciones {
+    display:         flex;
+    gap:             8px;
+    justify-content: flex-end;
+    margin-top:      2px;
+  }
+}
+
+.gis-turno {
+  display:        inline-flex;
+  align-items:    center;
+  gap:            6px;
+  align-self:     flex-start;
+  margin-top:     -4px;
+  padding:        3px 10px;
+  border-radius:  999px;
+  color:          #fff;
+  font-size:      calc(10.5px * var(--font-size-scale, 1));
+  font-weight:    700;
+}
+
+// Ciudad fijada para quien no es superadministrador: es un dato, no un filtro.
+.gis-dato {
+  display:        flex;
+  flex-direction: column;
+  gap:            3px;
+  margin:         0;
+
+  &__lbl {
+    color:       var(--policia-medio, #002a66);
+    font-size:   calc(11.5px * var(--font-size-scale, 1));
+    font-weight: 700;
+  }
+
+  &__val {
+    display:       flex;
+    align-items:   center;
+    gap:           6px;
+    padding:       8px 11px;
+    border:        1px solid rgba(21, 27, 59, .14);
+    border-radius: 8px;
+    background:    rgba(21, 27, 59, .04);
+    font-size:     calc(12.5px * var(--font-size-scale, 1));
+
+    i { color: #0e7490; }
+  }
+}
+
+.gis-error {
+  display:       flex;
+  align-items:   center;
+  gap:           8px;
+  margin:        0;
+  padding:       9px 12px;
+  border:        1px solid rgba(220, 38, 38, .35);
+  border-radius: 8px;
+  background:    rgba(220, 38, 38, .08);
+  color:         #b91c1c;
+  font-size:     calc(11.5px * var(--font-size-scale, 1));
+}
+
+// ── Resumen ───────────────────────────────────────────────────────────────
+.gis-resumen {
+  display:        flex;
+  flex-direction: column;
+  gap:            2px;
+  padding:        12px 14px 14px;
+
+  &__fila {
+    display:         flex;
+    align-items:     baseline;
+    justify-content: space-between;
+    gap:             10px;
+    padding:         5px 0;
+    border-bottom:   1px solid rgba(21, 27, 59, .06);
+    font-size:       calc(11.5px * var(--font-size-scale, 1));
+
+    strong {
+      font-size:            calc(13px * var(--font-size-scale, 1));
+      font-variant-numeric: tabular-nums;
+    }
+
+    // El color de cada prioridad es el mismo que en el mapa: si aquí dijera
+    // otra cosa habría que traducir mentalmente entre panel y puntos.
+    &--flash strong { color: #cc0000; }
+    &--inmd  strong { color: #e67300; }
+    &--rut   strong { color: #0066cc; }
+  }
+}
+
+.gis-insight {
+  display:     flex;
+  gap:         7px;
+  margin:      6px 0 0;
+  font-size:   calc(11.5px * var(--font-size-scale, 1));
+  line-height: 1.45;
+
+  i { margin-top: 3px; color: var(--policia-medio, #002a66); }
+  &__i--alerta { color: #e67300 !important; }
+}
+
+// ── Mapa ──────────────────────────────────────────────────────────────────
+.gis-mapa {
+  position: relative;
+  height:   clamp(420px, 58vh, 720px);
+
+  &__lienzo {
+    width:  100%;
+    height: 100%;
+  }
+}
+
+// Los controles van encima del mapa; el z-index de Leaflet para sus paneles
+// llega a 400 y el de los controles a 1000, así que 1100 los deja arriba.
+.gis-capas {
+  position:      absolute;
+  top:           10px;
+  right:         10px;
+  z-index:       1100;
+  display:       flex;
+  gap:           2px;
+  padding:       3px;
+  border:        1px solid rgba(21, 27, 59, .14);
+  border-radius: 10px;
+  background:    rgba(255, 255, 255, .94);
+  box-shadow:    0 4px 14px rgba(2, 6, 23, .14);
+}
+
+.gis-capa {
+  display:       inline-flex;
+  align-items:   center;
+  gap:           6px;
+  padding:       6px 11px;
+  border:        0;
+  border-radius: 8px;
+  background:    transparent;
+  color:         var(--policia-oscuro, #151b3b);
+  cursor:        pointer;
+  font:          inherit;
+  font-size:     calc(11.5px * var(--font-size-scale, 1));
+  font-weight:   700;
+
+  &:hover { background: rgba(8, 166, 203, .1); }
+
+  &--activa {
+    background: var(--policia-medio, #002a66);
+    color:      #fff;
+  }
+}
+
+.gis-leyenda {
+  position:       absolute;
+  bottom:         14px;
+  left:           10px;
+  z-index:        1100;
+  display:        flex;
+  flex-direction: column;
+  gap:            5px;
+  min-width:      150px;
+  padding:        10px 12px;
+  border:         1px solid rgba(21, 27, 59, .14);
+  border-radius:  10px;
+  background:     rgba(255, 255, 255, .94);
+  box-shadow:     0 4px 14px rgba(2, 6, 23, .14);
+  font-size:      calc(10.5px * var(--font-size-scale, 1));
+  color:          var(--policia-oscuro, #151b3b);
+
+  &__tit {
+    font-size:      calc(9.5px * var(--font-size-scale, 1));
+    font-weight:    800;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    opacity:        .7;
+  }
+
+  &__item { display: flex; align-items: center; gap: 7px; }
+
+  // El degradado repite exactamente las paradas del heatLayer.
+  &__barra {
+    height:        9px;
+    border-radius: 999px;
+    background: linear-gradient(90deg,
+      #000033 0%, #0000ff 25%, #00ccff 45%,
+      #00ff88 60%, #ffff00 75%, #ff6600 88%, #ff0000 100%);
+  }
+
+  &__escala {
+    display:         flex;
+    justify-content: space-between;
+    opacity:         .75;
+  }
+
+  &__sep {
+    height:     1px;
+    margin:     3px 0;
+    background: rgba(21, 27, 59, .12);
+  }
+
+  small { opacity: .7; line-height: 1.35; }
+}
+
+.gis-punto {
+  width:         11px;
+  height:        11px;
+  border:        2px solid #fff;
+  border-radius: 50%;
+  box-shadow:    0 0 0 1px rgba(21, 27, 59, .2);
+}
+
+.gis-grupo {
+  display:       inline-grid;
+  width:         22px;
+  height:        22px;
+  place-items:   center;
+  border:        2px solid rgba(255, 255, 255, .85);
+  border-radius: 50%;
+  color:         #fff;
+  font-size:     calc(9px * var(--font-size-scale, 1));
+  font-style:    normal;
+  font-weight:   800;
+}
+
+// Aviso centrado sobre el mapa: sin consulta, cargando o sin coordenadas.
+.gis-capa-aviso {
+  position:       absolute;
+  inset:          0;
+  z-index:        1050;
+  display:        flex;
+  flex-direction: column;
+  align-items:    center;
+  justify-content:center;
+  gap:            10px;
+  background:     rgba(255, 255, 255, .82);
+  color:          var(--ui-text-muted, #6b7280);
+  font-size:      calc(12.5px * var(--font-size-scale, 1));
+  text-align:     center;
+
+  > i { font-size: 2rem; opacity: .35; }
+  p   { margin: 0; }
+}
+
+// ── Gráficas ──────────────────────────────────────────────────────────────
+// Anchos acotados: con 1fr una sola gráfica se estira a 1.600 px y las barras
+// quedan separadas de sus etiquetas.
+.gis-stats {
+  display:               grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 460px));
+  gap:                   16px;
+  align-items:           start;
+
+  &__vacio {
+    grid-column:   1 / -1;
+    display:       flex;
+    align-items:   center;
+    gap:           10px;
+    margin:        0;
+    padding:       28px 18px;
+    border:        1px dashed rgba(21, 27, 59, .16);
+    border-radius: 10px;
+    color:         var(--ui-text-muted, #6b7280);
+    font-size:     calc(12.5px * var(--font-size-scale, 1));
+
+    i { font-size: 1.6rem; opacity: .3; }
+  }
+}
+
+.gis-grafica {
+  &__caja {
+    position: relative;
+    height:   240px;
+    padding:  12px 14px 14px;
+
+    &--baja { height: 200px; }
+  }
+}
+
+// ── Top de ciudades ───────────────────────────────────────────────────────
+.gis-ciudades {
+  display:        flex;
+  flex-direction: column;
+  gap:            7px;
+  margin:         0;
+  padding:        12px 14px 14px;
+  list-style:     none;
+
+  li {
+    display:               grid;
+    grid-template-columns: minmax(0, 1fr) 90px 48px;
+    align-items:           center;
+    gap:                   10px;
+    font-size:             calc(11.5px * var(--font-size-scale, 1));
+  }
+
+  &__nom {
+    overflow:      hidden;
+    text-overflow: ellipsis;
+    white-space:   nowrap;
+  }
+
+  &__barra {
+    height:        7px;
+    border-radius: 999px;
+    background:    rgba(21, 27, 59, .08);
+    overflow:      hidden;
+  }
+
+  &__fill {
+    display:       block;
+    height:        100%;
+    border-radius: 999px;
+    background:    var(--policia-medio, #002a66);
+  }
+
+  &__num {
+    font-weight:          700;
+    font-variant-numeric: tabular-nums;
+    text-align:           right;
+  }
+}
+
+// ── Modo oscuro ───────────────────────────────────────────────────────────
+:host-context(html.dark-mode) {
+  .gis-panel {
+    background:   rgba(255, 255, 255, .03);
+    border-color: rgba(255, 255, 255, .12);
+  }
+  .gis-resumen__fila { border-bottom-color: rgba(255, 255, 255, .08); }
+  .gis-dato__val     { background: rgba(255, 255, 255, .05); border-color: rgba(255, 255, 255, .14); }
+  .gis-error         { background: rgba(220, 38, 38, .14); color: #fca5a5; }
+  .gis-ciudades__barra { background: rgba(255, 255, 255, .1); }
+  .gis-stats__vacio  { border-color: rgba(255, 255, 255, .18); }
+
+  // Los paneles flotantes del mapa se mantienen claros a propósito: el mapa de
+  // OpenStreetMap sigue siendo claro y un panel oscuro encima se pierde.
+  .gis-capa-aviso { background: rgba(17, 24, 39, .8); }
+}
