@@ -108,6 +108,30 @@ const ROUTE_ALIASES: Readonly<Record<string, string>> = {
   '/dominio': '/administracion/dominio',
   '/cuentas-email': '/administracion/cuentas-email',
   '/correos-electronicos': '/gestion-documental/gestion-correos-electronicos',
+  // Atajos que el sistema anterior resolvía con un redirectTo en su tabla de
+  // rutas. El menú se arma desde ctr_menu, y esa tabla lleva años en
+  // producción con filas que guardan la ruta corta: allí funcionaban por el
+  // redirect, y aquí desaparecían del lateral sin decir nada, porque
+  // isKnownAppRoute() no las reconocía. Se replican como alias en lugar de
+  // migrar el dato en cada instalación.
+  //
+  // Queda fuera a propósito '/radio': el origen lo redirige a
+  // '/administracion/radio', una ruta que él mismo no declara, así que allí
+  // también termina en 404. No se traslada un enlace roto.
+  '/recepcion': '/operacion/recepcion',
+  '/pedido': '/operacion/pedido',
+  '/eventos': '/operacion/eventos',
+  '/turnos': '/operacion/turnos',
+  '/anotaciones': '/operacion/anotaciones-turno',
+  '/reportes': '/operacion/reportes',
+  '/mapa-incidentes': '/operacion/mapa-incidentes',
+  '/mapa-estadistico': '/operacion/mapa-estadistico',
+  '/entidades': '/administracion/entidades',
+  '/asistente': '/administracion/asistente',
+  '/agencias-externas': '/administracion/agencias-externas',
+  '/gestion-correos-electronicos': '/gestion-documental/gestion-correos-electronicos',
+  '/salud-cads': '/super/salud-cads',
+  '/tenants': '/super/tenants',
   // La base trae '/operacion/anotaciones' (sembrado por V47), pero la pantalla
   // se llama anotaciones-turno como en secad_angular. Se resuelve con un alias
   // para no tener que migrar el dato en cada instalación.
