@@ -249,10 +249,12 @@ namespace Api.Controllers.Operacion
         [Consumes("multipart/form-data")]
         [RequestSizeLimit(25 * 1024 * 1024)]
         public async Task<IActionResult> SubirChunkGrabacion(
-            [FromForm] IFormFile file,
-            [FromForm] long sesionId,
+            [FromForm] DtoChunkGrabacionRequest req,
             CancellationToken ct)
         {
+            var sesionId = req?.SesionId ?? 0;
+            var file     = req?.File;
+
             if (sesionId <= 0)
                 return BadRequest(new { success = false, message = "SesionId requerido." });
             if (file is null || file.Length == 0)

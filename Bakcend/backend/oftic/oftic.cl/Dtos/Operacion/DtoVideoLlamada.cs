@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Http;
 using System.Text.Json.Serialization;
 
 namespace Comun.Dtos.Operacion
@@ -125,6 +126,21 @@ namespace Comun.Dtos.Operacion
     public class DtoIniciarGrabacionRequest
     {
         [JsonNumberHandling(JsonNumberHandling.WriteAsString | JsonNumberHandling.AllowReadingFromString)]
+        public long SesionId { get; set; }
+    }
+
+    /// <summary>
+    /// Formulario de POST api/Adjunto/grabacion/chunk.
+    ///
+    /// El trozo y su sesión viajan en un solo modelo, como el resto de subidas
+    /// del sistema (DtoUploadAdjuntoRequest, branding, login visual…). Cuando el
+    /// IFormFile era un parámetro suelto junto a otro [FromForm], Swashbuckle no
+    /// podía describir la operación y tumbaba la generación entera de Swagger.
+    /// Los nombres de campo del multipart no cambian: `file` y `sesionId`.
+    /// </summary>
+    public class DtoChunkGrabacionRequest
+    {
+        public IFormFile? File { get; set; }
         public long SesionId { get; set; }
     }
 
