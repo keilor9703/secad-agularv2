@@ -35,6 +35,9 @@ interface NormalizedDbMenuItem {
   readonly vigente: number;
 }
 
+/** Ícono de reserva de los ítems que no traen uno en la base. */
+const ICONO_POR_DEFECTO = 'fa-solid fa-folder';
+
 interface MenuPartition {
   readonly regular: readonly MenuItem[];
   readonly administration: readonly MenuItem[];
@@ -105,9 +108,11 @@ export class NavigationMenuService {
       }
 
       const nextAncestors = new Set(ancestors).add(item.idMenu);
-      const children = (childrenByParent.get(item.idMenu) ?? [])
-        .map((child) => buildNode(child, nextAncestors))
-        .filter((child): child is MenuItem => child !== null);
+      const children = this.dedupeByRoute(
+        (childrenByParent.get(item.idMenu) ?? [])
+          .map((child) => buildNode(child, nextAncestors))
+          .filter((child): child is MenuItem => child !== null),
+      );
       const target = resolveMenuTarget(item.tipo, item.detalle);
       const route = this.resolveDestination(target, item.detalle);
 
@@ -126,9 +131,61 @@ export class NavigationMenuService {
       };
     };
 
-    return roots
-      .map((root) => buildNode(root, new Set<number>()))
-      .filter((item): item is MenuItem => item !== null);
+    return this.dedupeByRoute(
+      roots
+        .map((root) => buildNode(root, new Set<number>()))
+        .filter((item): item is MenuItem => item !== null),
+    );
+  }
+
+  /**
+   * Une los hermanos que llevan al MISMO destino.
+   *
+   * ctr_menu es una tabla con años de uso: sobreviven filas del sistema
+   * anterior junto a las que siembran las migraciones, y desde Administración
+   * de Menú se pueden crear más a mano. Mientras una de esas filas apuntaba a
+   * una pantalla que aún no existía, el filtro de rutas conocidas la
+   * descartaba y nadie notaba el duplicado; al portar la pantalla, las dos
+   * filas pasan a ser válidas y el módulo aparece dos veces en el lateral.
+   *
+   * La comparación es por ruta ya normalizada, no por `detalle` en crudo: dos
+   * filas distintas ('/operacion/anotaciones' y '/operacion/anotaciones-turno')
+   * pueden ser el mismo destino a través de un alias, y para quien mira el
+   * menú eso es un duplicado igual.
+   *
+   * Se conserva la primera por posición —el orden que ya venía ordenado— y de
+   * las demás se rescata lo que le falte: el ícono real si la superviviente se
+   * quedó con el de carpeta por defecto, y los hijos si alguna copia los tenía.
+   */
+  private dedupeByRoute(items: readonly MenuItem[]): MenuItem[] {
+    const resultado: MenuItem[] = [];
+    const posicionPorRuta = new Map<string, number>();
+
+    for (const item of items) {
+      const ruta = item.route ? normalizeAppRoute(item.route) : '';
+      const yaVisto = ruta ? posicionPorRuta.get(ruta) : undefined;
+
+      if (yaVisto === undefined) {
+        if (ruta) {
+          posicionPorRuta.set(ruta, resultado.length);
+        }
+        resultado.push(item);
+        continue;
+      }
+
+      const conservado = resultado[yaVisto];
+      resultado[yaVisto] = {
+        ...conservado,
+        icon: conservado.icon === ICONO_POR_DEFECTO ? item.icon : conservado.icon,
+        ...(conservado.children?.length
+          ? {}
+          : item.children?.length
+            ? { children: item.children, target: 'group' as const }
+            : {}),
+      };
+    }
+
+    return resultado;
   }
 
   private normalizeDatabaseItems(items: DbMenuItem[]): NormalizedDbMenuItem[] {
@@ -167,7 +224,7 @@ export class NavigationMenuService {
 
   private normalizeIcon(rawIcon: unknown): string {
     const icon = String(rawIcon ?? '').trim();
-    return !icon ? 'fa-solid fa-folder' : icon.includes('fa-') ? icon : `fa-solid ${icon}`;
+    return !icon ? ICONO_POR_DEFECTO : icon.includes('fa-') ? icon : `fa-solid ${icon}`;
   }
 
   /** Conserva la jerarquía al reunir destinos administrativos. */
