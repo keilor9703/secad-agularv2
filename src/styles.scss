@@ -38,6 +38,9 @@
   --expanded-width: 260px;
   --transition-speed: 0.3s;
   --ui-surface: #ffffff;
+  /* Superficie secundaria: barras de pestañas, cabeceras de acordeón y demás
+     fondos que deben distinguirse de --ui-surface sin ser una tarjeta aparte. */
+  --ui-surface-muted: #f6f8fb;
   --ui-text: #0f172a;
   --ui-muted: var(--policia-neutral-medio);
   --ui-radius: 14px;
@@ -123,6 +126,7 @@ html.dark-mode {
 
   --bg-header: #141e35;
   --ui-surface: #1e2840;
+  --ui-surface-muted: #182238;
   --ui-text: #e4e7eb;
   --ui-border: rgba(200, 200, 200, 0.1);
   --ui-muted: #9ca3af;
@@ -322,6 +326,10 @@ html.dark-mode {
   /* Tablas */
   .ui-table-wrap {
     border: 1px solid var(--policia-acento);
+    /* El contenedor se quedaba con el `background: #fff` de la regla general:
+       la tabla sí se oscurecía, pero el blanco del envoltorio asomaba en el
+       borde inferior de las tablas cortas y en la franja de scroll. */
+    background: var(--ui-surface);
   }
 
   .ui-table {

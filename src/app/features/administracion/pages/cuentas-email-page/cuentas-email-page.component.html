@@ -1,275 +1,192 @@
-<section class="cuentas-email-page">
-  <div class="ui-panel">
-    <div class="ui-panel__head">
-      <div class="ui-panel__title">
-        <i class="fa-solid fa-at"></i>
-        Administración de Cuentas SMTP
-      </div>
-      <div class="ui-panel__actions ui-window-controls">
-        @if (!editingId) {
-          <span class="ui-badge info">Nueva Configuración</span>
+<div class="ce-page">
+
+  <app-ui-page-header
+    title="Cuentas SMTP — Correo saliente"
+    icon="fa-solid fa-at"
+    description="Cuentas desde las que el sistema envía correo institucional. Cada cuenta
+                 pertenece a un grupo del organigrama COEST y solo los usuarios autorizados
+                 pueden enviar en su nombre."
+    [minimizable]="false"
+  />
+
+  <div class="ce-grid">
+
+    <!-- ─────────────────────────────  Formulario  ───────────────────────── -->
+    <section class="ce-form-card">
+      <app-ui-section-header
+        [title]="editando() ? 'Actualizar cuenta' : 'Registrar nueva cuenta'"
+        [description]="editando() ? form.controls.nombreCuenta.value : 'Los parámetros del servidor se aplican automáticamente.'"
+        [icon]="editando() ? 'fa-solid fa-pen-to-square' : 'fa-solid fa-plus-circle'"
+      />
+
+      <form [formGroup]="form" class="ce-form" (ngSubmit)="guardar()">
+        <app-ui-select
+          formControlName="idDominioGrupo"
+          label="Grupo dueño (organigrama COEST)"
+          placeholder="Seleccione el grupo"
+          [options]="opcionesGrupo()"
+          [error]="errorGrupo()"
+          required
+        />
+
+        <app-ui-input
+          formControlName="nombreCuenta"
+          label="Nombre identificador de la cuenta"
+          placeholder="Ej: Prensa COEST"
+          [maxlength]="100"
+          [error]="errorNombre()"
+          required
+        />
+
+        <app-ui-input
+          formControlName="email"
+          label="Email de la cuenta"
+          type="email"
+          placeholder="ejemplo@ponal.gov.co"
+          [maxlength]="150"
+          [error]="errorEmail()"
+          required
+        />
+
+        <app-ui-input
+          formControlName="claveSmtp"
+          label="Contraseña SMTP (o de aplicación)"
+          type="password"
+          autocomplete="new-password"
+          placeholder="••••••••"
+          [hint]="editando() ? 'Se conserva la contraseña guardada si no la cambia.' : ''"
+        />
+
+        <app-ui-select
+          formControlName="vigente"
+          label="Estado de la cuenta"
+          [options]="opcionesEstado"
+          [clearable]="false"
+          [searchable]="false"
+        />
+
+        <app-ui-file-upload
+          label="Imagen de encabezado del correo"
+          accept=".jpg,.jpeg,.png,.webp"
+          buttonText="Seleccionar imagen"
+          emptyText="Sin imagen de encabezado"
+          icon="fa-solid fa-image"
+          hint="JPG, PNG o WEBP · máx. 3 MB · se muestra en la parte superior de cada correo enviado."
+          [allowedExtensions]="['jpg', 'jpeg', 'png', 'webp']"
+          [maxSizeBytes]="maxEncabezadoBytes"
+          [fileName]="nombreImagenEncabezado()"
+          [loading]="subiendoImagenEncabezado()"
+          (fileSelected)="onImagenEncabezado($event)"
+          (clearRequested)="quitarImagenEncabezado()"
+          (validationError)="onErrorImagenEncabezado($event)"
+        />
+
+        @if (imagenEncabezadoPreview()) {
+          <figure class="ce-preview">
+            <img [src]="imagenEncabezadoPreview()" alt="Vista previa del encabezado del correo" />
+            <figcaption>Así se verá el encabezado de los correos de esta cuenta.</figcaption>
+          </figure>
         }
-        @if (editingId) {
-          <span class="ui-badge warning">Editando: {{ form.NombreCuenta }}</span>
-        }
-      </div>
-    </div>
 
-    <div class="ui-panel__body">
-      <div class="admin-grid">
-        <!-- Formulario de Configuración -->
-        <article class="tab-card form-card">
-          <h3>{{ editingId ? 'Actualizar Cuenta' : 'Registrar Nueva Cuenta' }}</h3>
-
-          <div class="ui-grid">
-            <div class="ui-field ui-col-12">
-              <label class="ui-label">Grupo Dueño (Organigrama COEST) *</label>
-              <select class="ui-control" [(ngModel)]="form.IdDominioGrupo">
-                <option [ngValue]="0">-- Seleccione el grupo --</option>
-                @for (g of gruposCOEST; track g) {
-                  <option [ngValue]="g.idDominio">{{ g.descripcion }}</option>
-                }
-              </select>
-            </div>
-
-            <div class="ui-field ui-col-12">
-              <label class="ui-label">Nombre Identificador de la Cuenta *</label>
-              <input class="ui-control" type="text" [(ngModel)]="form.NombreCuenta" placeholder="Ej: Prensa COEST">
-            </div>
-
-            <div class="ui-field ui-col-12">
-              <label class="ui-label">Email de la Cuenta *</label>
-              <input class="ui-control" type="email" [(ngModel)]="form.Email" placeholder="ejemplo@ponal.gov.co">
-            </div>
-
-            <div class="ui-field ui-col-12">
-              <label class="ui-label">Contraseña SMTP (o de Aplicación) *</label>
-              <input class="ui-control" type="password" [(ngModel)]="form.ClaveSmtp" placeholder="••••••••">
-            </div>
-
-            <div class="ui-field ui-col-12">
-              <label class="ui-label">Estado de la Cuenta</label>
-              <select class="ui-control" [(ngModel)]="form.Vigente">
-                <option [ngValue]="1">Activa</option>
-                <option [ngValue]="0">Inactiva</option>
-              </select>
-            </div>
-
-            <div class="ui-field ui-col-12">
-              <label class="ui-label">Imagen de Encabezado del Correo</label>
-              <div class="encabezado-upload-area">
-                @if (!imagenEncabezadoPreview) {
-                  <label class="encabezado-upload-btn" [class.loading]="subiendoImagenEncabezado">
-                    <input type="file" accept=".jpg,.jpeg,.png,.webp" (change)="onChangeImagenEncabezado($event)" style="display:none">
-                    <i class="fa-solid" [class.fa-image]="!subiendoImagenEncabezado" [class.fa-spinner]="subiendoImagenEncabezado" [class.fa-spin]="subiendoImagenEncabezado"></i>
-                    {{ subiendoImagenEncabezado ? 'Subiendo...' : 'Seleccionar imagen' }}
-                  </label>
-                  <span class="encabezado-hint">JPG, PNG o WEBP · máx. 3 MB · Se mostrará en la parte superior de cada correo enviado.</span>
-                }
-                @if (imagenEncabezadoPreview) {
-                  <div class="encabezado-preview">
-                    <img [src]="imagenEncabezadoPreview" alt="Encabezado" />
-                    <button class="ui-btn icon-only danger" type="button" title="Quitar imagen" (click)="quitarImagenEncabezado()">
-                      <i class="fa-solid fa-trash"></i>
-                    </button>
-                  </div>
-                }
-              </div>
-            </div>
-          </div>
-
-          <div class="tab-actions">
-            <button class="ui-btn secondary" type="button" (click)="nuevo()">Limpiar</button>
-            <button class="ui-btn primary" type="button" (click)="guardar()" [disabled]="saving">
-              <i class="fa-solid fa-floppy-disk"></i>
-              {{ saving ? 'Procesando...' : 'Guardar Configuración' }}
-            </button>
-          </div>
-        </article>
-
-        <!-- Listado de Cuentas -->
-        <article class="tab-card list-card">
-          <h3>Cuentas Configuradas</h3>
-
-          @if (loading) {
-            <div class="list-loading">Cargando cuentas...</div>
-          }
-
-          @if (!loading) {
-            <div class="ui-table-wrap">
-              <table class="ui-table">
-                <thead>
-                  <tr>
-                    <th>Grupo</th>
-                    <th>Nombre Cuenta</th>
-                    <th>Email</th>
-                    <th>Servidor</th>
-                    <th>Estado</th>
-                    <th>Acciones</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  @for (item of listaCuentas; track item) {
-                    <tr>
-                      <td><strong>{{ getNombreGrupo(item.idDominioGrupo) }}</strong></td>
-                      <td>{{ item.nombreCuenta }}</td>
-                      <td>{{ item.email }}</td>
-                      <td>{{ item.servidorSmtp }}:{{ item.puerto }}</td>
-                      <td>
-                        <span class="ui-badge" [class.success]="item.vigente === 1" [class.neutral]="item.vigente === 0">
-                          {{ item.vigente === 1 ? 'Activa' : 'Inactiva' }}
-                        </span>
-                      </td>
-                      <td>
-                        <div class="ui-table-actions">
-                          <button class="ui-btn-icon" title="Autorizaciones" (click)="abrirAutorizaciones(item)">
-                            <i class="fa-solid fa-user-shield"></i>
-                          </button>
-                          <button class="ui-btn-icon" title="Editar" (click)="editar(item)">
-                            <i class="fa-solid fa-pen-to-square"></i>
-                          </button>
-                          <button class="ui-btn-icon danger" title="Eliminar" (click)="eliminar(item)">
-                            <i class="fa-solid fa-trash"></i>
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  }
-                  @if (listaCuentas.length === 0) {
-                    <tr>
-                      <td colspan="6" class="text-center">No hay cuentas SMTP registradas.</td>
-                    </tr>
-                  }
-                </tbody>
-              </table>
-            </div>
-          }
-        </article>
-      </div>
-
-      @if (cuentaSeleccionadaAutorizacion) {
-        <article class="tab-card mt-3">
-          <div class="roles-head cuentas-head">
-            <h3>Usuarios autorizados - {{ cuentaSeleccionadaAutorizacion.nombreCuenta }}</h3>
-            <button class="ui-btn secondary" type="button" (click)="cerrarAutorizaciones()">Cerrar</button>
-          </div>
-          <div class="ui-grid">
-            <div class="ui-field ui-col-12">
-              <label class="ui-label search-label">Buscar usuario (username, identificación o nombre)</label>
-              <div class="search-input-wrap">
-                <input
-                  class="ui-control search-input"
-                  type="text"
-                  [(ngModel)]="buscadorUsuarios"
-                  (keyup.enter)="buscarUsuarios()"
-                  placeholder="Ej: jlopez o 12345678"
-                  >
-                  <button
-                    class="search-icon-btn"
-                    type="button"
-                    title="Buscar"
-                    (click)="buscarUsuarios()"
-                    [disabled]="loadingBusquedaUsuarios || savingAutorizacion">
-                    <i class="fa-solid" [class.fa-spinner]="loadingBusquedaUsuarios" [class.fa-spin]="loadingBusquedaUsuarios" [class.fa-magnifying-glass]="!loadingBusquedaUsuarios"></i>
-                  </button>
-                </div>
-              </div>
-            </div>
-            @if (resultadosUsuarios.length > 0) {
-              <div class="ui-table-wrap">
-                <table class="ui-table">
-                  <thead>
-                    <tr>
-                      <th>ID</th>
-                      <th>Usuario</th>
-                      <th>Identificación</th>
-                      <th>Nombre</th>
-                      <th>Rol</th>
-                      <th>Acción</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    @for (u of resultadosUsuarios; track u) {
-                      <tr>
-                        <td>{{ u.idUsuario }}</td>
-                        <td>{{ u.username }}</td>
-                        <td>{{ u.identificacion }}</td>
-                        <td>{{ u.nombreCompleto }}</td>
-                        <td>{{ u.rol }}</td>
-                        <td>
-                          <button class="ui-btn-icon" title="Autorizar" (click)="agregarAutorizado(u)" [disabled]="savingAutorizacion">
-                            <i class="fa-solid fa-user-plus"></i>
-                          </button>
-                        </td>
-                      </tr>
-                    }
-                  </tbody>
-                </table>
-              </div>
-            }
-            <h4 class="mt-3">Autorizados actuales</h4>
-            @if (loadingAutorizados) {
-              <div class="list-loading">Cargando autorizados...</div>
-            }
-            @if (!loadingAutorizados) {
-              <div class="ui-table-wrap">
-                <table class="ui-table">
-                  <thead>
-                    <tr>
-                      <th>Usuario</th>
-                      <th>Identificación</th>
-                      <th>Nombre</th>
-                      <th>Estado</th>
-                      <th>Acción</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    @for (a of listaAutorizados; track a) {
-                      <tr>
-                        <td>{{ a.usuarioLogin }}</td>
-                        <td>{{ a.identificacion }}</td>
-                        <td>{{ a.nombreCompleto }}</td>
-                        <td>
-                          <span class="ui-badge success">Activo</span>
-                        </td>
-                        <td>
-                          <button class="ui-btn-icon danger" title="Quitar" (click)="solicitarQuitarAutorizado(a)" [disabled]="savingAutorizacion">
-                            <i class="fa-solid fa-user-minus"></i>
-                          </button>
-                        </td>
-                      </tr>
-                    }
-                    @if (listaAutorizados.length === 0) {
-                      <tr>
-                        <td colspan="5" class="text-center">No hay usuarios autorizados para esta cuenta.</td>
-                      </tr>
-                    }
-                  </tbody>
-                </table>
-              </div>
-            }
-          </article>
-        }
-      </div>
-    </div>
-  </section>
-
-  @if (autorizadoPendienteEliminar) {
-    <div class="ui-alert">
-      <div class="ui-alert__dialog">
-        <div class="ui-alert__icon warning">
-          <i class="fa-solid fa-triangle-exclamation"></i>
+        <div class="ce-form__actions">
+          <app-ui-button variant="secondary" type="button" (buttonClick)="nuevo()">
+            {{ editando() ? 'Cancelar edición' : 'Limpiar' }}
+          </app-ui-button>
+          <app-ui-button
+            variant="primary"
+            type="submit"
+            icon="fa-solid fa-floppy-disk"
+            [disabled]="saving()"
+          >
+            {{ saving() ? 'Procesando…' : 'Guardar configuración' }}
+          </app-ui-button>
         </div>
-        <h3 class="ui-alert__title">¿Quitar autorización?</h3>
-        <p class="ui-alert__text">
-          Se quitará el acceso de <strong>{{ autorizadoPendienteEliminar.usuarioLogin }}</strong> a esta cuenta de correo.
-        </p>
-        <div class="ui-alert__foot warning">
-          <button class="ui-btn secondary" type="button" (click)="cancelarQuitarAutorizado()" [disabled]="savingAutorizacion">Cancelar</button>
-          <button class="ui-btn danger" type="button" (click)="confirmarQuitarAutorizado()" [disabled]="savingAutorizacion">
-            {{ savingAutorizacion ? 'Procesando...' : 'Sí, quitar autorización' }}
-          </button>
-        </div>
-      </div>
-    </div>
+      </form>
+    </section>
+
+    <!-- ─────────────────────────────  Listado  ──────────────────────────── -->
+    <section class="ce-list-card">
+      <app-ui-section-header
+        title="Cuentas configuradas"
+        icon="fa-solid fa-list-check"
+      />
+
+      <app-ui-table
+        [columns]="columnasCuentas"
+        [rows]="listaCuentas()"
+        [actions]="accionesCuentas"
+        [loading]="loading()"
+        loadingMessage="Cargando cuentas…"
+        emptyMessage="No hay cuentas SMTP registradas."
+        actionDisplay="row-hover"
+        actionsPosition="right"
+        actionMenuLabel="Acciones de la cuenta"
+        (actionClick)="onAccionCuenta($event)"
+      />
+    </section>
+  </div>
+
+  <!-- ───────────────────────────  Autorizaciones  ───────────────────────── -->
+  @if (cuentaAutorizacion(); as cuenta) {
+    <section class="ce-auth-card">
+      <app-ui-section-header
+        title="Usuarios autorizados"
+        [description]="cuenta.nombreCuenta + ' · ' + cuenta.email"
+        icon="fa-solid fa-user-shield"
+      >
+        <app-ui-button
+          header-actions
+          variant="secondary"
+          icon="fa-solid fa-xmark"
+          (buttonClick)="cerrarAutorizaciones()"
+        >
+          Cerrar
+        </app-ui-button>
+      </app-ui-section-header>
+
+      <app-ui-search-input
+        label="Buscar usuario (username, identificación o nombre)"
+        placeholder="Ej: jlopez o 12345678"
+        buttonText="Buscar"
+        hint="Mínimo 3 caracteres."
+        [disabled]="loadingBusquedaUsuarios() || savingAutorizacion()"
+        (search)="buscarUsuarios($event)"
+        (cleared)="limpiarBusqueda()"
+      />
+
+      @if (busquedaHecha()) {
+        <app-ui-table
+          class="ce-auth-card__tabla"
+          [columns]="columnasBusqueda"
+          [rows]="resultadosUsuarios()"
+          [actions]="accionesBusqueda"
+          [loading]="loadingBusquedaUsuarios()"
+          loadingMessage="Buscando usuarios…"
+          emptyMessage="Ningún usuario coincide con la búsqueda."
+          variant="plain"
+          actionsPosition="right"
+          actionMenuLabel="Acciones del usuario"
+          (actionClick)="onAccionBusqueda($event)"
+        />
+      }
+
+      <app-ui-section-header
+        title="Autorizados actuales"
+        icon="fa-solid fa-users"
+      />
+
+      <app-ui-table
+        [columns]="columnasAutorizados"
+        [rows]="listaAutorizados()"
+        [actions]="accionesAutorizados"
+        [loading]="loadingAutorizados()"
+        loadingMessage="Cargando autorizados…"
+        emptyMessage="No hay usuarios autorizados para esta cuenta."
+        variant="plain"
+        actionsPosition="right"
+        actionMenuLabel="Acciones de la autorización"
+        (actionClick)="onAccionAutorizado($event)"
+      />
+    </section>
   }
+</div>

@@ -221,4 +221,12 @@
   .ui-segmented-tabs__copy small {
     color: #a9b6c8;
   }
+
+  /* El bloque oscuro cubría la barra y los items pero no el contador, que
+     seguía siendo una píldora casi blanca sobre fondo oscuro. */
+  .ui-segmented-tabs__badge {
+    border-color: rgba(148, 163, 184, 0.22);
+    background: rgba(148, 163, 184, 0.16);
+    color: #dce6f2;
+  }
 }

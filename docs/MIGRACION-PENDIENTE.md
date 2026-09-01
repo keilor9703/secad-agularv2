@@ -410,21 +410,60 @@ institucional de la plantilla tiene incluso más campos que el del origen
 
 ---
 
-## Servicios de administración — 12 de 20
+## Servicios de administración — 20 de 20
 
-Faltan 8, y varios bloquean pantallas de la lista de arriba:
+Están los 20 del origen. La tabla anterior daba 12 y el resumen 18: ambas cifras
+eran incorrectas y varios servicios listados como faltantes existían desde hacía
+tiempo. El recuento fallaba porque miraba solo
+`features/administracion/services/`, y la plantilla reparte los servicios en dos
+carpetas según su alcance.
 
-| Servicio | Bloquea |
+| Ubicación en v2 | Servicios |
 |---|---|
-| ~~`fuerza.service.ts`~~ | ✅ portado |
-| ~~`usuario-admin.service.ts`~~ | ✅ completado (createCivilUsuario, getLocalUsuario) |
-| `roles-admin.service.ts` | Roles (idem) |
-| `camara-integracion.service.ts` | Integraciones |
-| `caso.service.ts` | Casos |
-| `config-sms.service.ts` | Proveedor SMS |
-| `cuenta-email.service.ts` | Cuentas de correo |
-| `dominio.service.ts` | Dominio |
-| `integraciones.service.ts` | Integraciones |
+| `features/administracion/services/` | `camara-integracion`, `caso`, `config-sms`, `cuenta-email`, `dominio`, `fuerza`, `integraciones`, `roles-admin`, `usuario-admin` (+ `funcionarios-demo-table`, propio de la plantilla) |
+| `core/services/` | `branding`, `linea-mando`, `login-visual`, `menu`, `modal`, `noticia`, `radio`, `slider`, `video-institucional`, `video-unidad` |
+| `core/services/operacion/` | `evento` — el origen lo tenía bajo administración, pero quien lo consume es Operación |
+
+Comprobado comparando los nombres de método de cada pareja origen/destino: la
+única diferencia es que la plantilla usa `inject()` en lugar de constructor.
+
+---
+
+## Verificación empírica de administración (01/09/2026)
+
+Las 15 pantallas del área se montaron una a una en un navegador sin cabeza, en
+tema claro y oscuro, midiendo errores en consola, alto renderizado, desborde
+horizontal y color real de cada superficie. Lo que salió:
+
+**Defectos reales corregidos**
+
+| Dónde | Qué pasaba |
+|---|---|
+| `form-control-sizing-demo` | Un `+` suelto dentro de la etiqueta `<app-ui-search-input>` se interpretaba como nombre de atributo: `setAttribute` lanzaba y tumbaba **toda** la pantalla de formularios. |
+| `ui-icon-picker` | Usaba `--ui-control-bg` y `--ui-control-border`, dos variables que no existen en ninguna parte, así que el disparador y su buscador quedaban blancos siempre. En oscuro, texto claro sobre blanco. Ahora usa `--form-bg` / `--form-border-color`, que sí están definidas en los dos temas (mismos valores en claro: no cambia nada ahí). |
+| `ui-api-reference` | Igual con `--ui-surface-muted`, tampoco definida. La variable se ha creado en `styles.scss` para los dos temas. |
+| `.ui-table-wrap` (global) | El bloque oscuro le cambiaba el borde pero no el `background: #fff` de la regla general: el blanco asomaba bajo las tablas cortas y en la franja de scroll. |
+| `ui-segmented-tabs` | El bloque oscuro cubría barra e ítems pero no el contador, que seguía siendo una píldora casi blanca. |
+| `ui-table` variante `plain` | El componente escribía `--ui-table-header-text-color: #263247` **en línea**, sin poder saber el tema; como el estilo en línea gana a cualquier regla, en oscuro los encabezados quedaban en azul oscuro sobre fondo oscuro: contraste medido **1,14:1**. El valor por defecto pasó a la hoja de estilos, por variante y por tema → **11,42:1** en oscuro, 12,89:1 en claro (sin cambios). Afectaba a las 4 tablas `plain` de la aplicación. |
+| `config-sms` | Leía `r.data.proveedor` sin comprobar `data`. El backend siempre lo envía, pero una respuesta inesperada tumbaba la pantalla con un `TypeError` en vez de mostrar el aviso de error. |
+
+**Falsos positivos de la propia prueba** (no eran defectos): el `AuthService`
+simulado no tenía `isCurrentUserSuperAdmin`, y el `HttpClient` simulado
+devolvía una lista donde `ConfigSms` espera un objeto. Además, el pomo del
+`ui-toggle` es claro a propósito en tema oscuro, y el encabezado institucional
+pinta un degradado, de modo que su `backgroundColor` calculado es transparente:
+hubo que decodificar el píxel pintado — rgb(0, 78, 112) — para comprobarlo.
+
+**`cuentas-email` rehecha sobre el kit.** Era la única pantalla del área que
+seguía con el marcado del origen: `<input>` y `<select>` nativos con clases
+`ui-control`, un botón de subida a mano, un buscador con su propio botón de lupa
+y un diálogo de confirmación escrito en la plantilla (con su estado, su
+`@HostListener` de Escape y su marcado `.ui-alert` duplicados). Ahora usa
+`ui-page-header`, `ui-section-header`, `ui-input`, `ui-select`, `ui-file-upload`,
+`ui-search-input`, `ui-table` y el diálogo del kit, con formulario reactivo,
+señales y `OnPush`. De paso: los errores de validación se muestran en el campo
+que los causa y no como un toast genérico, y los parámetros SMTP fijos dejan de
+reescribirse a mano por duplicado en cada guardado.
 
 ---
 
@@ -435,7 +474,7 @@ Faltan 8, y varios bloquean pantallas de la lista de arriba:
 | Servicios de operación | 12 | 12 |
 | Pantallas de operación | 9 | 9 |
 | Pantallas de administración | 16 | 16 |
-| Servicios de administración | 18 | 20 |
+| Servicios de administración | 20 | 20 |
 | Super Admin | 2 | 2 |
 
 **Cimientos ya resueltos** (no hay que repetirlos): multi-tenant en

@@ -126,16 +126,27 @@ export class ConfigSmsPageComponent implements OnInit {
     this.loading.set(true);
     this.service.get().subscribe({
       next: (r) => {
-        this.config.set(r.data);
+        this.loading.set(false);
+
+        // El contrato dice que un 200 siempre trae `data`, pero si el backend
+        // devolviera otra cosa (un proxy de por medio, un 200 con cuerpo vacío)
+        // leer .proveedor a ciegas lanza y tumba la pantalla entera en vez de
+        // avisar. Se trata como el error que es.
+        const data = r?.data;
+        if (!data) {
+          this.toast.error('Proveedor SMS', 'La respuesta del servidor no trae la configuración.');
+          return;
+        }
+
+        this.config.set(data);
         this.form.reset({
-          proveedor: r.data.proveedor,
-          baseUrl: r.data.baseUrl ?? '',
+          proveedor: data.proveedor,
+          baseUrl: data.baseUrl ?? '',
           // La API Key nunca vuelve del backend en claro, solo enmascarada.
           apiKey: '',
-          sender: r.data.sender ?? '',
+          sender: data.sender ?? '',
         });
-        this.proveedorActual.set(r.data.proveedor);
-        this.loading.set(false);
+        this.proveedorActual.set(data.proveedor);
       },
       error: () => {
         this.loading.set(false);

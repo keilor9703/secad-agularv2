@@ -182,9 +182,15 @@ export class UiTableComponent<T extends object = Record<string, unknown>> {
   readonly rowHeightCss = computed(() => this.resolveCssSize(this.rowHeight()));
   readonly rowPaddingCss = computed(() => this.resolveCssSize(this.rowPadding()) ?? '14px');
   readonly tableMinWidthCss = computed(() => this.resolveCssSize(this.tableMinWidth()));
-  readonly resolvedHeaderTextColor = computed(
-    () => this.headerTextColor() || (this.variant() === 'plain' ? '#263247' : '#ffffff'),
-  );
+  /**
+   * Solo se publica el color que haya pedido quien usa la tabla. El valor por
+   * defecto de cada variante vive en la hoja de estilos, que es la única capa
+   * que conoce el tema: fijarlo aquí escribía `#263247` en línea también en
+   * modo oscuro, y como el estilo en línea gana a cualquier regla, los
+   * encabezados de la variante `plain` quedaban en azul oscuro sobre fondo
+   * oscuro, ilegibles.
+   */
+  readonly resolvedHeaderTextColor = computed(() => this.headerTextColor() || null);
   /** Normaliza los alias lógicos para que la vista trabaje con izquierda/derecha. */
   readonly resolvedActionsPosition = computed<'left' | 'right'>(() => {
     const position = this.actionsPosition();

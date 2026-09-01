@@ -1,198 +1,111 @@
-.cuentas-email-page {
+/*
+ * La hoja anterior reimplementaba tarjetas, cabeceras, botón de subida,
+ * buscador y diálogo de confirmación que el kit ya resuelve. Aquí solo queda
+ * lo que es propio de esta pantalla: la rejilla de dos columnas, las tarjetas
+ * contenedoras y la vista previa del encabezado.
+ */
+
+:host {
   display: block;
 }
 
-.admin-grid {
+.ce-page {
   display: grid;
-  grid-template-columns: 30% 1fr;
-  gap: 2rem;
-  align-items: flex-start;
+  /* minmax(0, 1fr) y no el track `auto` implícito: la tabla del kit tiene un
+     ancho mínimo propio y con `auto` la pista no puede encogerse por debajo de
+     él, de modo que la tabla desbordaba la tarjeta y aparecía scroll
+     horizontal en toda la página. */
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
 }
 
-.tab-card {
-  background: var(--ui-surface);
-  border-radius: var(--ui-radius);
+.ce-grid {
+  display: grid;
+  grid-template-columns: minmax(320px, 420px) minmax(0, 1fr);
+  align-items: start;
+  gap: 16px;
+}
+
+%ce-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+  padding: 16px;
   border: 1px solid var(--ui-border);
-  padding: 2rem;
+  border-radius: var(--ui-radius);
+  background: var(--ui-surface);
   box-shadow: var(--ui-shadow-sm);
-
-  h3 {
-    margin: 0 0 1.5rem 0;
-    font-size: 1.2rem;
-    color: var(--policia-oscuro);
-    border-bottom: 3px solid var(--policia-acento);
-    display: inline-block;
-    padding-bottom: 8px;
-  }
 }
 
-.tab-actions {
+.ce-form-card {
+  @extend %ce-card;
+}
+
+.ce-list-card {
+  @extend %ce-card;
+}
+
+.ce-auth-card {
+  @extend %ce-card;
+}
+
+.ce-form {
+  display: grid;
+  gap: 12px;
+}
+
+.ce-form__actions {
   display: flex;
   justify-content: flex-end;
-  gap: 10px;
-  margin-top: 1.5rem;
-  padding-top: 1rem;
+  gap: 8px;
+  margin-top: 4px;
+  padding-top: 12px;
   border-top: 1px solid var(--ui-border);
 }
 
-.list-loading {
-  padding: 2rem;
-  text-align: center;
-  color: var(--ui-muted);
-  font-style: italic;
-}
-
-.text-center {
-  text-align: center;
-}
-
-.ui-table-actions {
-  display: flex;
-  gap: 8px;
-  justify-content: center;
-  align-items: center;
-}
-
-.ui-btn-icon {
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  border: 1px solid #d7e0ea;
-  background: var(--ui-surface);
-  color: var(--ui-text);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: all .18s ease;
-}
-
-.ui-btn-icon:hover {
-  border-color: var(--color-info-text);
-  color: var(--color-info-text);
-  transform: translateY(-1px);
-  box-shadow: 0 6px 14px rgba(13, 110, 253, 0.16);
-}
-
-.ui-btn-icon.danger {
-  color: var(--color-danger-text);
-}
-
-.ui-btn-icon.danger:hover {
-  border-color: var(--color-danger-text);
-  color: var(--color-danger-text);
-  box-shadow: 0 6px 14px rgba(220, 53, 69, 0.16);
-}
-
-.ui-btn-icon:disabled {
-  opacity: .55;
-  cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
-}
-
-.cuentas-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 12px;
-}
-
-.cuentas-head .ui-btn {
-  margin-left: 8px;
-}
-
-.search-label {
-  white-space: nowrap;
-}
-
-.search-input-wrap {
-  position: relative;
-  max-width: 680px;
-}
-
-.search-input {
-  padding-right: 44px;
-}
-
-.search-icon-btn {
-  position: absolute;
-  right: 8px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 30px;
-  height: 30px;
-  border: none;
-  border-radius: 50%;
-  background: #0d6efd;
-  color: #fff;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-}
-
-.search-icon-btn:disabled {
-  opacity: .6;
-  cursor: not-allowed;
-}
-
-.encabezado-upload-area {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.encabezado-upload-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 9px 18px;
-  border: 1px dashed rgba(var(--policia-oscuro-rgb), .35);
-  border-radius: var(--ui-radius);
-  background: rgba(var(--policia-oscuro-rgb), .03);
-  color: var(--policia-oscuro);
-  font-size: 0.875rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all .18s ease;
-  width: fit-content;
-
-  &:hover {
-    border-color: var(--policia-claro);
-    background: rgba(var(--policia-oscuro-rgb), .06);
-  }
-
-  &.loading {
-    opacity: .65;
-    cursor: not-allowed;
-    pointer-events: none;
-  }
-}
-
-.encabezado-hint {
-  font-size: 0.75rem;
-  color: var(--ui-muted);
-}
-
-.encabezado-preview {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
+.ce-preview {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 10px;
+  border: 1px dashed var(--ui-border);
+  border-radius: var(--ui-radius-sm);
+  background: var(--ui-surface-muted);
 
   img {
-    max-width: 260px;
-    max-height: 80px;
-    object-fit: contain;
-    border: 1px solid var(--ui-border);
+    display: block;
+    width: 100%;
+    max-height: 140px;
     border-radius: 6px;
-    background: var(--ui-surface);
-    padding: 4px;
+    object-fit: contain;
+  }
+
+  figcaption {
+    color: var(--ui-muted);
+    font-size: calc(12px * var(--font-size-scale));
   }
 }
 
-@media (max-width: 1200px) {
-  .admin-grid {
-    grid-template-columns: 1fr;
+/* La tabla de resultados de búsqueda es secundaria: se separa de la lista de
+   autorizados para que no parezcan la misma información. */
+.ce-auth-card__tabla {
+  display: block;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--ui-border);
+}
+
+@media (max-width: 1100px) {
+  .ce-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 620px) {
+  .ce-form__actions {
+    flex-direction: column-reverse;
+
+    app-ui-button {
+      width: 100%;
+    }
   }
 }

@@ -21,6 +21,7 @@ import { UiBadgeComponent } from '../../../../shared/components/ui-badge/ui-badg
 import { UiSpinnerComponent } from '../../../../shared/components/ui-spinner/ui-spinner.component';
 import { UiTableComponent } from '../../../../shared/components/ui-table/ui-table.component';
 import { UiModalComponent } from '../../../../shared/components/ui-modal/ui-modal.component';
+import { AlertService } from '../../../../shared/services/alert.service';
 import {
   UiTableAction,
   UiTableActionEvent,
@@ -94,6 +95,7 @@ export class IntegracionesPageComponent implements OnInit {
   private readonly toast  = inject(ToastService);
   private readonly auth   = inject(AuthService);
   private readonly fb     = inject(FormBuilder);
+  private readonly alert  = inject(AlertService);
 
   // ── Tab activa ──────────────────────────────────────────────────────────────
   readonly tab = signal<Tab>('salientes');
@@ -825,8 +827,22 @@ export class IntegracionesPageComponent implements OnInit {
     });
   }
 
-  deleteCam(c: DtoCamaraIntegracion): void {
-    if (!confirm(`¿Eliminar la integración de cámaras "${c.nombre}"? Esto también quita su catálogo de cámaras.`)) return;
+  /**
+   * El confirm() del navegador bloquea el hilo y no respeta ni el tema ni la
+   * escala de fuente; el resto de administración ya usa el diálogo del kit.
+   */
+  async deleteCam(c: DtoCamaraIntegracion): Promise<void> {
+    const confirmado = await this.alert.confirm({
+      title: 'Eliminar la integración de cámaras',
+      message: `¿Desea eliminar “${c.nombre}”? También se quita su catálogo de cámaras.`,
+      confirmText: 'Sí, eliminar',
+      cancelText: 'No, cancelar',
+      icon: 'warning',
+      intent: 'danger',
+      focusCancel: true,
+    });
+    if (!confirmado) return;
+
     this.camSvc.eliminar(c.id).subscribe({
       next:  r => { if (r.success) { this.toast.success('Cámaras', r.message); this.loadCamaras(); } },
       error: () => { this.toast.error('Cámaras', 'No se pudo eliminar.'); }

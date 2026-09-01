@@ -117,6 +117,16 @@
 //   text-transform: none;
 // }
 
+/* Color por defecto del encabezado según la variante. Antes lo imponía el
+   componente con un estilo en línea, que no podía distinguir el tema. */
+.ui-table-panel {
+  --ui-table-header-text-color: #ffffff;
+}
+
+.ui-table-panel--plain {
+  --ui-table-header-text-color: #263247;
+}
+
 /* Compatibilidad con las variables de tabla de Bootstrap sin fijar colores. */
 .ui-table-panel .ui-table > thead {
   --bs-table-bg: transparent;
@@ -520,6 +530,10 @@ app-ui-pagination {
   .ui-table-panel .ui-table > thead > tr > th {
     background: var(--ui-table-header-background);
     color: var(--ui-table-header-text-color);
+  }
+
+  .ui-table-panel--plain {
+    --ui-table-header-text-color: #dbe4f0;
   }
 
   .ui-table-panel--plain .ui-table > thead > tr > th {
