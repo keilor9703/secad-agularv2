@@ -9,7 +9,6 @@ import {
   signal,
 } from '@angular/core';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import ExcelJS from 'exceljs';
 import {
   CasoService,
   DtoCaso,
@@ -301,8 +300,19 @@ export class CasosPageComponent implements OnInit {
     this.resultadoImport.set(null);
   }
 
+  /**
+   * ExcelJS se carga solo cuando de verdad se va a leer o escribir un libro.
+   * Importado arriba de forma estática se llevaba casi 700 kB al paquete de
+   * esta pantalla, que el navegador descargaba al ENTRAR aunque nadie fuera a
+   * importar ni exportar nada.
+   */
+  private async cargarExcelJS(): Promise<typeof import('exceljs')> {
+    return import('exceljs');
+  }
+
   /** Primera hoja: columna A = código, columna B = descripción, fila 1 = encabezado. */
   private async leerExcel(file: File): Promise<{ codigo: string; descripcion: string }[]> {
+    const ExcelJS = await this.cargarExcelJS();
     const workbook = new ExcelJS.Workbook();
     await workbook.xlsx.load(await file.arrayBuffer());
 
@@ -327,6 +337,7 @@ export class CasosPageComponent implements OnInit {
   }
 
   async descargarPlantilla(): Promise<void> {
+    const ExcelJS = await this.cargarExcelJS();
     const workbook = new ExcelJS.Workbook();
     const hoja = workbook.addWorksheet('Códigos de caso');
     hoja.columns = [

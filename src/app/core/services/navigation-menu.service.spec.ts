@@ -31,13 +31,30 @@ const MENU_OPERACION: DbMenuItem[] = [
 
 describe('NavigationMenuService', () => {
   let service: NavigationMenuService;
+  let peticiones: number;
+  let token: string;
 
   const configurar = (items: DbMenuItem[]): void => {
     TestBed.resetTestingModule();
+    peticiones = 0;
+    token = 'jwt-1';
     TestBed.configureTestingModule({
       providers: [
-        { provide: MenuService, useValue: { getMyMenu: () => of(items), getByUser: () => of([]) } },
-        { provide: AuthService, useValue: { isAuthenticated: () => true, getUserId: () => 1 } },
+        {
+          provide: MenuService,
+          useValue: {
+            getMyMenu: () => { peticiones++; return of(items); },
+            getByUser: () => of([]),
+          },
+        },
+        {
+          provide: AuthService,
+          useValue: {
+            isAuthenticated: () => true,
+            getUserId: () => 1,
+            getToken: () => token,
+          },
+        },
       ],
     });
     service = TestBed.inject(NavigationMenuService);
@@ -88,5 +105,42 @@ describe('NavigationMenuService', () => {
 
     expect(hijos.length).toBe(1);
     expect(hijos[0].icon).toBe('fa-solid fa-truck-fast');
+  });
+
+  // ── Caché ───────────────────────────────────────────────────────────────
+  //  menuAccessGuard corre en cada navegación; sin caché cada cambio de
+  //  módulo pedía el menú entero al servidor y la navegación esperaba.
+
+  it('pide el menú una sola vez aunque se navegue muchas veces', async () => {
+    configurar(MENU_OPERACION);
+
+    await firstValueFrom(service.loadMenu());
+    for (const url of ['/operacion/recepcion', '/operacion/pedido', '/administracion/usuarios']) {
+      await firstValueFrom(service.canAccessRoute(url));
+    }
+    await firstValueFrom(service.loadMenu());
+
+    expect(peticiones).toBe(1);
+  });
+
+  it('vuelve a pedirlo si cambia el token de sesión', async () => {
+    configurar(MENU_OPERACION);
+
+    await firstValueFrom(service.loadMenu());
+    expect(peticiones).toBe(1);
+
+    token = 'jwt-2';
+    await firstValueFrom(service.loadMenu());
+    expect(peticiones).toBe(2);
+  });
+
+  it('vuelve a pedirlo tras invalidar la caché', async () => {
+    configurar(MENU_OPERACION);
+
+    await firstValueFrom(service.loadMenu());
+    service.invalidarMenu();
+    await firstValueFrom(service.loadMenu());
+
+    expect(peticiones).toBe(2);
   });
 });

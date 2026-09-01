@@ -1,5 +1,5 @@
 import { inject, Injectable } from '@angular/core';
-import { catchError, map, Observable, of, switchMap } from 'rxjs';
+import { catchError, map, Observable, of, shareReplay, switchMap } from 'rxjs';
 
 import { AuthService } from '../auth/auth.service';
 import { MenuItem } from '../interfaces/menu-item.interface';
@@ -52,7 +52,41 @@ export class NavigationMenuService {
   private readonly menuService = inject(MenuService);
   private readonly authService = inject(AuthService);
 
+  /**
+   * Menú del usuario, pedido UNA vez por sesión.
+   *
+   * menuAccessGuard es canActivateChild de la raíz, así que corre en cada
+   * navegación y llama a canAccessRoute(), que a su vez llama aquí. Sin caché
+   * eso significaba un GET /menu/me por cada cambio de módulo, con la
+   * navegación detenida esperando la respuesta: de ahí que entrar a una
+   * pantalla se sintiera lento comparado con el sistema anterior, que pedía
+   * el menú una sola vez al pintar el lateral.
+   *
+   * La caché se ata al token: si cambia (otro login, o la conmutación de
+   * contexto que devuelve un JWT nuevo) se vuelve a pedir. Así no hace falta
+   * que auth.service conozca a este servicio.
+   */
+  private menuEnCurso?: Observable<readonly MenuItem[]>;
+  private tokenDeLaCache: string | null = null;
+
   loadMenu(): Observable<readonly MenuItem[]> {
+    const token = this.authService.getToken();
+
+    if (!this.menuEnCurso || this.tokenDeLaCache !== token) {
+      this.tokenDeLaCache = token;
+      this.menuEnCurso = this.pedirMenu().pipe(shareReplay({ bufferSize: 1, refCount: false }));
+    }
+
+    return this.menuEnCurso;
+  }
+
+  /** Descarta la caché para que la próxima lectura vuelva a pedir el menú. */
+  invalidarMenu(): void {
+    this.menuEnCurso = undefined;
+    this.tokenDeLaCache = null;
+  }
+
+  private pedirMenu(): Observable<readonly MenuItem[]> {
     return this.menuService.getMyMenu().pipe(
       switchMap((items) => (items?.length ? of(items) : this.loadFallback())),
       catchError(() => this.loadFallback()),
