@@ -1,0 +1,263 @@
+<div class="ev-page">
+
+  <app-ui-page-header
+    title="Eventos — cola de despacho"
+    icon="fa-solid fa-tower-broadcast"
+    [description]="'Canal: ' + canalNombre() + ' · la cola se refresca sola cada 15 segundos.'"
+    [minimizable]="false"
+  >
+    <span page-header-actions class="ev-vivo">
+      <span class="ev-vivo__punto"></span> En vivo
+    </span>
+    @if (esAdmin) {
+      <app-ui-button
+        page-header-actions
+        variant="secondary" appearance="ghost" icon="fa-solid fa-shuffle"
+        tooltip="Cambiar el canal de despacho"
+        (buttonClick)="cambiarCanal()"
+      >Canal</app-ui-button>
+    }
+    <app-ui-button
+      page-header-actions
+      variant="primary" icon="fa-solid fa-rotate"
+      [loading]="cargando()" [disabled]="cargando()"
+      (buttonClick)="recargarAhora()"
+    >Recargar</app-ui-button>
+  </app-ui-page-header>
+
+  @if (canalSeleccionado() <= 0 && !mostrarSelectorCanal()) {
+    <p class="ev-aviso">
+      <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
+      <span>No tiene un canal de despacho configurado.</span>
+      <app-ui-button variant="primary" size="sm" icon="fa-solid fa-tower-broadcast"
+                     (buttonClick)="cambiarCanal()">Elegir canal</app-ui-button>
+    </p>
+  }
+
+  <div class="ev-layout">
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         Bandeja
+         ═══════════════════════════════════════════════════════════════════ -->
+    <section class="ev-panel ev-bandeja">
+      <app-ui-section-header title="Bandeja" icon="fa-solid fa-inbox" appearance="divider">
+        <app-ui-toggle
+          header-actions
+          [checked]="sonidoActivo()"
+          size="sm"
+          [ariaLabel]="sonidoActivo() ? 'Silenciar la alerta sonora' : 'Activar la alerta sonora'"
+          [onIcon]="'fa-solid fa-volume-high'"
+          [offIcon]="'fa-solid fa-volume-xmark'"
+          [showIcons]="true"
+          (checkedChange)="toggleSonido($event)"
+        />
+      </app-ui-section-header>
+
+      <div class="ev-filtros">
+        <span #buscador class="ev-filtros__buscar">
+          <app-ui-search-input
+            placeholder="Dirección, caso, llamante, teléfono, ID…  ( / para enfocar )"
+            [showButton]="false"
+            icon="fa-solid fa-magnifying-glass"
+            [ngModel]="filtroTexto()"
+            (ngModelChange)="onFiltroTextoChange($event)"
+          />
+        </span>
+
+        <div class="ev-pills">
+          @for (f of filtros(); track f.valor) {
+            <button type="button" class="ev-pill"
+                    [class.ev-pill--sel]="filtroEstado() === f.valor"
+                    (click)="filtrarPorEstado(f.valor)">
+              {{ f.label }}
+              @if (f.total > 0) { <span class="ev-pill__n">{{ f.total }}</span> }
+            </button>
+          }
+        </div>
+      </div>
+
+      <p class="ev-meta">
+        @if (errorCarga()) {
+          <span class="ev-err">
+            <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i> {{ errorCarga() }}
+          </span>
+        } @else {
+          <span>{{ eventosFiltrados().length }} evento(s)</span>
+          @if (filtroEstado() === 'C' && conteos().turnoActual) {
+            <span class="ev-meta__turno">
+              <i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i>
+              Turno {{ conteos().turnoActual }}
+            </span>
+          }
+        }
+      </p>
+
+      <!-- Escalamiento SLA -->
+      @if (eventosEscalados().length && !mostrarResultadosBusqueda()) {
+        <p class="ev-sla">
+          <i class="fa-solid fa-bell" aria-hidden="true"></i>
+          <span>
+            <strong>{{ eventosEscalados().length }}</strong> caso(s) abierto(s) sin recurso asignado
+            superan {{ umbrales().critico }} min — requieren despacho.
+          </span>
+        </p>
+      }
+
+      <!-- Búsqueda en el histórico -->
+      @if (mostrarResultadosBusqueda()) {
+        <div class="ev-busqueda">
+          <p class="ev-busqueda__head">
+            <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+            @if (buscandoBackend()) { Buscando en el histórico… }
+            @else { {{ resultadosBusqueda().length }} resultado(s) en todo el histórico }
+          </p>
+          @if (!buscandoBackend() && resultadosBusqueda().length === 0) {
+            <p class="ev-nota">Sin coincidencias en el histórico.</p>
+          }
+          <ul class="ev-busqueda__lista">
+            @for (ev of resultadosBusqueda(); track ev.id) {
+              <li>
+                <button type="button" (click)="abrirDetalle(ev)">
+                  <app-ui-badge [label]="getEstadoLabel(ev.estado)"
+                                [variant]="getEstadoVariante(ev.estado)" size="xs" />
+                  <span class="ev-busqueda__txt">
+                    <strong>{{ ev.direCaso || 'Sin dirección' }}</strong>
+                    <small>
+                      @if (ev.numeEvento) { Evento {{ ev.numeEvento }} · }
+                      @if (ev.codiPedido) { {{ ev.codiPedido }} · }
+                      {{ getFechaCreacionLabel(ev) }}
+                    </small>
+                  </span>
+                  <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
+                </button>
+              </li>
+            }
+          </ul>
+        </div>
+      }
+
+      <!-- Cola en vivo -->
+      @if (!mostrarResultadosBusqueda()) {
+        @if (cargando() && eventos().length === 0) {
+          <p class="ev-cargando"><app-ui-spinner size="sm" /> <span>Cargando eventos…</span></p>
+        } @else if (eventosFiltrados().length === 0) {
+          <p class="ev-nota ev-nota--vacia">
+            <i class="fa-solid fa-inbox" aria-hidden="true"></i>
+            No hay eventos para este canal.
+          </p>
+        }
+
+        <ul class="ev-lista">
+          @for (ev of eventosFiltrados(); track ev.id) {
+            <li>
+              <button type="button"
+                      class="ev-item {{ getSemaforoClass(ev) }}"
+                      [class.ev-item--sel]="eventoSeleccionado()?.id === ev.id"
+                      [class.ev-item--nuevo]="esEventoNuevo(ev)"
+                      [class.ev-item--gestion]="esEventoEnGestion(ev)"
+                      (click)="abrirDetalle(ev)">
+                <span class="ev-item__franja"></span>
+                <span class="ev-item__cuerpo">
+                  <span class="ev-item__alto">
+                    <span class="ev-item__id">
+                      @if (ev.numeEvento) { Evento {{ ev.numeEvento }} } @else { Pedido {{ ev.id }} }
+                    </span>
+                    <app-ui-badge [label]="getPrioridadLabel(ev.prioridad)"
+                                  [variant]="getPrioridadVariante(ev.prioridad)" size="xs" />
+                  </span>
+
+                  @if (ev.codiPedido || ev.descPedido) {
+                    <span class="ev-item__caso">
+                      @if (ev.codiPedido) { <strong>{{ ev.codiPedido }}</strong> }
+                      @if (ev.descPedido) { <span>{{ ev.descPedido }}</span> }
+                    </span>
+                  }
+
+                  <span class="ev-item__dir">
+                    <i class="fa-solid fa-location-dot" aria-hidden="true"></i>
+                    {{ ev.direCaso || 'Sin dirección' }}
+                  </span>
+                  @if (ev.ciudad) { <span class="ev-item__ciudad">{{ ev.ciudad }}</span> }
+
+                  <span class="ev-item__bajo">
+                    <app-ui-badge [label]="getEstadoLabel(ev.estado)"
+                                  [variant]="getEstadoVariante(ev.estado)" size="xs" />
+                    @if (ev.totalActuacionesActivas > 0) {
+                      <span class="ev-item__recursos" title="Recursos asignados activos">
+                        <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
+                        {{ ev.totalActuacionesActivas }}
+                      </span>
+                    }
+                    <span class="ev-item__reloj {{ getSemaforoClass(ev) }}">
+                      <i class="fa-regular fa-clock" aria-hidden="true"></i> {{ getElapsedLabel(ev) }}
+                    </span>
+                  </span>
+                </span>
+                <i class="fa-solid fa-chevron-right ev-item__chevron" aria-hidden="true"></i>
+              </button>
+            </li>
+          }
+        </ul>
+      }
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         Detalle del evento
+         ═══════════════════════════════════════════════════════════════════ -->
+    <section class="ev-detalle">
+      @if (eventoSeleccionado(); as ev) {
+        <app-evento-detalle
+          [evento]="ev"
+          [canalCodigo]="canalSeleccionado()"
+          [fuerzaId]="fuerzaId"
+          [sitioGraba]="sitioGraba"
+          [umbrales]="umbrales()"
+          [tick]="tick()"
+          (cerrado)="volverLista()"
+          (estadoCambiado)="aplicarEstadoActualizado($event.pedidoId, $event.estado)"
+          (recargarBandeja)="recargarAhora()"
+        />
+      } @else {
+        <p class="ev-nota ev-nota--vacia ev-nota--alta">
+          <i class="fa-solid fa-tower-broadcast" aria-hidden="true"></i>
+          Elija un evento de la bandeja para gestionarlo.
+        </p>
+      }
+    </section>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     Selector de canal
+     ═══════════════════════════════════════════════════════════════════════ -->
+<app-ui-modal
+  [open]="mostrarSelectorCanal()"
+  title="Elija su canal de despacho"
+  icon="fa-solid fa-tower-broadcast"
+  size="lg"
+  (closeRequested)="cancelarSelector()"
+>
+  <div modal-body>
+    @if (canalesDisponibles().length === 0) {
+      <p class="ev-nota ev-nota--vacia">
+        <i class="fa-solid fa-tower-broadcast" aria-hidden="true"></i>
+        No hay canales configurados para este sitio.
+      </p>
+    } @else {
+      <div class="ev-canal-grid">
+        @for (c of canalesDisponibles(); track c.codigo + '::' + c.fuerzaId) {
+          <button type="button" class="ev-canal-card" (click)="seleccionarCanal(c.codigo, c.fuerzaId)">
+            <span class="ev-canal-card__fuerza">{{ c.fuerzaDesc }}</span>
+            <strong>{{ c.descripcion }}</strong>
+            <small>Canal {{ c.codigo }}</small>
+          </button>
+        }
+      </div>
+    }
+  </div>
+  <div modal-actions>
+    <app-ui-button variant="secondary" appearance="ghost"
+                   (buttonClick)="cancelarSelector()">Cerrar</app-ui-button>
+  </div>
+</app-ui-modal>
+

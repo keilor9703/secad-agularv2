@@ -1,0 +1,405 @@
+// ═══════════════════════════════════════════════════════════════════════════
+//  Eventos — bandeja de la cola de despacho.
+//  El panel de un evento concreto tiene su propia hoja en
+//  components/evento-detalle.
+// ═══════════════════════════════════════════════════════════════════════════
+%linea   { display: inline-flex; align-items: center; }
+%boton   { border: 0; background: transparent; color: inherit; font: inherit; cursor: pointer; }
+%fila    { display: flex; align-items: center; }
+%columna { display: flex; flex-direction: column; }
+%cifras  { font-variant-numeric: tabular-nums; }
+%tarjeta { border: 1px solid var(--c-borde); border-radius: 10px; background: var(--c-fondo); }
+
+:host {
+  display: block;
+
+  // Escala tipográfica de la pantalla, en un solo sitio.
+  --f-xs: calc(10.5px * var(--font-size-scale, 1));
+  --f-sm: calc(11px * var(--font-size-scale, 1));
+  --f-md: calc(11.5px * var(--font-size-scale, 1));
+  --f-lg: calc(12px * var(--font-size-scale, 1));
+  --f-xl: calc(15px * var(--font-size-scale, 1));
+
+  // El tema oscuro se resuelve redefiniendo estos tokens una sola vez, no
+  // duplicando cada regla: esa lista paralela se desincroniza en cuanto se
+  // toca el tema claro.
+  --c-fondo:  #fff;
+  --c-velo:   rgba(21, 27, 59, .03);
+  --c-borde:  rgba(21, 27, 59, .1);
+  --c-linea:  rgba(21, 27, 59, .07);
+  --c-tenue:  #94a3b8;
+  --c-suave:  #64748b;
+  --c-texto:  #475569;
+  --c-hover:  rgba(8, 166, 203, .06);
+  --c-sel:    rgba(8, 166, 203, .12);
+  --c-sombra: 0 1px 2px rgb(15 23 42 / 5%);
+
+  --c-acento: #0e7490;
+  --c-ok:     #15803d;
+  --c-ok-bg:  rgba(22, 163, 74, .08);
+  --c-ok-bd:  rgba(22, 163, 74, .35);
+  --c-alerta: #b45309;
+  --c-alerta-bg: rgba(217, 119, 6, .08);
+  --c-alerta-bd: rgba(217, 119, 6, .35);
+  --c-mal:    #b91c1c;
+  --c-mal-bg: rgba(220, 38, 38, .07);
+  --c-mal-bd: rgba(220, 38, 38, .35);
+}
+
+:host-context(html.dark-mode) {
+  --c-fondo:  rgba(255, 255, 255, .03);
+  --c-velo:   rgba(255, 255, 255, .05);
+  --c-borde:  rgba(255, 255, 255, .12);
+  --c-linea:  rgba(255, 255, 255, .1);
+  --c-suave:  #94a3b8;
+  --c-texto:  #cbd5e1;
+  --c-hover:  rgba(8, 166, 203, .14);
+  --c-sel:    rgba(8, 166, 203, .2);
+  --c-sombra: 0 1px 2px rgb(0 0 0 / 30%);
+
+  --c-acento: #22d3ee;
+  --c-ok:     #86efac;
+  --c-ok-bg:  rgba(34, 197, 94, .14);
+  --c-ok-bd:  rgba(34, 197, 94, .45);
+  --c-alerta: #fcd34d;
+  --c-alerta-bg: rgba(217, 119, 6, .16);
+  --c-alerta-bd: rgba(251, 191, 36, .4);
+  --c-mal:    #fca5a5;
+  --c-mal-bg: rgba(248, 113, 113, .14);
+  --c-mal-bd: rgba(248, 113, 113, .4);
+}
+
+.ev-opcion {
+  @extend %linea; @extend %boton;
+  gap:           6px;
+  padding:       7px 13px;
+  border:        1px solid var(--c-borde);
+  border-radius: 999px;
+  font-size:     var(--f-md);
+
+  &:hover { background: var(--c-hover); }
+  &:focus-visible { outline: 2px solid #0e7490; outline-offset: 2px; }
+
+  &--sel { border-color: var(--c-acento); background: var(--c-sel); font-weight: 700; }
+}
+
+.ev-page { @extend %columna; gap: 14px; padding-bottom: 8px; }
+
+.ev-panel {
+  @extend %columna;
+  background:    var(--c-fondo);
+  border:        1px solid var(--c-borde);
+  border-radius: 12px;
+  box-shadow:    var(--c-sombra);
+  overflow:      hidden;
+}
+
+.ev-vivo {
+  @extend %linea;
+  gap:       6px;
+  font-size: var(--f-sm);
+  color:     var(--c-suave);
+
+  &__punto {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: #16a34a;
+    box-shadow: 0 0 0 0 rgb(22 163 74 / 55%);
+    animation: ev-latido 2s infinite;
+  }
+}
+
+@keyframes ev-latido {
+  70%  { box-shadow: 0 0 0 7px rgb(22 163 74 / 0%); }
+  100% { box-shadow: 0 0 0 0 rgb(22 163 74 / 0%); }
+}
+
+.ev-cargando,
+.ev-nota {
+  @extend %fila;
+  gap:       8px;
+  margin:    0;
+  padding:   12px 14px;
+  font-size: var(--f-lg);
+  color:     var(--c-suave);
+  line-height: 1.4;
+}
+
+.ev-nota--vacia {
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+  gap: 10px;
+  i { font-size: 1.6rem; opacity: .35; }
+}
+
+.ev-nota--alta   { min-height: 280px; }
+.ev-nota--alerta { color: var(--c-alerta); }
+
+.ev-err {
+  @extend %fila;
+  gap:       7px;
+  margin:    0;
+  font-size: var(--f-md);
+  color:     var(--c-mal);
+
+  &--caja {
+    padding:       9px 12px;
+    margin:        0 14px 10px;
+    border:        1px solid var(--c-mal-bd);
+    border-radius: 8px;
+    background:    var(--c-mal-bg);
+    span { flex: 1 1 auto; min-width: 0; }
+  }
+}
+
+.ev-msg-ok { @extend %linea; gap: 6px; font-size: var(--f-md); color: var(--c-ok); }
+
+.ev-aviso {
+  @extend %fila;
+  flex-wrap:     wrap;
+  gap:           10px;
+  margin:        0;
+  padding:       10px 14px;
+  border:        1px solid var(--c-alerta-bd);
+  border-radius: 10px;
+  background:    var(--c-alerta-bg);
+  font-size:     var(--f-lg);
+  color:         var(--c-alerta);
+  span { flex: 1 1 200px; }
+}
+
+// ── Distribución general ──────────────────────────────────────────────────
+.ev-layout {
+  display:               grid;
+  grid-template-columns: minmax(0, 400px) minmax(0, 1fr);
+  gap:                   14px;
+  align-items:           start;
+
+  @media (max-width: 1280px) { grid-template-columns: minmax(0, 1fr); }
+}
+
+// La bandeja es la brújula del despachador: se queda a la vista mientras se
+// recorre un detalle que mide varias pantallas.
+.ev-bandeja {
+  position:   sticky;
+  top:        8px;
+  max-height: calc(100vh - 40px);
+
+  @media (max-width: 1280px) { position: static; max-height: none; }
+}
+
+.ev-detalle { @extend %columna; gap: 14px; min-width: 0; }
+
+// ── Filtros de la bandeja ─────────────────────────────────────────────────
+.ev-filtros {
+  @extend %columna;
+  gap:           10px;
+  padding:       12px 14px;
+  border-bottom: 1px solid var(--c-linea);
+
+  &__buscar { display: block; }
+}
+
+.ev-pills { display: flex; flex-wrap: wrap; gap: 5px; }
+
+.ev-pill {
+  // Misma pieza que .ev-opcion, en tamaño de filtro. Antes eran tres reglas
+  // casi idénticas, y el mismo control se veía distinto en cada sitio.
+  @extend .ev-opcion;
+  gap:       5px;
+  padding:   4px 10px;
+  font-size: var(--f-xs);
+
+  &--sel { @extend .ev-opcion--sel; }
+
+  &__n {
+    @extend %cifras;
+    padding:       0 5px;
+    border-radius: 999px;
+    background:    var(--c-linea);
+    font-weight:   700;
+  }
+}
+
+.ev-meta {
+  @extend %fila;
+  gap:       10px;
+  margin:    0;
+  padding:   8px 14px;
+  font-size: var(--f-xs);
+  color:     var(--c-suave);
+
+  &__turno { @extend %linea; gap: 5px; margin-left: auto; }
+}
+
+.ev-sla {
+  @extend %fila;
+  gap:        8px;
+  margin:     0 14px 10px;
+  padding:    9px 12px;
+  border:     1px solid var(--c-mal-bd);
+  border-radius: 8px;
+  background: var(--c-mal-bg);
+  font-size:  var(--f-md);
+  color:      var(--c-mal);
+}
+
+// ── Búsqueda en el histórico ──────────────────────────────────────────────
+.ev-busqueda {
+  border-bottom: 1px solid var(--c-linea);
+
+  &__head {
+    @extend %fila;
+    gap:       7px;
+    margin:    0;
+    padding:   9px 14px;
+    font-size: var(--f-xs);
+    font-weight: 700;
+    color:     var(--c-suave);
+  }
+
+  &__lista {
+    margin: 0; padding: 0; list-style: none;
+    max-height: 40vh; overflow-y: auto;
+
+    li + li { border-top: 1px solid var(--c-linea); }
+
+    button {
+      @extend %fila;
+      gap:        9px;
+      width:      100%;
+      padding:    9px 14px;
+      @extend %boton;
+      text-align: left;
+      &:hover { background: var(--c-hover); }
+      &:focus-visible { outline: 2px solid #0e7490; outline-offset: -2px; }
+    }
+  }
+
+  &__txt {
+    @extend %columna;
+    flex: 1 1 auto; min-width: 0;
+    font-size: var(--f-md);
+    small { color: var(--c-tenue); font-size: var(--f-xs); }
+    strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  }
+}
+
+// ── Tarjetas de la bandeja ────────────────────────────────────────────────
+.ev-lista {
+  flex: 1 1 auto;
+  margin: 0; padding: 0; list-style: none;
+  overflow-y: auto;
+  li + li { border-top: 1px solid var(--c-linea); }
+}
+
+.ev-item {
+  display:    flex;
+  width:      100%;
+  padding:    0;
+  @extend %boton;
+  text-align: left;
+
+  &:hover { background: var(--c-hover); }
+  &:focus-visible { outline: 2px solid #0e7490; outline-offset: -2px; }
+
+  // El semáforo va en la franja lateral, no en el fondo: teñido el fondo, la
+  // bandeja entera queda de colores y la selección deja de notarse.
+  &__franja { flex: 0 0 4px; align-self: stretch; background: var(--c-tenue); }
+  &.semaforo-verde    > .ev-item__franja { background: #16a34a; }
+  &.semaforo-amarillo > .ev-item__franja { background: #d97706; }
+  &.semaforo-rojo     > .ev-item__franja { background: #dc2626; }
+
+  &__cuerpo { @extend %columna; gap: 3px; flex: 1 1 auto; min-width: 0; padding: 9px 12px; }
+  &__alto,
+  &__bajo   { @extend %fila; flex-wrap: wrap; gap: 6px; }
+
+  &__id { @extend %cifras; font-size: var(--f-xs); font-weight: 700; color: var(--c-suave); }
+
+  &__caso {
+    display: flex; flex-wrap: wrap; gap: 5px;
+    font-size: var(--f-lg); line-height: 1.3;
+    strong { color: var(--c-acento); }
+  }
+
+  &__dir {
+    @extend %linea;
+    gap: 5px;
+    font-size: var(--f-md);
+    color: var(--c-texto);
+    line-height: 1.35;
+  }
+
+  &__ciudad { font-size: var(--f-xs); color: var(--c-tenue); }
+
+  &__recursos {
+    @extend %linea; @extend %cifras;
+    gap: 4px;
+    font-size: var(--f-xs);
+    font-weight: 700;
+    color: var(--c-acento);
+  }
+
+  &__reloj {
+    @extend %linea;
+    gap: 4px;
+    margin-left: auto;
+    font-size: var(--f-xs);
+    white-space: nowrap;
+    color: var(--c-suave);
+
+    &.semaforo-amarillo { color: #d97706; font-weight: 700; }
+    &.semaforo-rojo     { color: var(--c-mal); font-weight: 700; }
+  }
+
+  &__chevron { align-self: center; padding-right: 10px; color: var(--c-tenue); font-size: 11px; }
+
+  &--sel { background: var(--c-sel); &:hover { background: var(--c-sel); } }
+
+  // Destello de seis segundos cuando el evento acaba de entrar en la cola.
+  &--nuevo { animation: ev-destello 1.2s ease-in-out 5; }
+
+  &--gestion .ev-item__id::after {
+    content: '· en gestión';
+    margin-left: 5px;
+    color: var(--c-acento);
+    font-weight: 700;
+  }
+}
+
+@keyframes ev-destello {
+  0%, 100% { background: transparent; }
+  50%      { background: rgba(8, 166, 203, .22); }
+}
+
+// ── Modales ───────────────────────────────────────────────────────────────
+.ev-canal-grid {
+  display:               grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap:                   10px;
+}
+
+.ev-canal-card {
+  @extend %columna;
+  gap: 3px;
+  padding: 12px;
+  @extend %tarjeta;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+
+  &:hover { border-color: var(--c-acento); background: var(--c-hover); }
+  &:focus-visible { outline: 2px solid #0e7490; outline-offset: 2px; }
+
+  &__fuerza {
+    font-size: var(--f-xs);
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: var(--c-tenue);
+  }
+  strong { font-size: var(--f-lg); }
+  small  { color: var(--c-suave); font-size: var(--f-xs); }
+}
+
+.ev-opciones { display: flex; flex-wrap: wrap; gap: 7px; }

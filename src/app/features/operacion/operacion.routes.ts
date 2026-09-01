@@ -60,5 +60,10 @@ export const operacionRoutes: Routes = [
       import('./pages/pedido-page/pedido-page.component').then((m) => m.PedidoPageComponent),
     data: { breadcrumb: 'Seguimiento de Incidentes' },
   },
-  // Pendiente de portar: eventos.
+  {
+    path: 'eventos',
+    loadComponent: () =>
+      import('./pages/eventos-page/eventos-page.component').then((m) => m.EventosPageComponent),
+    data: { breadcrumb: 'Eventos' },
+  },
 ];

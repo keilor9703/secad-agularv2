@@ -863,7 +863,9 @@ button.pd-tarjeta {
   }
 }
 
-// ── Marco de miniatura (adjuntos y grabaciones) ───────────────────────────
+// ── Marco de la grabación de una videollamada ─────────────────────────────
+// La galería de archivos del caso vive ahora en app-adjuntos-caso; esto es
+// solo la miniatura del reproductor de la sesión de video.
 .pd-marco {
   position:      relative;
   display:       block;
@@ -871,7 +873,7 @@ button.pd-tarjeta {
   overflow:      hidden;
   background:    var(--c-linea);
 
-  img, video { width: 100%; height: 100%; object-fit: cover; }
+  video { width: 100%; height: 100%; object-fit: cover; }
 
   > i {
     position: absolute;
@@ -882,43 +884,6 @@ button.pd-tarjeta {
     font-size:   1.9rem;
     color:       rgb(255 255 255 / 85%);
     text-shadow: 0 1px 4px rgb(0 0 0 / 45%);
-  }
-}
-
-// ── Archivos adjuntos ─────────────────────────────────────────────────────
-.pd-adjuntos {
-  display:               grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap:                   10px;
-  margin:                0;
-  padding:               14px;
-  list-style:            none;
-
-  a {
-    @extend %columna;
-    gap:            5px;
-    padding:        8px;
-    border:         1px solid var(--c-borde);
-    border-radius:  10px;
-    background:     var(--c-fondo);
-    color:          inherit;
-    text-decoration:none;
-    font-size:      var(--f-xs);
-
-    &:hover { border-color: rgba(8, 166, 203, .5); }
-  }
-
-  .pd-marco { aspect-ratio: 4 / 3; }
-}
-
-.pd-adjunto {
-  &__nombre { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  &__canal  { color: var(--c-tenue); }
-  &__meta {
-    @extend %columna;
-    gap:   2px;
-    color: var(--c-suave);
-    > span { @extend %linea; gap: 4px; }
   }
 }
 

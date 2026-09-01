@@ -22,6 +22,7 @@ import { UiSpinnerComponent } from '../../../../shared/components/ui-spinner/ui-
 import { UiPaginationComponent } from '../../../../shared/components/ui-pagination/ui-pagination.component';
 import { UiTableComponent } from '../../../../shared/components/ui-table/ui-table.component';
 import { UiTableColumn } from '../../../../shared/interfaces/ui-table.interface';
+import { AdjuntosCasoComponent } from '../../components/adjuntos-caso/adjuntos-caso.component';
 import { UiSelectOption } from '../../../../shared/interfaces/ui-select-option.interface';
 
 import { ToastService } from '../../../../core/services/toast.service';
@@ -138,6 +139,7 @@ interface OperadorStat {
     UiSpinnerComponent,
     UiPaginationComponent,
     UiTableComponent,
+    AdjuntosCasoComponent,
   ],
   templateUrl: './pedido-page.component.html',
   styleUrls: ['./pedido-page.component.scss'],

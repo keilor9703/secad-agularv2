@@ -1,0 +1,63 @@
+:host { display: block; }
+
+.ac-lista {
+  display:               grid;
+  grid-template-columns: repeat(auto-fill, minmax(145px, 1fr));
+  gap:                   9px;
+  margin: 0; padding: 0; list-style: none;
+
+  a {
+    display:        flex;
+    flex-direction: column;
+    gap:            5px;
+    padding:        7px;
+    border:         1px solid rgba(21, 27, 59, .1);
+    border-radius:  10px;
+    background:     #fff;
+    color:          inherit;
+    text-decoration:none;
+    font-size:      calc(10.5px * var(--font-size-scale, 1));
+    &:hover { border-color: #0e7490; }
+  }
+}
+
+.ac-marco {
+  position:      relative;
+  display:       block;
+  aspect-ratio:  4 / 3;
+  border-radius: 8px;
+  overflow:      hidden;
+  background:    rgba(21, 27, 59, .07);
+
+  img, video { width: 100%; height: 100%; object-fit: cover; }
+
+  > i {
+    position: absolute;
+    inset:    0;
+    display:  flex;
+    align-items:     center;
+    justify-content: center;
+    font-size:   1.8rem;
+    color:       rgb(255 255 255 / 85%);
+    text-shadow: 0 1px 4px rgb(0 0 0 / 45%);
+  }
+}
+
+.ac-nombre { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ac-canal  { color: #94a3b8; }
+
+.ac-meta {
+  display:        flex;
+  flex-direction: column;
+  gap:            2px;
+  color:          #64748b;
+  > span { display: inline-flex; align-items: center; gap: 4px; }
+}
+
+// Siempre :host-context: `html.dark-mode` a secas compila a un atributo que
+// <html> nunca lleva y la regla queda muerta sin avisar.
+:host-context(html.dark-mode) {
+  .ac-lista a { background: rgba(255, 255, 255, .04); border-color: rgba(255, 255, 255, .12); }
+  .ac-marco   { background: rgba(255, 255, 255, .1); }
+  .ac-meta    { color: #94a3b8; }
+}

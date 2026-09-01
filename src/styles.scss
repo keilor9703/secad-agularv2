@@ -2252,3 +2252,69 @@ body > .cdk-overlay-container:has(.ui-tooltip-overlay-pane) {
     grid-column: span 12;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Marcadores de recursos del mapa de Eventos.
+   Leaflet inyecta estos nodos en su propio contenedor, fuera de la
+   encapsulación del componente: viven aquí en vez de tras un ::ng-deep.
+   ═══════════════════════════════════════════════════════════════════════════ */
+.ev-pin {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px; height: 34px;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 50%);
+  i { color: #fff; font-size: 15px; }
+}
+
+.ev-pin__label {
+  margin-top: 3px;
+  padding: 1px 7px;
+  border-radius: 5px;
+  background: rgb(21 27 59 / 78%);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  text-align: center;
+  white-space: nowrap;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 40%);
+}
+
+.ev-popup {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 170px;
+  font-size: 12px;
+
+  &__titulo   { font-weight: 800; }
+  &__estado   { color: #0e7490; font-weight: 700; }
+  &__personal,
+  &__dist     { color: #64748b; }
+
+  &__badge {
+    margin-top: 4px;
+    padding: 2px 7px;
+    border-radius: 999px;
+    background: rgba(8, 166, 203, .16);
+    color: #0e7490;
+    font-weight: 700;
+    text-align: center;
+    &--otro { background: rgba(100, 116, 139, .16); color: #475569; }
+  }
+
+  &__btn {
+    margin-top: 6px;
+    padding: 5px 10px;
+    border: 0;
+    border-radius: 7px;
+    background: #0e7490;
+    color: #fff;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+    &:disabled { opacity: .6; cursor: default; }
+  }
+}

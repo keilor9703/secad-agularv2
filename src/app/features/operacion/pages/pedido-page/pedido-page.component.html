@@ -797,45 +797,7 @@
                              variant="info" appearance="soft" size="xs" />
               </app-ui-section-header>
 
-              <ul class="pd-adjuntos">
-                @for (adj of adjuntos(); track adj.id) {
-                  <li>
-                    <!-- Las grabaciones de videollamada son VIDEO: pintarlas con
-                         <img> dejaba un icono de imagen rota con el nombre debajo. -->
-                    <a [href]="adj.urlPublica" target="_blank" rel="noopener" [title]="adj.nombreOriginal">
-                      @if (adj.tipoAdjunto === 'VIDEO') {
-                        <span class="pd-marco">
-                          <video [src]="adj.urlPublica + '#t=0.5'" preload="metadata" muted></video>
-                          <i class="fa-solid fa-circle-play" aria-hidden="true"></i>
-                        </span>
-                        <span class="pd-adjunto__meta">
-                          @if (adj.numeroTelefonoLlamada) {
-                            <span><i class="fa-solid fa-phone" aria-hidden="true"></i> {{ adj.numeroTelefonoLlamada }}</span>
-                          }
-                          @if (adj.fechaInicioLlamada) {
-                            <span><i class="fa-regular fa-calendar" aria-hidden="true"></i> {{ adj.fechaInicioLlamada }}</span>
-                          }
-                          @if (adj.duracionSegundos != null) {
-                            <span><i class="fa-regular fa-clock" aria-hidden="true"></i> {{ formatDuracion(adj.duracionSegundos) }}</span>
-                          }
-                        </span>
-                      } @else {
-                        <span class="pd-marco">
-                          <img [src]="adj.urlPublica" [alt]="adj.nombreOriginal" loading="lazy" />
-                        </span>
-                        <span class="pd-adjunto__nombre">{{ adj.nombreOriginal }}</span>
-                        <span class="pd-adjunto__canal">
-                          @switch (adj.canalOrigen) {
-                            @case ('API_CHAT') { Chat }
-                            @case ('API_SMS')  { SMS }
-                            @default          { Manual }
-                          }
-                        </span>
-                      }
-                    </a>
-                  </li>
-                }
-              </ul>
+              <app-adjuntos-caso [adjuntos]="adjuntos()" />
             </section>
           }
 

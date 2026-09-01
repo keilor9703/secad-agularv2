@@ -84,6 +84,7 @@ export const APP_ROUTE_CATALOG: readonly AppRouteCatalogItem[] = [
   { route: '/operacion/turnos', label: 'Turnos de vigilancia', area: 'Operación' },
   { route: '/operacion/recepcion', label: 'Recepción de llamadas', area: 'Operación' },
   { route: '/operacion/pedido', label: 'Seguimiento de incidentes', area: 'Operación' },
+  { route: '/operacion/eventos', label: 'Eventos', area: 'Operación' },
 
   { route: '/gestion-documental', label: 'Gestión documental', area: 'Gestión documental' },
   {

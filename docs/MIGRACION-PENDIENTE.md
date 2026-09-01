@@ -41,7 +41,7 @@ Se actualiza a medida que se porta cada cosa.
 
 ---
 
-## Operación — 8 de 9
+## Operación — 9 de 9
 
 | Pantalla | Estado | Líneas |
 |---|---|---|
@@ -53,11 +53,53 @@ Se actualiza a medida que se porta cada cosa.
 | `turnos` | ✅ portada | 2.763 |
 | `recepcion` | ✅ portada | 4.073 |
 | `pedido` | ✅ portada | 5.053 |
-| `eventos` | ⬜ pendiente | 8.896 |
+| `eventos` | ✅ portada | 8.896 |
 
 Los 12 servicios de `core/services/operacion/` sí están portados completos.
 
-**Pendiente: 8.896 líneas** de `eventos`, la última pantalla de operación.
+**Operación queda completa.** Las nueve pantallas están portadas.
+
+**`eventos` — portada.** La consola de despacho, y la pantalla más grande del
+sistema. Bandeja en vivo con semáforo por umbrales SLA, filtros por estado con
+contadores, búsqueda en todo el histórico y alerta sonora de casos nuevos; y,
+por cada caso, datos, canales y agencias que lo atienden, mapa con las
+patrullas moviéndose y la ubicación del ciudadano, videollamada con chat y
+grabación, despacho en cuatro pasos con solicitud de apoyo, asistente de
+preguntas, anotaciones y siete modales.
+
+**Se partió en cuatro piezas.** El origen era un único componente de 2.832
+líneas de TypeScript con una hoja de 3.700 y una plantilla de 2.364: cola,
+detalle, mapa, WebRTC, despacho y todos los modales en el mismo archivo. Aquí
+son:
+
+| Pieza | Qué hace | Líneas |
+|---|---|---|
+| `pages/eventos-page` | Bandeja, filtros, búsqueda, canal y alerta sonora | 1.106 |
+| `components/evento-detalle` | Todo lo de un caso, con sus modales | 4.803 |
+| `components/adjuntos-caso` | Galería de archivos, compartida con `pedido` | 127 |
+| `utils/eventos-sla.util` | Semáforo y etiquetas, que usan las dos vistas | 153 |
+
+Correcciones respecto del origen:
+
+- El asistente de preguntas orientadoras no estaba enlazado a nada: sus radios
+  y campos no tenían `ngModel`, así que el despachador podía contestarlas todas
+  y lo escrito se perdía al cambiar de categoría o cerrar el caso. Ahora se
+  guardan y hay un botón que las pasa al formulario de anotación.
+- El mapa se montaba desde `ngAfterViewChecked`, que corre en cada ciclo de
+  detección durante toda la vida del componente, buscando `getElementById`. Y
+  `L` venía de un `declare const` sobre un script de CDN que el CSP bloquea.
+  Ahora es un import real, el contenedor se resuelve por referencia y lo monta
+  un `effect`.
+- La línea de despacho pintaba las marcas de tiempo crudas del backend
+  (`2026-08-29T08:14:00Z`) en vez de una hora legible.
+- `Promise.allSettled` sobre `toPromise()`, que RxJS 7 deprecó y 8 elimina.
+- El `AudioContext` de la alerta sonora no se cerraba nunca: quedaba uno vivo
+  por cada visita a la pantalla.
+- Las tarjetas de la bandeja eran `<div (click)>`, inalcanzables con el
+  teclado; ahora son botones.
+- Los estilos de los marcadores de Leaflet estaban tras un `::ng-deep`
+  (deprecado). Son DOM que Leaflet inyecta fuera de la encapsulación, así que
+  viven en la hoja global.
 
 **`pedido` — portada.** Seguimiento de incidentes: panel con el turno vigente,
 tarjetas de estado, distribución por prioridad y por canal de origen y lista de
@@ -391,7 +433,7 @@ Faltan 8, y varios bloquean pantallas de la lista de arriba:
 | Área | Portado | Total |
 |---|---|---|
 | Servicios de operación | 12 | 12 |
-| Pantallas de operación | 8 | 9 |
+| Pantallas de operación | 9 | 9 |
 | Pantallas de administración | 16 | 16 |
 | Servicios de administración | 18 | 20 |
 | Super Admin | 2 | 2 |
