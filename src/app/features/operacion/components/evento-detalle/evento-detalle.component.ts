@@ -11,7 +11,6 @@ import { debounceTime, distinctUntilChanged, startWith, switchMap } from 'rxjs/o
 import * as L from 'leaflet';
 
 import { UiSectionHeaderComponent } from '../../../../shared/components/ui-section-header/ui-section-header.component';
-import { UiExpansionPanelComponent } from '../../../../shared/components/ui-expansion-panel/ui-expansion-panel.component';
 import { UiButtonComponent } from '../../../../shared/components/ui-button/ui-button.component';
 import { UiInputComponent } from '../../../../shared/components/ui-input/ui-input.component';
 import { UiSelectComponent } from '../../../../shared/components/ui-select/ui-select.component';
@@ -85,7 +84,6 @@ export interface CambioEstadoEvento {
     DatePipe,
     DecimalPipe,
     UiSectionHeaderComponent,
-    UiExpansionPanelComponent,
     UiButtonComponent,
     UiInputComponent,
     UiSelectComponent,
@@ -157,6 +155,17 @@ export class EventoDetalleComponent implements OnDestroy {
       const d  = this.detalle();
       if (!el || !d || this.mapa) return;
       this.montarMapa(el, d);
+    });
+
+    // Auto-cambiar el tab de media al conectar/desconectar la videollamada:
+    // la cámara del ciudadano pasa a primer plano y al colgar el mapa vuelve.
+    effect(() => {
+      const estado = this.videollamadaEstado();
+      if (estado === 'conectada' || estado === 'conectando' || estado === 'esperando') {
+        this.tabMedia.set('video');
+      } else if (estado === 'inactiva') {
+        this.tabMedia.set('mapa');
+      }
     });
 
     this.suscribirVideollamada();
@@ -237,6 +246,12 @@ export class EventoDetalleComponent implements OnDestroy {
   anotacionesAbierto      = true;
   canalesAsignadosAbierto = true;
   asistenteAbierto        = false;
+
+  // ── Tabs del nuevo layout ─────────────────────────────────────────────────
+  /** Zona central: 'mapa' siempre visible; 'video' al conectar una videollamada. */
+  readonly tabMedia = signal<'mapa' | 'video'>('mapa');
+  /** Panel derecho: tab activo de información secundaria. */
+  readonly tabInfo  = signal<'recursos' | 'despacho' | 'anotaciones' | 'asistente'>('recursos');
 
   readonly canalesAsignados = signal<DtoCanalesAsignadosResult | null>(null);
 

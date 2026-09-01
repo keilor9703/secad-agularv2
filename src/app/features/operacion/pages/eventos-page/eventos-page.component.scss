@@ -172,8 +172,12 @@
 .ev-layout {
   display:               grid;
   grid-template-columns: minmax(0, 400px) minmax(0, 1fr);
+  // La cuadrícula ocupa el alto disponible en el viewport (menos el encabezado
+  // de la página y el espacio que ya se comió el page-header). Así el panel de
+  // detalle nunca tiene scroll externo: cada zona tiene el suyo propio.
+  height:                calc(100vh - var(--header-height, 70px) - 120px);
+  min-height:            0;
   gap:                   14px;
-  align-items:           start;
 
   @media (max-width: 1280px) { grid-template-columns: minmax(0, 1fr); }
 }
@@ -183,12 +187,21 @@
 .ev-bandeja {
   position:   sticky;
   top:        8px;
-  max-height: calc(100vh - 40px);
+  max-height: calc(100vh - var(--header-height, 70px) - 120px);
+  overflow-y: auto;
 
   @media (max-width: 1280px) { position: static; max-height: none; }
 }
 
-.ev-detalle { @extend %columna; gap: 14px; min-width: 0; }
+// El detalle ocupa el espacio restante del grid sin overflow externo.
+// El alto 100% lo hereda ed-shell que es display:flex flex-direction:column.
+.ev-detalle {
+  display:   flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow:  hidden;
+}
 
 // ── Filtros de la bandeja ─────────────────────────────────────────────────
 .ev-filtros {

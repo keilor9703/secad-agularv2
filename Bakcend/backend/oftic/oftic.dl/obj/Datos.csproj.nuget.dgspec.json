@@ -1,35 +1,25 @@
 {
   "format": 1,
   "restore": {
-    "D:\\Disco E\\SECAD_SEPT\\SECAD_NET8.0\\MODERNIZACION\\Plantilla_Mejorada\\plantilla-angular-ponal\\Bakcend\\backend\\oftic\\oftic.dl\\Datos.csproj": {}
+    "C:\\Users\\acer\\Documents\\V2\\secad-agularv2\\Bakcend\\backend\\oftic\\oftic.dl\\Datos.csproj": {}
   },
   "projects": {
-    "D:\\Disco E\\SECAD_SEPT\\SECAD_NET8.0\\MODERNIZACION\\Plantilla_Mejorada\\plantilla-angular-ponal\\Bakcend\\backend\\oftic\\oftic.cl\\Comun.csproj": {
+    "C:\\Users\\acer\\Documents\\V2\\secad-agularv2\\Bakcend\\backend\\oftic\\oftic.cl\\Comun.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\Disco E\\SECAD_SEPT\\SECAD_NET8.0\\MODERNIZACION\\Plantilla_Mejorada\\plantilla-angular-ponal\\Bakcend\\backend\\oftic\\oftic.cl\\Comun.csproj",
+        "projectUniqueName": "C:\\Users\\acer\\Documents\\V2\\secad-agularv2\\Bakcend\\backend\\oftic\\oftic.cl\\Comun.csproj",
         "projectName": "Comun",
-        "projectPath": "D:\\Disco E\\SECAD_SEPT\\SECAD_NET8.0\\MODERNIZACION\\Plantilla_Mejorada\\plantilla-angular-ponal\\Bakcend\\backend\\oftic\\oftic.cl\\Comun.csproj",
-        "packagesPath": "C:\\Users\\ke.martinez\\.nuget\\packages\\",
-        "outputPath": "D:\\Disco E\\SECAD_SEPT\\SECAD_NET8.0\\MODERNIZACION\\Plantilla_Mejorada\\plantilla-angular-ponal\\Bakcend\\backend\\oftic\\oftic.cl\\obj\\",
+        "projectPath": "C:\\Users\\acer\\Documents\\V2\\secad-agularv2\\Bakcend\\backend\\oftic\\oftic.cl\\Comun.csproj",
+        "packagesPath": "C:\\Users\\acer\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\acer\\Documents\\V2\\secad-agularv2\\Bakcend\\backend\\oftic\\oftic.cl\\obj\\",
         "projectStyle": "PackageReference",
-        "fallbackFolders": [
-          "C:\\Program Files\\DevExpress 25.2\\Components\\Offline Packages",
-          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
-        ],
         "configFilePaths": [
-          "C:\\Users\\ke.martinez\\AppData\\Roaming\\NuGet\\NuGet.Config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\DevExpress 25.2.config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+          "C:\\Users\\acer\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net8.0"
         ],
         "sources": {
-          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
-          "C:\\Program Files\\DevExpress 25.2\\Components\\System\\Components\\Packages": {},
-          "\\\\srvfilesponal3\\OFITE\\AITEC\\GRUDE\\7.1.4.3 Grupo Desarrollo de Software\\DOCUMENTOS SOPORTE Y APOYO\\TE KEHILOR MARTINEZ\\2. Docs\\15. Librerias 2FA": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
@@ -47,8 +37,7 @@
           "enableAudit": "true",
           "auditLevel": "low",
           "auditMode": "direct"
-        },
-        "SdkAnalysisLevel": "10.0.200"
+        }
       },
       "frameworks": {
         "net8.0": {
@@ -78,44 +67,34 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.203/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.424/PortableRuntimeIdentifierGraph.json"
         }
       }
     },
-    "D:\\Disco E\\SECAD_SEPT\\SECAD_NET8.0\\MODERNIZACION\\Plantilla_Mejorada\\plantilla-angular-ponal\\Bakcend\\backend\\oftic\\oftic.dl\\Datos.csproj": {
+    "C:\\Users\\acer\\Documents\\V2\\secad-agularv2\\Bakcend\\backend\\oftic\\oftic.dl\\Datos.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\Disco E\\SECAD_SEPT\\SECAD_NET8.0\\MODERNIZACION\\Plantilla_Mejorada\\plantilla-angular-ponal\\Bakcend\\backend\\oftic\\oftic.dl\\Datos.csproj",
+        "projectUniqueName": "C:\\Users\\acer\\Documents\\V2\\secad-agularv2\\Bakcend\\backend\\oftic\\oftic.dl\\Datos.csproj",
         "projectName": "Datos",
-        "projectPath": "D:\\Disco E\\SECAD_SEPT\\SECAD_NET8.0\\MODERNIZACION\\Plantilla_Mejorada\\plantilla-angular-ponal\\Bakcend\\backend\\oftic\\oftic.dl\\Datos.csproj",
-        "packagesPath": "C:\\Users\\ke.martinez\\.nuget\\packages\\",
-        "outputPath": "D:\\Disco E\\SECAD_SEPT\\SECAD_NET8.0\\MODERNIZACION\\Plantilla_Mejorada\\plantilla-angular-ponal\\Bakcend\\backend\\oftic\\oftic.dl\\obj\\",
+        "projectPath": "C:\\Users\\acer\\Documents\\V2\\secad-agularv2\\Bakcend\\backend\\oftic\\oftic.dl\\Datos.csproj",
+        "packagesPath": "C:\\Users\\acer\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\acer\\Documents\\V2\\secad-agularv2\\Bakcend\\backend\\oftic\\oftic.dl\\obj\\",
         "projectStyle": "PackageReference",
-        "fallbackFolders": [
-          "C:\\Program Files\\DevExpress 25.2\\Components\\Offline Packages",
-          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
-        ],
         "configFilePaths": [
-          "C:\\Users\\ke.martinez\\AppData\\Roaming\\NuGet\\NuGet.Config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\DevExpress 25.2.config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+          "C:\\Users\\acer\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net8.0"
         ],
         "sources": {
-          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
-          "C:\\Program Files\\DevExpress 25.2\\Components\\System\\Components\\Packages": {},
-          "\\\\srvfilesponal3\\OFITE\\AITEC\\GRUDE\\7.1.4.3 Grupo Desarrollo de Software\\DOCUMENTOS SOPORTE Y APOYO\\TE KEHILOR MARTINEZ\\2. Docs\\15. Librerias 2FA": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
           "net8.0": {
             "targetAlias": "net8.0",
             "projectReferences": {
-              "D:\\Disco E\\SECAD_SEPT\\SECAD_NET8.0\\MODERNIZACION\\Plantilla_Mejorada\\plantilla-angular-ponal\\Bakcend\\backend\\oftic\\oftic.cl\\Comun.csproj": {
-                "projectPath": "D:\\Disco E\\SECAD_SEPT\\SECAD_NET8.0\\MODERNIZACION\\Plantilla_Mejorada\\plantilla-angular-ponal\\Bakcend\\backend\\oftic\\oftic.cl\\Comun.csproj"
+              "C:\\Users\\acer\\Documents\\V2\\secad-agularv2\\Bakcend\\backend\\oftic\\oftic.cl\\Comun.csproj": {
+                "projectPath": "C:\\Users\\acer\\Documents\\V2\\secad-agularv2\\Bakcend\\backend\\oftic\\oftic.cl\\Comun.csproj"
               }
             }
           }
@@ -129,8 +108,7 @@
           "enableAudit": "true",
           "auditLevel": "low",
           "auditMode": "direct"
-        },
-        "SdkAnalysisLevel": "10.0.200"
+        }
       },
       "frameworks": {
         "net8.0": {
@@ -173,7 +151,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.203/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.424/PortableRuntimeIdentifierGraph.json"
         }
       }
     }

@@ -14,3 +14,19 @@ D:\Disco E\SECAD_SEPT\SECAD_NET8.0\MODERNIZACION\SecadAngular\backend\oftic\ofti
 D:\Disco E\SECAD_SEPT\SECAD_NET8.0\MODERNIZACION\SecadAngular\backend\oftic\oftic.sl\obj\Debug\net8.0\refint\Servicios.dll
 D:\Disco E\SECAD_SEPT\SECAD_NET8.0\MODERNIZACION\SecadAngular\backend\oftic\oftic.sl\obj\Debug\net8.0\Servicios.pdb
 D:\Disco E\SECAD_SEPT\SECAD_NET8.0\MODERNIZACION\SecadAngular\backend\oftic\oftic.sl\obj\Debug\net8.0\ref\Servicios.dll
+C:\Users\acer\Documents\V2\secad-agularv2\Bakcend\backend\oftic\oftic.sl\bin\Debug\net8.0\Servicios.deps.json
+C:\Users\acer\Documents\V2\secad-agularv2\Bakcend\backend\oftic\oftic.sl\bin\Debug\net8.0\Servicios.dll
+C:\Users\acer\Documents\V2\secad-agularv2\Bakcend\backend\oftic\oftic.sl\bin\Debug\net8.0\Servicios.pdb
+C:\Users\acer\Documents\V2\secad-agularv2\Bakcend\backend\oftic\oftic.sl\bin\Debug\net8.0\Comun.dll
+C:\Users\acer\Documents\V2\secad-agularv2\Bakcend\backend\oftic\oftic.sl\bin\Debug\net8.0\Comun.pdb
+C:\Users\acer\Documents\V2\secad-agularv2\Bakcend\backend\oftic\oftic.sl\obj\Debug\net8.0\Servicios.csproj.AssemblyReference.cache
+C:\Users\acer\Documents\V2\secad-agularv2\Bakcend\backend\oftic\oftic.sl\obj\Debug\net8.0\Servicios.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\acer\Documents\V2\secad-agularv2\Bakcend\backend\oftic\oftic.sl\obj\Debug\net8.0\Servicios.AssemblyInfoInputs.cache
+C:\Users\acer\Documents\V2\secad-agularv2\Bakcend\backend\oftic\oftic.sl\obj\Debug\net8.0\Servicios.AssemblyInfo.cs
+C:\Users\acer\Documents\V2\secad-agularv2\Bakcend\backend\oftic\oftic.sl\obj\Debug\net8.0\Servicios.csproj.CoreCompileInputs.cache
+C:\Users\acer\Documents\V2\secad-agularv2\Bakcend\backend\oftic\oftic.sl\obj\Debug\net8.0\Servicios.sourcelink.json
+C:\Users\acer\Documents\V2\secad-agularv2\Bakcend\backend\oftic\oftic.sl\obj\Debug\net8.0\Servicios.csproj.Up2Date
+C:\Users\acer\Documents\V2\secad-agularv2\Bakcend\backend\oftic\oftic.sl\obj\Debug\net8.0\Servicios.dll
+C:\Users\acer\Documents\V2\secad-agularv2\Bakcend\backend\oftic\oftic.sl\obj\Debug\net8.0\refint\Servicios.dll
+C:\Users\acer\Documents\V2\secad-agularv2\Bakcend\backend\oftic\oftic.sl\obj\Debug\net8.0\Servicios.pdb
+C:\Users\acer\Documents\V2\secad-agularv2\Bakcend\backend\oftic\oftic.sl\obj\Debug\net8.0\ref\Servicios.dll

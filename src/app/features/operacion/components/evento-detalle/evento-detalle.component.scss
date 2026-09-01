@@ -1,24 +1,32 @@
 // ═══════════════════════════════════════════════════════════════════════════
-//  Panel de gestión de un evento: datos, mapa con recursos, videollamada,
-//  despacho, asistente, anotaciones y sus modales.
+//  SECAD — Panel de detalle de evento.
+//  Nuevo layout "Centro de Mando": tres zonas fijas en viewport,
+//  sin scroll externo. Mapa y video son los elementos protagonistas.
 // ═══════════════════════════════════════════════════════════════════════════
+
+// ── Mixins y placeholders ────────────────────────────────────────────────
 %fila    { display: flex; align-items: center; }
 %columna { display: flex; flex-direction: column; }
 %cifras  { font-variant-numeric: tabular-nums; }
+%linea   { display: inline-flex; align-items: center; }
 %tarjeta { border: 1px solid var(--c-borde); border-radius: 10px; background: var(--c-fondo); }
+%boton   { border: 0; background: transparent; color: inherit; font: inherit; cursor: pointer; }
 
+// ── Tokens de color ──────────────────────────────────────────────────────
 :host {
-  display: block;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
 
-  // Escala tipográfica de la pantalla, en un solo sitio.
-  --f-xs: calc(10.5px * var(--font-size-scale, 1));
-  --f-md: calc(11.5px * var(--font-size-scale, 1));
-  --f-lg: calc(12px * var(--font-size-scale, 1));
-  --f-xl: calc(15px * var(--font-size-scale, 1));
+  // Escala tipográfica
+  --f-xs:  calc(10.5px * var(--font-size-scale, 1));
+  --f-sm:  calc(11px   * var(--font-size-scale, 1));
+  --f-md:  calc(11.5px * var(--font-size-scale, 1));
+  --f-lg:  calc(12px   * var(--font-size-scale, 1));
+  --f-xl:  calc(15px   * var(--font-size-scale, 1));
 
-  // El tema oscuro se resuelve redefiniendo estos tokens una sola vez, no
-  // duplicando cada regla: esa lista paralela se desincroniza en cuanto se
-  // toca el tema claro.
+  // Modo claro
   --c-fondo:  #fff;
   --c-velo:   rgba(21, 27, 59, .03);
   --c-borde:  rgba(21, 27, 59, .1);
@@ -29,6 +37,7 @@
   --c-hover:  rgba(8, 166, 203, .06);
   --c-sel:    rgba(8, 166, 203, .12);
   --c-sombra: 0 1px 2px rgb(15 23 42 / 5%);
+  --c-sombra-md: 0 4px 12px rgb(15 23 42 / 10%);
 
   --c-acento: #0e7490;
   --c-ok:     #15803d;
@@ -52,7 +61,7 @@
   --c-hover:  rgba(8, 166, 203, .14);
   --c-sel:    rgba(8, 166, 203, .2);
   --c-sombra: 0 1px 2px rgb(0 0 0 / 30%);
-
+  --c-sombra-md: 0 4px 12px rgb(0 0 0 / 40%);
   --c-acento: #22d3ee;
   --c-ok:     #86efac;
   --c-ok-bg:  rgba(34, 197, 94, .14);
@@ -64,148 +73,141 @@
   --c-mal-bg: rgba(248, 113, 113, .14);
   --c-mal-bd: rgba(248, 113, 113, .4);
 }
-// ═══════════════════════════════════════════════════════════════════════════
-//  Eventos — cola de despacho
-//  Solo lo que el kit no cubre: bandeja con semáforo, puesto en vivo
-//  (videollamada, mapa y recursos), línea de despacho y asistente.
-// ═══════════════════════════════════════════════════════════════════════════
 
-%linea   { display: inline-flex; align-items: center; }
-
-// Un botón sin cromo propio (hereda tipografía y color) y una tarjeta con el
-// marco estándar. Estaban repetidos en más de diez sitios cada uno.
-%boton   { border: 0; background: transparent; color: inherit; font: inherit; cursor: pointer; }
-
-.ev-opcion {
-  @extend %linea; @extend %boton;
-  gap:           6px;
-  padding:       7px 13px;
-  border:        1px solid var(--c-borde);
-  border-radius: 999px;
-  font-size:     var(--f-md);
-
-  &:hover { background: var(--c-hover); }
-  &:focus-visible { outline: 2px solid #0e7490; outline-offset: 2px; }
-
-  &--sel { border-color: var(--c-acento); background: var(--c-sel); font-weight: 700; }
-}
-
-.ev-panel {
-  @extend %columna;
-  background:    var(--c-fondo);
-  border:        1px solid var(--c-borde);
-  border-radius: 12px;
-  box-shadow:    var(--c-sombra);
-  overflow:      hidden;
-}
-
-.ev-cargando,
-.ev-nota {
+// ── Loading ──────────────────────────────────────────────────────────────
+.ed-loading {
   @extend %fila;
-  gap:       8px;
-  margin:    0;
-  padding:   12px 14px;
-  font-size: var(--f-lg);
-  color:     var(--c-suave);
-  line-height: 1.4;
-}
-
-.ev-nota--vacia {
-  flex-direction: column;
-  justify-content: center;
-  text-align: center;
   gap: 10px;
-  i { font-size: 1.6rem; opacity: .35; }
+  padding: 20px 16px;
+  font-size: var(--f-lg);
+  color: var(--c-suave);
 }
 
-.ev-nota--alerta { color: var(--c-alerta); }
-
-.ev-err {
-  @extend %fila;
-  gap:       7px;
-  margin:    0;
-  font-size: var(--f-md);
-  color:     var(--c-mal);
-
-  &--caja {
-    padding:       9px 12px;
-    margin:        0 14px 10px;
-    border:        1px solid var(--c-mal-bd);
-    border-radius: 8px;
-    background:    var(--c-mal-bg);
-    span { flex: 1 1 auto; min-width: 0; }
-  }
+// ══════════════════════════════════════════════════════════════════════════
+//  SHELL — Contenedor principal, ocupa toda la altura disponible
+// ══════════════════════════════════════════════════════════════════════════
+.ed-shell {
+  @extend %columna;
+  height: 100%;
+  overflow: hidden;
+  gap: 0;
 }
 
-.ev-msg-ok { @extend %linea; gap: 6px; font-size: var(--f-md); color: var(--c-ok); }
-
-// ── Cabecera del detalle ──────────────────────────────────────────────────
-.ev-detalle-head {
+// ══════════════════════════════════════════════════════════════════════════
+//  CABECERA COMPACTA
+// ══════════════════════════════════════════════════════════════════════════
+.ed-head {
   @extend %fila;
-  align-items:   flex-start;
-  flex-wrap:     wrap;
-  gap:           10px;
-  padding:       12px 14px;
-  border:        1px solid var(--c-borde);
-  border-left:   5px solid var(--c-tenue);
-  border-radius: 12px;
-  background:    var(--c-fondo);
-  box-shadow:    var(--c-sombra);
+  flex-wrap: wrap;
+  gap: 8px;
+  flex: 0 0 auto;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--c-linea);
+  background: var(--c-fondo);
+  box-shadow: var(--c-sombra);
 
+  // Semáforo: franja izquierda de color
+  border-left: 4px solid var(--c-tenue);
   &.semaforo-verde    { border-left-color: #16a34a; }
   &.semaforo-amarillo { border-left-color: #d97706; }
   &.semaforo-rojo     { border-left-color: #dc2626; }
 
-  &__info { @extend %columna; gap: 3px; flex: 1 1 260px; min-width: 0; }
-
-  &__titulo {
+  &__left {
     @extend %fila;
-    flex-wrap: wrap;
     gap: 8px;
+    flex: 0 0 auto;
+  }
+
+  &__id-block {
+    @extend %columna;
+    gap: 1px;
+  }
+
+  &__num {
+    @extend %fila;
+    gap: 6px;
     font-size: var(--f-xl);
+    font-weight: 700;
     strong { color: var(--c-acento); }
   }
 
-  &__id { @extend %cifras; font-weight: 800; }
+  &__ev {
+    font-variant-numeric: tabular-nums;
+    font-weight: 800;
+    color: var(--c-texto);
+  }
 
-  &__sub  { font-size: var(--f-lg); color: var(--c-texto); }
-  &__meta { font-size: var(--f-xs); color: var(--c-tenue); line-height: 1.5; }
+  &__dir {
+    @extend %fila;
+    gap: 5px;
+    font-size: var(--f-md);
+    color: var(--c-suave);
+    em { color: var(--c-tenue); font-style: normal; }
+    i  { color: var(--c-acento); }
+  }
 
-  &__badges { display: flex; flex-wrap: wrap; gap: 6px; }
+  &__center {
+    @extend %fila;
+    flex-wrap: wrap;
+    gap: 6px;
+    flex: 1 1 200px;
+  }
+
+  &__meta {
+    @extend %fila;
+    @extend %cifras;
+    gap: 5px;
+    font-size: var(--f-xs);
+    color: var(--c-tenue);
+  }
+
+  &__meta-sep { opacity: .5; }
+
+  &__right {
+    @extend %fila;
+    flex-wrap: wrap;
+    gap: 5px;
+    flex: 0 0 auto;
+    margin-left: auto;
+  }
+
+  &__lbl-estado {
+    font-size: var(--f-xs);
+    color: var(--c-suave);
+  }
+
+  &__sep {
+    width: 1px;
+    height: 20px;
+    background: var(--c-linea);
+    margin: 0 2px;
+  }
 }
 
-.ev-presencia,
-.ev-vinculo {
+.ed-presencia,
+.ed-vinculo {
   @extend %linea;
-  gap:       6px;
+  gap: 5px;
   font-size: var(--f-xs);
-  color:     var(--c-acento);
+  color: var(--c-acento);
   font-weight: 700;
 }
 
-// ── Barra de acciones ─────────────────────────────────────────────────────
-.ev-acciones {
-  @extend %fila;
-  flex-wrap:     wrap;
-  gap:           6px;
-  padding:       9px 12px;
-  border:        1px solid var(--c-borde);
-  border-radius: 10px;
-  background:    var(--c-velo);
-
-  &__lbl { font-size: var(--f-xs); color: var(--c-suave); margin-right: 2px; }
-  &__sep { flex: 1 1 auto; }
+// ── Historial de estados ──────────────────────────────────────────────────
+.ed-historial-bar {
+  flex: 0 0 auto;
+  border-bottom: 1px solid var(--c-linea);
+  background: var(--c-velo);
 }
 
-// ── Historial de estados ──────────────────────────────────────────────────
-.ev-historial {
+.ed-historial {
   margin: 0; padding: 0; list-style: none;
 
   li {
     @extend %fila;
     flex-wrap: wrap;
     gap: 8px;
-    padding: 8px 14px;
+    padding: 6px 14px;
     font-size: var(--f-md);
     & + li { border-top: 1px solid var(--c-linea); }
   }
@@ -215,188 +217,311 @@
   &__motivo  { flex: 1 1 100%; color: var(--c-texto); font-style: italic; }
 }
 
-// ── Duplicados ────────────────────────────────────────────────────────────
-.ev-dupl {
-  border-color: var(--c-alerta-bd);
+// ── Alerta de duplicados ──────────────────────────────────────────────────
+.ed-dupl-alert {
+  @extend %fila;
+  flex: 0 0 auto;
+  gap: 8px;
+  padding: 6px 14px;
+  background: var(--c-alerta-bg);
+  border-bottom: 1px solid var(--c-alerta-bd);
+  font-size: var(--f-xs);
+  color: var(--c-alerta);
+  > i { flex: 0 0 auto; }
+  > span { flex: 1 1 auto; @extend %fila; flex-wrap: wrap; gap: 6px; }
 
-  &__lista {
-    margin: 0; padding: 0; list-style: none;
+  &__btn {
+    @extend %boton;
+    padding: 2px 7px;
+    border: 1px solid var(--c-alerta-bd);
+    border-radius: 999px;
+    font-size: var(--f-xs);
+    color: var(--c-alerta);
+    cursor: pointer;
+    &:hover { background: var(--c-alerta-bg); }
+  }
 
-    li {
-      @extend %fila;
-      flex-wrap: wrap;
-      gap: 9px;
-      padding: 9px 14px;
-      font-size: var(--f-md);
-      & + li { border-top: 1px solid var(--c-linea); }
+  &__cerrar {
+    @extend %boton;
+    @extend %fila;
+    justify-content: center;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    cursor: pointer;
+    flex: 0 0 auto;
+    &:hover { background: var(--c-alerta-bd); }
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+//  CUERPO — Grid de dos columnas
+// ══════════════════════════════════════════════════════════════════════════
+.ed-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  flex: 1 1 auto;
+  overflow: hidden;
+  gap: 0;
+
+  @media (max-width: 1200px) {
+    grid-template-columns: minmax(0, 1fr) 300px;
+  }
+
+  @media (max-width: 960px) {
+    grid-template-columns: minmax(0, 1fr);
+    .ed-col-info { display: none; }
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+//  COLUMNA MEDIA (Mapa / Video)
+// ══════════════════════════════════════════════════════════════════════════
+.ed-col-media {
+  @extend %columna;
+  overflow: hidden;
+  border-right: 1px solid var(--c-linea);
+  background: #0d1b2a; // fondo oscuro para el mapa — más contraste
+}
+
+// ── Tabs de Media ────────────────────────────────────────────────────────
+.ed-media-tabs {
+  @extend %fila;
+  flex: 0 0 auto;
+  gap: 2px;
+  padding: 6px 10px;
+  background: rgba(13, 27, 42, .85);
+  border-bottom: 1px solid rgba(255, 255, 255, .08);
+  backdrop-filter: blur(8px);
+
+  &__controles {
+    @extend %fila;
+    gap: 6px;
+    margin-left: auto;
+    flex-wrap: wrap;
+  }
+}
+
+.ed-media-tab {
+  @extend %linea;
+  @extend %boton;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 8px;
+  font-size: var(--f-sm);
+  font-weight: 600;
+  color: rgba(255, 255, 255, .55);
+  transition: background .15s, color .15s;
+
+  &:hover { background: rgba(255, 255, 255, .08); color: #fff; }
+
+  &--sel {
+    background: rgba(8, 166, 203, .22);
+    color: #22d3ee;
+  }
+
+  &__dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    &--ok     { background: #22c55e; box-shadow: 0 0 0 0 rgb(34 197 94 / 50%); animation: ed-pulso 2s infinite; }
+    &--alerta { background: #f59e0b; }
+  }
+}
+
+@keyframes ed-pulso {
+  70%  { box-shadow: 0 0 0 6px rgb(34 197 94 / 0%); }
+  100% { box-shadow: 0 0 0 0   rgb(34 197 94 / 0%); }
+}
+
+// Controles del mapa en la barra de tabs
+.ed-vivo-ts {
+  @extend %linea;
+  @extend %cifras;
+  gap: 4px;
+  font-size: var(--f-xs);
+  color: rgba(255, 255, 255, .45);
+}
+
+.ed-coords {
+  @extend %linea;
+  @extend %cifras;
+  @extend %boton;
+  gap: 4px;
+  padding: 3px 8px;
+  border: 1px solid rgba(255, 255, 255, .15);
+  border-radius: 999px;
+  font-size: var(--f-xs);
+  color: rgba(255, 255, 255, .5);
+  cursor: pointer;
+  &:hover { background: rgba(255, 255, 255, .08); color: rgba(255, 255, 255, .8); }
+}
+
+.ed-err-inline {
+  @extend %linea;
+  gap: 5px;
+  font-size: var(--f-xs);
+  color: var(--c-mal);
+}
+
+// ── Área del mapa y video ────────────────────────────────────────────────
+.ed-media-area {
+  flex: 1 1 auto;
+  position: relative;
+  overflow: hidden;
+}
+
+// MAPA: visible por defecto, se oculta con clase cuando el tab es 'video'
+.ed-mapa-wrap {
+  position: absolute;
+  inset: 0;
+  transition: opacity .2s;
+
+  &--oculto {
+    opacity: 0;
+    pointer-events: none;
+    z-index: 0;
+  }
+}
+
+.ed-mapa {
+  width: 100%;
+  height: 100%;
+}
+
+// VIDEO: oculto por defecto (inactivo), visible con clase cuando el tab es 'video'
+.ed-video-wrap {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 1;
+  transition: opacity .2s;
+
+  &--visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+// ── Panel de videollamada ────────────────────────────────────────────────
+.ed-video {
+  @extend %columna;
+  height: 100%;
+  gap: 0;
+  background: #0f172a;
+  color: #e2e8f0;
+
+  &__status-bar {
+    @extend %fila;
+    flex-wrap: wrap;
+    gap: 6px;
+    flex: 0 0 auto;
+    padding: 8px 12px;
+    background: rgba(15, 23, 42, .8);
+    border-bottom: 1px solid rgba(255, 255, 255, .08);
+  }
+
+  &__ubic-badge {
+    @extend %linea;
+    gap: 5px;
+    margin-left: auto;
+    font-size: var(--f-xs);
+    color: #67e8f9;
+  }
+
+  &__link-bar {
+    @extend %fila;
+    flex: 0 0 auto;
+    gap: 7px;
+    padding: 8px 12px;
+    background: rgba(15, 23, 42, .6);
+    border-bottom: 1px solid rgba(255, 255, 255, .06);
+    app-ui-input { flex: 1 1 auto; min-width: 0; }
+  }
+
+  // Marco del video: ocupa todo el espacio restante
+  &__marco {
+    flex: 1 1 auto;
+    position: relative;
+    overflow: hidden;
+    background: #000;
+
+    video {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
     }
   }
 
-  &__txt {
-    @extend %columna;
-    flex: 1 1 200px; min-width: 0;
-    small { color: var(--c-tenue); font-size: var(--f-xs); }
+  // Botones flotantes sobre el video
+  &__overlay-btns {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    display: flex;
+    gap: 6px;
+    z-index: 5;
   }
-}
 
-// ── Datos del incidente ───────────────────────────────────────────────────
-.ev-datos {
-  display:               grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap:                   11px 16px;
-  margin:                0;
-
-  &__sep {
+  &__overlay-btn {
     @extend %fila;
-    gap: 10px;
-    margin-top: 3px;
-    font-size: var(--f-xs);
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: .06em;
-    color: var(--c-tenue);
-    &::after { content: ''; flex: 1 1 auto; height: 1px; background: var(--c-borde); }
-  }
-}
-
-.ev-dato {
-  @extend %columna;
-  gap: 2px;
-  min-width: 0;
-
-  dt { @extend %linea; gap: 5px; font-size: var(--f-xs); color: var(--c-tenue); }
-  dd { margin: 0; font-size: var(--f-lg); line-height: 1.4; word-break: break-word; }
-
-  &--full { grid-column: 1 / -1; }
-  &--destacado dd { font-weight: 700; color: var(--c-acento); font-size: var(--f-xl); }
-  &__sub { color: var(--c-tenue); font-size: var(--f-xs); }
-
-  &--relato {
-    padding: 10px 12px;
-    border: 1px solid var(--c-borde);
+    justify-content: center;
+    width: 34px; height: 34px;
+    border: 0;
     border-radius: 8px;
-    background: var(--c-velo);
-    white-space: pre-wrap;
+    background: rgb(15 23 42 / 70%);
+    color: #fff;
+    font-size: 14px;
+    cursor: pointer;
+    backdrop-filter: blur(4px);
+    transition: background .15s;
+    &:hover { background: rgb(15 23 42 / 90%); }
   }
-}
 
-.ev-codigos { display: flex; flex-wrap: wrap; gap: 8px; }
-
-.ev-codigo {
-  @extend %linea;
-  gap: 6px;
-  padding: 3px 9px;
-  border: 1px solid var(--c-borde);
-  border-radius: 999px;
-  background: var(--c-velo);
-  font-size: var(--f-md);
-
-  strong { color: var(--c-acento); }
-  small  { color: var(--c-suave); }
-  &--sec strong { color: var(--c-suave); }
-}
-
-// ── Canales asignados ─────────────────────────────────────────────────────
-.ev-canales {
-  margin: 0; padding: 0; list-style: none;
-
-  li {
+  // Controles inferiores
+  &__controles {
     @extend %fila;
-    gap: 10px;
-    padding: 9px 0;
-    font-size: var(--f-md);
-    & + li { border-top: 1px solid var(--c-linea); }
-    > i { color: var(--c-acento); }
+    flex: 0 0 auto;
+    flex-wrap: wrap;
+    gap: 7px;
+    padding: 8px 12px;
+    background: rgba(15, 23, 42, .8);
+    border-top: 1px solid rgba(255, 255, 255, .08);
   }
-
-  .ev-canal--cerrado > i  { color: var(--c-ok); }
-  .ev-canal--externa > i  { color: var(--c-alerta); }
 }
 
-.ev-canal__info {
-  @extend %columna;
-  flex: 1 1 auto; min-width: 0;
-  small { color: var(--c-tenue); font-size: var(--f-xs); }
-}
-
-// ── Puesto en vivo ────────────────────────────────────────────────────────
-.ev-vivo-barra {
-  @extend %fila;
-  flex-wrap: wrap;
-  gap: 8px;
-  padding-bottom: 10px;
-  font-size: var(--f-xs);
-  color: var(--c-suave);
-
-  &__ts { @extend %linea; @extend %cifras; gap: 5px; }
-}
-
-.ev-coords {
-  @extend %linea; @extend %cifras;
-  gap: 5px;
-  padding: 4px 9px;
-  border: 1px solid var(--c-borde);
-  border-radius: 999px;
-  background: transparent;
-  color: inherit;
-  font: inherit;
-  font-size: var(--f-xs);
-  cursor: pointer;
-  &:hover { background: var(--c-hover); }
-}
-
-.ev-reconectar,
-.ev-iniciar-llamada {
-  @extend %fila;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-left: auto;
-}
-
-.ev-reconectar {
-  padding: 6px 10px;
-  border: 1px solid var(--c-alerta-bd);
-  border-radius: 8px;
-  background: var(--c-alerta-bg);
-
-  &__aviso { @extend %linea; gap: 6px; color: var(--c-alerta); font-weight: 700; }
-}
-
-.ev-iniciar-llamada__tel { flex: 0 1 200px; }
-
-// Sugerencia de cuadrante
-.ev-sugerencia {
-  margin-bottom: 10px;
-  border: 1px solid var(--c-borde);
-  border-radius: 10px;
-  background: var(--c-velo);
-  overflow: hidden;
+// ── Sugerencia de cuadrante ──────────────────────────────────────────────
+.ed-sugerencia {
+  flex: 0 0 auto;
+  border-top: 1px solid rgba(255, 255, 255, .08);
+  background: rgba(13, 27, 42, .95);
+  color: #e2e8f0;
 
   &__head {
     @extend %fila;
     gap: 7px;
-    margin: 0;
     padding: 8px 12px;
-    border-bottom: 1px solid var(--c-borde);
     font-size: var(--f-md);
     font-weight: 700;
+    color: #67e8f9;
     app-ui-button { margin-left: auto; }
   }
 
   &__lista {
     margin: 0; padding: 0; list-style: none;
+    max-height: 180px;
+    overflow-y: auto;
 
     li {
       @extend %fila;
-      gap: 9px;
-      padding: 8px 12px;
+      gap: 8px;
+      padding: 7px 12px;
       font-size: var(--f-md);
-      & + li { border-top: 1px solid var(--c-linea); }
+      & + li { border-top: 1px solid rgba(255, 255, 255, .06); }
       strong { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     }
   }
 
-  &__item--top { background: var(--c-ok-bg); }
+  &__item--top { background: rgba(34, 197, 94, .1); }
 
   &__rank {
     @extend %fila; @extend %cifras;
@@ -412,44 +537,355 @@
   &__dist {
     @extend %cifras;
     white-space: nowrap;
-    color: var(--c-suave);
-    small { color: var(--c-acento); font-weight: 700; }
+    color: rgba(255, 255, 255, .55);
+    small { color: #22d3ee; font-weight: 700; }
   }
 }
 
-// Rejilla del puesto: sin llamada [mapa][recursos]; con llamada, además una
-// fila superior [video][chat]. El chat es sección propia, así abrirlo nunca
-// encoge el recuadro del video.
-.ev-vivo-grid {
-  display:               grid;
-  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
-  gap:                   12px;
-
-  @media (max-width: 1000px) { grid-template-columns: minmax(0, 1fr); }
-}
-
-.ev-mapa-col { min-width: 0; }
-
-.ev-mapa {
-  height:        420px;
-  min-height:    320px;
-  border:        1px solid var(--c-borde);
-  border-radius: 10px;
-  overflow:      hidden;
-}
-
-.ev-recursos {
-  @extend %columna;
+.ed-err-caja {
+  @extend %fila;
+  flex: 0 0 auto;
   gap: 8px;
-  min-width: 0;
-  max-height: 420px;
+  padding: 8px 12px;
+  background: var(--c-mal-bg);
+  border-top: 1px solid var(--c-mal-bd);
+  font-size: var(--f-md);
+  color: var(--c-mal);
+  span { flex: 1 1 auto; min-width: 0; }
+}
+
+// ── Footer de Media (iniciar/reconectar videollamada + chat) ─────────────
+.ed-media-footer {
+  @extend %columna;
+  flex: 0 0 auto;
+  border-top: 1px solid rgba(255, 255, 255, .08);
+  background: rgba(13, 27, 42, .9);
+  max-height: 260px;
   overflow-y: auto;
 }
 
-.ev-recurso {
+.ed-reconectar {
+  @extend %fila;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, .06);
+
+  &__aviso {
+    @extend %linea;
+    gap: 6px;
+    color: #fcd34d;
+    font-size: var(--f-sm);
+    font-weight: 700;
+    small { font-weight: 400; opacity: .75; }
+  }
+}
+
+.ed-iniciar-llamada {
+  @extend %fila;
+  gap: 8px;
+  padding: 8px 12px;
+  > i { color: #22d3ee; flex: 0 0 auto; }
+
+  &__tel { flex: 0 1 200px; min-width: 0; }
+}
+
+// ── Chat ─────────────────────────────────────────────────────────────────
+.ed-chat {
+  @extend %columna;
+  gap: 0;
+
+  &__head {
+    @extend %fila;
+    gap: 7px;
+    padding: 6px 12px;
+    border-top: 1px solid rgba(255, 255, 255, .06);
+    font-size: var(--f-sm);
+    font-weight: 700;
+    color: rgba(255, 255, 255, .7);
+  }
+
+  &__hilo {
+    @extend %columna;
+    gap: 5px;
+    max-height: 140px;
+    overflow-y: auto;
+    padding: 8px 12px;
+  }
+
+  &__burbuja {
+    @extend %columna;
+    align-self: flex-start;
+    max-width: 85%;
+    padding: 5px 8px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, .08);
+    font-size: var(--f-md);
+    color: #e2e8f0;
+    small { color: rgba(255, 255, 255, .35); font-size: var(--f-xs); align-self: flex-end; }
+
+    &--propia {
+      align-self: flex-end;
+      background: rgba(8, 166, 203, .25);
+    }
+  }
+
+  &__form {
+    @extend %fila;
+    gap: 6px;
+    padding: 6px 12px;
+    border-top: 1px solid rgba(255, 255, 255, .06);
+    app-ui-input { flex: 1 1 auto; min-width: 0; }
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+//  COLUMNA INFO (Card del caso + Tabs)
+// ══════════════════════════════════════════════════════════════════════════
+.ed-col-info {
+  @extend %columna;
+  overflow: hidden;
+  background: var(--c-fondo);
+}
+
+// ── Card del caso ────────────────────────────────────────────────────────
+.ed-caso-card {
+  @extend %columna;
+  flex: 0 0 auto;
+  gap: 8px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--c-linea);
+  background: var(--c-fondo);
+
+  &__dir {
+    @extend %fila;
+    gap: 6px;
+    font-size: var(--f-lg);
+    font-weight: 700;
+    color: var(--c-acento);
+    > i { flex: 0 0 auto; }
+    > span { flex: 1 1 auto; min-width: 0; }
+    small { color: var(--c-tenue); font-size: var(--f-xs); font-weight: 400; }
+  }
+
+  &__codigo {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  &__datos {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px 8px;
+    margin: 0;
+  }
+
+  &__relato {
+    @extend %fila;
+    gap: 6px;
+    align-items: flex-start;
+    padding: 7px 9px;
+    border: 1px solid var(--c-borde);
+    border-radius: 8px;
+    background: var(--c-velo);
+    font-size: var(--f-md);
+    color: var(--c-texto);
+    white-space: pre-wrap;
+    line-height: 1.4;
+    > i { flex: 0 0 auto; color: var(--c-tenue); margin-top: 2px; }
+    max-height: 90px;
+    overflow-y: auto;
+  }
+}
+
+.ed-dato {
+  @extend %fila;
+  gap: 5px;
+  min-width: 0;
+  font-size: var(--f-md);
+
+  dt {
+    flex: 0 0 auto;
+    color: var(--c-tenue);
+    font-size: var(--f-xs);
+  }
+  dd {
+    margin: 0;
+    color: var(--c-texto);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+  }
+}
+
+.ed-codigo {
+  @extend %linea;
+  gap: 6px;
+  padding: 2px 8px;
+  border: 1px solid var(--c-borde);
+  border-radius: 999px;
+  background: var(--c-velo);
+  font-size: var(--f-md);
+  strong { color: var(--c-acento); }
+  small  { color: var(--c-suave); }
+  &--sec strong { color: var(--c-suave); }
+}
+
+// Canales asignados (compacto)
+.ed-canales-compact {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.ed-canal-chip {
+  @extend %linea;
+  gap: 4px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-size: var(--f-xs);
+  border: 1px solid var(--c-borde);
+  background: var(--c-velo);
+  color: var(--c-suave);
+  > i { color: var(--c-acento); }
+
+  &--cerrado { opacity: .65; > i { color: var(--c-ok); } }
+  &--externa { > i { color: var(--c-alerta); } }
+}
+
+// ── Tabs ─────────────────────────────────────────────────────────────────
+.ed-tabs {
+  @extend %fila;
+  flex: 0 0 auto;
+  gap: 0;
+  background: var(--c-velo);
+  border-bottom: 1px solid var(--c-linea);
+  overflow-x: auto;
+  scrollbar-width: none;
+  &::-webkit-scrollbar { display: none; }
+}
+
+.ed-tab {
+  @extend %fila;
+  @extend %boton;
+  gap: 5px;
+  flex: 1 1 auto;
+  justify-content: center;
+  padding: 8px 6px;
+  font-size: var(--f-xs);
+  font-weight: 600;
+  color: var(--c-suave);
+  border-bottom: 2px solid transparent;
+  white-space: nowrap;
+  transition: color .15s, border-color .15s;
+
+  &:hover { color: var(--c-acento); }
+
+  &--sel {
+    color: var(--c-acento);
+    border-bottom-color: var(--c-acento);
+    background: var(--c-sel);
+  }
+
+  &__badge {
+    @extend %cifras;
+    min-width: 17px;
+    padding: 0 4px;
+    border-radius: 999px;
+    background: var(--c-linea);
+    color: var(--c-suave);
+    font-size: var(--f-xs);
+    font-weight: 800;
+    text-align: center;
+
+    &--activo { background: var(--c-ok-bg); color: var(--c-ok); }
+    &--alerta { background: var(--c-alerta-bg); color: var(--c-alerta); }
+  }
+}
+
+// ── Cuerpo del tab (con scroll interno) ─────────────────────────────────
+.ed-tab-body {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+}
+
+.ed-tab-content {
+  @extend %columna;
+  gap: 10px;
+  padding: 10px 12px;
+}
+
+// ── Mensajes genéricos ────────────────────────────────────────────────────
+.ed-cargando,
+.ed-nota {
+  @extend %fila;
+  gap: 7px;
+  margin: 0;
+  padding: 8px 0;
+  font-size: var(--f-lg);
+  color: var(--c-suave);
+  line-height: 1.4;
+}
+
+.ed-nota--alerta { color: var(--c-alerta); }
+
+.ed-nota-vacia {
+  @extend %columna;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 140px;
+  text-align: center;
+  color: var(--c-tenue);
+  font-size: var(--f-lg);
+  i { font-size: 1.8rem; opacity: .3; }
+}
+
+.ed-nota-bloqueo {
+  @extend %fila;
+  gap: 6px;
+  margin: 4px 0;
+  padding: 6px 10px;
+  border: 1px solid var(--c-borde);
+  border-radius: 8px;
+  background: var(--c-velo);
+  font-size: var(--f-md);
+  color: var(--c-suave);
+}
+
+// ── Adjuntos (en tab de anotaciones) ─────────────────────────────────────
+.ed-adjuntos-sec {
+  @extend %columna;
+  gap: 8px;
+}
+
+.ed-sec-label {
+  @extend %fila;
+  gap: 6px;
+  margin: 0;
+  font-size: var(--f-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--c-tenue);
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+//  RECURSOS (tab)
+// ══════════════════════════════════════════════════════════════════════════
+.ed-recursos-lista {
+  @extend %columna;
+  gap: 8px;
+}
+
+.ed-recurso {
   @extend %columna;
   gap: 6px;
-  padding: 9px 10px;
+  padding: 8px 10px;
   @extend %tarjeta;
 
   &--ocupado  { opacity: .82; }
@@ -461,6 +897,7 @@
     padding: 0;
     @extend %boton;
     text-align: left;
+    width: 100%;
     > i { color: var(--c-acento); }
   }
 
@@ -481,13 +918,12 @@
     font-size: var(--f-xs);
     color: var(--c-suave);
     small { color: var(--c-acento); font-weight: 700; }
-
     &--cerca  { color: var(--c-ok); font-weight: 700; }
     &--singps { color: var(--c-tenue); }
   }
 }
 
-.ev-gps {
+.ed-gps {
   flex: 0 0 8px;
   height: 8px;
   border-radius: 50%;
@@ -495,133 +931,26 @@
   &--on { background: #16a34a; }
 }
 
-// ── Videollamada ──────────────────────────────────────────────────────────
-.ev-video {
-  @extend %columna;
-  gap: 9px;
-  min-width: 0;
-  padding: 10px;
-  border: 1px solid var(--c-borde);
-  border-radius: 10px;
-  background: var(--c-velo);
-
-  &__estado { display: flex; flex-wrap: wrap; gap: 6px; }
-
-  &__link {
-    @extend %fila;
-    gap: 7px;
-    app-ui-input { flex: 1 1 auto; min-width: 0; }
-  }
-
-  &__ubic {
-    @extend %fila;
-    flex-wrap: wrap;
-    gap: 7px;
-    margin: 0;
-    font-size: var(--f-md);
-    color: var(--c-acento);
-    span { flex: 1 1 auto; min-width: 0; }
-  }
-
-  &__marco {
-    position: relative;
-    aspect-ratio: 16 / 9;
-    border-radius: 10px;
-    overflow: hidden;
-    background: #0f172a;
-    video { width: 100%; height: 100%; object-fit: contain; }
-  }
-
-  // Único acceso a pantalla completa: está sobre la propia imagen, que es
-  // donde se busca. El origen además repetía la acción como botón de texto.
-  &__expandir {
-    position: absolute;
-    top: 8px; right: 8px;
-    width: 30px; height: 30px;
-    border: 0;
-    border-radius: 8px;
-    background: rgb(15 23 42 / 65%);
-    color: #fff;
-    cursor: pointer;
-    &:hover { background: rgb(15 23 42 / 85%); }
-  }
-
-  &__controles { display: flex; flex-wrap: wrap; gap: 7px; }
-}
-
-.ev-chat {
-  @extend %columna;
-  gap: 8px;
-  min-width: 0;
-  padding: 10px;
-  border: 1px solid var(--c-borde);
-  border-radius: 10px;
-  background: var(--c-velo);
-
-  &__head {
-    @extend %fila;
-    gap: 7px;
-    margin: 0;
-    font-size: var(--f-md);
-    font-weight: 700;
-  }
-
-  &__hilo {
-    @extend %columna;
-    gap: 6px;
-    flex: 1 1 auto;
-    min-height: 140px;
-    max-height: 300px;
-    overflow-y: auto;
-    padding: 8px;
-    border: 1px solid var(--c-borde);
-    border-radius: 8px;
-    background: var(--c-fondo);
-  }
-
-  &__burbuja {
-    @extend %columna;
-    align-self: flex-start;
-    max-width: 85%;
-    padding: 6px 9px;
-    border: 1px solid var(--c-borde);
-    border-radius: 10px;
-    background: var(--c-velo);
-    font-size: var(--f-md);
-    small { color: var(--c-tenue); font-size: var(--f-xs); align-self: flex-end; }
-
-    &--propia {
-      align-self: flex-end;
-      background: var(--c-sel);
-      border-color: rgba(8, 166, 203, .4);
-    }
-  }
-
-  &__form {
-    @extend %fila;
-    gap: 7px;
-    app-ui-input { flex: 1 1 auto; min-width: 0; }
-  }
-}
-
-// ── Despacho activo ───────────────────────────────────────────────────────
-.ev-despachos {
+// ══════════════════════════════════════════════════════════════════════════
+//  DESPACHO (tab)
+// ══════════════════════════════════════════════════════════════════════════
+.ed-despachos {
   @extend %columna;
   gap: 10px;
 
   &__sep {
     @extend %fila;
     gap: 7px;
-    margin: 6px 0 0;
     font-size: var(--f-xs);
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: .05em;
     color: var(--c-tenue);
+    margin: 4px 0 0;
   }
 }
 
-.ev-despacho {
+.ed-despacho {
   @extend %tarjeta;
   overflow: hidden;
 
@@ -632,7 +961,7 @@
     @extend %fila;
     flex-wrap: wrap;
     gap: 8px;
-    padding: 9px 12px;
+    padding: 8px 12px;
     border-bottom: 1px solid var(--c-linea);
     font-size: var(--f-lg);
     strong { @extend %linea; gap: 6px; }
@@ -645,7 +974,7 @@
     @extend %fila;
     flex-wrap: wrap;
     gap: 8px;
-    padding: 7px 12px;
+    padding: 6px 12px;
     font-size: var(--f-xs);
   }
 
@@ -664,21 +993,21 @@
   }
 }
 
-.ev-pasos {
+.ed-pasos {
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
   margin: 0;
-  padding: 10px 12px;
+  padding: 8px 12px;
   list-style: none;
 
   li {
     @extend %columna;
     align-items: center;
     gap: 2px;
-    flex: 1 1 84px;
+    flex: 1 1 60px;
     min-width: 0;
-    padding: 7px 5px;
+    padding: 5px 4px;
     border: 1px dashed var(--c-borde);
     border-radius: 8px;
     text-align: center;
@@ -686,95 +1015,33 @@
   }
 }
 
-.ev-paso {
+.ed-paso {
   &--hecho {
     border-style: solid;
     border-color: var(--c-ok-bd);
     background: var(--c-ok-bg);
     opacity: 1;
-    .ev-paso__punto { background: var(--c-ok); }
+    .ed-paso__punto { background: var(--c-ok); }
   }
 
-  &__punto { width: 9px; height: 9px; border-radius: 50%; background: var(--c-tenue); }
+  &__punto { width: 8px; height: 8px; border-radius: 50%; background: var(--c-tenue); }
   &__lbl   { font-size: var(--f-xs); font-weight: 700; }
   &__ts    { @extend %cifras; font-size: var(--f-xs); color: var(--c-suave); }
 }
 
-// ── Asistente ─────────────────────────────────────────────────────────────
-.ev-asistente {
-  @extend %columna;
-  gap: 12px;
-
-  &__pie {
-    @extend %fila;
-    flex-wrap: wrap;
-    gap: 10px;
-    justify-content: flex-end;
-    .ev-nota { padding: 0; margin-right: auto; }
-  }
-}
-
-.ev-preguntas {
+// ══════════════════════════════════════════════════════════════════════════
+//  ANOTACIONES (tab)
+// ══════════════════════════════════════════════════════════════════════════
+.ed-anot-form {
   @extend %columna;
   gap: 10px;
-  margin: 0;
-  padding-left: 18px;
-
-  li {
-    @extend %columna;
-    gap: 5px;
-    padding: 9px 11px;
-    border: 1px solid var(--c-borde);
-    border-radius: 10px;
-    background: var(--c-velo);
-  }
-}
-
-.ev-pregunta {
-  &--ok { border-color: var(--c-ok-bd); background: var(--c-ok-bg); }
-
-  &__q {
-    font-size: var(--f-lg);
-    font-weight: 600;
-    em { color: var(--c-mal); font-style: normal; }
-  }
-
-  &__ayuda {
-    @extend %linea;
-    gap: 5px;
-    font-size: var(--f-xs);
-    color: var(--c-suave);
-  }
-
-  &__resp { max-width: 320px; }
-}
-
-.ev-sino { display: flex; gap: 6px; }
-
-.ev-sino__opt {
-  @extend .ev-opcion;
-  padding: 4px 16px;
-  font-weight: 700;
-
-  &--sel { border-color: var(--c-acento); background: var(--c-acento); color: #fff; }
-}
-
-// ── Adjuntos ──────────────────────────────────────────────────────────────
-
-
-
-// ── Anotaciones ───────────────────────────────────────────────────────────
-.ev-anot-form {
-  @extend %columna;
-  gap: 10px;
-  margin-bottom: 14px;
-  padding: 12px;
+  padding: 10px;
   border: 1px solid var(--c-borde);
   border-radius: 10px;
   background: var(--c-velo);
 
   &__fila  { display: flex; flex-wrap: wrap; gap: 10px; }
-  &__campo { flex: 1 1 200px; min-width: 0; }
+  &__campo { flex: 1 1 180px; min-width: 0; }
 
   &__pie {
     @extend %fila;
@@ -783,15 +1050,15 @@
   }
 }
 
-.ev-plantillas {
+.ed-plantillas {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 5px;
 
   button {
     @extend %linea;
-    gap: 5px;
-    padding: 3px 9px;
+    gap: 4px;
+    padding: 2px 8px;
     border: 1px solid var(--c-borde);
     border-radius: 999px;
     background: transparent;
@@ -803,13 +1070,20 @@
   }
 }
 
-.ev-anotaciones {
+.ed-msg-ok {
+  @extend %linea;
+  gap: 6px;
+  font-size: var(--f-md);
+  color: var(--c-ok);
+}
+
+.ed-anotaciones {
   @extend %columna;
-  gap: 8px;
+  gap: 7px;
   margin: 0; padding: 0; list-style: none;
 
   li {
-    padding: 9px 11px;
+    padding: 8px 10px;
     border: 1px solid var(--c-borde);
     border-left: 3px solid var(--c-tenue);
     border-radius: 8px;
@@ -824,17 +1098,17 @@
   li[data-tipo='REMISION']         { border-left-color: #7c3aed; }
 }
 
-.ev-anotacion {
+.ed-anotacion {
   &__head {
     @extend %fila;
     flex-wrap: wrap;
-    gap: 7px;
+    gap: 6px;
     font-size: var(--f-md);
     small { margin-left: auto; color: var(--c-tenue); font-size: var(--f-xs); }
   }
 
   &__txt {
-    margin: 5px 0 0;
+    margin: 4px 0 0;
     font-size: var(--f-md);
     line-height: 1.45;
     color: var(--c-texto);
@@ -842,12 +1116,84 @@
   }
 }
 
-.ev-modal-recurso {
+// ══════════════════════════════════════════════════════════════════════════
+//  ASISTENTE (tab)
+// ══════════════════════════════════════════════════════════════════════════
+.ed-asistente {
+  @extend %columna;
+  gap: 12px;
+
+  &__pie {
+    @extend %fila;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: flex-end;
+    .ed-nota { padding: 0; margin-right: auto; }
+  }
+}
+
+.ed-preguntas {
+  @extend %columna;
+  gap: 8px;
+  margin: 0;
+  padding-left: 16px;
+
+  li {
+    @extend %columna;
+    gap: 5px;
+    padding: 8px 10px;
+    border: 1px solid var(--c-borde);
+    border-radius: 10px;
+    background: var(--c-velo);
+  }
+}
+
+.ed-pregunta {
+  &--ok { border-color: var(--c-ok-bd); background: var(--c-ok-bg); }
+  &__q   { font-size: var(--f-lg); font-weight: 600; em { color: var(--c-mal); font-style: normal; } }
+  &__ayuda { @extend %linea; gap: 4px; font-size: var(--f-xs); color: var(--c-suave); }
+  &__resp { max-width: 300px; }
+}
+
+.ed-sino { display: flex; gap: 6px; }
+
+.ed-sino__opt {
+  @extend %linea;
+  @extend %boton;
+  gap: 4px;
+  padding: 4px 14px;
+  border: 1px solid var(--c-borde);
+  border-radius: 999px;
+  font-size: var(--f-md);
+  font-weight: 700;
+  &:hover { background: var(--c-hover); }
+  &--sel { border-color: var(--c-acento); background: var(--c-acento); color: #fff; }
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+//  MODALES — piezas compartidas
+// ══════════════════════════════════════════════════════════════════════════
+.ed-opcion {
+  @extend %linea;
+  @extend %boton;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid var(--c-borde);
+  border-radius: 999px;
+  font-size: var(--f-md);
+  &:hover { background: var(--c-hover); }
+  &:focus-visible { outline: 2px solid #0e7490; outline-offset: 2px; }
+  &--sel { border-color: var(--c-acento); background: var(--c-sel); font-weight: 700; }
+}
+
+.ed-opciones { display: flex; flex-wrap: wrap; gap: 7px; }
+
+.ed-modal-recurso {
   @extend %fila;
   flex-wrap: wrap;
   gap: 8px;
   margin: 0 0 10px;
-  padding: 9px 11px;
+  padding: 8px 10px;
   border: 1px solid var(--c-borde);
   border-radius: 8px;
   background: var(--c-velo);
@@ -856,7 +1202,7 @@
   span { @extend %linea; gap: 5px; color: var(--c-suave); font-size: var(--f-xs); }
 }
 
-.ev-cierre {
+.ed-cierre {
   @extend %columna;
   gap: 14px;
 
@@ -872,18 +1218,14 @@
   }
 }
 
-.ev-opciones { display: flex; flex-wrap: wrap; gap: 7px; }
-
-
-// Autocompletado con lista flotante
-.ev-auto {
+.ed-auto {
   position: relative;
   display: flex;
   align-items: flex-end;
   flex-wrap: wrap;
   gap: 8px;
 
-  app-ui-input { flex: 1 1 220px; min-width: 0; }
+  app-ui-input { flex: 1 1 200px; min-width: 0; }
 
   &__lista {
     position: absolute;
@@ -891,7 +1233,7 @@
     left: 0;
     right: 0;
     z-index: 30;
-    max-height: 240px;
+    max-height: 220px;
     overflow-y: auto;
     margin: 4px 0 0;
     padding: 0;
@@ -908,7 +1250,7 @@
       flex-wrap: wrap;
       gap: 7px;
       width: 100%;
-      padding: 8px 11px;
+      padding: 7px 10px;
       border: 0;
       background: transparent;
       color: inherit;
@@ -923,23 +1265,22 @@
   }
 }
 
-.ev-chips { display: flex; flex-wrap: wrap; gap: 7px; }
+.ed-chips { display: flex; flex-wrap: wrap; gap: 7px; }
 
-.ev-chip {
+.ed-chip {
   @extend %linea;
-  gap: 6px;
-  padding: 3px 5px 3px 9px;
+  gap: 5px;
+  padding: 3px 5px 3px 8px;
   border: 1px solid var(--c-acento);
   border-radius: 999px;
   background: var(--c-sel);
   font-size: var(--f-md);
-
   small { color: var(--c-suave); }
 
   &__n {
     @extend %fila; @extend %cifras;
     justify-content: center;
-    width: 17px; height: 17px;
+    width: 16px; height: 16px;
     border-radius: 50%;
     background: var(--c-acento);
     color: #fff;
@@ -950,7 +1291,7 @@
   button {
     @extend %fila;
     justify-content: center;
-    width: 19px; height: 19px;
+    width: 18px; height: 18px;
     border: 0;
     border-radius: 50%;
     background: transparent;
@@ -960,12 +1301,12 @@
   }
 }
 
-.ev-delito {
+.ed-delito {
   @extend %fila;
   flex-wrap: wrap;
   gap: 7px;
   margin: 0;
-  padding: 8px 11px;
+  padding: 7px 10px;
   border: 1px solid var(--c-ok-bd);
   border-radius: 8px;
   background: var(--c-ok-bg);
@@ -975,11 +1316,11 @@
   app-ui-button { margin-left: auto; }
 }
 
-.ev-confirmar {
+.ed-confirmar {
   @extend %fila;
   gap: 9px;
-  margin-top: 12px;
-  padding: 10px 12px;
+  margin-top: 10px;
+  padding: 9px 12px;
   border: 1px solid var(--c-alerta-bd);
   border-radius: 8px;
   background: var(--c-alerta-bg);
@@ -988,17 +1329,17 @@
   input { width: 16px; height: 16px; accent-color: #0e7490; cursor: pointer; }
 }
 
-// Pestañas del modal de remisión
-.ev-tabs {
+// Tabs del modal de remisión
+.ed-tabs-modal {
   display: flex;
-  gap: 5px;
+  gap: 4px;
   margin-bottom: 12px;
   border-bottom: 1px solid var(--c-borde);
 
   button {
     @extend %linea;
     gap: 6px;
-    padding: 8px 14px;
+    padding: 7px 14px;
     border: 0;
     border-bottom: 2px solid transparent;
     background: transparent;
@@ -1016,7 +1357,7 @@
   }
 }
 
-.ev-remitir-grupo {
+.ed-remitir-grupo {
   margin-bottom: 12px;
 
   &__head {
@@ -1031,16 +1372,16 @@
   }
 }
 
-.ev-destinos {
-  display:               grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap:                   8px;
+.ed-destinos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(175px, 1fr));
+  gap: 7px;
 }
 
-.ev-destino {
+.ed-destino {
   @extend %fila;
   gap: 8px;
-  padding: 9px 11px;
+  padding: 8px 10px;
   border: 1px solid var(--c-borde);
   border-radius: 10px;
   background: transparent;
@@ -1052,8 +1393,6 @@
 
   &:hover { background: var(--c-hover); }
   span { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-
   &--sel { border-color: var(--c-acento); background: var(--c-sel); font-weight: 700; }
   &__check { color: var(--c-acento); }
 }
-

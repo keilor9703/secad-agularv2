@@ -11,3 +11,16 @@ D:\Disco E\SECAD_SEPT\SECAD_NET8.0\MODERNIZACION\SecadAngular\backend\oftic\ofti
 D:\Disco E\SECAD_SEPT\SECAD_NET8.0\MODERNIZACION\SecadAngular\backend\oftic\oftic.cl\obj\Debug\net8.0\refint\Comun.dll
 D:\Disco E\SECAD_SEPT\SECAD_NET8.0\MODERNIZACION\SecadAngular\backend\oftic\oftic.cl\obj\Debug\net8.0\Comun.pdb
 D:\Disco E\SECAD_SEPT\SECAD_NET8.0\MODERNIZACION\SecadAngular\backend\oftic\oftic.cl\obj\Debug\net8.0\ref\Comun.dll
+C:\Users\acer\Documents\V2\secad-agularv2\Bakcend\backend\oftic\oftic.cl\bin\Debug\net8.0\Comun.deps.json
+C:\Users\acer\Documents\V2\secad-agularv2\Bakcend\backend\oftic\oftic.cl\bin\Debug\net8.0\Comun.dll
+C:\Users\acer\Documents\V2\secad-agularv2\Bakcend\backend\oftic\oftic.cl\bin\Debug\net8.0\Comun.pdb
+C:\Users\acer\Documents\V2\secad-agularv2\Bakcend\backend\oftic\oftic.cl\obj\Debug\net8.0\Comun.csproj.AssemblyReference.cache
+C:\Users\acer\Documents\V2\secad-agularv2\Bakcend\backend\oftic\oftic.cl\obj\Debug\net8.0\Comun.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\acer\Documents\V2\secad-agularv2\Bakcend\backend\oftic\oftic.cl\obj\Debug\net8.0\Comun.AssemblyInfoInputs.cache
+C:\Users\acer\Documents\V2\secad-agularv2\Bakcend\backend\oftic\oftic.cl\obj\Debug\net8.0\Comun.AssemblyInfo.cs
+C:\Users\acer\Documents\V2\secad-agularv2\Bakcend\backend\oftic\oftic.cl\obj\Debug\net8.0\Comun.csproj.CoreCompileInputs.cache
+C:\Users\acer\Documents\V2\secad-agularv2\Bakcend\backend\oftic\oftic.cl\obj\Debug\net8.0\Comun.sourcelink.json
+C:\Users\acer\Documents\V2\secad-agularv2\Bakcend\backend\oftic\oftic.cl\obj\Debug\net8.0\Comun.dll
+C:\Users\acer\Documents\V2\secad-agularv2\Bakcend\backend\oftic\oftic.cl\obj\Debug\net8.0\refint\Comun.dll
+C:\Users\acer\Documents\V2\secad-agularv2\Bakcend\backend\oftic\oftic.cl\obj\Debug\net8.0\Comun.pdb
+C:\Users\acer\Documents\V2\secad-agularv2\Bakcend\backend\oftic\oftic.cl\obj\Debug\net8.0\ref\Comun.dll
