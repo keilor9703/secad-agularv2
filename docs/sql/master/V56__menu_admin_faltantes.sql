@@ -1,4 +1,21 @@
 -- ══════════════════════════════════════════════════════════════════════════
+-- ⛔ V56 ESTÁ MAL. NO APLICARLA SUELTA — aplicar SIEMPRE V57 después.
+--
+-- Se conserva tal cual porque ya se ejecutó en producción, y una migración
+-- aplicada no se reescribe: se corrige con otra posterior.
+--
+-- Dos defectos:
+--   1. Busca el grupo padre con `tipo = 'GRUPO'`. En una base real ese grupo
+--      puede tener tipo 'S' —es el que pone la pantalla de administración de
+--      menú al crearlo a mano—, así que no lo encuentra y CREA UN SEGUNDO
+--      grupo «Administración», dejando el menú con dos grupos homónimos.
+--   2. Comprueba la existencia con `AND vigente = 1`, de modo que duplica las
+--      filas que alguien haya desactivado a propósito.
+--
+-- V57 deshace ambas cosas y siembra lo que de verdad falta.
+-- ══════════════════════════════════════════════════════════════════════════
+
+-- ══════════════════════════════════════════════════════════════════════════
 -- V56: Asegurar los ítems de Administración que V47/V50/V52 pudieron no crear
 --
 -- SÍNTOMA: en el menú de la versión nueva faltan «Códigos de Caso»,
