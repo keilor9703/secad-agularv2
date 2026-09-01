@@ -41,7 +41,7 @@ Se actualiza a medida que se porta cada cosa.
 
 ---
 
-## Operación — 7 de 9
+## Operación — 8 de 9
 
 | Pantalla | Estado | Líneas |
 |---|---|---|
@@ -52,12 +52,49 @@ Se actualiza a medida que se porta cada cosa.
 | `reportes` | ✅ portada | 2.405 |
 | `turnos` | ✅ portada | 2.763 |
 | `recepcion` | ✅ portada | 4.073 |
-| `pedido` | ⬜ pendiente | 5.053 |
+| `pedido` | ✅ portada | 5.053 |
 | `eventos` | ⬜ pendiente | 8.896 |
 
 Los 12 servicios de `core/services/operacion/` sí están portados completos.
 
-**Pendiente: 13.949 líneas** entre `pedido` y `eventos`.
+**Pendiente: 8.896 líneas** de `eventos`, la última pantalla de operación.
+
+**`pedido` — portada.** Seguimiento de incidentes: panel con el turno vigente,
+tarjetas de estado, distribución por prioridad y por canal de origen y lista de
+críticos; lista paginada con semáforo, filtros y búsqueda; trazabilidad completa
+de un incidente —identificadores, canales de atención, datos, historia con el
+ciclo de cada recurso despachado (asignado → en camino → en sitio → cerrado),
+equipo de la actuación, archivos y videollamadas con su chat—; e indicadores con
+tabla por operador. HTML 1.410 → 1.024 líneas y SCSS 2.474 → 1.010 sobre
+`ui-page-header`, `ui-segmented-tabs`, `ui-section-header`, `ui-search-input`,
+`ui-select`, `ui-input`, `ui-pagination`, `ui-table`, `ui-badge`, `ui-chip`,
+`ui-spinner` y `ui-button`.
+
+Correcciones respecto del origen:
+
+- El panel y los indicadores se calculan sobre la página cargada, pero se
+  rotulaban «cola CAD completa»: con 412 incidentes en tres páginas, eso era
+  sencillamente falso. Ahora dicen sobre cuántos se calcularon, y los filtros de
+  la lista avisan de que actúan sobre la página, no sobre el histórico.
+- La meta del indicador de críticos se leía «Meta: < 0», imposible de cumplir ni
+  con cero críticos. Cada indicador lleva ahora su meta escrita.
+- El enlace directo `?id=` guardaba el id y esperaba a que el incidente
+  apareciera en la página cargada. Si era antiguo no aparecía nunca y el enlace
+  no hacía nada, sin decirlo; ahora se abre por id contra el backend.
+- Ni la carga del detalle ni su refresco cortaban la suscripción al destruirse
+  el componente: salir de la pantalla con la petición en vuelo seguía
+  escribiendo señales de un componente ya destruido.
+- La línea de tiempo usaba `track $index`, así que al refrescar reordenaba las
+  tarjetas. Cada evento lleva ahora una clave estable.
+- El tipo de anotación se pintaba con el valor crudo del backend
+  (`NOVEDAD_PERSONAL`), y sin título propio la anotación repetía la misma frase
+  como título y como distintivo.
+- El botón de cerrar del encabezado ocultaba la pantalla entera y dejaba la ruta
+  en blanco sin forma de volver; se quitó.
+- La hoja de estilos del origen (2.474 líneas) duplicaba cada regla bajo el
+  modo oscuro. Aquí el tema se resuelve redefiniendo una capa de tokens: esa
+  lista paralela costaba más de tres kilobytes y se desincronizaba en cuanto se
+  tocaba el tema claro.
 
 **`recepcion` — portada.** La toma del incidente: cierres rápidos sin caso,
 detección de duplicados, identificación de la llamada, tipificación con
@@ -354,7 +391,7 @@ Faltan 8, y varios bloquean pantallas de la lista de arriba:
 | Área | Portado | Total |
 |---|---|---|
 | Servicios de operación | 12 | 12 |
-| Pantallas de operación | 7 | 9 |
+| Pantallas de operación | 8 | 9 |
 | Pantallas de administración | 16 | 16 |
 | Servicios de administración | 18 | 20 |
 | Super Admin | 2 | 2 |

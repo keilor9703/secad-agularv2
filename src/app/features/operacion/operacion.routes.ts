@@ -54,5 +54,11 @@ export const operacionRoutes: Routes = [
       ),
     data: { breadcrumb: 'Recepción de Llamadas' },
   },
-  // Pendientes de portar: eventos y pedido.
+  {
+    path: 'pedido',
+    loadComponent: () =>
+      import('./pages/pedido-page/pedido-page.component').then((m) => m.PedidoPageComponent),
+    data: { breadcrumb: 'Seguimiento de Incidentes' },
+  },
+  // Pendiente de portar: eventos.
 ];

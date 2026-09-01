@@ -1,0 +1,1090 @@
+// ═══════════════════════════════════════════════════════════════════════════
+//  Seguimiento de incidentes CAD
+//  Sólo lo que el kit no cubre: tarjetas del panel, barras de distribución,
+//  lista con semáforo, línea de tiempo y bloques de videollamada.
+// ═══════════════════════════════════════════════════════════════════════════
+
+// Patrones que se repetían una veintena de veces cada uno. Como marcadores,
+// Sass los agrupa en una sola regla en vez de reimprimir las declaraciones.
+%linea   { display: inline-flex; align-items: center; }
+%fila    { display: flex; align-items: center; }
+%columna { display: flex; flex-direction: column; }
+%cifras  { font-variant-numeric: tabular-nums; }
+
+:host {
+  display: block;
+
+  // ── Escala tipográfica ───────────────────────────────────────────────────
+  // Antes cada regla repetía su propio calc() con --font-size-scale y los
+  // tamaños se habían ido separando de a medio píxel sin ningún criterio.
+  --f-xxs: calc(9.5px * var(--font-size-scale, 1));
+  --f-xs:  calc(10.5px * var(--font-size-scale, 1));
+  --f-sm:  calc(11px * var(--font-size-scale, 1));
+  --f-md:  calc(11.5px * var(--font-size-scale, 1));
+  --f-lg:  calc(12px * var(--font-size-scale, 1));
+  --f-xl:  calc(15px * var(--font-size-scale, 1));
+  --f-num: calc(27px * var(--font-size-scale, 1));
+
+  // ── Paleta ───────────────────────────────────────────────────────────────
+  // El tema oscuro se resuelve redefiniendo estos tokens una sola vez, no
+  // duplicando cada regla bajo :host-context: esa lista paralela costaba más
+  // de tres kilobytes y se desincronizaba en cuanto se tocaba el tema claro.
+  --c-fondo:   #fff;
+  --c-velo:    rgba(21, 27, 59, .03);
+  --c-borde:   rgba(21, 27, 59, .1);
+  --c-linea:   rgba(21, 27, 59, .07);
+  --c-tenue:   #94a3b8;
+  --c-suave:   #64748b;
+  --c-texto:   #475569;
+  --c-hover:   rgba(8, 166, 203, .06);
+  --c-sel:     rgba(8, 166, 203, .12);
+  --c-sombra:  0 1px 2px rgb(15 23 42 / 5%);
+
+  --c-acento:  #0e7490;
+  --c-desp:    #2563eb;
+  --c-desp-bg: rgba(37, 99, 235, .05);
+  --c-desp-bd: rgba(37, 99, 235, .25);
+  --c-ok:      #15803d;
+  --c-ok-bg:   rgba(22, 163, 74, .07);
+  --c-ok-bd:   rgba(22, 163, 74, .35);
+  --c-mal:     #b91c1c;
+  --c-mal-bg:  rgba(220, 38, 38, .06);
+  --c-mal-bd:  rgba(220, 38, 38, .35);
+  --c-sup:     #6d28d9;
+  --c-sup-bg:  rgba(124, 58, 237, .05);
+  --c-sup-bd:  rgba(124, 58, 237, .3);
+}
+
+:host-context(html.dark-mode) {
+  --c-fondo:   rgba(255, 255, 255, .03);
+  --c-velo:    rgba(255, 255, 255, .05);
+  --c-borde:   rgba(255, 255, 255, .12);
+  --c-linea:   rgba(255, 255, 255, .1);
+  --c-suave:   #94a3b8;
+  --c-texto:   #cbd5e1;
+  --c-hover:   rgba(8, 166, 203, .14);
+  --c-sel:     rgba(8, 166, 203, .2);
+  --c-sombra:  0 1px 2px rgb(0 0 0 / 30%);
+
+  --c-acento:  #22d3ee;
+  --c-desp:    #60a5fa;
+  --c-desp-bg: rgba(37, 99, 235, .14);
+  --c-desp-bd: rgba(96, 165, 250, .35);
+  --c-ok:      #86efac;
+  --c-ok-bg:   rgba(34, 197, 94, .12);
+  --c-ok-bd:   rgba(34, 197, 94, .45);
+  --c-mal:     #fca5a5;
+  --c-mal-bg:  rgba(248, 113, 113, .12);
+  --c-mal-bd:  rgba(248, 113, 113, .4);
+  --c-sup:     #c4b5fd;
+  --c-sup-bg:  rgba(124, 58, 237, .14);
+  --c-sup-bd:  rgba(167, 139, 250, .4);
+}
+
+.pd-page {
+  @extend %columna;
+  gap:            16px;
+  padding-bottom: 8px;
+}
+
+.pd-panel {
+  @extend %columna;
+  background:    var(--c-fondo);
+  border:        1px solid var(--c-borde);
+  border-radius: 12px;
+  box-shadow:    var(--c-sombra);
+  overflow:      hidden;
+}
+
+.pd-refresco {
+  @extend %linea; @extend %cifras;
+  gap:       6px;
+  font-size: var(--f-md);
+  color:     var(--c-suave);
+}
+
+.pd-cargando,
+.pd-nota {
+  @extend %fila;
+  gap:       8px;
+  margin:    0;
+  padding:   14px;
+  font-size: var(--f-lg);
+  color:     var(--c-suave);
+}
+
+.pd-nota--vacia {
+  flex-direction:  column;
+  justify-content: center;
+  gap:             10px;
+  text-align:      center;
+  i { font-size: 1.7rem; opacity: .35; }
+}
+
+.pd-nota--alta { min-height: 260px; }
+
+.pd-vacio {
+  @extend %columna;
+  align-items: center;
+  gap:         10px;
+  margin:      0;
+  padding:     32px 16px;
+  text-align:  center;
+  color:       var(--c-suave);
+  font-size:   var(--f-lg);
+  i { font-size: 2rem; opacity: .3; }
+}
+
+// ── Banda del turno vigente ───────────────────────────────────────────────
+.pd-turno {
+  flex-direction: row;
+  align-items:    center;
+  flex-wrap:      wrap;
+  gap:            10px;
+  padding:        10px 14px;
+  font-size:      var(--f-lg);
+
+  > i { color: var(--c-acento); }
+
+  &__nota {
+    flex:      1 1 240px;
+    min-width: 0;
+    color:     var(--c-suave);
+    font-size: var(--f-sm);
+  }
+}
+
+// ── Tarjetas de resumen ───────────────────────────────────────────────────
+.pd-tarjetas {
+  display:               grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap:                   12px;
+}
+
+.pd-tarjeta {
+  @extend %columna;
+  position:      relative;
+  gap:           2px;
+  padding:       16px 14px 14px;
+  background:    var(--c-fondo);
+  border:        1px solid var(--c-borde);
+  border-left:   4px solid var(--c-tenue);
+  border-radius: 12px;
+  box-shadow:    var(--c-sombra);
+  text-align:    left;
+  color:         inherit;
+  font:          inherit;
+
+  &__ico { position: absolute; top: 14px; right: 14px; font-size: 1.4rem; opacity: .18; }
+
+  &__val {
+    @extend %cifras;
+    font-size:   var(--f-num);
+    font-weight: 800;
+    line-height: 1.1;
+  }
+
+  &__lbl {
+    font-size:      var(--f-lg);
+    font-weight:    700;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+  }
+
+  &__sub { font-size: var(--f-xs); color: var(--c-tenue); }
+
+  &--total     { border-left-color: #0e7490; .pd-tarjeta__val { color: #0e7490; } }
+  &--activo    { border-left-color: #2563eb; .pd-tarjeta__val { color: #2563eb; } }
+  &--pendiente { border-left-color: #d97706; .pd-tarjeta__val { color: #d97706; } }
+  &--cerrado   { border-left-color: #16a34a; .pd-tarjeta__val { color: #16a34a; } }
+  &--critico   { border-left-color: #dc2626; .pd-tarjeta__val { color: #dc2626; } }
+}
+
+button.pd-tarjeta {
+  cursor: pointer;
+  &:hover { border-color: rgba(8, 166, 203, .5); box-shadow: 0 4px 12px rgb(15 23 42 / 10%); }
+  &:focus-visible { outline: 2px solid #0e7490; outline-offset: 2px; }
+}
+
+// ── Distribuciones ────────────────────────────────────────────────────────
+.pd-fila {
+  display:               grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap:                   16px;
+  align-items:           start;
+}
+
+.pd-barras {
+  @extend %columna;
+  gap:     10px;
+  padding: 14px;
+}
+
+.pd-barra {
+  display:               grid;
+  grid-template-columns: 110px 1fr 42px;
+  align-items:           center;
+  gap:                   10px;
+  font-size:             var(--f-md);
+
+  &__lbl {
+    font-weight:   700;
+    overflow:      hidden;
+    text-overflow: ellipsis;
+    white-space:   nowrap;
+
+    // La versaleta va sólo en las tres prioridades, que son códigos. Aplicada
+    // a la lista entera dejaba los canales de origen gritando
+    // «LLAMADA 112/123» y cuesta más leerlos.
+    &--flash,
+    &--inmediata,
+    &--rutina { text-transform: uppercase; letter-spacing: .03em; }
+
+    &--flash     { color: #dc2626; }
+    &--inmediata { color: #d97706; }
+    &--rutina    { color: #2563eb; }
+  }
+
+  &__riel {
+    height:        10px;
+    border-radius: 999px;
+    background:    var(--c-linea);
+    overflow:      hidden;
+  }
+
+  &__relleno {
+    display:       block;
+    height:        100%;
+    border-radius: 999px;
+    transition:    width .3s ease;
+
+    &--flash     { background: #dc2626; }
+    &--inmediata { background: #d97706; }
+    &--rutina    { background: #2563eb; }
+    &--origen    { background: #0e7490; }
+  }
+
+  &__num { @extend %cifras; text-align: right; font-weight: 700; }
+}
+
+.pd-leyenda {
+  @extend %fila;
+  gap:       6px;
+  padding:   0 14px 14px;
+  font-size: var(--f-sm);
+  color:     var(--c-suave);
+
+  span + .pd-punto { margin-left: 10px; }
+}
+
+.pd-punto {
+  flex:          0 0 9px;
+  height:        9px;
+  border-radius: 50%;
+
+  &--verde    { background: #16a34a; }
+  &--amarillo { background: #d97706; }
+  &--rojo     { background: #dc2626; }
+}
+
+// ── Incidentes críticos ───────────────────────────────────────────────────
+.pd-criticos {
+  border-color: var(--c-mal-bd);
+
+  &__lista {
+    @extend %columna;
+    margin:     0;
+    padding:    0;
+    list-style: none;
+
+    li + li { border-top: 1px solid var(--c-linea); }
+
+    button {
+      @extend %fila;
+      flex-wrap:  wrap;
+      gap:        10px;
+      width:      100%;
+      padding:    10px 14px;
+      border:     0;
+      background: transparent;
+      color:      inherit;
+      font:       inherit;
+      font-size:  var(--f-md);
+      text-align: left;
+      cursor:     pointer;
+
+      &:hover { background: var(--c-mal-bg); }
+      &:focus-visible { outline: 2px solid #dc2626; outline-offset: -2px; }
+    }
+  }
+
+  &__id { @extend %cifras; font-weight: 700; }
+
+  &__txt {
+    flex:          1 1 200px;
+    min-width:     0;
+    overflow:      hidden;
+    text-overflow: ellipsis;
+    white-space:   nowrap;
+  }
+
+  &__meta { @extend %linea; gap: 5px; color: var(--c-suave); white-space: nowrap; }
+}
+
+// ── Layout de la vista de incidentes ──────────────────────────────────────
+.pd-layout {
+  display:               grid;
+  grid-template-columns: minmax(0, 380px) minmax(0, 1fr);
+  gap:                   16px;
+  align-items:           start;
+
+  @media (max-width: 1180px) { grid-template-columns: minmax(0, 1fr); }
+}
+
+// La lista es la brújula de la pantalla: se queda a la vista mientras se
+// recorre una trazabilidad que puede medir varias pantallas.
+.pd-lista-col {
+  position:   sticky;
+  top:        8px;
+  max-height: calc(100vh - 40px);
+
+  @media (max-width: 1180px) { position: static; max-height: none; }
+}
+
+.pd-detalle-col {
+  @extend %columna;
+  gap:       16px;
+  min-width: 0;
+}
+
+// ── Filtros ───────────────────────────────────────────────────────────────
+.pd-filtros {
+  @extend %columna;
+  gap:           10px;
+  padding:       14px;
+  border-bottom: 1px solid var(--c-linea);
+
+  &__fila { display: flex; align-items: flex-end; flex-wrap: wrap; gap: 8px; }
+
+  &__campo { flex: 1 1 130px; min-width: 0; }
+  &__campo--ancho { flex: 1 1 100%; }
+
+  &__aviso {
+    @extend %fila;
+    flex-wrap:     wrap;
+    gap:           6px;
+    margin:        0;
+    padding:       8px 10px;
+    border:        1px solid rgba(8, 166, 203, .35);
+    border-radius: 8px;
+    background:    rgba(8, 166, 203, .1);
+    font-size:     var(--f-xs);
+    color:         var(--c-acento);
+    line-height:   1.35;
+
+    span { flex: 1 1 180px; min-width: 0; }
+
+    button {
+      border:      0;
+      background:  transparent;
+      color:       inherit;
+      font:        inherit;
+      font-weight: 700;
+      cursor:      pointer;
+      text-decoration: underline;
+    }
+  }
+}
+
+.pd-turno-chip {
+  @extend %linea;
+  gap:         5px;
+  padding:     6px 10px;
+  font-size:   var(--f-sm);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+// ── Lista de incidentes ───────────────────────────────────────────────────
+.pd-lista {
+  flex:       1 1 auto;
+  margin:     0;
+  padding:    0;
+  list-style: none;
+  overflow-y: auto;
+
+  li + li { border-top: 1px solid var(--c-linea); }
+}
+
+.pd-item {
+  display:    flex;
+  width:      100%;
+  padding:    0;
+  border:     0;
+  background: transparent;
+  color:      inherit;
+  font:       inherit;
+  text-align: left;
+  cursor:     pointer;
+
+  &:hover { background: var(--c-hover); }
+  &:focus-visible { outline: 2px solid #0e7490; outline-offset: -2px; }
+
+  // El color del semáforo va en la franja lateral, no en el fondo: teñido el
+  // fondo, la lista entera quedaba de colores y la selección no se notaba.
+  &__franja { flex: 0 0 4px; align-self: stretch; background: var(--c-tenue); }
+
+  &.semaforo-verde    > .pd-item__franja { background: #16a34a; }
+  &.semaforo-amarillo > .pd-item__franja { background: #d97706; }
+  &.semaforo-rojo     > .pd-item__franja { background: #dc2626; }
+
+  &__cuerpo {
+    @extend %columna;
+    gap:       3px;
+    flex:      1 1 auto;
+    min-width: 0;
+    padding:   10px 12px;
+  }
+
+  &__alto { @extend %fila; flex-wrap: wrap; gap: 7px; }
+
+  &__id { @extend %cifras; font-size: var(--f-sm); font-weight: 700; color: var(--c-suave); }
+
+  &__reloj {
+    @extend %linea;
+    margin-left: auto;
+    gap:         4px;
+    font-size:   var(--f-sm);
+    color:       var(--c-suave);
+    white-space: nowrap;
+  }
+
+  &__codigo {
+    display:     flex;
+    flex-wrap:   wrap;
+    gap:         5px;
+    font-size:   var(--f-lg);
+    line-height: 1.3;
+    strong { color: var(--c-acento); }
+  }
+
+  &__codigo2 { color: var(--c-tenue); }
+
+  &__dir { font-size: var(--f-md); color: var(--c-texto); line-height: 1.35; }
+
+  &__meta {
+    display:   flex;
+    flex-wrap: wrap;
+    gap:       4px 12px;
+    font-size: var(--f-xs);
+    color:     var(--c-tenue);
+    > span { @extend %linea; gap: 4px; }
+  }
+
+  &__turno,
+  &__evento { font-weight: 700; }
+
+  &--sel {
+    background: var(--c-sel);
+    &:hover { background: var(--c-sel); }
+  }
+}
+
+// ── Cabecera del detalle ──────────────────────────────────────────────────
+.pd-detalle-head {
+  @extend %fila;
+  flex-wrap:     wrap;
+  gap:           10px;
+  padding:       12px 14px;
+  border:        1px solid var(--c-borde);
+  border-left:   5px solid var(--c-tenue);
+  border-radius: 12px;
+  background:    var(--c-fondo);
+  box-shadow:    var(--c-sombra);
+
+  &.semaforo-verde    { border-left-color: #16a34a; }
+  &.semaforo-amarillo { border-left-color: #d97706; }
+  &.semaforo-rojo     { border-left-color: #dc2626; }
+
+  &__id { font-size: var(--f-xl); font-weight: 800; }
+
+  &__reloj {
+    @extend %linea;
+    margin-left: auto;
+    gap:         5px;
+    font-size:   var(--f-md);
+    color:       var(--c-suave);
+    white-space: nowrap;
+  }
+}
+
+// ── Chips de identificadores ──────────────────────────────────────────────
+.pd-ids { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.pd-id {
+  @extend %linea;
+  gap:           6px;
+  padding:       6px 10px;
+  border:        1px solid var(--c-borde);
+  border-radius: 999px;
+  background:    var(--c-fondo);
+  font-size:     var(--f-sm);
+
+  &__lbl { color: var(--c-tenue); }
+  &__val { @extend %cifras; font-weight: 700; }
+}
+
+// ── Canales de atención ───────────────────────────────────────────────────
+.pd-canales {
+  margin:     0;
+  padding:    0;
+  list-style: none;
+  li + li { border-top: 1px solid var(--c-linea); }
+}
+
+.pd-canal {
+  @extend %fila;
+  gap:       10px;
+  padding:   10px 14px;
+  font-size: var(--f-md);
+
+  &__punto { flex: 0 0 9px; height: 9px; border-radius: 50%; background: var(--c-tenue); }
+
+  &--P .pd-canal__punto { background: #d97706; }
+  &--D .pd-canal__punto { background: #2563eb; }
+  &--A .pd-canal__punto { background: #0e7490; }
+  &--C .pd-canal__punto { background: #16a34a; }
+  &--V .pd-canal__punto { background: #dc2626; }
+
+  &__info { @extend %columna; gap: 3px; flex: 1 1 auto; min-width: 0; }
+
+  &__nombre {
+    @extend %fila;
+    flex-wrap: wrap;
+    gap:       6px;
+    > i    { color: var(--c-acento); }
+    > span { color: var(--c-suave); }
+  }
+
+  &__recursos {
+    display:   flex;
+    flex-wrap: wrap;
+    gap:       4px 12px;
+    font-size: var(--f-xs);
+    color:     var(--c-suave);
+    > span { @extend %linea; gap: 4px; }
+  }
+
+  &__estado { @extend %columna; align-items: flex-end; gap: 3px; }
+  &__hora   { @extend %cifras; font-size: var(--f-xs); color: var(--c-tenue); }
+}
+
+// Placa de una unidad — el mismo distintivo en la lista de canales, en el
+// bloque de actuación y en el equipo; antes eran tres reglas idénticas.
+.pd-placa {
+  @extend %linea;
+  gap:            4px;
+  padding:        1px 6px;
+  border:         1px solid var(--c-borde);
+  border-radius:  4px;
+  font-weight:    700;
+  letter-spacing: .04em;
+}
+
+// ── Datos del incidente ───────────────────────────────────────────────────
+.pd-datos {
+  display:               grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap:                   12px 18px;
+  margin:                0;
+  padding:               14px;
+
+  &__sep {
+    @extend %fila;
+    gap:            10px;
+    margin-top:     4px;
+    font-size:      var(--f-xs);
+    font-weight:    700;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color:          var(--c-tenue);
+
+    &::after { content: ''; flex: 1 1 auto; height: 1px; background: var(--c-borde); }
+  }
+}
+
+.pd-dato {
+  @extend %columna;
+  gap:       2px;
+  min-width: 0;
+
+  dt { @extend %linea; gap: 5px; font-size: var(--f-xs); color: var(--c-tenue); }
+  dd { margin: 0; font-size: var(--f-lg); line-height: 1.4; word-break: break-word; }
+
+  &--full { grid-column: 1 / -1; }
+  &--destacado { font-weight: 700; color: var(--c-acento); }
+  &--mono { font-family: ui-monospace, "SFMono-Regular", Menlo, monospace; }
+
+  &--relato {
+    padding:       10px 12px;
+    border:        1px solid var(--c-borde);
+    border-radius: 8px;
+    background:    var(--c-velo);
+    white-space:   pre-wrap;
+  }
+
+  &__extra { color: var(--c-tenue); }
+}
+
+// ── Anotación supervisora ─────────────────────────────────────────────────
+.pd-anot {
+  @extend %columna;
+  gap:           10px;
+  margin:        14px;
+  padding:       12px;
+  border:        1px solid var(--c-sup-bd);
+  border-radius: 10px;
+  background:    var(--c-sup-bg);
+
+  &__tag {
+    @extend %linea;
+    gap:            6px;
+    font-size:      var(--f-xs);
+    font-weight:    700;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color:          var(--c-sup);
+  }
+
+  &__pie { display: flex; justify-content: flex-end; gap: 8px; }
+}
+
+// ── Línea de tiempo ───────────────────────────────────────────────────────
+.pd-tl {
+  @extend %columna;
+  margin:     0;
+  padding:    14px;
+  list-style: none;
+
+  &__item {
+    display: flex;
+    gap:     12px;
+
+    &--tl-creacion   .pd-tl__punto,
+    &--tl-operativa  .pd-tl__punto { background: #0e7490; }
+    &--tl-despacho   .pd-tl__punto { background: #2563eb; }
+    &--tl-preventiva .pd-tl__punto,
+    &--tl-novedad    .pd-tl__punto { background: #d97706; }
+    &--tl-supervision .pd-tl__punto { background: #7c3aed; }
+    &--tl-cierre     .pd-tl__punto { background: #16a34a; }
+  }
+
+  &__marca { @extend %columna; align-items: center; flex: 0 0 auto; }
+
+  &__punto {
+    @extend %fila;
+    justify-content: center;
+    width:           28px;
+    height:          28px;
+    border-radius:   50%;
+    background:      var(--c-tenue);
+    color:           #fff;
+    font-size:       11px;
+  }
+
+  &__linea { flex: 1 1 auto; width: 2px; min-height: 14px; background: var(--c-borde); }
+
+  &__tarjeta {
+    flex:          1 1 auto;
+    min-width:     0;
+    margin-bottom: 12px;
+    padding:       10px 12px;
+    border:        1px solid var(--c-borde);
+    border-radius: 10px;
+    background:    var(--c-velo);
+  }
+
+  &__head { @extend %fila; flex-wrap: wrap; gap: 8px; }
+
+  &__titulo { font-size: var(--f-lg); font-weight: 700; }
+
+  &__hora {
+    @extend %cifras;
+    margin-left: auto;
+    font-size:   var(--f-xs);
+    color:       var(--c-tenue);
+    white-space: nowrap;
+  }
+
+  &__desc {
+    margin:      6px 0 0;
+    font-size:   var(--f-md);
+    line-height: 1.45;
+    color:       var(--c-texto);
+    white-space: pre-wrap;
+  }
+
+  &__actor {
+    @extend %linea;
+    gap:        5px;
+    margin-top: 6px;
+    font-size:  var(--f-xs);
+    color:      var(--c-tenue);
+  }
+}
+
+// ── Bloque de actuación ───────────────────────────────────────────────────
+.pd-act {
+  flex:          1 1 auto;
+  min-width:     0;
+  margin-bottom: 12px;
+  border:        1px solid var(--c-desp-bd);
+  border-radius: 10px;
+  background:    var(--c-desp-bg);
+  overflow:      hidden;
+
+  &__head {
+    @extend %fila;
+    flex-wrap:     wrap;
+    gap:           8px;
+    padding:       9px 12px;
+    border-bottom: 1px solid var(--c-desp-bd);
+  }
+
+  &__titulo {
+    @extend %fila;
+    flex-wrap: wrap;
+    gap:       7px;
+    flex:      1 1 200px;
+    min-width: 0;
+    font-size: var(--f-lg);
+    > i { color: var(--c-desp); }
+  }
+
+  &__unidad {
+    padding:       1px 7px;
+    border-radius: 999px;
+    background:    rgba(37, 99, 235, .16);
+    font-size:     var(--f-xs);
+    font-weight:   700;
+    color:         var(--c-desp);
+  }
+
+  &__badges { @extend %linea; gap: 8px; }
+
+  &__dur { @extend %linea; gap: 4px; font-size: var(--f-xs); color: var(--c-suave); white-space: nowrap; }
+
+  &__pie {
+    @extend %fila;
+    flex-wrap:  wrap;
+    gap:        6px 14px;
+    padding:    8px 12px;
+    border-top: 1px solid var(--c-desp-bd);
+    font-size:  var(--f-xs);
+    color:      var(--c-suave);
+
+    > span { @extend %linea; gap: 5px; }
+    app-ui-button { margin-left: auto; }
+  }
+}
+
+// Fases: Asignado → En camino → En sitio → Cerrado
+.pd-fases {
+  display:     flex;
+  align-items: stretch;
+  flex-wrap:   wrap;
+  gap:         4px;
+  padding:     10px 12px;
+}
+
+.pd-fase {
+  @extend %columna;
+  align-items:   center;
+  gap:           2px;
+  flex:          1 1 92px;
+  min-width:     0;
+  padding:       8px 6px;
+  border:        1px dashed var(--c-borde);
+  border-radius: 8px;
+  text-align:    center;
+  opacity:       .55;
+
+  &--ok {
+    border-style: solid;
+    border-color: var(--c-ok-bd);
+    background:   var(--c-ok-bg);
+    opacity:      1;
+  }
+
+  &__ico {
+    @extend %fila;
+    justify-content: center;
+    width:           22px;
+    height:          22px;
+    border-radius:   50%;
+    background:      var(--c-linea);
+    font-size:       10px;
+  }
+
+  &--ok &__ico  { background: var(--c-ok-bd); color: var(--c-ok); }
+  &__lbl        { font-size: var(--f-xs); font-weight: 700; }
+  &__ts         { @extend %cifras; font-size: var(--f-xs); color: var(--c-suave); }
+  &__delta      { font-size: var(--f-xs); font-weight: 700; color: var(--c-ok); }
+  &__flecha     { align-self: center; color: var(--c-tenue); font-size: 10px; }
+}
+
+// Equipo de la actuación
+.pd-equipo {
+  @extend %columna;
+  gap:        6px;
+  margin:     0;
+  padding:    10px 12px;
+  border-top: 1px solid var(--c-desp-bd);
+  list-style: none;
+  background: var(--c-velo);
+
+  li {
+    @extend %fila;
+    flex-wrap: wrap;
+    gap:       8px;
+    font-size: var(--f-sm);
+    > i { color: var(--c-desp); }
+  }
+
+  &__vacio { color: var(--c-tenue); }
+  &__cod   { font-weight: 700; }
+  &__tipo  { color: var(--c-suave); }
+
+  &__hora {
+    @extend %linea; @extend %cifras;
+    margin-left: auto;
+    gap:         4px;
+    color:       var(--c-tenue);
+  }
+}
+
+// ── Marco de miniatura (adjuntos y grabaciones) ───────────────────────────
+.pd-marco {
+  position:      relative;
+  display:       block;
+  border-radius: 8px;
+  overflow:      hidden;
+  background:    var(--c-linea);
+
+  img, video { width: 100%; height: 100%; object-fit: cover; }
+
+  > i {
+    position: absolute;
+    inset:    0;
+    display:  flex;
+    align-items:     center;
+    justify-content: center;
+    font-size:   1.9rem;
+    color:       rgb(255 255 255 / 85%);
+    text-shadow: 0 1px 4px rgb(0 0 0 / 45%);
+  }
+}
+
+// ── Archivos adjuntos ─────────────────────────────────────────────────────
+.pd-adjuntos {
+  display:               grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap:                   10px;
+  margin:                0;
+  padding:               14px;
+  list-style:            none;
+
+  a {
+    @extend %columna;
+    gap:            5px;
+    padding:        8px;
+    border:         1px solid var(--c-borde);
+    border-radius:  10px;
+    background:     var(--c-fondo);
+    color:          inherit;
+    text-decoration:none;
+    font-size:      var(--f-xs);
+
+    &:hover { border-color: rgba(8, 166, 203, .5); }
+  }
+
+  .pd-marco { aspect-ratio: 4 / 3; }
+}
+
+.pd-adjunto {
+  &__nombre { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  &__canal  { color: var(--c-tenue); }
+  &__meta {
+    @extend %columna;
+    gap:   2px;
+    color: var(--c-suave);
+    > span { @extend %linea; gap: 4px; }
+  }
+}
+
+// ── Videollamadas ─────────────────────────────────────────────────────────
+.pd-videos { @extend %columna; gap: 12px; padding: 14px; }
+
+.pd-video {
+  border:        1px solid var(--c-borde);
+  border-radius: 10px;
+  overflow:      hidden;
+
+  &__head {
+    @extend %fila;
+    flex-wrap:     wrap;
+    gap:           10px;
+    padding:       9px 12px;
+    border-bottom: 1px solid var(--c-borde);
+    background:    var(--c-velo);
+    font-size:     var(--f-md);
+  }
+
+  &__atendio { @extend %linea; gap: 5px; }
+  &__dur     { @extend %linea; gap: 5px; color: var(--c-suave); }
+
+  &__cuando {
+    margin-left: auto;
+    color:       var(--c-tenue);
+    font-size:   var(--f-xs);
+    white-space: nowrap;
+  }
+
+  &__cuerpo {
+    display:               grid;
+    grid-template-columns: 200px minmax(0, 1fr) minmax(0, 1fr);
+    gap:                   14px;
+    padding:               12px;
+
+    @media (max-width: 900px) { grid-template-columns: minmax(0, 1fr); }
+  }
+
+  // Sin grabación la columna del reproductor sobra: la tarjeta colapsa a dos
+  // columnas en vez de dejar un hueco.
+  &--sin-grab &__cuerpo {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    @media (max-width: 900px) { grid-template-columns: minmax(0, 1fr); }
+  }
+
+  &__grab { @extend %columna; gap: 6px; min-width: 0; }
+
+  .pd-marco { aspect-ratio: 16 / 10; background: #0f172a; }
+
+  &__grab-nombre {
+    font-size:     var(--f-xs);
+    color:         var(--c-suave);
+    overflow:      hidden;
+    text-overflow: ellipsis;
+    white-space:   nowrap;
+  }
+
+  &__link {
+    @extend %linea;
+    gap:             5px;
+    color:           var(--c-acento);
+    font-size:       var(--f-xs);
+    font-weight:     700;
+    text-decoration: none;
+    &:hover { text-decoration: underline; }
+  }
+
+  &__datos {
+    @extend %columna;
+    gap:       7px;
+    margin:    0;
+    min-width: 0;
+
+    div { @extend %columna; gap: 1px; }
+    dt  { font-size: var(--f-xs); color: var(--c-tenue); }
+    dd  { margin: 0; font-size: var(--f-sm); word-break: break-word; }
+  }
+}
+
+.pd-chat {
+  @extend %columna;
+  gap:       6px;
+  min-width: 0;
+
+  &__head { @extend %linea; gap: 6px; font-size: var(--f-xs); font-weight: 700; color: var(--c-suave); }
+
+  &__hilo {
+    @extend %columna;
+    gap:           6px;
+    margin:        0;
+    padding:       8px;
+    max-height:    220px;
+    overflow-y:    auto;
+    border:        1px solid var(--c-borde);
+    border-radius: 8px;
+    background:    var(--c-velo);
+    list-style:    none;
+
+    li {
+      @extend %columna;
+      gap:           2px;
+      align-self:    flex-start;
+      max-width:     88%;
+      padding:       6px 9px;
+      border:        1px solid var(--c-borde);
+      border-radius: 10px;
+      background:    var(--c-fondo);
+      font-size:     var(--f-sm);
+    }
+  }
+
+  &__msg--cad {
+    align-self:   flex-end;
+    background:   var(--c-sel);
+    border-color: rgba(8, 166, 203, .4);
+  }
+
+  &__meta  { display: flex; gap: 8px; font-size: var(--f-xxs); color: var(--c-tenue); }
+  &__texto { line-height: 1.35; word-break: break-word; }
+}
+
+// ── Indicadores ───────────────────────────────────────────────────────────
+.pd-kpis {
+  display:               grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap:                   12px;
+  padding:               14px;
+}
+
+.pd-kpi {
+  @extend %columna;
+  gap:           4px;
+  padding:       14px;
+  border:        1px solid var(--c-ok-bd);
+  border-radius: 10px;
+  background:    var(--c-ok-bg);
+
+  &--alerta { border-color: var(--c-mal-bd); background: var(--c-mal-bg); }
+
+  &__head {
+    @extend %fila;
+    justify-content: space-between;
+    gap:             8px;
+    color:           var(--c-suave);
+  }
+
+  &__val {
+    @extend %cifras;
+    font-size:   var(--f-num);
+    font-weight: 800;
+    line-height: 1.1;
+    small { font-size: var(--f-lg); font-weight: 700; }
+  }
+
+  &__lbl { font-size: var(--f-md); line-height: 1.35; }
+
+  &__meta {
+    @extend %linea;
+    gap:         5px;
+    font-size:   var(--f-xs);
+    color:       var(--c-ok);
+    font-weight: 700;
+    &--alerta { color: var(--c-mal); }
+  }
+}
+
+.pd-kpis-head { gap: 0; }

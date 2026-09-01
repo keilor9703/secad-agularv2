@@ -1,0 +1,1025 @@
+<div class="pd-page">
+
+  <app-ui-page-header
+    title="Seguimiento de incidentes CAD"
+    icon="fa-solid fa-shield-halved"
+    description="Estado de la cola, trazabilidad completa de cada incidente e indicadores de atención."
+    [minimizable]="false"
+  >
+    <span page-header-actions class="pd-refresco">
+      <i class="fa-solid fa-arrows-rotate" [class.fa-spin]="loading()" aria-hidden="true"></i>
+      {{ lastRefresh() | date:'HH:mm:ss' }}
+    </span>
+    <app-ui-button
+      page-header-actions
+      variant="primary"
+      icon="fa-solid fa-rotate"
+      [loading]="loading()"
+      [disabled]="loading()"
+      tooltip="Volver a consultar la cola"
+      (buttonClick)="cargarLista()"
+    >Actualizar</app-ui-button>
+  </app-ui-page-header>
+
+  <app-ui-segmented-tabs
+    [items]="pestanas"
+    [activeId]="vista()"
+    ariaLabel="Vista del seguimiento"
+    [showBadges]="false"
+    (selectionChange)="setVista($any($event.id))"
+  />
+
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       PANEL
+       ═══════════════════════════════════════════════════════════════════════ -->
+  @if (vista() === 'dashboard') {
+
+    @if (loading() && stats().total === 0) {
+      <p class="pd-cargando"><app-ui-spinner size="sm" /> <span>Cargando la cola de incidentes…</span></p>
+    }
+
+    <!-- Turno vigente -->
+    @if (conteos(); as c) {
+      <section class="pd-panel pd-turno">
+        <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
+        <strong>{{ getTurnoLabel() }}</strong>
+        <app-ui-chip [value]="c.cerradosTurno" label="cerrados en el turno"
+                     variant="success" appearance="soft" size="xs" />
+        <span class="pd-turno__nota">
+          Los contadores de abajo cubren {{ alcanceCalculo() }}, no solo el turno vigente.
+        </span>
+      </section>
+    }
+
+    <!-- Tarjetas de resumen -->
+    <div class="pd-tarjetas">
+      <div class="pd-tarjeta pd-tarjeta--total">
+        <i class="fa-solid fa-inbox pd-tarjeta__ico" aria-hidden="true"></i>
+        <span class="pd-tarjeta__val">{{ stats().total }}</span>
+        <span class="pd-tarjeta__lbl">En la cola</span>
+        <span class="pd-tarjeta__sub">activos + pendientes + cerrados</span>
+      </div>
+
+      <button type="button" class="pd-tarjeta pd-tarjeta--activo" (click)="verPorEstado('A')">
+        <i class="fa-solid fa-circle-dot pd-tarjeta__ico" aria-hidden="true"></i>
+        <span class="pd-tarjeta__val">{{ stats().activos }}</span>
+        <span class="pd-tarjeta__lbl">Activos</span>
+        <span class="pd-tarjeta__sub">ver en la lista</span>
+      </button>
+
+      <button type="button" class="pd-tarjeta pd-tarjeta--pendiente" (click)="verPorEstado('P')">
+        <i class="fa-solid fa-clock pd-tarjeta__ico" aria-hidden="true"></i>
+        <span class="pd-tarjeta__val">{{ stats().pendientes }}</span>
+        <span class="pd-tarjeta__lbl">Pendientes</span>
+        <span class="pd-tarjeta__sub">ver en la lista</span>
+      </button>
+
+      <button type="button" class="pd-tarjeta pd-tarjeta--cerrado" (click)="verPorEstado('C')">
+        <i class="fa-solid fa-circle-check pd-tarjeta__ico" aria-hidden="true"></i>
+        <span class="pd-tarjeta__val">{{ stats().cerrados }}</span>
+        <span class="pd-tarjeta__lbl">Cerrados</span>
+        <span class="pd-tarjeta__sub">ver en la lista</span>
+      </button>
+
+      <div class="pd-tarjeta pd-tarjeta--critico">
+        <i class="fa-solid fa-triangle-exclamation pd-tarjeta__ico" aria-hidden="true"></i>
+        <span class="pd-tarjeta__val">{{ stats().criticos }}</span>
+        <span class="pd-tarjeta__lbl">Críticos</span>
+        <span class="pd-tarjeta__sub">tiempo de atención excedido</span>
+      </div>
+    </div>
+
+    <!-- Distribuciones -->
+    <div class="pd-fila">
+      <section class="pd-panel">
+        <app-ui-section-header title="Distribución por prioridad" icon="fa-solid fa-bolt" appearance="divider" />
+        <div class="pd-barras">
+          @for (b of [
+            { clase: 'flash',     label: 'Flash',     valor: stats().flash },
+            { clase: 'inmediata', label: 'Inmediata', valor: stats().inmediata },
+            { clase: 'rutina',    label: 'Rutina',    valor: stats().rutina }
+          ]; track b.clase) {
+            <div class="pd-barra">
+              <span class="pd-barra__lbl pd-barra__lbl--{{ b.clase }}">{{ b.label }}</span>
+              <span class="pd-barra__riel">
+                <span class="pd-barra__relleno pd-barra__relleno--{{ b.clase }}"
+                      [style.width.%]="porcentaje(b.valor, stats().total)"></span>
+              </span>
+              <span class="pd-barra__num">{{ b.valor }}</span>
+            </div>
+          }
+        </div>
+
+        <div class="pd-leyenda">
+          <span class="pd-punto pd-punto--verde"></span><span>Normal</span>
+          <span class="pd-punto pd-punto--amarillo"></span><span>Atención</span>
+          <span class="pd-punto pd-punto--rojo"></span><span>Crítico</span>
+        </div>
+      </section>
+
+      <section class="pd-panel">
+        <app-ui-section-header title="Por canal de origen" icon="fa-solid fa-share-nodes" appearance="divider" />
+        <div class="pd-barras">
+          @if (getOrigenKeys().length === 0) {
+            <p class="pd-nota">Sin datos de canal registrados.</p>
+          }
+          @for (key of getOrigenKeys(); track key) {
+            <div class="pd-barra">
+              <span class="pd-barra__lbl">{{ getOrigenLabel(key) }}</span>
+              <span class="pd-barra__riel">
+                <span class="pd-barra__relleno pd-barra__relleno--origen"
+                      [style.width.%]="porcentaje(stats().porOrigen[key], stats().total)"></span>
+              </span>
+              <span class="pd-barra__num">{{ stats().porOrigen[key] }}</span>
+            </div>
+          }
+        </div>
+      </section>
+    </div>
+
+    <!-- Incidentes críticos -->
+    @if (stats().criticos > 0) {
+      <section class="pd-panel pd-criticos">
+        <app-ui-section-header
+          title="Incidentes que superan el umbral de tiempo"
+          icon="fa-solid fa-triangle-exclamation"
+          description="Toque uno para abrir su trazabilidad."
+          appearance="divider"
+        >
+          <app-ui-badge header-actions [label]="stats().criticos + ''" variant="danger" size="xs" />
+        </app-ui-section-header>
+
+        <ul class="pd-criticos__lista">
+          @for (item of incidentesCriticos(); track item.id) {
+            <li>
+              <button type="button" (click)="seleccionarIncidente(item)">
+                <span class="pd-criticos__id">#{{ item.id }}</span>
+                @if (item.prioridad) {
+                  <app-ui-badge [label]="getPrioridadLabel(item.prioridad)"
+                                [variant]="getPrioridadVariant(item.prioridad)" size="xs" />
+                }
+                <span class="pd-criticos__txt">
+                  {{ item.codiPedido || '—' }} · {{ item.direCaso || 'Sin dirección' }}
+                </span>
+                <span class="pd-criticos__meta">
+                  <i class="fa-regular fa-clock" aria-hidden="true"></i> {{ getElapsedLabel(item) }}
+                </span>
+                <span class="pd-criticos__meta">
+                  <i class="fa-solid fa-user" aria-hidden="true"></i> {{ item.usernameCreacion || '—' }}
+                </span>
+              </button>
+            </li>
+          }
+        </ul>
+      </section>
+    }
+
+    @if (!loading() && stats().total === 0) {
+      <p class="pd-vacio">
+        <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
+        <span>No hay incidentes registrados en el período consultado.
+              La lista se actualiza sola cada 30 segundos.</span>
+      </p>
+    }
+  }
+
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       INCIDENTES — lista y trazabilidad
+       ═══════════════════════════════════════════════════════════════════════ -->
+  @if (vista() === 'incidentes') {
+    <div class="pd-layout">
+
+      <!-- ── Columna izquierda: la lista ────────────────────────────────── -->
+      <section class="pd-panel pd-lista-col">
+        <app-ui-section-header title="Incidentes" icon="fa-solid fa-list-check" appearance="divider">
+          <app-ui-chip header-actions [value]="listadoFiltrado().length" label="en pantalla"
+                       variant="info" appearance="soft" size="xs" />
+        </app-ui-section-header>
+
+        <div class="pd-filtros">
+          <app-ui-search-input
+            class="pd-filtros__buscar"
+            placeholder="Buscar por ID, dirección, código u operador…"
+            [showButton]="false"
+            icon="fa-solid fa-magnifying-glass"
+            [ngModel]="filtroTexto()"
+            (ngModelChange)="filtroTexto.set($event)"
+          />
+
+          <div class="pd-filtros__fila">
+            <app-ui-select
+              class="pd-filtros__campo"
+              ariaLabel="Estado del incidente"
+              [options]="opcionesEstado"
+              [clearable]="false"
+              [ngModel]="filtroEstado()"
+              (ngModelChange)="filtroEstado.set($event)"
+            />
+            <app-ui-select
+              class="pd-filtros__campo"
+              ariaLabel="Prioridad"
+              [options]="opcionesPrioridad"
+              [clearable]="false"
+              [ngModel]="filtroPrioridad()"
+              (ngModelChange)="filtroPrioridad.set($event)"
+            />
+          </div>
+
+          <div class="pd-filtros__fila">
+            <app-ui-select
+              class="pd-filtros__campo pd-filtros__campo--ancho"
+              ariaLabel="Turno de vigilancia"
+              [options]="opcionesTurno"
+              [clearable]="false"
+              [ngModel]="filtroTurno() + ''"
+              (ngModelChange)="filtroTurno.set(+$event)"
+            />
+            @if (filtroTurno() > 0) {
+              <span class="pd-turno-chip" [style.color]="turnoColor(filtroTurno())">
+                <i class="fa-solid {{ turnoIcono(filtroTurno()) }}" aria-hidden="true"></i>
+                {{ turnoRango(filtroTurno()) }}
+              </span>
+            }
+          </div>
+
+          <!-- El rango de fechas consulta al servidor: la tabla puede tener
+               millones de casos, así que sin él la lista sólo trae la página
+               más reciente. -->
+          <div class="pd-filtros__fila pd-filtros__fila--fechas">
+            <app-ui-input
+              class="pd-filtros__campo"
+              label="Desde" type="date"
+              [ngModel]="filtroFechaDesde()"
+              (ngModelChange)="filtroFechaDesde.set($event)"
+            />
+            <app-ui-input
+              class="pd-filtros__campo"
+              label="Hasta" type="date"
+              [ngModel]="filtroFechaHasta()"
+              (ngModelChange)="filtroFechaHasta.set($event)"
+            />
+            <app-ui-button
+              variant="primary" size="sm" icon="fa-solid fa-magnifying-glass"
+              [loading]="loading()"
+              tooltip="Consultar ese rango en el servidor"
+              (buttonClick)="aplicarFiltroFecha()"
+            >Consultar</app-ui-button>
+            @if (filtroFechaDesde() || filtroFechaHasta()) {
+              <app-ui-button
+                variant="secondary" appearance="ghost" size="sm" icon="fa-solid fa-xmark"
+                tooltip="Volver a la página más reciente"
+                (buttonClick)="limpiarFiltroFecha()"
+              >Limpiar</app-ui-button>
+            }
+          </div>
+
+          <!-- Los filtros de arriba actúan sobre la página cargada, no sobre
+               el histórico: decirlo evita leer «3 incidentes» como si fueran
+               todos los que cumplen el filtro en el sistema. -->
+          @if (hayFiltrosLocales()) {
+            <p class="pd-filtros__aviso">
+              <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+              <span>
+                Filtrando {{ listadoFiltrado().length }} de los {{ listaPedidos().length }}
+                incidentes de esta página. Para buscar en el histórico use el rango de fechas.
+              </span>
+              <button type="button" (click)="limpiarFiltrosLocales()">Quitar filtros</button>
+            </p>
+          }
+        </div>
+
+        @if (loading() && listadoFiltrado().length === 0) {
+          <p class="pd-cargando"><app-ui-spinner size="sm" /> <span>Cargando incidentes…</span></p>
+        }
+        @if (!loading() && listadoFiltrado().length === 0) {
+          <p class="pd-nota pd-nota--vacia">
+            <i class="fa-solid fa-inbox" aria-hidden="true"></i>
+            Sin resultados para los filtros aplicados.
+          </p>
+        }
+
+        <ul class="pd-lista">
+          @for (item of listadoFiltrado(); track item.id) {
+            <li>
+              <button type="button"
+                      class="pd-item {{ getSemaforoClass(item) }}"
+                      [class.pd-item--sel]="item.id === selectedId()"
+                      (click)="seleccionarIncidente(item)">
+                <span class="pd-item__franja"></span>
+                <span class="pd-item__cuerpo">
+                  <span class="pd-item__alto">
+                    <span class="pd-item__id">#{{ item.id }}</span>
+                    <app-ui-badge [label]="getEstadoLabel(item.estado)"
+                                  [variant]="getEstadoVariant(item.estado)" size="xs" />
+                    <span class="pd-item__reloj">
+                      <i class="fa-regular fa-clock" aria-hidden="true"></i> {{ getElapsedLabel(item) }}
+                    </span>
+                  </span>
+
+                  <span class="pd-item__codigo">
+                    <strong>{{ item.codiPedido || 'Sin código' }}</strong>
+                    @if (item.descPedido) { <span>{{ item.descPedido }}</span> }
+                    @if (item.codiPedido2) {
+                      <span class="pd-item__codigo2">
+                        / {{ item.codiPedido2 }}@if (item.descPedido2) { — {{ item.descPedido2 }} }
+                      </span>
+                    }
+                  </span>
+
+                  @if (item.prioridad) {
+                    <span class="pd-item__prio">
+                      <app-ui-badge [label]="getPrioridadLabel(item.prioridad)"
+                                    [variant]="getPrioridadVariant(item.prioridad)" size="xs" />
+                    </span>
+                  }
+
+                  <span class="pd-item__dir">{{ item.direCaso || '—' }}</span>
+
+                  <span class="pd-item__meta">
+                    <span><i class="fa-solid fa-user" aria-hidden="true"></i>
+                      {{ item.usernameCreacion || '(sin usuario)' }}</span>
+                    <span><i class="fa-solid fa-calendar-day" aria-hidden="true"></i>
+                      {{ (item.horaCaso | date:'dd/MM HH:mm') || '—' }}</span>
+                    @if (turnoDeIncidente(item.horaCaso) > 0) {
+                      <span class="pd-item__turno"
+                            [style.color]="turnoColor(turnoDeIncidente(item.horaCaso))"
+                            [title]="turnoLabel(turnoDeIncidente(item.horaCaso))">
+                        <i class="fa-solid {{ turnoIcono(turnoDeIncidente(item.horaCaso)) }}" aria-hidden="true"></i>
+                        T{{ turnoDeIncidente(item.horaCaso) }}
+                      </span>
+                    }
+                    @if (item.numeEvento) {
+                      <span class="pd-item__evento">
+                        <i class="fa-solid fa-bolt" aria-hidden="true"></i> Ev.{{ item.numeEvento }}
+                      </span>
+                    }
+                  </span>
+                </span>
+              </button>
+            </li>
+          }
+        </ul>
+
+        @if (totalPaginas() > 1) {
+          <app-ui-pagination
+            [total]="totalPedidos()"
+            [page]="paginaActual()"
+            [pageSize]="pageSize()"
+            [showPageSize]="false"
+            (pageChange)="irAPagina($event)"
+          />
+        }
+      </section>
+
+      <!-- ── Columna derecha: trazabilidad ──────────────────────────────── -->
+      <section class="pd-detalle-col">
+
+        @if (!selectedId()) {
+          <p class="pd-nota pd-nota--vacia pd-nota--alta">
+            <i class="fa-solid fa-diagram-project" aria-hidden="true"></i>
+            Elija un incidente de la lista para ver toda su trazabilidad.
+          </p>
+        }
+
+        @if (selectedId() && loadingDetalle()) {
+          <p class="pd-cargando"><app-ui-spinner size="sm" /> <span>Cargando la trazabilidad…</span></p>
+        }
+
+        @if (selectedId() && !loadingDetalle() && detalle(); as d) {
+
+          <!-- Cabecera del detalle -->
+          <div class="pd-detalle-head {{ getSemaforoClass(d) }}">
+            <span class="pd-detalle-head__id">Incidente #{{ d.id }}</span>
+            <app-ui-badge [label]="getEstadoLabel(d.estado)" [variant]="getEstadoVariant(d.estado)" size="sm" />
+            @if (d.prioridad) {
+              <app-ui-badge [label]="getPrioridadLabel(d.prioridad)"
+                            [variant]="getPrioridadVariant(d.prioridad)"
+                            icon="fa-solid fa-bolt" iconPosition="start" size="sm" />
+            }
+            <span class="pd-detalle-head__reloj">
+              <i class="fa-regular fa-clock" aria-hidden="true"></i> {{ getElapsedLabel(d) }}
+            </span>
+            <app-ui-button
+              variant="secondary" appearance="ghost" size="sm"
+              icon="fa-solid fa-arrow-left" iconOnly
+              ariaLabel="Volver a la lista" tooltip="Volver a la lista"
+              (buttonClick)="volverALista()"
+            />
+          </div>
+
+          <!-- Identificadores -->
+          <div class="pd-ids">
+            <span class="pd-id">
+              <i class="fa-solid fa-hashtag" aria-hidden="true"></i>
+              <span class="pd-id__lbl">ID pedido</span>
+              <span class="pd-id__val">{{ d.id }}</span>
+            </span>
+            @if (turnoDeIncidente(d.horaCaso) > 0) {
+              <span class="pd-id" [style.border-color]="turnoColor(turnoDeIncidente(d.horaCaso)) + '55'">
+                <i class="fa-solid {{ turnoIcono(turnoDeIncidente(d.horaCaso)) }}"
+                   [style.color]="turnoColor(turnoDeIncidente(d.horaCaso))" aria-hidden="true"></i>
+                <span class="pd-id__lbl">Turno</span>
+                <span class="pd-id__val">{{ turnoLabel(turnoDeIncidente(d.horaCaso)) }}</span>
+              </span>
+            }
+            @if (d.eventoId || d.numeEvento) {
+              <span class="pd-id">
+                <i class="fa-solid fa-bolt" aria-hidden="true"></i>
+                <span class="pd-id__lbl">ID evento</span>
+                <span class="pd-id__val">{{ d.eventoId || d.numeEvento }}</span>
+              </span>
+            }
+            @if (d.numeLlamada) {
+              <span class="pd-id">
+                <i class="fa-solid fa-phone-volume" aria-hidden="true"></i>
+                <span class="pd-id__lbl">N.º llamada</span>
+                <span class="pd-id__val">{{ d.numeLlamada }}</span>
+              </span>
+            }
+            @if (d.numeTelefono) {
+              <span class="pd-id">
+                <i class="fa-solid fa-mobile-screen" aria-hidden="true"></i>
+                <span class="pd-id__lbl">Teléfono</span>
+                <span class="pd-id__val">{{ d.numeTelefono }}</span>
+              </span>
+            }
+            @if (d.sitioGraba) {
+              <span class="pd-id">
+                <i class="fa-solid fa-building-shield" aria-hidden="true"></i>
+                <span class="pd-id__lbl">Sitio CAD</span>
+                <span class="pd-id__val">{{ d.sitioGraba }}</span>
+              </span>
+            }
+          </div>
+
+          <!-- Canales de atención -->
+          <section class="pd-panel">
+            <app-ui-section-header
+              [title]="actuaciones().length > 0 ? 'Canales de atención' : 'Canal de atención'"
+              icon="fa-solid fa-headset"
+              appearance="divider"
+            >
+              @if (actuaciones().length > 0) {
+                <app-ui-chip header-actions [value]="actuaciones().length" label="canales"
+                             variant="info" appearance="soft" size="xs" />
+              }
+            </app-ui-section-header>
+
+            @if (actuaciones().length > 0) {
+              <ul class="pd-canales">
+                @for (act of actuaciones(); track act.id) {
+                  <li class="pd-canal pd-canal--{{ act.estado }}">
+                    <span class="pd-canal__punto"></span>
+                    <span class="pd-canal__info">
+                      <span class="pd-canal__nombre">
+                        <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
+                        <strong>{{ act.fuerzaDesc || '—' }}</strong>
+                        @if (act.canalDesc) { <span>/ {{ act.canalDesc }}</span> }
+                      </span>
+                      <span class="pd-canal__recursos">
+                        @if (act.unidadAsignada) {
+                          <span><i class="fa-solid fa-car-side" aria-hidden="true"></i> {{ act.unidadAsignada }}</span>
+                        }
+                        @if (act.placaUnidad) { <span class="pd-placa">{{ act.placaUnidad }}</span> }
+                        @if (act.despachadorUsuario) {
+                          <span><i class="fa-solid fa-user-tie" aria-hidden="true"></i> {{ act.despachadorUsuario }}</span>
+                        }
+                      </span>
+                    </span>
+                    <span class="pd-canal__estado">
+                      <app-ui-badge [label]="getEstadoActuacionLabel(act.estado)"
+                                    [variant]="act.estado === 'C' ? 'success'
+                                             : act.estado === 'V' ? 'danger'
+                                             : act.estado === 'A' ? 'info' : 'warning'" size="xs" />
+                      @if (act.fechaCreacion) {
+                        <span class="pd-canal__hora">{{ act.fechaCreacion | date:'HH:mm' }}</span>
+                      }
+                    </span>
+                  </li>
+                }
+              </ul>
+            } @else if (d.canalDescripcion || d.fuerzaDescripcion) {
+              <ul class="pd-canales">
+                <li class="pd-canal pd-canal--C">
+                  <span class="pd-canal__punto"></span>
+                  <span class="pd-canal__info">
+                    <span class="pd-canal__nombre">
+                      <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
+                      <strong>{{ d.fuerzaDescripcion || '—' }}</strong>
+                      @if (d.canalDescripcion) { <span>/ {{ d.canalDescripcion }}</span> }
+                    </span>
+                  </span>
+                  @if (d.fechaCierre) {
+                    <span class="pd-canal__estado">
+                      <app-ui-badge label="Cerrado" variant="success" size="xs" />
+                      <span class="pd-canal__hora">{{ d.fechaCierre | date:'HH:mm' }}</span>
+                    </span>
+                  }
+                </li>
+              </ul>
+            } @else {
+              <p class="pd-nota">Sin canales de atención asignados.</p>
+            }
+          </section>
+
+          <!-- Datos del incidente -->
+          <section class="pd-panel">
+            <app-ui-section-header title="Datos del incidente" icon="fa-solid fa-file-lines" appearance="divider" />
+
+            <dl class="pd-datos">
+              <div class="pd-dato pd-dato--full">
+                <dt><i class="fa-solid fa-location-dot" aria-hidden="true"></i> Dirección del incidente</dt>
+                <dd class="pd-dato--destacado">{{ d.direCaso || '—' }}</dd>
+              </div>
+
+              @if (d.barrio || d.ciudad) {
+                <div class="pd-dato">
+                  <dt>Barrio / ciudad</dt>
+                  <dd>{{ d.barrio || '—' }}@if (d.ciudad) { · {{ d.ciudad }} }</dd>
+                </div>
+              }
+
+              @if (d.latitudCaso && d.longitudCaso && d.latitudCaso !== '0' && d.longitudCaso !== '0') {
+                <div class="pd-dato">
+                  <dt><i class="fa-solid fa-map-location-dot" aria-hidden="true"></i> Coordenadas</dt>
+                  <dd class="pd-dato--mono">{{ d.latitudCaso }}, {{ d.longitudCaso }}</dd>
+                </div>
+              }
+
+              <div class="pd-datos__sep pd-dato--full"><span>Tipificación</span></div>
+
+              <div class="pd-dato pd-dato--full">
+                <dt>Tipo de caso</dt>
+                <dd>
+                  <strong>{{ d.codiPedido || '—' }}</strong>
+                  @if (d.descPedido) { — {{ d.descPedido }} }
+                  @if (d.codiPedido2) {
+                    <span class="pd-dato__extra">
+                      / {{ d.codiPedido2 }}@if (d.descPedido2) { — {{ d.descPedido2 }} }
+                    </span>
+                  }
+                </dd>
+              </div>
+
+              @if (d.tipoPedido) {
+                <div class="pd-dato"><dt>Tipo de llamada</dt><dd>{{ d.tipoPedido }}</dd></div>
+              }
+              @if (d.caliPedido) {
+                <div class="pd-dato"><dt>Calidad de la llamada</dt><dd>{{ d.caliPedido }}</dd></div>
+              }
+
+              <div class="pd-datos__sep pd-dato--full"><span>Recepción</span></div>
+
+              <div class="pd-dato">
+                <dt><i class="fa-regular fa-clock" aria-hidden="true"></i> Hora del caso</dt>
+                <dd>
+                  {{ (d.horaCaso | date:'dd/MM/yyyy HH:mm') || '—' }}
+                  @if (turnoDeIncidente(d.horaCaso) > 0) {
+                    <span class="pd-dato__extra">· {{ turnoLabel(turnoDeIncidente(d.horaCaso)) }}</span>
+                  }
+                </dd>
+              </div>
+
+              <div class="pd-dato">
+                <dt><i class="fa-solid fa-user" aria-hidden="true"></i> Creado por</dt>
+                <dd>{{ d.usernameCreacion || '—' }}</dd>
+              </div>
+
+              <div class="pd-dato">
+                <dt><i class="fa-solid fa-share-nodes" aria-hidden="true"></i> Canal de origen</dt>
+                <dd>{{ d.origen ? getOrigenLabel(d.origen) : '—' }}</dd>
+              </div>
+
+              @if (d.nombLlamante) {
+                <div class="pd-dato"><dt>Informante</dt><dd>{{ d.nombLlamante }}</dd></div>
+              }
+              @if (d.propTelefono) {
+                <div class="pd-dato"><dt>Propietario de la línea</dt><dd>{{ d.propTelefono }}</dd></div>
+              }
+              @if (d.dispTelefonico) {
+                <div class="pd-dato"><dt>Medio de comunicación</dt><dd>{{ d.dispTelefonico }}</dd></div>
+              }
+              @if (d.direLlamante && d.direLlamante !== d.direCaso) {
+                <div class="pd-dato"><dt>Dirección de quien llama</dt><dd>{{ d.direLlamante }}</dd></div>
+              }
+              @if (d.pedidoPadreSitio || d.pedidoPadreNum) {
+                <div class="pd-dato">
+                  <dt><i class="fa-solid fa-link" aria-hidden="true"></i> Incidente relacionado</dt>
+                  <dd>{{ d.pedidoPadreSitio }} / {{ d.pedidoPadreNum }}</dd>
+                </div>
+              }
+              @if (d.comentario) {
+                <div class="pd-dato pd-dato--full">
+                  <dt>Descripción de los hechos</dt>
+                  <dd class="pd-dato--relato">{{ d.comentario }}</dd>
+                </div>
+              }
+            </dl>
+          </section>
+
+          <!-- Trazabilidad -->
+          <section class="pd-panel">
+            <app-ui-section-header
+              title="Historia del incidente"
+              icon="fa-solid fa-timeline"
+              description="Creación, despachos, anotaciones y cierre, en orden cronológico."
+              appearance="divider"
+            >
+              <app-ui-chip header-actions [value]="timeline().length" label="eventos"
+                           variant="info" appearance="soft" size="xs" />
+              @if (d.estado !== 'C') {
+                <app-ui-button
+                  header-actions
+                  variant="primary" size="sm"
+                  [icon]="showAnotForm() ? 'fa-solid fa-xmark' : 'fa-solid fa-eye'"
+                  (buttonClick)="showAnotForm.set(!showAnotForm())"
+                >{{ showAnotForm() ? 'Cancelar' : 'Anotar supervisión' }}</app-ui-button>
+              }
+            </app-ui-section-header>
+
+            @if (showAnotForm()) {
+              <div class="pd-anot">
+                <span class="pd-anot__tag">
+                  <i class="fa-solid fa-eye" aria-hidden="true"></i> Jefe de Turno — supervisión
+                </span>
+                <app-ui-input
+                  label="Título de la observación"
+                  placeholder="Ej.: supervisión de unidades, escalamiento de prioridad…"
+                  [maxlength]="200"
+                  [(ngModel)]="anotacionForm.titulo"
+                />
+                <app-ui-input
+                  label="Texto de la observación"
+                  multiline [rows]="3" required
+                  [maxlength]="2000"
+                  [error]="anotacionForm.anotacion?.trim() ? '' : 'Obligatorio.'"
+                  placeholder="Lo que quedará registrado en la trazabilidad del incidente…"
+                  [(ngModel)]="anotacionForm.anotacion"
+                />
+                <div class="pd-anot__pie">
+                  <app-ui-button variant="secondary" appearance="ghost" size="sm"
+                                 (buttonClick)="showAnotForm.set(false)">Cancelar</app-ui-button>
+                  <app-ui-button variant="primary" size="sm" icon="fa-solid fa-eye"
+                                 [loading]="savingAnotacion()" [disabled]="savingAnotacion()"
+                                 (buttonClick)="guardarAnotacion()">Registrar</app-ui-button>
+                </div>
+              </div>
+            }
+
+            @if (timeline().length === 0) {
+              <p class="pd-nota">Sin eventos registrados en la trazabilidad.</p>
+            }
+
+            <ol class="pd-tl">
+              @for (ev of timeline(); track ev.key; let ultimo = $last) {
+                <li class="pd-tl__item pd-tl__item--{{ ev.colorClass }}">
+                  <span class="pd-tl__marca">
+                    <span class="pd-tl__punto"><i [class]="ev.icono" aria-hidden="true"></i></span>
+                    @if (!ultimo) { <span class="pd-tl__linea"></span> }
+                  </span>
+
+                  @if (ev.tipo === 'ACTUACION' && ev.actuacion; as act) {
+                    <div class="pd-act">
+                      <div class="pd-act__head">
+                        <span class="pd-act__titulo">
+                          <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
+                          <strong>{{ act.canal || 'Recurso despachado' }}</strong>
+                          @if (act.unidad) { <span class="pd-act__unidad">{{ act.unidad }}</span> }
+                          @if (act.placa) {
+                            <span class="pd-placa">
+                              <i class="fa-solid fa-car-side" aria-hidden="true"></i>{{ act.placa }}
+                            </span>
+                          }
+                        </span>
+                        <span class="pd-act__badges">
+                          <app-ui-badge [label]="getEstadoActuacionLabel(act.estado)"
+                                        [variant]="act.estado === 'C' ? 'success'
+                                                 : act.estado === 'V' ? 'danger'
+                                                 : act.estado === 'A' ? 'info' : 'warning'" size="xs" />
+                          @if (act.totalMin !== null) {
+                            <span class="pd-act__dur">
+                              <i class="fa-regular fa-clock" aria-hidden="true"></i> {{ fmtDur(act.totalMin) }}
+                            </span>
+                          }
+                        </span>
+                      </div>
+
+                      <div class="pd-fases">
+                        @for (fase of act.fases; track fase.label; let ultima = $last) {
+                          <div class="pd-fase" [class.pd-fase--ok]="fase.cumplida">
+                            <span class="pd-fase__ico"><i [class]="fase.icono" aria-hidden="true"></i></span>
+                            <span class="pd-fase__lbl">{{ fase.label }}</span>
+                            <span class="pd-fase__ts">
+                              {{ fase.timestamp ? (fase.timestamp | date:'dd/MM HH:mm') : '—' }}
+                            </span>
+                            @if (fase.deltaMin !== null && fase.cumplida) {
+                              <span class="pd-fase__delta">+{{ fmtDur(fase.deltaMin) }}</span>
+                            }
+                          </div>
+                          @if (!ultima) {
+                            <i class="fa-solid fa-chevron-right pd-fase__flecha" aria-hidden="true"></i>
+                          }
+                        }
+                      </div>
+
+                      <div class="pd-act__pie">
+                        <span><i class="fa-solid fa-user-tie" aria-hidden="true"></i>
+                          {{ act.despachador || '(sin despachador)' }}</span>
+                        @if (act.caliPedido) {
+                          <span><i class="fa-solid fa-star" aria-hidden="true"></i> {{ act.caliPedido }}</span>
+                        }
+                        <app-ui-button
+                          variant="secondary" appearance="ghost" size="sm"
+                          [icon]="equipoExpandido()[act.actId] ? 'fa-solid fa-chevron-up' : 'fa-solid fa-users'"
+                          [loading]="!!equipoCargando()[act.actId]"
+                          (buttonClick)="toggleEquipo(act.actId)"
+                        >{{ equipoExpandido()[act.actId]
+                              ? 'Ocultar equipo'
+                              : 'Ver equipo (' + act.totalUnidades + ')' }}</app-ui-button>
+                      </div>
+
+                      @if (equipoExpandido()[act.actId]) {
+                        <ul class="pd-equipo">
+                          @if (equipoDe(act.actId).length === 0) {
+                            <li class="pd-equipo__vacio">
+                              <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+                              Solo la unidad principal está registrada.
+                            </li>
+                          }
+                          @for (u of equipoDe(act.actId); track u.id) {
+                            <li>
+                              <i class="fa-solid fa-user-shield" aria-hidden="true"></i>
+                              <span class="pd-equipo__cod">{{ u.unidadCodigo }}</span>
+                              @if (u.placa) { <span class="pd-placa">{{ u.placa }}</span> }
+                              @if (u.tipoUnidad) { <span class="pd-equipo__tipo">{{ u.tipoUnidad }}</span> }
+                              <app-ui-badge [label]="getEstadoUnidadLabel(u.estado)"
+                                            [variant]="u.estado === 'A' ? 'info'
+                                                     : u.estado === 'D' ? 'warning'
+                                                     : u.estado === 'L' ? 'success' : 'danger'" size="xs" />
+                              @if (u.fechaDespacho) {
+                                <span class="pd-equipo__hora">
+                                  <i class="fa-regular fa-clock" aria-hidden="true"></i>
+                                  {{ u.fechaDespacho | date:'HH:mm' }}
+                                </span>
+                              }
+                            </li>
+                          }
+                        </ul>
+                      }
+                    </div>
+                  } @else {
+                    <div class="pd-tl__tarjeta">
+                      <div class="pd-tl__head">
+                        <span class="pd-tl__titulo">{{ ev.titulo }}</span>
+                        @if (ev.tipoAnotacion) {
+                          <app-ui-badge [label]="ev.tipoAnotacion" variant="neutral" size="xs" />
+                        }
+                        <span class="pd-tl__hora">{{ (ev.timestamp | date:'dd/MM/yy HH:mm') || '—' }}</span>
+                      </div>
+                      @if (ev.descripcion) {
+                        <p class="pd-tl__desc">{{ ev.descripcion }}</p>
+                      }
+                      <span class="pd-tl__actor">
+                        <i class="fa-solid fa-user" aria-hidden="true"></i> {{ ev.actor }}
+                      </span>
+                    </div>
+                  }
+                </li>
+              }
+            </ol>
+          </section>
+
+          <!-- Archivos multimedia -->
+          @if (adjuntos().length > 0) {
+            <section class="pd-panel">
+              <app-ui-section-header title="Archivos del caso" icon="fa-solid fa-photo-film" appearance="divider">
+                <app-ui-chip header-actions [value]="adjuntos().length" label="archivos"
+                             variant="info" appearance="soft" size="xs" />
+              </app-ui-section-header>
+
+              <ul class="pd-adjuntos">
+                @for (adj of adjuntos(); track adj.id) {
+                  <li>
+                    <!-- Las grabaciones de videollamada son VIDEO: pintarlas con
+                         <img> dejaba un icono de imagen rota con el nombre debajo. -->
+                    <a [href]="adj.urlPublica" target="_blank" rel="noopener" [title]="adj.nombreOriginal">
+                      @if (adj.tipoAdjunto === 'VIDEO') {
+                        <span class="pd-marco">
+                          <video [src]="adj.urlPublica + '#t=0.5'" preload="metadata" muted></video>
+                          <i class="fa-solid fa-circle-play" aria-hidden="true"></i>
+                        </span>
+                        <span class="pd-adjunto__meta">
+                          @if (adj.numeroTelefonoLlamada) {
+                            <span><i class="fa-solid fa-phone" aria-hidden="true"></i> {{ adj.numeroTelefonoLlamada }}</span>
+                          }
+                          @if (adj.fechaInicioLlamada) {
+                            <span><i class="fa-regular fa-calendar" aria-hidden="true"></i> {{ adj.fechaInicioLlamada }}</span>
+                          }
+                          @if (adj.duracionSegundos != null) {
+                            <span><i class="fa-regular fa-clock" aria-hidden="true"></i> {{ formatDuracion(adj.duracionSegundos) }}</span>
+                          }
+                        </span>
+                      } @else {
+                        <span class="pd-marco">
+                          <img [src]="adj.urlPublica" [alt]="adj.nombreOriginal" loading="lazy" />
+                        </span>
+                        <span class="pd-adjunto__nombre">{{ adj.nombreOriginal }}</span>
+                        <span class="pd-adjunto__canal">
+                          @switch (adj.canalOrigen) {
+                            @case ('API_CHAT') { Chat }
+                            @case ('API_SMS')  { SMS }
+                            @default          { Manual }
+                          }
+                        </span>
+                      }
+                    </a>
+                  </li>
+                }
+              </ul>
+            </section>
+          }
+
+          <!-- Videollamadas -->
+          @if (videoSesiones().length > 0) {
+            <section class="pd-panel">
+              <app-ui-section-header
+                title="Videollamadas"
+                icon="fa-solid fa-video"
+                description="En un caso cerrado esto es todo lo que queda de la llamada."
+                appearance="divider"
+              >
+                <app-ui-chip header-actions [value]="videoSesiones().length" label="llamadas"
+                             variant="info" appearance="soft" size="xs" />
+              </app-ui-section-header>
+
+              <div class="pd-videos">
+                @for (vs of videoSesiones(); track vs.sesionId) {
+                  <article class="pd-video" [class.pd-video--sin-grab]="!(vs.tieneGrabacion && vs.grabacionUrl)">
+                    <header class="pd-video__head">
+                      <app-ui-badge [label]="etiquetaEstadoVideo(vs.estado)"
+                                    [variant]="variantEstadoVideo(vs.estado)" size="xs" />
+                      <span class="pd-video__atendio">
+                        <i class="fa-solid fa-headset" aria-hidden="true"></i>
+                        Atendida por <strong>{{ vs.usuarioDespachador || '—' }}</strong>
+                      </span>
+                      @if (vs.duracionSegundos != null) {
+                        <span class="pd-video__dur">
+                          <i class="fa-regular fa-clock" aria-hidden="true"></i> {{ formatDuracion(vs.duracionSegundos) }}
+                        </span>
+                      }
+                      @if (!(vs.tieneGrabacion && vs.grabacionUrl)) {
+                        <app-ui-badge
+                          [label]="vs.grabacionEstado === 'GRABANDO'
+                            ? 'Grabación en curso' : 'Sin grabación'"
+                          [icon]="vs.grabacionEstado === 'GRABANDO'
+                            ? 'fa-solid fa-circle-notch' : 'fa-regular fa-circle'"
+                          iconPosition="start" variant="neutral" size="xs" />
+                      }
+                      <span class="pd-video__cuando">{{ formatFechaHora(vs.fechaCreacion) }}</span>
+                    </header>
+
+                    <div class="pd-video__cuerpo">
+                      <!-- Sin grabación no se pinta la columna del reproductor: dejaba
+                           una banda vacía con una sola frase dentro. -->
+                      @if (vs.tieneGrabacion && vs.grabacionUrl) {
+                      <div class="pd-video__grab">
+                        <a [href]="vs.grabacionUrl" target="_blank" rel="noopener"
+                           class="pd-marco" [title]="vs.grabacionNombre || 'Grabación'">
+                          <video [src]="vs.grabacionUrl + '#t=0.5'" preload="metadata" muted></video>
+                          <i class="fa-solid fa-circle-play" aria-hidden="true"></i>
+                        </a>
+                        <span class="pd-video__grab-nombre" [title]="vs.grabacionNombre || ''">
+                          {{ vs.grabacionNombre }}
+                        </span>
+                        <a [href]="vs.grabacionUrl" target="_blank" rel="noopener" class="pd-video__link">
+                          <i class="fa-solid fa-download" aria-hidden="true"></i> Abrir o descargar
+                        </a>
+                      </div>
+                      }
+
+                      <dl class="pd-video__datos">
+                        <div><dt>Enlace enviado</dt><dd>{{ formatFechaHora(vs.fechaCreacion) }}</dd></div>
+                        <div>
+                          <dt>Inicio de la llamada</dt>
+                          <dd>
+                            @if (vs.fechaConectado) { {{ formatFechaHora(vs.fechaConectado) }} }
+                            @else { <em>nunca se conectó</em> }
+                          </dd>
+                        </div>
+                        <div><dt>Fin</dt><dd>{{ formatFechaHora(vs.fechaFinalizado) }}</dd></div>
+                        <div><dt>Duración</dt><dd>{{ formatDuracion(vs.duracionSegundos) }}</dd></div>
+                        @if (vs.numeroTelefono) {
+                          <div><dt>Teléfono</dt><dd>{{ vs.numeroTelefono }}</dd></div>
+                        }
+                        @if (vs.ultimaLat != null && vs.ultimaLng != null) {
+                          <div>
+                            <dt>Última ubicación</dt>
+                            <dd>
+                              <a [href]="urlMapaUbicacion(vs.ultimaLat, vs.ultimaLng)" target="_blank"
+                                 rel="noopener" class="pd-video__link">
+                                <i class="fa-solid fa-location-dot" aria-hidden="true"></i>
+                                {{ vs.ultimaLat }}, {{ vs.ultimaLng }}
+                              </a>
+                            </dd>
+                          </div>
+                        }
+                      </dl>
+
+                      <div class="pd-chat">
+                        <header class="pd-chat__head">
+                          <i class="fa-regular fa-comments" aria-hidden="true"></i>
+                          Chat de la videollamada
+                          <app-ui-chip [value]="vs.chat.length" variant="neutral" appearance="soft" size="xs" />
+                        </header>
+                        @if (vs.chat.length === 0) {
+                          <p class="pd-nota">No se intercambiaron mensajes de texto.</p>
+                        } @else {
+                          <ul class="pd-chat__hilo">
+                            @for (m of vs.chat; track m.id) {
+                              <li [class.pd-chat__msg--cad]="m.emisor === 'DESPACHADOR'">
+                                <span class="pd-chat__meta">
+                                  <strong>
+                                    @if (m.emisor === 'DESPACHADOR') { {{ m.usuario || 'Despachador' }} }
+                                    @else { Ciudadano }
+                                  </strong>
+                                  <span>{{ formatHoraChat(m.fecha) }}</span>
+                                </span>
+                                <span class="pd-chat__texto">{{ m.texto }}</span>
+                              </li>
+                            }
+                          </ul>
+                        }
+                      </div>
+                    </div>
+                  </article>
+                }
+              </div>
+            </section>
+          }
+        }
+      </section>
+    </div>
+  }
+
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       INDICADORES
+       ═══════════════════════════════════════════════════════════════════════ -->
+  @if (vista() === 'kpis') {
+
+    <!-- El origen rotulaba estos indicadores «cola CAD completa». Se calculan
+         sobre la página cargada, así que con más de una página eso era falso. -->
+    <section class="pd-panel pd-kpis-head">
+      <app-ui-section-header
+        title="Indicadores de atención"
+        icon="fa-solid fa-chart-bar"
+        [description]="'Calculados sobre ' + alcanceCalculo() + '. Actualizado a las ' + (lastRefresh() | date:'HH:mm:ss') + '.'"
+        appearance="divider"
+      >
+        <app-ui-button
+          header-actions
+          variant="secondary" size="sm" icon="fa-solid fa-arrows-rotate"
+          [loading]="loading()" [disabled]="loading()"
+          (buttonClick)="cargarLista()"
+        >Recalcular</app-ui-button>
+      </app-ui-section-header>
+
+      <div class="pd-kpis">
+        @for (kpi of kpis(); track kpi.label) {
+          <div class="pd-kpi" [class.pd-kpi--alerta]="!kpi.cumple">
+            <span class="pd-kpi__head">
+              <i class="fa-solid {{ kpi.icon }}" aria-hidden="true"></i>
+              @if (kpi.prioridad) {
+                <app-ui-badge [label]="getPrioridadLabel(kpi.prioridad)"
+                              [variant]="getPrioridadVariant(kpi.prioridad)" size="xs" />
+              }
+            </span>
+            <span class="pd-kpi__val">{{ kpi.valor }}<small>{{ kpi.unidad }}</small></span>
+            <span class="pd-kpi__lbl">{{ kpi.label }}</span>
+            @if (kpi.metaTexto) {
+              <span class="pd-kpi__meta" [class.pd-kpi__meta--alerta]="!kpi.cumple">
+                <i class="fa-solid {{ kpi.cumple ? 'fa-circle-check' : 'fa-circle-xmark' }}" aria-hidden="true"></i>
+                Meta: {{ kpi.metaTexto }}
+              </span>
+            }
+          </div>
+        }
+      </div>
+    </section>
+
+    <section class="pd-panel">
+      <app-ui-section-header
+        title="Trabajo por operador"
+        icon="fa-solid fa-users"
+        description="Incidentes recibidos por cada operador y cuántos siguen abiertos."
+        appearance="divider"
+      />
+      <app-ui-table
+        [columns]="columnasOperador"
+        [rows]="operadores()"
+        [loading]="loading()"
+        emptyMessage="Sin datos de operadores en el período consultado."
+        [pageSizeOptions]="[10, 20, 50]"
+      />
+    </section>
+  }
+</div>
