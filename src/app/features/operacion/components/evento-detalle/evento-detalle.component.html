@@ -118,7 +118,7 @@
   <!-- ── Avisos: solo aparecen cuando hay algo que decir ───────────────── -->
   @if ((historialEstadoAbierto && estadoHistorial().length)
         || (!duplicadosDescartados() && duplicados().length && d.estado !== 'C')
-        || mostrarSugerencia() || errorAsignacion()) {
+        || errorAsignacion()) {
     <div class="ev-consola__avisos">
       @if (historialEstadoAbierto && estadoHistorial().length) {
         <section class="ev-panel">
@@ -186,50 +186,6 @@
           </ul>
         </section>
       }
-      @if (mostrarSugerencia()) {
-        <div class="ev-sugerencia">
-          <p class="ev-sugerencia__head">
-            <i class="fa-solid fa-location-crosshairs" aria-hidden="true"></i>
-            Cuadrantes libres más cercanos al hecho
-            <app-ui-button
-              variant="secondary" appearance="ghost" size="sm"
-              icon="fa-solid fa-xmark" iconOnly
-              ariaLabel="Cerrar la sugerencia" tooltip="Cerrar"
-              (buttonClick)="mostrarSugerencia.set(false)"
-            />
-          </p>
-          @if (cargandoSugerencia()) {
-            <p class="ev-cargando"><app-ui-spinner size="sm" /> <span>Buscando el más cercano…</span></p>
-          } @else if (errorSugerencia()) {
-            <p class="ev-nota">{{ errorSugerencia() }}</p>
-          } @else {
-            <ol class="ev-sugerencia__lista">
-              @for (s of sugerenciasRecurso(); track s.medioId; let i = $index) {
-                <li [class.ev-sugerencia__item--top]="i === 0">
-                  <span class="ev-sugerencia__rank">{{ i + 1 }}</span>
-                  <strong>{{ nombrePatrulla(s) }}</strong>
-                  <span class="ev-sugerencia__dist">
-                    {{ s.distanciaM < 1000
-                        ? s.distanciaM + ' m'
-                        : (s.distanciaM / 1000 | number:'1.1-1') + ' km' }}
-                    @if (etaMin(s.distanciaM / 1000, s.tipoMedio) !== null) {
-                      <small title="Estimación por distancia y tipo de recurso">
-                        ~{{ etaMin(s.distanciaM / 1000, s.tipoMedio) }} min
-                      </small>
-                    }
-                  </span>
-                  <app-ui-button
-                    variant="primary" size="sm"
-                    [disabled]="!!asignandoMedioId()"
-                    (buttonClick)="asignarSugerido(s)"
-                  >Asignar</app-ui-button>
-                </li>
-              }
-            </ol>
-          }
-        </div>
-      }
-
       @if (errorAsignacion()) {
         <p class="ev-err ev-err--caja">
           <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
@@ -247,47 +203,6 @@
 
   <div class="ev-consola__cuerpo">
 
-    <!-- ── Escena: el mapa manda ─────────────────────────────────────── -->
-    <section class="ev-escena" aria-label="Mapa del incidente">
-      <div class="ev-escena__barra">
-        <div class="ev-vivo-barra">
-          @if (ultimaActRecursos()) {
-            <span class="ev-vivo-barra__ts">
-              <i class="fa-regular fa-clock" aria-hidden="true"></i>
-              Actualizado {{ ultimaActRecursos() | date:'HH:mm:ss' }}
-            </span>
-          }
-          <app-ui-chip [value]="recursos().length" label="recursos"
-                       variant="info" appearance="soft" size="xs" />
-          <app-ui-button
-            variant="secondary" appearance="ghost" size="sm"
-            icon="fa-solid fa-location-crosshairs"
-            tooltip="Sugerir el cuadrante libre más cercano al sitio"
-            (buttonClick)="sugerirRecursoCercano()"
-          >Cuadrante más cercano</app-ui-button>
-          @if (d.latitudCaso || d.longitudCaso) {
-            <button type="button" class="ev-coords" (click)="centrarEnIncidente()"
-                    title="Centrar el mapa en el incidente">
-              <i class="fa-solid fa-location-dot" aria-hidden="true"></i>
-              {{ d.latitudCaso || '—' }}, {{ d.longitudCaso || '—' }}
-            </button>
-          }
-          @if (errorRecursos()) {
-            <span class="ev-err">
-              <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i> {{ errorRecursos() }}
-            </span>
-          }
-
-        </div>
-      </div>
-
-      <div class="ev-escena__mapa">
-        <div class="ev-mapa-col">
-          <div #mapaEvento class="ev-mapa"></div>
-        </div>
-      </div>
-    </section>
-
     <!-- ── Columna derecha: videollamada + pestañas ───────────────────── -->
     <aside class="ev-lateral">
 
@@ -299,7 +214,16 @@
            [style.--ev-flot-y.px]="videoFlotantePos().y">
         @if (llamadaEnCurso(d)) {
           <div class="ev-video-jefe">
-            <div class="ev-video-jefe__mando">
+            <!-- En modo flotante esta barra es el asa: se arrastra desde aquí. -->
+            <div class="ev-video-jefe__mando"
+                 [class.ev-video-jefe__mando--asa]="modoVideo() === 'flotante'"
+                 (pointerdown)="iniciarArrastreVideo($event)"
+                 (pointermove)="moverArrastreVideo($event)"
+                 (pointerup)="terminarArrastreVideo($event)"
+                 (pointercancel)="terminarArrastreVideo($event)">
+              @if (modoVideo() === 'flotante') {
+                <i class="fa-solid fa-grip-lines ev-video-jefe__grip" aria-hidden="true"></i>
+              }
               <app-ui-button
                 variant="secondary" appearance="ghost" size="sm" iconOnly
                 [icon]="modoVideo() === 'flotante' ? 'fa-solid fa-window-restore' : 'fa-solid fa-clone'"
@@ -501,6 +425,14 @@
           <i class="fa-solid fa-notes-medical" aria-hidden="true"></i><span>Notas</span>
           @if (d.anotaciones.length) { <b class="ev-tabc__n">{{ d.anotaciones.length }}</b> }
         </button>
+        @if (mostrarSugerencia()) {
+          <button type="button" role="tab" class="ev-tabc"
+                  [class.ev-tabc--sel]="panel() === 'cuadrantes'"
+                  [attr.aria-selected]="panel() === 'cuadrantes'"
+                  (click)="irAPanel('cuadrantes')">
+            <i class="fa-solid fa-location-crosshairs" aria-hidden="true"></i><span>Cuadrantes</span>
+          </button>
+        }
         <button type="button" role="tab" class="ev-tabc"
                 [class.ev-tabc--sel]="panel() === 'asistente'"
                 [attr.aria-selected]="panel() === 'asistente'"
@@ -1095,6 +1027,52 @@
 
           }
 
+          @case ('cuadrantes') {
+          @if (mostrarSugerencia()) {
+            <div class="ev-sugerencia">
+              <p class="ev-sugerencia__head">
+                <i class="fa-solid fa-location-crosshairs" aria-hidden="true"></i>
+                Cuadrantes libres más cercanos al hecho
+                <app-ui-button
+                  variant="secondary" appearance="ghost" size="sm"
+                  icon="fa-solid fa-xmark" iconOnly
+                  ariaLabel="Cerrar la sugerencia" tooltip="Cerrar"
+                  (buttonClick)="mostrarSugerencia.set(false)"
+                />
+              </p>
+              @if (cargandoSugerencia()) {
+                <p class="ev-cargando"><app-ui-spinner size="sm" /> <span>Buscando el más cercano…</span></p>
+              } @else if (errorSugerencia()) {
+                <p class="ev-nota">{{ errorSugerencia() }}</p>
+              } @else {
+                <ol class="ev-sugerencia__lista">
+                  @for (s of sugerenciasRecurso(); track s.medioId; let i = $index) {
+                    <li [class.ev-sugerencia__item--top]="i === 0">
+                      <span class="ev-sugerencia__rank">{{ i + 1 }}</span>
+                      <strong>{{ nombrePatrulla(s) }}</strong>
+                      <span class="ev-sugerencia__dist">
+                        {{ s.distanciaM < 1000
+                            ? s.distanciaM + ' m'
+                            : (s.distanciaM / 1000 | number:'1.1-1') + ' km' }}
+                        @if (etaMin(s.distanciaM / 1000, s.tipoMedio) !== null) {
+                          <small title="Estimación por distancia y tipo de recurso">
+                            ~{{ etaMin(s.distanciaM / 1000, s.tipoMedio) }} min
+                          </small>
+                        }
+                      </span>
+                      <app-ui-button
+                        variant="primary" size="sm"
+                        [disabled]="!!asignandoMedioId()"
+                        (buttonClick)="asignarSugerido(s)"
+                      >Asignar</app-ui-button>
+                    </li>
+                  }
+                </ol>
+              }
+            </div>
+          }
+          }
+
           @case ('archivos') {
             @if (adjuntos().length > 0) {
               <app-ui-expansion-panel
@@ -1109,6 +1087,47 @@
         }
       </div>
     </aside>
+    <!-- ── Escena: el mapa manda ─────────────────────────────────────── -->
+    <section class="ev-escena" aria-label="Mapa del incidente">
+      <div class="ev-escena__barra">
+        <div class="ev-vivo-barra">
+          @if (ultimaActRecursos()) {
+            <span class="ev-vivo-barra__ts">
+              <i class="fa-regular fa-clock" aria-hidden="true"></i>
+              Actualizado {{ ultimaActRecursos() | date:'HH:mm:ss' }}
+            </span>
+          }
+          <app-ui-chip [value]="recursos().length" label="recursos"
+                       variant="info" appearance="soft" size="xs" />
+          <app-ui-button
+            variant="secondary" appearance="ghost" size="sm"
+            icon="fa-solid fa-location-crosshairs"
+            tooltip="Sugerir el cuadrante libre más cercano al sitio"
+            (buttonClick)="sugerirRecursoCercano()"
+          >Cuadrante más cercano</app-ui-button>
+          @if (d.latitudCaso || d.longitudCaso) {
+            <button type="button" class="ev-coords" (click)="centrarEnIncidente()"
+                    title="Centrar el mapa en el incidente">
+              <i class="fa-solid fa-location-dot" aria-hidden="true"></i>
+              {{ d.latitudCaso || '—' }}, {{ d.longitudCaso || '—' }}
+            </button>
+          }
+          @if (errorRecursos()) {
+            <span class="ev-err">
+              <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i> {{ errorRecursos() }}
+            </span>
+          }
+
+        </div>
+      </div>
+
+      <div class="ev-escena__mapa">
+        <div class="ev-mapa-col">
+          <div #mapaEvento class="ev-mapa"></div>
+        </div>
+      </div>
+    </section>
+
   </div>
 </div>
 }

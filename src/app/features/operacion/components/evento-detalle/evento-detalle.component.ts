@@ -78,7 +78,8 @@ export interface CambioEstadoEvento {
  * 2.832 líneas con una hoja de estilos de 3.700.
  */
 /** Pestañas del panel lateral de la consola. */
-export type PanelConsola = 'caso' | 'recursos' | 'despacho' | 'asistente' | 'notas' | 'archivos';
+export type PanelConsola =
+  | 'caso' | 'recursos' | 'despacho' | 'asistente' | 'notas' | 'archivos' | 'cuadrantes';
 
 @Component({
   selector: 'app-evento-detalle',
@@ -261,6 +262,50 @@ export class EventoDetalleComponent implements OnDestroy {
     this.modoVideo.update((m) => (m === 'flotante' ? 'panel' : 'flotante'));
     // El recuadro cambia de tamaño: Leaflet necesita que le avisen.
     setTimeout(() => this.mapa?.invalidateSize(), 260);
+  }
+
+  /**
+   * Arrastre de la ventana flotante.
+   *
+   * Sin esto la ventana se despegaba pero quedaba clavada en una esquina, que
+   * es tanto como no despegarla: lo que se busca al sacarla es poder ponerla
+   * donde no tape lo que se está mirando.
+   *
+   * Se usan eventos de puntero —valen para ratón y para pantalla táctil— y se
+   * captura el puntero en el asa, de modo que el arrastre no se pierde si el
+   * cursor sale de ella. La posición se guarda en píxeles desde la esquina
+   * inferior derecha y se limita al viewport para que la ventana no pueda
+   * perderse fuera de la pantalla.
+   */
+  private arrastreVideo: { x: number; y: number; px: number; py: number } | null = null;
+
+  iniciarArrastreVideo(ev: PointerEvent): void {
+    if (this.modoVideo() !== 'flotante') return;
+    const pos = this.videoFlotantePos();
+    this.arrastreVideo = { x: ev.clientX, y: ev.clientY, px: pos.x, py: pos.y };
+    (ev.target as HTMLElement).setPointerCapture?.(ev.pointerId);
+    ev.preventDefault();
+  }
+
+  moverArrastreVideo(ev: PointerEvent): void {
+    const a = this.arrastreVideo;
+    if (!a) return;
+    // El desplazamiento va invertido: la ventana se ancla por abajo y por la
+    // derecha, así que arrastrar hacia la izquierda AUMENTA el margen derecho.
+    const x = a.px - (ev.clientX - a.x);
+    const y = a.py - (ev.clientY - a.y);
+    const maxX = Math.max(0, window.innerWidth  - 220);
+    const maxY = Math.max(0, window.innerHeight - 140);
+    this.videoFlotantePos.set({
+      x: Math.min(Math.max(0, x), maxX),
+      y: Math.min(Math.max(0, y), maxY),
+    });
+  }
+
+  terminarArrastreVideo(ev: PointerEvent): void {
+    if (!this.arrastreVideo) return;
+    this.arrastreVideo = null;
+    (ev.target as HTMLElement).releasePointerCapture?.(ev.pointerId);
   }
 
   datosAbierto            = true;
@@ -1348,6 +1393,10 @@ export class EventoDetalleComponent implements OnDestroy {
     const lat = parseFloat(d.latitudCaso  || '');
     const lng = parseFloat(d.longitudCaso || '');
     this.mostrarSugerencia.set(true);
+    // El resultado vive en su propia pestaña. Antes se abría como un panel
+    // sobre el mapa y, con más de tres cuadrantes, empujaba hacia abajo todo
+    // lo que tenía debajo: el mapa perdía alto y el layout se descuadraba.
+    this.panel.set('cuadrantes');
     if (!isFinite(lat) || !isFinite(lng)) {
       this.errorSugerencia.set('El incidente no tiene coordenadas registradas.');
       return;

@@ -243,8 +243,13 @@
 
 // ── Cuerpo ────────────────────────────────────────────────────────────────
 .ev-consola__cuerpo {
-  display:               grid;
-  grid-template-columns: minmax(0, 1fr) clamp(330px, 27vw, 420px);
+  display: grid;
+  // El centro —videollamada y pestañas— se lleva el ancho sobrante; el mapa
+  // es una columna lateral de ancho acotado. Antes era al revés y el mapa se
+  // estiraba a lo ancho sin ganar nada: un mapa muy ancho y bajo enseña menos
+  // contexto útil que uno más cuadrado, y ese ancho le hacía falta a la ficha
+  // del caso, que quedaba en una sola columna con la mitad derecha en blanco.
+  grid-template-columns: minmax(0, 1fr) clamp(300px, 24vw, 400px);
   gap:                   10px;
   min-height:            0;
 
@@ -256,12 +261,17 @@
 }
 
 // ── Escena: el mapa ───────────────────────────────────────────────────────
+// El alto del mapa lo decide la rejilla, nunca su contenido ni el de la
+// pestaña que esté abierta al lado: al cambiar de pestaña el mapa se
+// redimensionaba, que además obliga a Leaflet a recalcularse a cada paso.
 .ev-escena {
   display:            grid;
   grid-template-rows: auto minmax(0, 1fr);
   gap:                8px;
   min-height:         0;
   min-width:          0;
+  height:             100%;
+  overflow:           hidden;
 
   &__barra {
     .ev-vivo-barra { margin: 0; }
@@ -283,6 +293,10 @@
   gap:                8px;
   min-height:         0;
   min-width:          0;
+  height:             100%;
+  // Cualquier exceso se desplaza DENTRO del cuerpo de la pestaña, nunca
+  // empujando la columna y con ella el alto del mapa.
+  overflow:           hidden;
 
   &__video { min-height: 0; }
 
@@ -309,6 +323,30 @@
     position: absolute;
     top: 6px; left: 6px;
     z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  // En modo flotante la barra es el asa: ocupa todo el ancho para que haya
+  // dónde agarrar, y el cursor lo anuncia.
+  &__mando--asa {
+    right: 6px;
+    padding: 2px 6px;
+    border-radius: 8px;
+    background: rgb(15 23 42 / 55%);
+    cursor: grab;
+    touch-action: none;      // el arrastre no compite con el gesto de scroll
+
+    &:active { cursor: grabbing; }
+  }
+
+  &__grip {
+    flex: 1 1 auto;
+    color: rgb(255 255 255 / 70%);
+    font-size: 12px;
+    text-align: center;
+    pointer-events: none;
   }
 }
 
@@ -495,10 +533,15 @@
 
 // ── Datos del incidente ───────────────────────────────────────────────────
 .ev-datos {
-  display:               grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  display: grid;
+  // Dos columnas fijas mientras haya sitio. Con `auto-fit` y un mínimo de
+  // 200 px, en una columna estrecha caía a una sola y dejaba la mitad derecha
+  // en blanco; el dato de un incidente es corto y entra de sobra en la mitad.
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap:                   11px 16px;
   margin:                0;
+
+  @media (max-width: 620px) { grid-template-columns: minmax(0, 1fr); }
 
   &__sep {
     @extend %fila;
