@@ -12,10 +12,6 @@
 
 :host {
   display: block;
-  // La consola de despacho ocupa el alto disponible; sin esto la cadena de
-  // alturas se rompe aquí y el mapa no sabe cuánto puede crecer.
-  height: 100%;
-  min-height: 0;
 
   // Escala tipográfica de la pantalla, en un solo sitio.
   --f-xs: calc(10.5px * var(--font-size-scale, 1));
@@ -87,17 +83,7 @@
   &--sel { border-color: var(--c-acento); background: var(--c-sel); font-weight: 700; }
 }
 
-// La pantalla completa es una consola: cabecera fija arriba y, debajo, una
-// rejilla que llena lo que queda. El scroll vive dentro de los paneles, no en
-// el documento — el despachador no debería tener que buscar el mapa.
-.ev-page {
-  display:            grid;
-  grid-template-rows: auto minmax(0, 1fr);
-  gap:                12px;
-  height:             100%;
-  min-height:         0;
-  padding-bottom:     8px;
-}
+.ev-page { @extend %columna; gap: 14px; padding-bottom: 8px; }
 
 .ev-panel {
   @extend %columna;
@@ -185,38 +171,31 @@
 // ── Distribución general ──────────────────────────────────────────────────
 .ev-layout {
   display:               grid;
-  grid-template-columns: clamp(240px, 21vw, 330px) minmax(0, 1fr);
-  gap:                   12px;
-  align-items:           stretch;
+  grid-template-columns: minmax(0, 320px) minmax(0, 1fr);
+  height:                calc(100vh - var(--header-height, 70px) - 120px);
   min-height:            0;
+  gap:                   12px;
 
-  // La bandeja se desplaza por su cuenta; el detalle gobierna su propio alto.
-  > .ev-bandeja { min-height: 0; overflow: hidden; }
-  > app-evento-detalle,
-  > .ev-detalle { min-height: 0; }
-
-  @media (max-width: 1280px) {
-    grid-template-columns: minmax(0, 1fr);
-    overflow-y: auto;
-  }
+  @media (max-width: 1280px) { grid-template-columns: minmax(0, 1fr); }
 }
 
-// La bandeja es la brújula del despachador: se queda a la vista mientras se
-// recorre un detalle que mide varias pantallas.
+// La bandeja permanece fija mientras se trabaja en el detalle.
 .ev-bandeja {
-  // Ya no necesita `sticky` ni una altura calculada contra el viewport: la
-  // rejilla de la consola le da el alto exacto y ella se desplaza por dentro.
-  min-height: 0;
+  position:   sticky;
+  top:        8px;
+  max-height: calc(100vh - var(--header-height, 70px) - 120px);
+  overflow-y: auto;
 
-  @media (max-width: 1280px) { max-height: 60vh; }
+  @media (max-width: 1280px) { position: static; max-height: none; }
 }
 
+// El detalle ocupa el resto del grid y cede la altura al ed-shell interior.
 .ev-detalle {
-  display:    grid;
-  min-width:  0;
-  min-height: 0;
-
-  app-evento-detalle { min-height: 0; }
+  display:        flex;
+  flex-direction: column;
+  min-width:      0;
+  min-height:     0;
+  overflow:       hidden;
 }
 
 // ── Filtros de la bandeja ─────────────────────────────────────────────────

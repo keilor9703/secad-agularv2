@@ -18,3 +18,23 @@ D:\Disco E\SECAD_SEPT\SECAD_NET8.0\MODERNIZACION\SecadAngular\backend\oftic\ofti
 D:\Disco E\SECAD_SEPT\SECAD_NET8.0\MODERNIZACION\SecadAngular\backend\oftic\oftic.bl\obj\Debug\net8.0\refint\Negocio.dll
 D:\Disco E\SECAD_SEPT\SECAD_NET8.0\MODERNIZACION\SecadAngular\backend\oftic\oftic.bl\obj\Debug\net8.0\Negocio.pdb
 D:\Disco E\SECAD_SEPT\SECAD_NET8.0\MODERNIZACION\SecadAngular\backend\oftic\oftic.bl\obj\Debug\net8.0\ref\Negocio.dll
+C:\Users\acer\Documents\V2\secad-agularv2\Bakcend\backend\oftic\oftic.bl\bin\Debug\net8.0\Negocio.deps.json
+C:\Users\acer\Documents\V2\secad-agularv2\Bakcend\backend\oftic\oftic.bl\bin\Debug\net8.0\Negocio.dll
+C:\Users\acer\Documents\V2\secad-agularv2\Bakcend\backend\oftic\oftic.bl\bin\Debug\net8.0\Negocio.pdb
+C:\Users\acer\Documents\V2\secad-agularv2\Bakcend\backend\oftic\oftic.bl\bin\Debug\net8.0\Comun.dll
+C:\Users\acer\Documents\V2\secad-agularv2\Bakcend\backend\oftic\oftic.bl\bin\Debug\net8.0\Datos.dll
+C:\Users\acer\Documents\V2\secad-agularv2\Bakcend\backend\oftic\oftic.bl\bin\Debug\net8.0\Servicios.dll
+C:\Users\acer\Documents\V2\secad-agularv2\Bakcend\backend\oftic\oftic.bl\bin\Debug\net8.0\Comun.pdb
+C:\Users\acer\Documents\V2\secad-agularv2\Bakcend\backend\oftic\oftic.bl\bin\Debug\net8.0\Datos.pdb
+C:\Users\acer\Documents\V2\secad-agularv2\Bakcend\backend\oftic\oftic.bl\bin\Debug\net8.0\Servicios.pdb
+C:\Users\acer\Documents\V2\secad-agularv2\Bakcend\backend\oftic\oftic.bl\obj\Debug\net8.0\Negocio.csproj.AssemblyReference.cache
+C:\Users\acer\Documents\V2\secad-agularv2\Bakcend\backend\oftic\oftic.bl\obj\Debug\net8.0\Negocio.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\acer\Documents\V2\secad-agularv2\Bakcend\backend\oftic\oftic.bl\obj\Debug\net8.0\Negocio.AssemblyInfoInputs.cache
+C:\Users\acer\Documents\V2\secad-agularv2\Bakcend\backend\oftic\oftic.bl\obj\Debug\net8.0\Negocio.AssemblyInfo.cs
+C:\Users\acer\Documents\V2\secad-agularv2\Bakcend\backend\oftic\oftic.bl\obj\Debug\net8.0\Negocio.csproj.CoreCompileInputs.cache
+C:\Users\acer\Documents\V2\secad-agularv2\Bakcend\backend\oftic\oftic.bl\obj\Debug\net8.0\Negocio.sourcelink.json
+C:\Users\acer\Documents\V2\secad-agularv2\Bakcend\backend\oftic\oftic.bl\obj\Debug\net8.0\Negocio.csproj.Up2Date
+C:\Users\acer\Documents\V2\secad-agularv2\Bakcend\backend\oftic\oftic.bl\obj\Debug\net8.0\Negocio.dll
+C:\Users\acer\Documents\V2\secad-agularv2\Bakcend\backend\oftic\oftic.bl\obj\Debug\net8.0\refint\Negocio.dll
+C:\Users\acer\Documents\V2\secad-agularv2\Bakcend\backend\oftic\oftic.bl\obj\Debug\net8.0\Negocio.pdb
+C:\Users\acer\Documents\V2\secad-agularv2\Bakcend\backend\oftic\oftic.bl\obj\Debug\net8.0\ref\Negocio.dll
