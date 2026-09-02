@@ -69,12 +69,35 @@
   --footer-height: calc(78px + env(safe-area-inset-bottom));
 }
 
+/*
+ * Contenedor donde el router inserta cada pantalla.
+ *
+ * Antes no propagaba altura: crecía con su contenido, de modo que una página
+ * que pide `height: 100%` para repartirse el alto —la consola de despacho de
+ * Eventos— no tenía contra qué medir y se estiraba sin límite. El efecto era
+ * que sus listas largas empujaban la página entera en vez de desplazarse por
+ * dentro. Medido: .content llegaba a 2405 px con 27 recursos en la pestaña.
+ *
+ * Con `height: 100%` toma el alto visible de .main. Las pantallas largas no
+ * cambian: su contenido desborda y .main —que ya tenía overflow-y auto— sigue
+ * desplazándolo igual que antes.
+ */
 .content {
   width: 100%;
   min-width: 0;
+  height: 100%;
+  min-height: 0;
   margin-top: 0;
   position: relative;
   padding: 0;
+  display: flex;
+  flex-direction: column;
+
+  /* La pantalla enrutada es el único hijo con presencia visual. */
+  > *:not(router-outlet) {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
 }
 
 .app-footer-fixed {

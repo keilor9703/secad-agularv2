@@ -249,7 +249,7 @@
   // estiraba a lo ancho sin ganar nada: un mapa muy ancho y bajo enseña menos
   // contexto útil que uno más cuadrado, y ese ancho le hacía falta a la ficha
   // del caso, que quedaba en una sola columna con la mitad derecha en blanco.
-  grid-template-columns: minmax(0, 1fr) clamp(300px, 24vw, 400px);
+  grid-template-columns: minmax(0, 1fr) clamp(340px, 26vw, 560px);
   gap:                   10px;
   min-height:            0;
 
@@ -303,11 +303,26 @@
   // Ventana flotante: la videollamada se despega para dejar la columna
   // entera al panel de pestañas sin perder de vista al ciudadano.
   &__video--flotante {
-    position:      fixed;
-    right:         var(--ev-flot-x, 24px);
-    bottom:        var(--ev-flot-y, 24px);
-    z-index:       60;
-    width:         clamp(280px, 26vw, 380px);
+    position: fixed;
+    right:    var(--ev-flot-x, 24px);
+    bottom:   var(--ev-flot-y, 24px);
+
+    // Leaflet coloca sus capas y controles hasta z-index 1000, así que con 60
+    // la ventana «flotante» quedaba POR DEBAJO del mapa. Por encima de todo,
+    // salvo los modales del kit.
+    z-index: 1200;
+
+    // Arranca ancha —antes era una rendija de 280 px en la que no se veía la
+    // escena— y se puede redimensionar arrastrando la esquina inferior
+    // derecha. `resize` exige un overflow distinto de visible.
+    width:      clamp(360px, 34vw, 720px);
+    min-width:  300px;
+    max-width:  92vw;
+    min-height: 220px;
+    max-height: 88vh;
+    resize:     both;
+    overflow:   auto;
+
     padding:       8px;
     border:        1px solid var(--c-borde);
     border-radius: 14px;
