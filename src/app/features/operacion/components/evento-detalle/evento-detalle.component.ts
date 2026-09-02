@@ -77,6 +77,9 @@ export interface CambioEstadoEvento {
  * detalle, mapa, WebRTC, despacho y siete modales— era un solo componente de
  * 2.832 líneas con una hoja de estilos de 3.700.
  */
+/** Pestañas del panel lateral de la consola. */
+export type PanelConsola = 'caso' | 'recursos' | 'despacho' | 'asistente' | 'notas' | 'archivos';
+
 @Component({
   selector: 'app-evento-detalle',
   standalone: true,
@@ -96,7 +99,7 @@ export interface CambioEstadoEvento {
     AdjuntosCasoComponent,
   ],
   templateUrl: './evento-detalle.component.html',
-  styleUrls: ['./evento-detalle.component.scss'],
+  styleUrls: ['./evento-detalle.component.scss', './evento-detalle.modales.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class EventoDetalleComponent implements OnDestroy {
@@ -230,6 +233,36 @@ export class EventoDetalleComponent implements OnDestroy {
   }
 
   // ── Paneles del detalle ───────────────────────────────────────────────────
+  // ── Estado de la consola ────────────────────────────────────────────────
+  //  La pantalla dejó de ser una columna que se recorre con scroll: ahora es
+  //  una consola que cabe entera. El mapa y la videollamada mandan, y todo lo
+  //  demás vive en un panel de pestañas a la derecha, para que el despachador
+  //  no pierda de vista dónde están el incidente, las patrullas y el
+  //  ciudadano mientras consulta cualquier otra cosa.
+  readonly panel = signal<PanelConsola>('caso');
+
+  /**
+   * `panel`  → la videollamada ocupa su hueco en la columna derecha.
+   * `flotante` → se despega en una ventanita que se puede arrastrar, para
+   *              dejar la columna entera al panel de pestañas sin perder de
+   *              vista al ciudadano.
+   * La pantalla completa la resuelve el navegador y no necesita estado.
+   */
+  readonly modoVideo = signal<'panel' | 'flotante'>('panel');
+
+  /** Posición de la ventana flotante, en píxeles desde la esquina inferior derecha. */
+  readonly videoFlotantePos = signal<{ x: number; y: number }>({ x: 24, y: 24 });
+
+  irAPanel(destino: PanelConsola): void {
+    this.panel.set(destino);
+  }
+
+  alternarVideoFlotante(): void {
+    this.modoVideo.update((m) => (m === 'flotante' ? 'panel' : 'flotante'));
+    // El recuadro cambia de tamaño: Leaflet necesita que le avisen.
+    setTimeout(() => this.mapa?.invalidateSize(), 260);
+  }
+
   datosAbierto            = true;
   recursosAbierto         = true;
   despachoAbierto         = true;

@@ -1,1019 +1,1118 @@
-
 @if (cargandoDetalle()) {
   <p class="ev-cargando"><app-ui-spinner size="sm" /> <span>Cargando el evento…</span></p>
 }
 
 @if (detalle(); as d) {
 
-  <!-- Cabecera -->
-  <div class="ev-detalle-head {{ getSemaforoClass(d) }}">
-    <app-ui-button
-      variant="secondary" appearance="ghost" size="sm"
-      icon="fa-solid fa-arrow-left" iconOnly
-      ariaLabel="Volver a la bandeja" tooltip="Volver a la bandeja (Esc)"
-      (buttonClick)="volverLista()"
-    />
-    <span class="ev-detalle-head__info">
-      <span class="ev-detalle-head__titulo">
-        @if (d.codiPedido) { <strong>{{ d.codiPedido }}</strong> }
-        <span class="ev-detalle-head__id">
-          #{{ evento().numeEvento || d.id }}
-        </span>
-      </span>
-      <span class="ev-detalle-head__sub">
-        {{ d.direCaso }}@if (d.ciudad) { · {{ d.ciudad }} }
-      </span>
-      <span class="ev-detalle-head__meta">
-        <i class="fa-regular fa-calendar-check" aria-hidden="true"></i>
-        Creado {{ getFechaCreacionLabel(d) }}
-        · <i class="fa-regular fa-clock" aria-hidden="true"></i> {{ getElapsedLabel(d) }}
-        @if (d.ultimoAccesoUsername) {
-          · <i class="fa-regular fa-eye" aria-hidden="true"></i>
-          Abierto por {{ d.ultimoAccesoUsername }}
-          @if (d.ultimoAccesoFecha) { a las {{ d.ultimoAccesoFecha | date:'HH:mm' }} }
-        }
-      </span>
-      @if (presenciaUsuarios().length) {
-        <span class="ev-presencia" title="Otros despachadores viendo este caso ahora">
-          <i class="fa-solid fa-user-group" aria-hidden="true"></i>
-          También lo está viendo: {{ presenciaUsuarios().join(', ') }}
-        </span>
-      }
-      @if (d.pedidoPadreNum) {
-        <span class="ev-vinculo">
-          <i class="fa-solid fa-link" aria-hidden="true"></i>
-          Vinculado al caso #{{ d.pedidoPadreNum }}
-          <app-ui-button
-            variant="secondary" appearance="ghost" size="sm"
-            icon="fa-solid fa-xmark" iconOnly
-            ariaLabel="Quitar el vínculo" tooltip="Quitar el vínculo"
-            [disabled]="!!vinculandoId()"
-            (buttonClick)="desvincularCaso()"
-          />
-        </span>
-      }
-    </span>
-    <span class="ev-detalle-head__badges">
-      <app-ui-badge [label]="getPrioridadLabel(d.prioridad)"
-                    [variant]="getPrioridadVariante(d.prioridad)" size="sm" />
-      <app-ui-badge [label]="getEstadoLabel(d.estado)"
-                    [variant]="getEstadoVariante(d.estado)" size="sm" />
-    </span>
-  </div>
+<!-- ═══════════════════════════════════════════════════════════════════════
+     Consola de despacho
 
-  <!-- Barra de acciones -->
-  <div class="ev-acciones">
-    @if (d.estado !== 'C') {
-      <span class="ev-acciones__lbl">Cambiar estado a:</span>
-      @for (est of ESTADOS; track est.valor) {
-        @if (est.valor !== 'C' && est.valor !== d.estado) {
-          <app-ui-button
-            variant="secondary" appearance="ghost" size="sm"
-            [disabled]="cambiandoEstado()"
-            (buttonClick)="abrirModalCambiarEstado(est.valor)"
-          >{{ est.label }}</app-ui-button>
-        }
-      }
-    }
-    @if (estadoHistorial().length) {
+     Una sola pantalla, sin scroll de página: el mapa y la videollamada
+     siempre a la vista —son los dos sitios donde ocurre la emergencia— y
+     todo lo demás en un panel de pestañas que se consulta sin perderlos.
+     Antes esto era una columna de acordeones que había que recorrer.
+     ═══════════════════════════════════════════════════════════════════════ -->
+<div class="ev-consola" [class.ev-consola--video]="llamadaEnCurso(d)">
+
+  <!-- ── Franja de identidad del caso ──────────────────────────────────── -->
+  <header class="ev-consola__barra {{ getSemaforoClass(d) }}">
+    <div class="ev-detalle-head {{ getSemaforoClass(d) }}">
       <app-ui-button
         variant="secondary" appearance="ghost" size="sm"
-        icon="fa-solid fa-clock-rotate-left"
-        tooltip="Ver el historial de cambios de estado"
-        (buttonClick)="historialEstadoAbierto = !historialEstadoAbierto"
-      >Historial ({{ estadoHistorial().length }})</app-ui-button>
-    }
-    <span class="ev-acciones__sep"></span>
-    @if (d.estado !== 'C') {
-      <app-ui-button
-        variant="secondary" size="sm" icon="fa-solid fa-share-from-square"
-        tooltip="Remitir este caso a otro canal SECAD o a una agencia externa"
-        (buttonClick)="abrirModalRemitir()"
-      >Remitir</app-ui-button>
-      <app-ui-button
-        variant="danger" size="sm" icon="fa-solid fa-lock"
-        (buttonClick)="abrirModalCerrar()"
-      >Cerrar evento</app-ui-button>
-    } @else {
-      <app-ui-button
-        variant="warning" size="sm" icon="fa-solid fa-lock-open"
-        [disabled]="cambiandoEstado()"
-        tooltip="Reabrir el caso (requiere motivo)"
-        (buttonClick)="reabrirEvento()"
-      >Reabrir</app-ui-button>
-    }
-  </div>
-
-  @if (historialEstadoAbierto && estadoHistorial().length) {
-    <section class="ev-panel">
-      <app-ui-section-header title="Historial de estados" icon="fa-solid fa-clock-rotate-left"
-                             appearance="divider" />
-      <ul class="ev-historial">
-        @for (h of estadoHistorial(); track h.fecha + '-' + h.estadoNuevo) {
-          <li>
-            <span class="ev-historial__estados">
-              @if (h.estadoAnterior) {
-                <app-ui-badge [label]="getEstadoLabel(h.estadoAnterior)"
-                              [variant]="getEstadoVariante(h.estadoAnterior)" size="xs" />
-                <i class="fa-solid fa-arrow-right-long" aria-hidden="true"></i>
-              }
-              <app-ui-badge [label]="getEstadoLabel(h.estadoNuevo)"
-                            [variant]="getEstadoVariante(h.estadoNuevo)" size="xs" />
-            </span>
-            <span class="ev-historial__meta">
-              {{ h.username || '—' }} · {{ h.fecha | date:'dd/MM HH:mm' }}
-            </span>
-            @if (h.motivo) { <span class="ev-historial__motivo">«{{ h.motivo }}»</span> }
-          </li>
-        }
-      </ul>
-    </section>
-  }
-
-  <!-- Duplicados -->
-  @if (!duplicadosDescartados() && duplicados().length && d.estado !== 'C') {
-    <section class="ev-panel ev-dupl">
-      <app-ui-section-header
-        title="Casos recientes en la misma zona"
-        icon="fa-solid fa-triangle-exclamation"
-        description="Puede ser un duplicado o una reincidencia. Es solo contexto: no bloquea nada."
-        appearance="divider"
-      >
-        <app-ui-button
-          header-actions
-          variant="secondary" appearance="ghost" size="sm"
-          icon="fa-solid fa-xmark" iconOnly
-          ariaLabel="Descartar el aviso" tooltip="Descartar"
-          (buttonClick)="descartarDuplicados()"
-        />
-      </app-ui-section-header>
-      <ul class="ev-dupl__lista">
-        @for (dup of duplicados(); track dup.id) {
-          <li>
-            <app-ui-badge [label]="getEstadoLabel(dup.estado || '')"
-                          [variant]="getEstadoVariante(dup.estado || '')" size="xs" />
-            <span class="ev-dupl__txt">
-              <strong>{{ dup.direCaso || 'Sin dirección' }}</strong>
-              <small>
-                {{ dup.distanciaMetros | number:'1.0-0' }} m · hace {{ dup.minutosAtras }} min
-                @if (dup.codiPedido) { · {{ dup.codiPedido }} }
-              </small>
-            </span>
-            @if (!d.pedidoPadreNum) {
-              <app-ui-button
-                variant="secondary" appearance="ghost" size="sm" icon="fa-solid fa-link"
-                [loading]="vinculandoId() === dup.id"
-                tooltip="Marcar como el mismo incidente"
-                (buttonClick)="vincularCaso(dup)"
-              >Vincular</app-ui-button>
-            }
-          </li>
-        }
-      </ul>
-    </section>
-  }
-
-  <!-- ── Datos del incidente ─────────────────────────────────────── -->
-  <app-ui-expansion-panel
-    title="Datos del incidente" icon="fa-solid fa-file-shield"
-    [(expanded)]="datosAbierto"
-  >
-    <dl class="ev-datos">
-      <div class="ev-dato ev-dato--full ev-dato--destacado">
-        <dt><i class="fa-solid fa-location-dot" aria-hidden="true"></i> Dirección del caso</dt>
-        <dd>{{ d.direCaso || '—' }}</dd>
-        @if (d.barrio) { <dd class="ev-dato__sub">{{ d.barrio }}</dd> }
-      </div>
-
-      <div class="ev-dato">
-        <dt><i class="fa-solid fa-phone-volume" aria-hidden="true"></i> N.º de llamada</dt>
-        <dd>{{ d.numeLlamada ?? '—' }}</dd>
-      </div>
-      <div class="ev-dato">
-        <dt><i class="fa-solid fa-phone" aria-hidden="true"></i> Teléfono</dt>
-        <dd>{{ d.numeTelefono ?? '—' }}</dd>
-      </div>
-      <div class="ev-dato">
-        <dt><i class="fa-regular fa-clock" aria-hidden="true"></i> Hora del caso</dt>
-        <dd>{{ formatHora(d.horaCaso) }}</dd>
-      </div>
-      <div class="ev-dato">
-        <dt><i class="fa-solid fa-user" aria-hidden="true"></i> Llamante</dt>
-        <dd>{{ d.nombLlamante || '—' }}</dd>
-      </div>
-      <div class="ev-dato">
-        <dt><i class="fa-solid fa-mobile-screen" aria-hidden="true"></i> Propietario de la línea</dt>
-        <dd>{{ d.propTelefono || '—' }}</dd>
-      </div>
-      <div class="ev-dato">
-        <dt><i class="fa-solid fa-city" aria-hidden="true"></i> Ciudad</dt>
-        <dd>{{ d.ciudad || '—' }}</dd>
-      </div>
-
-      <div class="ev-datos__sep ev-dato--full"><span>Tipificación</span></div>
-
-      <div class="ev-dato ev-dato--full">
-        <dt><i class="fa-solid fa-tags" aria-hidden="true"></i> Código(s) de caso</dt>
-        <dd class="ev-codigos">
-          @if (d.codiPedido) {
-            <span class="ev-codigo">
-              <strong>{{ d.codiPedido }}</strong>
-              <small>{{ d.descPedido || '(sin descripción)' }}</small>
-            </span>
-          }
-          @if (d.codiPedido2) {
-            <span class="ev-codigo ev-codigo--sec">
-              <strong>{{ d.codiPedido2 }}</strong>
-              <small>{{ d.descPedido2 || '(sin descripción)' }}</small>
-            </span>
-          }
-          @if (!d.codiPedido) { — }
-        </dd>
-      </div>
-
-      <div class="ev-dato">
-        <dt><i class="fa-solid fa-clipboard-list" aria-hidden="true"></i> Tipo</dt>
-        <dd>{{ d.tipoPedido || '—' }}</dd>
-      </div>
-      <div class="ev-dato">
-        <dt><i class="fa-solid fa-star" aria-hidden="true"></i> Calidad</dt>
-        <dd>{{ d.caliPedido || '—' }}</dd>
-      </div>
-      <div class="ev-dato">
-        <dt><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i> Importancia</dt>
-        <dd>{{ d.importancia || '—' }}</dd>
-      </div>
-
-      @if (d.comentario) {
-        <div class="ev-dato ev-dato--full">
-          <dt><i class="fa-solid fa-align-left" aria-hidden="true"></i> Descripción de los hechos</dt>
-          <dd class="ev-dato--relato">{{ d.comentario }}</dd>
-        </div>
-      }
-    </dl>
-  </app-ui-expansion-panel>
-
-  <!-- ── Canales y agencias asignados ────────────────────────────── -->
-  @if (canalesAsignados(); as ca) {
-    @if (ca.canales.length > 1 || ca.agenciasExternas.length > 0) {
-      <app-ui-expansion-panel
-        title="Canales y agencias que atienden el caso"
-        icon="fa-solid fa-diagram-project"
-        description="No se cierra definitivamente hasta que todos terminen su participación."
-        [(expanded)]="canalesAsignadosAbierto"
-      >
-        <ul class="ev-canales">
-          @for (c of ca.canales; track c.codigo + '-' + c.fuerzaId) {
-            <li [class.ev-canal--cerrado]="c.estado === 'C'">
-              <i class="fa-solid" [class.fa-tower-broadcast]="c.estado !== 'C'"
-                 [class.fa-circle-check]="c.estado === 'C'" aria-hidden="true"></i>
-              <span class="ev-canal__info">
-                <strong>
-                  {{ c.fuerzaDescripcion || 'Fuerza ' + c.fuerzaId }} —
-                  {{ c.canalDescripcion || 'Canal ' + c.codigo }}
-                </strong>
-                <small>
-                  @if (c.estado === 'C') {
-                    Cerró su participación{{ c.usuarioModifica ? ' — ' + c.usuarioModifica : '' }}
-                  } @else if (c.actuacionesActivas > 0) {
-                    {{ c.actuacionesActivas }} recurso(s) activo(s)
-                  } @else {
-                    Sin recursos asignados todavía
-                  }
-                </small>
-              </span>
-              <app-ui-badge [label]="c.estado === 'C' ? 'Cerrado' : 'Activo'"
-                            [variant]="c.estado === 'C' ? 'success' : 'info'" size="xs" />
-            </li>
-          }
-          @for (a of ca.agenciasExternas; track a.agenciaId) {
-            <li class="ev-canal--externa">
-              <i class="fa-solid fa-building-shield" aria-hidden="true"></i>
-              <span class="ev-canal__info">
-                <strong>{{ a.nombre || 'Agencia externa' }}</strong>
-                <small>
-                  Despachado {{ formatHora(a.fechaEnvio) }}
-                  @if (!a.exitoso) { · <em class="ev-err">el envío falló</em> }
-                </small>
-              </span>
-              <app-ui-badge label="Informativo" variant="neutral" size="xs" />
-            </li>
-          }
-        </ul>
-      </app-ui-expansion-panel>
-    }
-  }
-
-  <!-- ── Puesto en vivo: videollamada, mapa y recursos ───────────── -->
-  <app-ui-expansion-panel
-    title="Mapa, recursos y videollamada"
-    icon="fa-solid fa-video"
-    description="Posición de las patrullas y del ciudadano en vivo, con refresco cada 8 segundos."
-    [(expanded)]="recursosAbierto"
-  >
-    <div class="ev-vivo-barra">
-      @if (ultimaActRecursos()) {
-        <span class="ev-vivo-barra__ts">
-          <i class="fa-regular fa-clock" aria-hidden="true"></i>
-          Actualizado {{ ultimaActRecursos() | date:'HH:mm:ss' }}
-        </span>
-      }
-      <app-ui-chip [value]="recursos().length" label="recursos"
-                   variant="info" appearance="soft" size="xs" />
-      <app-ui-button
-        variant="secondary" appearance="ghost" size="sm"
-        icon="fa-solid fa-location-crosshairs"
-        tooltip="Sugerir el cuadrante libre más cercano al sitio"
-        (buttonClick)="sugerirRecursoCercano()"
-      >Cuadrante más cercano</app-ui-button>
-      @if (d.latitudCaso || d.longitudCaso) {
-        <button type="button" class="ev-coords" (click)="centrarEnIncidente()"
-                title="Centrar el mapa en el incidente">
-          <i class="fa-solid fa-location-dot" aria-hidden="true"></i>
-          {{ d.latitudCaso || '—' }}, {{ d.longitudCaso || '—' }}
-        </button>
-      }
-      @if (errorRecursos()) {
-        <span class="ev-err">
-          <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i> {{ errorRecursos() }}
-        </span>
-      }
-
-      @if (!llamadaEnCurso(d) && d.estado !== 'C') {
-        @if (videollamadaReconectable(); as activa) {
-          <!-- Ya hay una llamada en curso para este caso: el despachador
-               refrescó, cambió de pestaña o es un relevo de turno. Se
-               reconecta a ELLA en vez de generar otro enlace y dejar al
-               ciudadano hablando solo. -->
-          <span class="ev-reconectar">
-            <span class="ev-reconectar__aviso">
-              <i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i>
-              Hay una videollamada en curso para este caso
-              @if (activa.grabando) { <small>· con grabación abierta</small> }
-            </span>
-            <app-ui-button
-              variant="primary" size="sm" icon="fa-solid fa-plug-circle-bolt"
-              [loading]="reconectandoVideollamada()" [disabled]="reconectandoVideollamada()"
-              (buttonClick)="reconectarVideollamada()"
-            >Reconectar</app-ui-button>
+        icon="fa-solid fa-arrow-left" iconOnly
+        ariaLabel="Volver a la bandeja" tooltip="Volver a la bandeja (Esc)"
+        (buttonClick)="volverLista()"
+      />
+      <span class="ev-detalle-head__info">
+        <span class="ev-detalle-head__titulo">
+          @if (d.codiPedido) { <strong>{{ d.codiPedido }}</strong> }
+          <span class="ev-detalle-head__id">
+            #{{ evento().numeEvento || d.id }}
           </span>
-        } @else {
-          <span class="ev-iniciar-llamada">
-            <app-ui-input
-              class="ev-iniciar-llamada__tel"
-              ariaLabel="Teléfono del ciudadano"
-              placeholder="Teléfono del ciudadano…"
-              inputmode="tel"
-              [(ngModel)]="videollamadaTelefono"
+        </span>
+        <span class="ev-detalle-head__sub">
+          {{ d.direCaso }}@if (d.ciudad) { · {{ d.ciudad }} }
+        </span>
+        <span class="ev-detalle-head__meta">
+          <i class="fa-regular fa-calendar-check" aria-hidden="true"></i>
+          Creado {{ getFechaCreacionLabel(d) }}
+          · <i class="fa-regular fa-clock" aria-hidden="true"></i> {{ getElapsedLabel(d) }}
+          @if (d.ultimoAccesoUsername) {
+            · <i class="fa-regular fa-eye" aria-hidden="true"></i>
+            Abierto por {{ d.ultimoAccesoUsername }}
+            @if (d.ultimoAccesoFecha) { a las {{ d.ultimoAccesoFecha | date:'HH:mm' }} }
+          }
+        </span>
+        @if (presenciaUsuarios().length) {
+          <span class="ev-presencia" title="Otros despachadores viendo este caso ahora">
+            <i class="fa-solid fa-user-group" aria-hidden="true"></i>
+            También lo está viendo: {{ presenciaUsuarios().join(', ') }}
+          </span>
+        }
+        @if (d.pedidoPadreNum) {
+          <span class="ev-vinculo">
+            <i class="fa-solid fa-link" aria-hidden="true"></i>
+            Vinculado al caso #{{ d.pedidoPadreNum }}
+            <app-ui-button
+              variant="secondary" appearance="ghost" size="sm"
+              icon="fa-solid fa-xmark" iconOnly
+              ariaLabel="Quitar el vínculo" tooltip="Quitar el vínculo"
+              [disabled]="!!vinculandoId()"
+              (buttonClick)="desvincularCaso()"
             />
-            <app-ui-button
-              variant="primary" size="sm" icon="fa-solid fa-video"
-              [loading]="creandoVideollamada()" [disabled]="creandoVideollamada()"
-              (buttonClick)="iniciarVideollamada()"
-            >Iniciar videollamada</app-ui-button>
           </span>
         }
+      </span>
+      <span class="ev-detalle-head__badges">
+        <app-ui-badge [label]="getPrioridadLabel(d.prioridad)"
+                      [variant]="getPrioridadVariante(d.prioridad)" size="sm" />
+        <app-ui-badge [label]="getEstadoLabel(d.estado)"
+                      [variant]="getEstadoVariante(d.estado)" size="sm" />
+      </span>
+    </div>
+
+    <div class="ev-acciones">
+      @if (d.estado !== 'C') {
+        <span class="ev-acciones__lbl">Cambiar estado a:</span>
+        @for (est of ESTADOS; track est.valor) {
+          @if (est.valor !== 'C' && est.valor !== d.estado) {
+            <app-ui-button
+              variant="secondary" appearance="ghost" size="sm"
+              [disabled]="cambiandoEstado()"
+              (buttonClick)="abrirModalCambiarEstado(est.valor)"
+            >{{ est.label }}</app-ui-button>
+          }
+        }
+      }
+      @if (estadoHistorial().length) {
+        <app-ui-button
+          variant="secondary" appearance="ghost" size="sm"
+          icon="fa-solid fa-clock-rotate-left"
+          tooltip="Ver el historial de cambios de estado"
+          (buttonClick)="historialEstadoAbierto = !historialEstadoAbierto"
+        >Historial ({{ estadoHistorial().length }})</app-ui-button>
+      }
+      <span class="ev-acciones__sep"></span>
+      @if (d.estado !== 'C') {
+        <app-ui-button
+          variant="secondary" size="sm" icon="fa-solid fa-share-from-square"
+          tooltip="Remitir este caso a otro canal SECAD o a una agencia externa"
+          (buttonClick)="abrirModalRemitir()"
+        >Remitir</app-ui-button>
+        <app-ui-button
+          variant="danger" size="sm" icon="fa-solid fa-lock"
+          (buttonClick)="abrirModalCerrar()"
+        >Cerrar evento</app-ui-button>
+      } @else {
+        <app-ui-button
+          variant="warning" size="sm" icon="fa-solid fa-lock-open"
+          [disabled]="cambiandoEstado()"
+          tooltip="Reabrir el caso (requiere motivo)"
+          (buttonClick)="reabrirEvento()"
+        >Reabrir</app-ui-button>
       }
     </div>
 
-    @if (mostrarSugerencia()) {
-      <div class="ev-sugerencia">
-        <p class="ev-sugerencia__head">
-          <i class="fa-solid fa-location-crosshairs" aria-hidden="true"></i>
-          Cuadrantes libres más cercanos al hecho
-          <app-ui-button
-            variant="secondary" appearance="ghost" size="sm"
-            icon="fa-solid fa-xmark" iconOnly
-            ariaLabel="Cerrar la sugerencia" tooltip="Cerrar"
-            (buttonClick)="mostrarSugerencia.set(false)"
-          />
-        </p>
-        @if (cargandoSugerencia()) {
-          <p class="ev-cargando"><app-ui-spinner size="sm" /> <span>Buscando el más cercano…</span></p>
-        } @else if (errorSugerencia()) {
-          <p class="ev-nota">{{ errorSugerencia() }}</p>
-        } @else {
-          <ol class="ev-sugerencia__lista">
-            @for (s of sugerenciasRecurso(); track s.medioId; let i = $index) {
-              <li [class.ev-sugerencia__item--top]="i === 0">
-                <span class="ev-sugerencia__rank">{{ i + 1 }}</span>
-                <strong>{{ nombrePatrulla(s) }}</strong>
-                <span class="ev-sugerencia__dist">
-                  {{ s.distanciaM < 1000
-                      ? s.distanciaM + ' m'
-                      : (s.distanciaM / 1000 | number:'1.1-1') + ' km' }}
-                  @if (etaMin(s.distanciaM / 1000, s.tipoMedio) !== null) {
-                    <small title="Estimación por distancia y tipo de recurso">
-                      ~{{ etaMin(s.distanciaM / 1000, s.tipoMedio) }} min
-                    </small>
+  </header>
+
+  <!-- ── Avisos: solo aparecen cuando hay algo que decir ───────────────── -->
+  @if ((historialEstadoAbierto && estadoHistorial().length)
+        || (!duplicadosDescartados() && duplicados().length && d.estado !== 'C')
+        || mostrarSugerencia() || errorAsignacion()) {
+    <div class="ev-consola__avisos">
+      @if (historialEstadoAbierto && estadoHistorial().length) {
+        <section class="ev-panel">
+          <app-ui-section-header title="Historial de estados" icon="fa-solid fa-clock-rotate-left"
+                                 appearance="divider" />
+          <ul class="ev-historial">
+            @for (h of estadoHistorial(); track h.fecha + '-' + h.estadoNuevo) {
+              <li>
+                <span class="ev-historial__estados">
+                  @if (h.estadoAnterior) {
+                    <app-ui-badge [label]="getEstadoLabel(h.estadoAnterior)"
+                                  [variant]="getEstadoVariante(h.estadoAnterior)" size="xs" />
+                    <i class="fa-solid fa-arrow-right-long" aria-hidden="true"></i>
                   }
+                  <app-ui-badge [label]="getEstadoLabel(h.estadoNuevo)"
+                                [variant]="getEstadoVariante(h.estadoNuevo)" size="xs" />
                 </span>
-                <app-ui-button
-                  variant="primary" size="sm"
-                  [disabled]="!!asignandoMedioId()"
-                  (buttonClick)="asignarSugerido(s)"
-                >Asignar</app-ui-button>
+                <span class="ev-historial__meta">
+                  {{ h.username || '—' }} · {{ h.fecha | date:'dd/MM HH:mm' }}
+                </span>
+                @if (h.motivo) { <span class="ev-historial__motivo">«{{ h.motivo }}»</span> }
               </li>
             }
-          </ol>
-        }
-      </div>
-    }
-
-    @if (errorAsignacion()) {
-      <p class="ev-err ev-err--caja">
-        <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
-        <span>{{ errorAsignacion() }}</span>
-        <app-ui-button
-          variant="secondary" appearance="ghost" size="sm"
-          icon="fa-solid fa-xmark" iconOnly
-          ariaLabel="Descartar el error" tooltip="Descartar"
-          (buttonClick)="errorAsignacion.set('')"
-        />
-      </p>
-    }
-
-    <!-- Sin llamada: [mapa][recursos]. Con llamada: [video][chat] sobre
-         [mapa][recursos]. El chat es una sección propia, así abrirlo no
-         vuelve a encoger el recuadro del video. -->
-    <div class="ev-vivo-grid" [class.ev-vivo-grid--llamada]="llamadaEnCurso(d)">
-
-      @if (llamadaEnCurso(d)) {
-        <div class="ev-video">
-          <div class="ev-video__estado">
-            @switch (videollamadaEstado()) {
-              @case ('esperando')  { <app-ui-badge label="Esperando al ciudadano…" variant="warning" size="xs" /> }
-              @case ('conectando') { <app-ui-badge label="Conectando…" variant="warning" size="xs" /> }
-              @case ('conectada')  { <app-ui-badge label="Conectada" variant="success" size="xs" /> }
-              @case ('error')      { <app-ui-badge label="Error de conexión" variant="danger" size="xs" /> }
-            }
-            @if (grabandoVideollamada()) {
-              <app-ui-badge label="Grabando" icon="fa-solid fa-record-vinyl"
-                            iconPosition="start" variant="danger" size="xs" />
-            }
-          </div>
-
-          @if (videollamadaLink()) {
-            <div class="ev-video__link">
-              <app-ui-input ariaLabel="Enlace de la videollamada" readonly
-                            [ngModel]="videollamadaLink()" />
-              <app-ui-button
-                variant="secondary" size="sm" icon="fa-solid fa-copy"
-                tooltip="Copiar el enlace" (buttonClick)="copiarLinkVideollamada()"
-              >Copiar</app-ui-button>
-            </div>
-            @if (videollamadaMensaje()) {
-              <p class="ev-nota">{{ videollamadaMensaje() }}</p>
-            }
-          }
-
-          <!-- La ubicación se dibuja sobre el mismo mapa de la derecha. -->
-          @if (videollamadaUbicacion(); as ubic) {
-            <p class="ev-video__ubic">
-              <i class="fa-solid fa-location-dot" aria-hidden="true"></i>
-              <span>
-                Ciudadano ubicado en el mapa
-                @if (ubic.precision) { <small>(precisión ~{{ ubic.precision | number:'1.0-0' }} m)</small> }
-              </span>
-              <app-ui-button
-                variant="secondary" appearance="ghost" size="sm" icon="fa-solid fa-crosshairs"
-                (buttonClick)="centrarEnCiudadano()"
-              >Centrar</app-ui-button>
-            </p>
-          }
-
-          @if (videollamadaEstado() === 'conectada') {
-            <div class="ev-video__marco">
-              <video #videoRemoto autoplay playsinline
-                     [srcObject]="videollamadaRemoteStream()"></video>
-              <button type="button" class="ev-video__expandir"
-                      title="Ver a pantalla completa"
-                      (click)="verVideollamadaPantallaCompleta()">
-                <i class="fa-solid fa-expand" aria-hidden="true"></i>
-              </button>
-            </div>
-          }
-
-          <div class="ev-video__controles">
-            @if (videollamadaEstado() === 'conectada') {
-              <app-ui-button
-                variant="secondary" size="sm" icon="fa-solid fa-expand"
-                tooltip="Ver la transmisión del ciudadano a tamaño real"
-                (buttonClick)="verVideollamadaPantallaCompleta()"
-              >Pantalla completa</app-ui-button>
-              <app-ui-button
-                [variant]="videollamadaMicActivo() ? 'secondary' : 'danger'"
-                size="sm"
-                [icon]="videollamadaMicActivo() ? 'fa-solid fa-microphone' : 'fa-solid fa-microphone-slash'"
-                tooltip="El ciudadano puede seguir escribiéndole por chat aunque lo silencie"
-                (buttonClick)="toggleMicVideollamada()"
-              >{{ videollamadaMicActivo() ? 'Silenciar mi micrófono' : 'Micrófono silenciado' }}</app-ui-button>
-              <app-ui-button
-                [variant]="grabandoVideollamada() ? 'danger' : 'secondary'"
-                size="sm"
-                [icon]="grabandoVideollamada() ? 'fa-solid fa-stop' : 'fa-solid fa-record-vinyl'"
-                (buttonClick)="toggleGrabacionVideollamada()"
-              >{{ grabandoVideollamada() ? 'Detener grabación' : 'Grabar' }}</app-ui-button>
-            }
-            <app-ui-button
-              variant="danger" size="sm" icon="fa-solid fa-phone-slash"
-              (buttonClick)="colgarVideollamada()"
-            >Colgar</app-ui-button>
-          </div>
-        </div>
-
-        <!-- Chat: sección propia, siempre visible mientras hay llamada,
-             para que quien no puede hablar tenga a la vista cómo escribir. -->
-        <div class="ev-chat">
-          <p class="ev-chat__head">
-            <i class="fa-solid fa-comment" aria-hidden="true"></i>
-            Chat con el ciudadano
-            <app-ui-badge
-              [label]="videollamadaChatDisponible() ? 'Disponible' : 'Conectando…'"
-              [variant]="videollamadaChatDisponible() ? 'success' : 'neutral'" size="xs" />
-          </p>
-          <div class="ev-chat__hilo">
-            @if (videollamadaChatMensajes().length === 0) {
-              <p class="ev-nota">Sin mensajes todavía. Escríbale si no puede hablar en voz alta.</p>
-            }
-            @for (m of videollamadaChatMensajes(); track $index) {
-              <span class="ev-chat__burbuja" [class.ev-chat__burbuja--propia]="m.propio">
-                <span>{{ m.texto }}</span>
-                <small>{{ m.hora }}</small>
-              </span>
-            }
-          </div>
-          <form class="ev-chat__form" (submit)="enviarChatVideollamada(); $event.preventDefault()">
-            <app-ui-input
-              ariaLabel="Mensaje para el ciudadano"
-              placeholder="Escriba un mensaje…"
-              name="chatTexto"
-              [(ngModel)]="videollamadaChatTexto"
-            />
-            <app-ui-button
-              variant="primary" size="sm" icon="fa-solid fa-paper-plane" iconOnly
-              ariaLabel="Enviar el mensaje" tooltip="Enviar"
-              (buttonClick)="enviarChatVideollamada()"
-            />
-          </form>
-        </div>
+          </ul>
+        </section>
       }
-
-      <!-- El mapa vive fuera de cualquier condición sobre la lista de
-           recursos: así el contenedor siempre existe y el montaje no
-           espera un elemento que nunca aparece. -->
-      <div class="ev-mapa-col">
-        <div #mapaEvento class="ev-mapa"></div>
-      </div>
-
-      <div class="ev-recursos">
-        @if (cargandoRecursos() && recursos().length === 0) {
-          <p class="ev-cargando"><app-ui-spinner size="sm" /> <span>Consultando recursos…</span></p>
-        } @else if (recursos().length === 0) {
-          <p class="ev-nota ev-nota--vacia">
-            <i class="fa-solid fa-car-side" aria-hidden="true"></i>
-            Sin recursos en turno para este canal.
-          </p>
-        } @else {
-          @for (r of recursos(); track r.id) {
-            <div class="ev-recurso"
-                 [class.ev-recurso--ocupado]="r.estado === 28 || r.estado === 30"
-                 [class.ev-recurso--asignado]="medioAsignadoAEsteEvento(r)">
-              <button type="button" class="ev-recurso__head"
-                      (click)="centrarEnRecurso(r)"
-                      [title]="r.lat != null && r.lng != null ? 'Centrar en el mapa' : 'Sin señal GPS'">
-                <i class="{{ iconoTipo(r.tipoMedio) }}" [title]="etiquetaTipoMedio(r.tipoMedio)"
-                   aria-hidden="true"></i>
-                <span class="ev-recurso__info">
-                  <strong>{{ nombrePatrulla(r) }}</strong>
-                  <small>{{ r.personalResumen || 'Sin personal asignado' }}</small>
+      @if (!duplicadosDescartados() && duplicados().length && d.estado !== 'C') {
+        <section class="ev-panel ev-dupl">
+          <app-ui-section-header
+            title="Casos recientes en la misma zona"
+            icon="fa-solid fa-triangle-exclamation"
+            description="Puede ser un duplicado o una reincidencia. Es solo contexto: no bloquea nada."
+            appearance="divider"
+          >
+            <app-ui-button
+              header-actions
+              variant="secondary" appearance="ghost" size="sm"
+              icon="fa-solid fa-xmark" iconOnly
+              ariaLabel="Descartar el aviso" tooltip="Descartar"
+              (buttonClick)="descartarDuplicados()"
+            />
+          </app-ui-section-header>
+          <ul class="ev-dupl__lista">
+            @for (dup of duplicados(); track dup.id) {
+              <li>
+                <app-ui-badge [label]="getEstadoLabel(dup.estado || '')"
+                              [variant]="getEstadoVariante(dup.estado || '')" size="xs" />
+                <span class="ev-dupl__txt">
+                  <strong>{{ dup.direCaso || 'Sin dirección' }}</strong>
+                  <small>
+                    {{ dup.distanciaMetros | number:'1.0-0' }} m · hace {{ dup.minutosAtras }} min
+                    @if (dup.codiPedido) { · {{ dup.codiPedido }} }
+                  </small>
                 </span>
-                <span class="ev-gps" [class.ev-gps--on]="r.gpsActivo"
-                      [title]="r.gpsActivo ? 'GPS activo' : 'Sin señal GPS'"></span>
-              </button>
-
-              <div class="ev-recurso__meta">
-                <app-ui-badge [label]="r.estadoDesc"
-                              [variant]="varianteEstadoMedio(r.estado)" size="xs" />
-                @if (r.distanciaKm != null) {
-                  <span class="ev-recurso__dist" [class.ev-recurso__dist--cerca]="r.distanciaKm < 1"
-                        title="Distancia en línea recta al incidente">
-                    <i class="fa-solid fa-route" aria-hidden="true"></i>
-                    {{ formatDistancia(r.distanciaKm) }}
-                    @if (etaMin(r.distanciaKm, r.tipoMedio) !== null) {
-                      <small title="Tiempo estimado de llegada">~{{ etaMin(r.distanciaKm, r.tipoMedio) }} min</small>
+                @if (!d.pedidoPadreNum) {
+                  <app-ui-button
+                    variant="secondary" appearance="ghost" size="sm" icon="fa-solid fa-link"
+                    [loading]="vinculandoId() === dup.id"
+                    tooltip="Marcar como el mismo incidente"
+                    (buttonClick)="vincularCaso(dup)"
+                  >Vincular</app-ui-button>
+                }
+              </li>
+            }
+          </ul>
+        </section>
+      }
+      @if (mostrarSugerencia()) {
+        <div class="ev-sugerencia">
+          <p class="ev-sugerencia__head">
+            <i class="fa-solid fa-location-crosshairs" aria-hidden="true"></i>
+            Cuadrantes libres más cercanos al hecho
+            <app-ui-button
+              variant="secondary" appearance="ghost" size="sm"
+              icon="fa-solid fa-xmark" iconOnly
+              ariaLabel="Cerrar la sugerencia" tooltip="Cerrar"
+              (buttonClick)="mostrarSugerencia.set(false)"
+            />
+          </p>
+          @if (cargandoSugerencia()) {
+            <p class="ev-cargando"><app-ui-spinner size="sm" /> <span>Buscando el más cercano…</span></p>
+          } @else if (errorSugerencia()) {
+            <p class="ev-nota">{{ errorSugerencia() }}</p>
+          } @else {
+            <ol class="ev-sugerencia__lista">
+              @for (s of sugerenciasRecurso(); track s.medioId; let i = $index) {
+                <li [class.ev-sugerencia__item--top]="i === 0">
+                  <span class="ev-sugerencia__rank">{{ i + 1 }}</span>
+                  <strong>{{ nombrePatrulla(s) }}</strong>
+                  <span class="ev-sugerencia__dist">
+                    {{ s.distanciaM < 1000
+                        ? s.distanciaM + ' m'
+                        : (s.distanciaM / 1000 | number:'1.1-1') + ' km' }}
+                    @if (etaMin(s.distanciaM / 1000, s.tipoMedio) !== null) {
+                      <small title="Estimación por distancia y tipo de recurso">
+                        ~{{ etaMin(s.distanciaM / 1000, s.tipoMedio) }} min
+                      </small>
                     }
                   </span>
-                } @else {
-                  <span class="ev-recurso__dist ev-recurso__dist--singps">
-                    <i class="fa-solid fa-location-crosshairs" aria-hidden="true"></i> Sin GPS
-                  </span>
-                }
-              </div>
-
-              <div class="ev-recurso__acciones">
-                @if (r.estado === 27 && !medioAsignadoAEsteEvento(r) && !r.eventoId) {
                   <app-ui-button
-                    variant="primary" size="sm" icon="fa-solid fa-plus"
-                    [loading]="asignandoMedioId() === r.id"
-                    [disabled]="!!asignandoMedioId() || d.estado === 'C'"
-                    tooltip="Paso 1: asignar el recurso a este incidente"
-                    (buttonClick)="asignarRecursoAlEvento(r)"
+                    variant="primary" size="sm"
+                    [disabled]="!!asignandoMedioId()"
+                    (buttonClick)="asignarSugerido(s)"
                   >Asignar</app-ui-button>
-                }
-                @if (r.estado === 27 && r.eventoId && !medioAsignadoAEsteEvento(r)) {
-                  <app-ui-badge label="En otro caso" icon="fa-solid fa-link"
-                                iconPosition="start" variant="neutral" size="xs" />
-                }
-                @if (medioAsignadoAEsteEvento(r)) {
-                  <app-ui-badge label="Asignado a este evento" icon="fa-solid fa-link"
-                                iconPosition="start" variant="info" size="xs" />
-                }
-                @if (r.estado === 30 || r.estado === 28) {
-                  <app-ui-badge [label]="etiquetaEstadoMedio(r.estado)"
-                                [variant]="varianteEstadoMedio(r.estado)" size="xs" />
-                }
-              </div>
-            </div>
-          }
-        }
-      </div>
-    </div>
-  </app-ui-expansion-panel>
-
-  <!-- ── Despacho activo ─────────────────────────────────────────── -->
-  <app-ui-expansion-panel
-    title="Despacho activo"
-    icon="fa-solid fa-route"
-    [description]="actuacionesActivas().length + ' recurso(s) en curso'
-      + (actuaciones().length > actuacionesActivas().length
-          ? ' · ' + actuaciones().length + ' en total, incluidos cerrados y anulados' : '')"
-    [(expanded)]="despachoAbierto"
-  >
-    @if (errorActuaciones()) {
-      <p class="ev-err">
-        <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i> {{ errorActuaciones() }}
-      </p>
-    }
-
-    @if (cargandoActuaciones() && actuaciones().length === 0) {
-      <p class="ev-cargando"><app-ui-spinner size="sm" /> <span>Cargando actuaciones…</span></p>
-    } @else if (actuaciones().length === 0) {
-      <p class="ev-nota ev-nota--vacia">
-        <i class="fa-solid fa-route" aria-hidden="true"></i>
-        Sin recursos asignados a este evento. Use <strong>Asignar</strong> en la lista de recursos.
-      </p>
-    } @else {
-      <div class="ev-despachos">
-        @for (act of actuaciones(); track act.id; let i = $index) {
-          @if (act.estado === 'V' && (i === 0 || actuaciones()[i - 1].estado !== 'V')) {
-            <p class="ev-despachos__sep">
-              <i class="fa-solid fa-link-slash" aria-hidden="true"></i>
-              Recursos anulados o desasignados
-            </p>
-          }
-          <article class="ev-despacho"
-                   [class.ev-despacho--cerrada]="act.estado === 'C' || act.estado === 'V'"
-                   [class.ev-despacho--anulada]="act.estado === 'V'">
-            <header class="ev-despacho__head">
-              <strong>
-                <i class="fa-solid fa-car-side" aria-hidden="true"></i>
-                {{ nombreUnidad(act) }}
-              </strong>
-              <app-ui-badge [label]="etiquetaEstadoActuacion(act.estado)"
-                            [variant]="varianteEstadoActuacion(act.estado)" size="xs" />
-              @if (act.canalDesc) {
-                <span class="ev-despacho__canal">
-                  <i class="fa-solid fa-tower-broadcast" aria-hidden="true"></i> {{ act.canalDesc }}
-                </span>
-              }
-            </header>
-
-            <!-- El origen pintaba aquí la marca ISO cruda del backend. -->
-            <ol class="ev-pasos">
-              @for (p of [
-                { label: 'Asignado',  ts: act.fechaCreacion, hecho: true },
-                { label: 'En ruta',   ts: act.fechaDespacho, hecho: act.estado === 'D' || act.estado === 'A' || act.estado === 'C' },
-                { label: 'En sitio',  ts: act.fechaLlegada,  hecho: act.estado === 'A' || act.estado === 'C' },
-                { label: 'Atendió',   ts: act.fechaCierre,   hecho: act.estado === 'C' }
-              ]; track p.label) {
-                <li [class.ev-paso--hecho]="p.hecho">
-                  <span class="ev-paso__punto"></span>
-                  <span class="ev-paso__lbl">{{ p.label }}</span>
-                  <span class="ev-paso__ts">{{ p.ts ? (p.ts | date:'dd/MM HH:mm') : '—' }}</span>
                 </li>
               }
             </ol>
+          }
+        </div>
+      }
 
-            @if (act.estado !== 'C' && act.estado !== 'V' && d.estado !== 'C') {
-              @if (!puedeGestionarActuacion(act)) {
-                <p class="ev-nota">
-                  <i class="fa-solid fa-lock" aria-hidden="true"></i>
-                  Asignado por {{ act.fuerzaDesc || 'otra fuerza' }} – {{ act.canalDesc || 'otro canal' }}.
-                  Solo ese canal puede gestionarlo.
-                </p>
-              } @else {
-                <div class="ev-despacho__estado">
-                  <span class="ev-despacho__timer"
-                        [class.ev-despacho__timer--alerta]="minutosEnEstadoActual(act) >= slaUmbralCritico">
-                    <i class="fa-regular fa-clock" aria-hidden="true"></i>
-                    {{ minutosEnEstadoActual(act) }} min en
-                    {{ act.estado === 'P' ? 'asignado' : act.estado === 'D' ? 'ruta' : 'sitio' }}
-                  </span>
-                  @if (act.solicitaApoyo) {
-                    <app-ui-badge label="¡Apoyo solicitado!" icon="fa-solid fa-tower-broadcast"
+      @if (errorAsignacion()) {
+        <p class="ev-err ev-err--caja">
+          <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
+          <span>{{ errorAsignacion() }}</span>
+          <app-ui-button
+            variant="secondary" appearance="ghost" size="sm"
+            icon="fa-solid fa-xmark" iconOnly
+            ariaLabel="Descartar el error" tooltip="Descartar"
+            (buttonClick)="errorAsignacion.set('')"
+          />
+        </p>
+      }
+    </div>
+  }
+
+  <div class="ev-consola__cuerpo">
+
+    <!-- ── Escena: el mapa manda ─────────────────────────────────────── -->
+    <section class="ev-escena" aria-label="Mapa del incidente">
+      <div class="ev-escena__barra">
+        <div class="ev-vivo-barra">
+          @if (ultimaActRecursos()) {
+            <span class="ev-vivo-barra__ts">
+              <i class="fa-regular fa-clock" aria-hidden="true"></i>
+              Actualizado {{ ultimaActRecursos() | date:'HH:mm:ss' }}
+            </span>
+          }
+          <app-ui-chip [value]="recursos().length" label="recursos"
+                       variant="info" appearance="soft" size="xs" />
+          <app-ui-button
+            variant="secondary" appearance="ghost" size="sm"
+            icon="fa-solid fa-location-crosshairs"
+            tooltip="Sugerir el cuadrante libre más cercano al sitio"
+            (buttonClick)="sugerirRecursoCercano()"
+          >Cuadrante más cercano</app-ui-button>
+          @if (d.latitudCaso || d.longitudCaso) {
+            <button type="button" class="ev-coords" (click)="centrarEnIncidente()"
+                    title="Centrar el mapa en el incidente">
+              <i class="fa-solid fa-location-dot" aria-hidden="true"></i>
+              {{ d.latitudCaso || '—' }}, {{ d.longitudCaso || '—' }}
+            </button>
+          }
+          @if (errorRecursos()) {
+            <span class="ev-err">
+              <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i> {{ errorRecursos() }}
+            </span>
+          }
+
+        </div>
+      </div>
+
+      <div class="ev-escena__mapa">
+        <div class="ev-mapa-col">
+          <div #mapaEvento class="ev-mapa"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Columna derecha: videollamada + pestañas ───────────────────── -->
+    <aside class="ev-lateral">
+
+      <!-- Videollamada. En modo flotante el marco se despega y esta caja
+           queda vacía, así el panel de pestañas ocupa toda la columna. -->
+      <div class="ev-lateral__video"
+           [class.ev-lateral__video--flotante]="modoVideo() === 'flotante'"
+           [style.--ev-flot-x.px]="videoFlotantePos().x"
+           [style.--ev-flot-y.px]="videoFlotantePos().y">
+        @if (llamadaEnCurso(d)) {
+          <div class="ev-video-jefe">
+            <div class="ev-video-jefe__mando">
+              <app-ui-button
+                variant="secondary" appearance="ghost" size="sm" iconOnly
+                [icon]="modoVideo() === 'flotante' ? 'fa-solid fa-window-restore' : 'fa-solid fa-clone'"
+                [tooltip]="modoVideo() === 'flotante' ? 'Devolver la videollamada al panel' : 'Ver en ventana flotante'"
+                ariaLabel="Cambiar el modo de la videollamada"
+                (buttonClick)="alternarVideoFlotante()"
+              />
+            </div>
+            @if (llamadaEnCurso(d)) {
+              <div class="ev-video">
+                <div class="ev-video__estado">
+                  @switch (videollamadaEstado()) {
+                    @case ('esperando')  { <app-ui-badge label="Esperando al ciudadano…" variant="warning" size="xs" /> }
+                    @case ('conectando') { <app-ui-badge label="Conectando…" variant="warning" size="xs" /> }
+                    @case ('conectada')  { <app-ui-badge label="Conectada" variant="success" size="xs" /> }
+                    @case ('error')      { <app-ui-badge label="Error de conexión" variant="danger" size="xs" /> }
+                  }
+                  @if (grabandoVideollamada()) {
+                    <app-ui-badge label="Grabando" icon="fa-solid fa-record-vinyl"
                                   iconPosition="start" variant="danger" size="xs" />
                   }
                 </div>
 
-                <div class="ev-despacho__acciones">
-                  @if (act.estado === 'P') {
+                @if (videollamadaLink()) {
+                  <div class="ev-video__link">
+                    <app-ui-input ariaLabel="Enlace de la videollamada" readonly
+                                  [ngModel]="videollamadaLink()" />
                     <app-ui-button
-                      variant="primary" size="sm" icon="fa-solid fa-truck-fast"
-                      [loading]="operandoActuacionId() === act.id"
-                      tooltip="Paso 2: marcar el recurso en ruta"
-                      (buttonClick)="marcarEnRuta(act)"
-                    >Salió en ruta</app-ui-button>
+                      variant="secondary" size="sm" icon="fa-solid fa-copy"
+                      tooltip="Copiar el enlace" (buttonClick)="copiarLinkVideollamada()"
+                    >Copiar</app-ui-button>
+                  </div>
+                  @if (videollamadaMensaje()) {
+                    <p class="ev-nota">{{ videollamadaMensaje() }}</p>
                   }
-                  @if (act.estado === 'D') {
+                }
+
+                <!-- La ubicación se dibuja sobre el mismo mapa de la derecha. -->
+                @if (videollamadaUbicacion(); as ubic) {
+                  <p class="ev-video__ubic">
+                    <i class="fa-solid fa-location-dot" aria-hidden="true"></i>
+                    <span>
+                      Ciudadano ubicado en el mapa
+                      @if (ubic.precision) { <small>(precisión ~{{ ubic.precision | number:'1.0-0' }} m)</small> }
+                    </span>
                     <app-ui-button
-                      [variant]="sugiereLlegada(act) ? 'success' : 'warning'"
-                      size="sm" icon="fa-solid fa-map-pin"
-                      [loading]="operandoActuacionId() === act.id"
-                      [tooltip]="sugiereLlegada(act)
-                        ? 'El GPS indica que el recurso ya llegó al lugar'
-                        : 'Paso 3: marcar que el recurso llegó al lugar'"
-                      (buttonClick)="marcarEnSitio(act)"
-                    >{{ sugiereLlegada(act) ? '¿Llegó? el GPS lo ubica cerca' : 'Llegó al lugar' }}</app-ui-button>
-                  }
-                  @if (act.estado === 'A') {
+                      variant="secondary" appearance="ghost" size="sm" icon="fa-solid fa-crosshairs"
+                      (buttonClick)="centrarEnCiudadano()"
+                    >Centrar</app-ui-button>
+                  </p>
+                }
+
+                @if (videollamadaEstado() === 'conectada') {
+                  <div class="ev-video__marco">
+                    <video #videoRemoto autoplay playsinline
+                           [srcObject]="videollamadaRemoteStream()"></video>
+                    <button type="button" class="ev-video__expandir"
+                            title="Ver a pantalla completa"
+                            (click)="verVideollamadaPantallaCompleta()">
+                      <i class="fa-solid fa-expand" aria-hidden="true"></i>
+                    </button>
+                  </div>
+                }
+
+                <div class="ev-video__controles">
+                  @if (videollamadaEstado() === 'conectada') {
                     <app-ui-button
-                      variant="success" size="sm" icon="fa-solid fa-circle-check"
-                      [loading]="operandoActuacionId() === act.id"
-                      tooltip="Paso 4: registrar el resultado de la atención"
-                      (buttonClick)="abrirCierreActuacion(act)"
-                    >Atendió</app-ui-button>
+                      variant="secondary" size="sm" icon="fa-solid fa-expand"
+                      tooltip="Ver la transmisión del ciudadano a tamaño real"
+                      (buttonClick)="verVideollamadaPantallaCompleta()"
+                    >Pantalla completa</app-ui-button>
+                    <app-ui-button
+                      [variant]="videollamadaMicActivo() ? 'secondary' : 'danger'"
+                      size="sm"
+                      [icon]="videollamadaMicActivo() ? 'fa-solid fa-microphone' : 'fa-solid fa-microphone-slash'"
+                      tooltip="El ciudadano puede seguir escribiéndole por chat aunque lo silencie"
+                      (buttonClick)="toggleMicVideollamada()"
+                    >{{ videollamadaMicActivo() ? 'Silenciar mi micrófono' : 'Micrófono silenciado' }}</app-ui-button>
+                    <app-ui-button
+                      [variant]="grabandoVideollamada() ? 'danger' : 'secondary'"
+                      size="sm"
+                      [icon]="grabandoVideollamada() ? 'fa-solid fa-stop' : 'fa-solid fa-record-vinyl'"
+                      (buttonClick)="toggleGrabacionVideollamada()"
+                    >{{ grabandoVideollamada() ? 'Detener grabación' : 'Grabar' }}</app-ui-button>
                   }
                   <app-ui-button
-                    variant="danger" appearance="ghost" size="sm" icon="fa-solid fa-link-slash"
-                    [disabled]="operandoActuacionId() === act.id"
-                    [tooltip]="act.estado === 'P'
-                      ? 'Desasignar el recurso'
-                      : 'Cancelar un recurso ya despachado (requiere motivo)'"
-                    (buttonClick)="abrirModalDesasignar(act)"
-                  >{{ act.estado === 'P' ? 'Desasignar' : 'Cancelar' }}</app-ui-button>
-                  @if (act.solicitaApoyo) {
-                    <app-ui-button
-                      variant="success" appearance="ghost" size="sm" icon="fa-solid fa-check-double"
-                      [loading]="solicitandoApoyoId() === act.id"
-                      (buttonClick)="atenderApoyo(act)"
-                    >Apoyo atendido</app-ui-button>
-                  } @else {
-                    <app-ui-button
-                      variant="warning" appearance="ghost" size="sm" icon="fa-solid fa-tower-broadcast"
-                      [loading]="solicitandoApoyoId() === act.id"
-                      tooltip="Solicitar apoyo urgente (seguridad del funcionario)"
-                      (buttonClick)="solicitarApoyo(act)"
-                    >Solicitar apoyo</app-ui-button>
-                  }
-                  <app-ui-button
-                    variant="secondary" appearance="ghost" size="sm" icon="fa-solid fa-circle-exclamation"
-                    tooltip="Registrar una novedad sobre este recurso"
-                    (buttonClick)="abrirModalNovedad(act)"
-                  >Novedad@if (act.totalNotas) { ({{ act.totalNotas }}) }</app-ui-button>
+                    variant="danger" size="sm" icon="fa-solid fa-phone-slash"
+                    (buttonClick)="colgarVideollamada()"
+                  >Colgar</app-ui-button>
                 </div>
+              </div>
+
+              <!-- Chat: sección propia, siempre visible mientras hay llamada,
+                   para que quien no puede hablar tenga a la vista cómo escribir. -->
+              <div class="ev-chat">
+                <p class="ev-chat__head">
+                  <i class="fa-solid fa-comment" aria-hidden="true"></i>
+                  Chat con el ciudadano
+                  <app-ui-badge
+                    [label]="videollamadaChatDisponible() ? 'Disponible' : 'Conectando…'"
+                    [variant]="videollamadaChatDisponible() ? 'success' : 'neutral'" size="xs" />
+                </p>
+                <div class="ev-chat__hilo">
+                  @if (videollamadaChatMensajes().length === 0) {
+                    <p class="ev-nota">Sin mensajes todavía. Escríbale si no puede hablar en voz alta.</p>
+                  }
+                  @for (m of videollamadaChatMensajes(); track $index) {
+                    <span class="ev-chat__burbuja" [class.ev-chat__burbuja--propia]="m.propio">
+                      <span>{{ m.texto }}</span>
+                      <small>{{ m.hora }}</small>
+                    </span>
+                  }
+                </div>
+                <form class="ev-chat__form" (submit)="enviarChatVideollamada(); $event.preventDefault()">
+                  <app-ui-input
+                    ariaLabel="Mensaje para el ciudadano"
+                    placeholder="Escriba un mensaje…"
+                    name="chatTexto"
+                    [(ngModel)]="videollamadaChatTexto"
+                  />
+                  <app-ui-button
+                    variant="primary" size="sm" icon="fa-solid fa-paper-plane" iconOnly
+                    ariaLabel="Enviar el mensaje" tooltip="Enviar"
+                    (buttonClick)="enviarChatVideollamada()"
+                  />
+                </form>
+              </div>
+            }
+          </div>
+        } @else if (d.estado !== 'C') {
+          <div class="ev-video-vacio">
+            <i class="fa-solid fa-video" aria-hidden="true"></i>
+            <p class="ev-video-vacio__txt">
+              Llame al ciudadano por video para ver la escena y su ubicación en el mapa.
+            </p>
+            @if (videollamadaReconectable(); as activa) {
+              <!-- Ya hay una llamada en curso para este caso: el despachador
+                   refrescó, cambió de pestaña o es un relevo de turno. Se
+                   reconecta a ELLA en vez de generar otro enlace y dejar al
+                   ciudadano hablando solo. -->
+              <span class="ev-reconectar">
+                <span class="ev-reconectar__aviso">
+                  <i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i>
+                  Hay una videollamada en curso para este caso
+                  @if (activa.grabando) { <small>· con grabación abierta</small> }
+                </span>
+                <app-ui-button
+                  variant="primary" size="sm" icon="fa-solid fa-plug-circle-bolt"
+                  [loading]="reconectandoVideollamada()" [disabled]="reconectandoVideollamada()"
+                  (buttonClick)="reconectarVideollamada()"
+                >Reconectar</app-ui-button>
+              </span>
+            } @else {
+              <span class="ev-iniciar-llamada">
+                <app-ui-input
+                  class="ev-iniciar-llamada__tel"
+                  ariaLabel="Teléfono del ciudadano"
+                  placeholder="Teléfono del ciudadano…"
+                  inputmode="tel"
+                  [(ngModel)]="videollamadaTelefono"
+                />
+                <app-ui-button
+                  variant="primary" size="sm" icon="fa-solid fa-video"
+                  [loading]="creandoVideollamada()" [disabled]="creandoVideollamada()"
+                  (buttonClick)="iniciarVideollamada()"
+                >Iniciar videollamada</app-ui-button>
+              </span>
+            }
+          </div>
+        }
+      </div>
+
+      <!-- Pestañas -->
+      <nav class="ev-tabs-consola" role="tablist" aria-label="Información del caso">
+        <button type="button" role="tab" class="ev-tabc"
+                [class.ev-tabc--sel]="panel() === 'caso'"
+                [attr.aria-selected]="panel() === 'caso'"
+                (click)="irAPanel('caso')">
+          <i class="fa-solid fa-circle-info" aria-hidden="true"></i><span>Caso</span>
+        </button>
+        <button type="button" role="tab" class="ev-tabc"
+                [class.ev-tabc--sel]="panel() === 'recursos'"
+                [attr.aria-selected]="panel() === 'recursos'"
+                (click)="irAPanel('recursos')">
+          <i class="fa-solid fa-car-side" aria-hidden="true"></i><span>Recursos</span>
+          @if (recursos().length) { <b class="ev-tabc__n">{{ recursos().length }}</b> }
+        </button>
+        <button type="button" role="tab" class="ev-tabc"
+                [class.ev-tabc--sel]="panel() === 'despacho'"
+                [attr.aria-selected]="panel() === 'despacho'"
+                (click)="irAPanel('despacho')">
+          <i class="fa-solid fa-truck-fast" aria-hidden="true"></i><span>Despacho</span>
+          @if (actuaciones().length) { <b class="ev-tabc__n">{{ actuaciones().length }}</b> }
+        </button>
+        <button type="button" role="tab" class="ev-tabc"
+                [class.ev-tabc--sel]="panel() === 'notas'"
+                [attr.aria-selected]="panel() === 'notas'"
+                (click)="irAPanel('notas')">
+          <i class="fa-solid fa-notes-medical" aria-hidden="true"></i><span>Notas</span>
+          @if (d.anotaciones.length) { <b class="ev-tabc__n">{{ d.anotaciones.length }}</b> }
+        </button>
+        <button type="button" role="tab" class="ev-tabc"
+                [class.ev-tabc--sel]="panel() === 'asistente'"
+                [attr.aria-selected]="panel() === 'asistente'"
+                (click)="irAPanel('asistente')">
+          <i class="fa-solid fa-robot" aria-hidden="true"></i><span>Asistente</span>
+        </button>
+        @if (adjuntos().length) {
+          <button type="button" role="tab" class="ev-tabc"
+                  [class.ev-tabc--sel]="panel() === 'archivos'"
+                  [attr.aria-selected]="panel() === 'archivos'"
+                  (click)="irAPanel('archivos')">
+            <i class="fa-solid fa-photo-film" aria-hidden="true"></i><span>Archivos</span>
+            <b class="ev-tabc__n">{{ adjuntos().length }}</b>
+          </button>
+        }
+      </nav>
+
+      <!-- Contenido de la pestaña: el ÚNICO sitio con scroll propio -->
+      <div class="ev-tabc-cuerpo" role="tabpanel">
+        @switch (panel()) {
+
+          @case ('caso') {
+            <app-ui-expansion-panel
+              title="Datos del incidente" icon="fa-solid fa-file-shield"
+              [(expanded)]="datosAbierto"
+            >
+              <dl class="ev-datos">
+                <div class="ev-dato ev-dato--full ev-dato--destacado">
+                  <dt><i class="fa-solid fa-location-dot" aria-hidden="true"></i> Dirección del caso</dt>
+                  <dd>{{ d.direCaso || '—' }}</dd>
+                  @if (d.barrio) { <dd class="ev-dato__sub">{{ d.barrio }}</dd> }
+                </div>
+
+                <div class="ev-dato">
+                  <dt><i class="fa-solid fa-phone-volume" aria-hidden="true"></i> N.º de llamada</dt>
+                  <dd>{{ d.numeLlamada ?? '—' }}</dd>
+                </div>
+                <div class="ev-dato">
+                  <dt><i class="fa-solid fa-phone" aria-hidden="true"></i> Teléfono</dt>
+                  <dd>{{ d.numeTelefono ?? '—' }}</dd>
+                </div>
+                <div class="ev-dato">
+                  <dt><i class="fa-regular fa-clock" aria-hidden="true"></i> Hora del caso</dt>
+                  <dd>{{ formatHora(d.horaCaso) }}</dd>
+                </div>
+                <div class="ev-dato">
+                  <dt><i class="fa-solid fa-user" aria-hidden="true"></i> Llamante</dt>
+                  <dd>{{ d.nombLlamante || '—' }}</dd>
+                </div>
+                <div class="ev-dato">
+                  <dt><i class="fa-solid fa-mobile-screen" aria-hidden="true"></i> Propietario de la línea</dt>
+                  <dd>{{ d.propTelefono || '—' }}</dd>
+                </div>
+                <div class="ev-dato">
+                  <dt><i class="fa-solid fa-city" aria-hidden="true"></i> Ciudad</dt>
+                  <dd>{{ d.ciudad || '—' }}</dd>
+                </div>
+
+                <div class="ev-datos__sep ev-dato--full"><span>Tipificación</span></div>
+
+                <div class="ev-dato ev-dato--full">
+                  <dt><i class="fa-solid fa-tags" aria-hidden="true"></i> Código(s) de caso</dt>
+                  <dd class="ev-codigos">
+                    @if (d.codiPedido) {
+                      <span class="ev-codigo">
+                        <strong>{{ d.codiPedido }}</strong>
+                        <small>{{ d.descPedido || '(sin descripción)' }}</small>
+                      </span>
+                    }
+                    @if (d.codiPedido2) {
+                      <span class="ev-codigo ev-codigo--sec">
+                        <strong>{{ d.codiPedido2 }}</strong>
+                        <small>{{ d.descPedido2 || '(sin descripción)' }}</small>
+                      </span>
+                    }
+                    @if (!d.codiPedido) { — }
+                  </dd>
+                </div>
+
+                <div class="ev-dato">
+                  <dt><i class="fa-solid fa-clipboard-list" aria-hidden="true"></i> Tipo</dt>
+                  <dd>{{ d.tipoPedido || '—' }}</dd>
+                </div>
+                <div class="ev-dato">
+                  <dt><i class="fa-solid fa-star" aria-hidden="true"></i> Calidad</dt>
+                  <dd>{{ d.caliPedido || '—' }}</dd>
+                </div>
+                <div class="ev-dato">
+                  <dt><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i> Importancia</dt>
+                  <dd>{{ d.importancia || '—' }}</dd>
+                </div>
+
+                @if (d.comentario) {
+                  <div class="ev-dato ev-dato--full">
+                    <dt><i class="fa-solid fa-align-left" aria-hidden="true"></i> Descripción de los hechos</dt>
+                    <dd class="ev-dato--relato">{{ d.comentario }}</dd>
+                  </div>
+                }
+              </dl>
+            </app-ui-expansion-panel>
+
+            @if (canalesAsignados(); as ca) {
+              @if (ca.canales.length > 1 || ca.agenciasExternas.length > 0) {
+                <app-ui-expansion-panel
+                  title="Canales y agencias que atienden el caso"
+                  icon="fa-solid fa-diagram-project"
+                  description="No se cierra definitivamente hasta que todos terminen su participación."
+                  [(expanded)]="canalesAsignadosAbierto"
+                >
+                  <ul class="ev-canales">
+                    @for (c of ca.canales; track c.codigo + '-' + c.fuerzaId) {
+                      <li [class.ev-canal--cerrado]="c.estado === 'C'">
+                        <i class="fa-solid" [class.fa-tower-broadcast]="c.estado !== 'C'"
+                           [class.fa-circle-check]="c.estado === 'C'" aria-hidden="true"></i>
+                        <span class="ev-canal__info">
+                          <strong>
+                            {{ c.fuerzaDescripcion || 'Fuerza ' + c.fuerzaId }} —
+                            {{ c.canalDescripcion || 'Canal ' + c.codigo }}
+                          </strong>
+                          <small>
+                            @if (c.estado === 'C') {
+                              Cerró su participación{{ c.usuarioModifica ? ' — ' + c.usuarioModifica : '' }}
+                            } @else if (c.actuacionesActivas > 0) {
+                              {{ c.actuacionesActivas }} recurso(s) activo(s)
+                            } @else {
+                              Sin recursos asignados todavía
+                            }
+                          </small>
+                        </span>
+                        <app-ui-badge [label]="c.estado === 'C' ? 'Cerrado' : 'Activo'"
+                                      [variant]="c.estado === 'C' ? 'success' : 'info'" size="xs" />
+                      </li>
+                    }
+                    @for (a of ca.agenciasExternas; track a.agenciaId) {
+                      <li class="ev-canal--externa">
+                        <i class="fa-solid fa-building-shield" aria-hidden="true"></i>
+                        <span class="ev-canal__info">
+                          <strong>{{ a.nombre || 'Agencia externa' }}</strong>
+                          <small>
+                            Despachado {{ formatHora(a.fechaEnvio) }}
+                            @if (!a.exitoso) { · <em class="ev-err">el envío falló</em> }
+                          </small>
+                        </span>
+                        <app-ui-badge label="Informativo" variant="neutral" size="xs" />
+                      </li>
+                    }
+                  </ul>
+                </app-ui-expansion-panel>
               }
             }
-          </article>
-        }
-      </div>
-    }
-  </app-ui-expansion-panel>
+          }
 
-  <!-- ── Asistente ───────────────────────────────────────────────── -->
-  <app-ui-expansion-panel
-    title="Asistente — preguntas orientadoras"
-    icon="fa-solid fa-robot"
-    [description]="asistentePreguntas().length
-      ? asistenteRespondidas() + ' de ' + asistentePreguntas().length + ' respondidas'
-      : 'Guía de preguntas según el tipo de incidente.'"
-    [expanded]="asistenteAbierto"
-    (expandedChange)="onAsistenteAbiertoChange($event)"
-  >
-    <div class="ev-asistente">
-      @if (asistenteLoadingCat()) {
-        <p class="ev-cargando"><app-ui-spinner size="sm" /> <span>Cargando categorías…</span></p>
-      } @else {
-        <app-ui-select
-          label="Tipo de incidente"
-          [options]="opcionesCategoriaAsistente()"
-          [clearable]="false"
-          [ngModel]="asistenteCategoriaSel()"
-          (ngModelChange)="onAsistenteCategoriaChange($event)"
-        />
-      }
+          @case ('recursos') {
+            <div class="ev-recursos">
+              @if (cargandoRecursos() && recursos().length === 0) {
+                <p class="ev-cargando"><app-ui-spinner size="sm" /> <span>Consultando recursos…</span></p>
+              } @else if (recursos().length === 0) {
+                <p class="ev-nota ev-nota--vacia">
+                  <i class="fa-solid fa-car-side" aria-hidden="true"></i>
+                  Sin recursos en turno para este canal.
+                </p>
+              } @else {
+                @for (r of recursos(); track r.id) {
+                  <div class="ev-recurso"
+                       [class.ev-recurso--ocupado]="r.estado === 28 || r.estado === 30"
+                       [class.ev-recurso--asignado]="medioAsignadoAEsteEvento(r)">
+                    <button type="button" class="ev-recurso__head"
+                            (click)="centrarEnRecurso(r)"
+                            [title]="r.lat != null && r.lng != null ? 'Centrar en el mapa' : 'Sin señal GPS'">
+                      <i class="{{ iconoTipo(r.tipoMedio) }}" [title]="etiquetaTipoMedio(r.tipoMedio)"
+                         aria-hidden="true"></i>
+                      <span class="ev-recurso__info">
+                        <strong>{{ nombrePatrulla(r) }}</strong>
+                        <small>{{ r.personalResumen || 'Sin personal asignado' }}</small>
+                      </span>
+                      <span class="ev-gps" [class.ev-gps--on]="r.gpsActivo"
+                            [title]="r.gpsActivo ? 'GPS activo' : 'Sin señal GPS'"></span>
+                    </button>
 
-      @if (asistenteLoadingPreg()) {
-        <p class="ev-cargando"><app-ui-spinner size="sm" /> <span>Cargando preguntas…</span></p>
-      }
-      @if (!asistenteLoadingPreg() && asistenteCategoriaSel() && asistentePreguntas().length === 0) {
-        <p class="ev-nota">Sin preguntas configuradas para esta categoría.</p>
-      }
+                    <div class="ev-recurso__meta">
+                      <app-ui-badge [label]="r.estadoDesc"
+                                    [variant]="varianteEstadoMedio(r.estado)" size="xs" />
+                      @if (r.distanciaKm != null) {
+                        <span class="ev-recurso__dist" [class.ev-recurso__dist--cerca]="r.distanciaKm < 1"
+                              title="Distancia en línea recta al incidente">
+                          <i class="fa-solid fa-route" aria-hidden="true"></i>
+                          {{ formatDistancia(r.distanciaKm) }}
+                          @if (etaMin(r.distanciaKm, r.tipoMedio) !== null) {
+                            <small title="Tiempo estimado de llegada">~{{ etaMin(r.distanciaKm, r.tipoMedio) }} min</small>
+                          }
+                        </span>
+                      } @else {
+                        <span class="ev-recurso__dist ev-recurso__dist--singps">
+                          <i class="fa-solid fa-location-crosshairs" aria-hidden="true"></i> Sin GPS
+                        </span>
+                      }
+                    </div>
 
-      @if (asistentePreguntas().length > 0) {
-        <ol class="ev-preguntas">
-          @for (preg of asistentePreguntas(); track preg.id) {
-            <li [class.ev-pregunta--ok]="asistenteRespuestas()[preg.id]">
-              <span class="ev-pregunta__q">
-                {{ preg.pregunta }}
-                @if (preg.obligatoria) { <em title="Obligatoria">*</em> }
-              </span>
-              @if (preg.ayuda) {
-                <span class="ev-pregunta__ayuda">
-                  <i class="fa-solid fa-circle-info" aria-hidden="true"></i> {{ preg.ayuda }}
-                </span>
-              }
-
-              @switch (preg.tipoRespuesta) {
-                @case ('SINO') {
-                  <span class="ev-sino">
-                    <button type="button" class="ev-sino__opt"
-                            [class.ev-sino__opt--sel]="asistenteRespuestas()[preg.id] === 'sí'"
-                            [attr.aria-pressed]="asistenteRespuestas()[preg.id] === 'sí'"
-                            (click)="responderAsistente(preg.id, 'sí')">Sí</button>
-                    <button type="button" class="ev-sino__opt"
-                            [class.ev-sino__opt--sel]="asistenteRespuestas()[preg.id] === 'no'"
-                            [attr.aria-pressed]="asistenteRespuestas()[preg.id] === 'no'"
-                            (click)="responderAsistente(preg.id, 'no')">No</button>
-                  </span>
-                }
-                @case ('NUMERO') {
-                  <app-ui-input
-                    class="ev-pregunta__resp" type="number" placeholder="0"
-                    [ariaLabel]="preg.pregunta"
-                    [ngModel]="asistenteRespuestas()[preg.id]"
-                    (ngModelChange)="responderAsistente(preg.id, $event)"
-                  />
-                }
-                @case ('SELECCION') {
-                  <app-ui-select
-                    class="ev-pregunta__resp"
-                    [ariaLabel]="preg.pregunta"
-                    [options]="opcionesPregunta(preg)"
-                    [clearable]="false"
-                    [ngModel]="asistenteRespuestas()[preg.id]"
-                    (ngModelChange)="responderAsistente(preg.id, $event)"
-                  />
-                }
-                @default {
-                  <app-ui-input
-                    class="ev-pregunta__resp" placeholder="Respuesta…"
-                    [ariaLabel]="preg.pregunta"
-                    [ngModel]="asistenteRespuestas()[preg.id]"
-                    (ngModelChange)="responderAsistente(preg.id, $event)"
-                  />
+                    <div class="ev-recurso__acciones">
+                      @if (r.estado === 27 && !medioAsignadoAEsteEvento(r) && !r.eventoId) {
+                        <app-ui-button
+                          variant="primary" size="sm" icon="fa-solid fa-plus"
+                          [loading]="asignandoMedioId() === r.id"
+                          [disabled]="!!asignandoMedioId() || d.estado === 'C'"
+                          tooltip="Paso 1: asignar el recurso a este incidente"
+                          (buttonClick)="asignarRecursoAlEvento(r)"
+                        >Asignar</app-ui-button>
+                      }
+                      @if (r.estado === 27 && r.eventoId && !medioAsignadoAEsteEvento(r)) {
+                        <app-ui-badge label="En otro caso" icon="fa-solid fa-link"
+                                      iconPosition="start" variant="neutral" size="xs" />
+                      }
+                      @if (medioAsignadoAEsteEvento(r)) {
+                        <app-ui-badge label="Asignado a este evento" icon="fa-solid fa-link"
+                                      iconPosition="start" variant="info" size="xs" />
+                      }
+                      @if (r.estado === 30 || r.estado === 28) {
+                        <app-ui-badge [label]="etiquetaEstadoMedio(r.estado)"
+                                      [variant]="varianteEstadoMedio(r.estado)" size="xs" />
+                      }
+                    </div>
+                  </div>
                 }
               }
-            </li>
-          }
-        </ol>
-
-        <!-- En el origen estos campos no estaban enlazados a nada: el
-             despachador podía contestarlos todos y lo escrito se perdía. -->
-        <div class="ev-asistente__pie">
-          @if (asistentePendientes() > 0) {
-            <span class="ev-nota">
-              Faltan {{ asistentePendientes() }} pregunta(s) obligatoria(s).
-            </span>
-          }
-          <app-ui-button
-            variant="primary" size="sm" icon="fa-solid fa-arrow-down-to-line"
-            [disabled]="asistenteRespondidas() === 0"
-            tooltip="Copiar lo respondido al formulario de anotación"
-            (buttonClick)="pasarAsistenteAAnotacion()"
-          >Pasar a la anotación</app-ui-button>
-        </div>
-      }
-    </div>
-  </app-ui-expansion-panel>
-
-  <!-- ── Archivos ────────────────────────────────────────────────── -->
-  @if (adjuntos().length > 0) {
-    <app-ui-expansion-panel
-      title="Archivos del caso" icon="fa-solid fa-photo-film"
-      [description]="adjuntos().length + ' archivo(s)'"
-      [(expanded)]="fotosAbierto"
-    >
-      <app-adjuntos-caso [adjuntos]="adjuntos()" />
-    </app-ui-expansion-panel>
-  }
-
-  <!-- ── Anotaciones ─────────────────────────────────────────────── -->
-  <app-ui-expansion-panel
-    [title]="'Anotaciones (' + d.anotaciones.length + ')'"
-    icon="fa-solid fa-notes-medical"
-    [(expanded)]="anotacionesAbierto"
-  >
-    @if (d.estado !== 'C') {
-      <div class="ev-anot-form">
-        <div class="ev-anot-form__fila">
-          <app-ui-select
-            class="ev-anot-form__campo"
-            label="Tipo"
-            [options]="opcionesTipoAnotacion"
-            [clearable]="false"
-            [ngModel]="nuevaAnotacion().tipoAnotacion"
-            (ngModelChange)="onTipoAnotacionChange($event)"
-          />
-          <app-ui-input
-            class="ev-anot-form__campo"
-            label="Título"
-            placeholder="Título breve…"
-            [ngModel]="nuevaAnotacion().titulo"
-            (ngModelChange)="setAnotacionTitulo($event)"
-          />
-        </div>
-
-        @if (nuevaAnotacion().tipoAnotacion === 'OPERATIVA') {
-          <app-ui-select
-            label="Tipo de actividad"
-            [options]="opcionesActividadAnotacion()"
-            [clearable]="false"
-            [ngModel]="anotActividadCodigo()"
-            (ngModelChange)="onAnotActividadChange($event)"
-          />
-          @if (anotRequiereDelito()) {
-            <div class="ev-anot-form__fila">
-              <app-ui-input
-                class="ev-anot-form__campo"
-                label="Artículo del delito"
-                placeholder="Ej.: Art. 239, Art. 103…"
-                [ngModel]="anotDelitoArticulo()"
-                (ngModelChange)="anotDelitoArticulo.set($event)"
-              />
-              <app-ui-input
-                class="ev-anot-form__campo"
-                label="Nombre del delito"
-                placeholder="Ej.: Hurto calificado…"
-                [ngModel]="anotDelitoDesc()"
-                (ngModelChange)="anotDelitoDesc.set($event)"
-              />
             </div>
           }
+
+          @case ('despacho') {
+            <app-ui-expansion-panel
+              title="Despacho activo"
+              icon="fa-solid fa-route"
+              [description]="actuacionesActivas().length + ' recurso(s) en curso'
+                + (actuaciones().length > actuacionesActivas().length
+                    ? ' · ' + actuaciones().length + ' en total, incluidos cerrados y anulados' : '')"
+              [(expanded)]="despachoAbierto"
+            >
+              @if (errorActuaciones()) {
+                <p class="ev-err">
+                  <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i> {{ errorActuaciones() }}
+                </p>
+              }
+
+              @if (cargandoActuaciones() && actuaciones().length === 0) {
+                <p class="ev-cargando"><app-ui-spinner size="sm" /> <span>Cargando actuaciones…</span></p>
+              } @else if (actuaciones().length === 0) {
+                <p class="ev-nota ev-nota--vacia">
+                  <i class="fa-solid fa-route" aria-hidden="true"></i>
+                  Sin recursos asignados a este evento. Use <strong>Asignar</strong> en la lista de recursos.
+                </p>
+              } @else {
+                <div class="ev-despachos">
+                  @for (act of actuaciones(); track act.id; let i = $index) {
+                    @if (act.estado === 'V' && (i === 0 || actuaciones()[i - 1].estado !== 'V')) {
+                      <p class="ev-despachos__sep">
+                        <i class="fa-solid fa-link-slash" aria-hidden="true"></i>
+                        Recursos anulados o desasignados
+                      </p>
+                    }
+                    <article class="ev-despacho"
+                             [class.ev-despacho--cerrada]="act.estado === 'C' || act.estado === 'V'"
+                             [class.ev-despacho--anulada]="act.estado === 'V'">
+                      <header class="ev-despacho__head">
+                        <strong>
+                          <i class="fa-solid fa-car-side" aria-hidden="true"></i>
+                          {{ nombreUnidad(act) }}
+                        </strong>
+                        <app-ui-badge [label]="etiquetaEstadoActuacion(act.estado)"
+                                      [variant]="varianteEstadoActuacion(act.estado)" size="xs" />
+                        @if (act.canalDesc) {
+                          <span class="ev-despacho__canal">
+                            <i class="fa-solid fa-tower-broadcast" aria-hidden="true"></i> {{ act.canalDesc }}
+                          </span>
+                        }
+                      </header>
+
+                      <!-- El origen pintaba aquí la marca ISO cruda del backend. -->
+                      <ol class="ev-pasos">
+                        @for (p of [
+                          { label: 'Asignado',  ts: act.fechaCreacion, hecho: true },
+                          { label: 'En ruta',   ts: act.fechaDespacho, hecho: act.estado === 'D' || act.estado === 'A' || act.estado === 'C' },
+                          { label: 'En sitio',  ts: act.fechaLlegada,  hecho: act.estado === 'A' || act.estado === 'C' },
+                          { label: 'Atendió',   ts: act.fechaCierre,   hecho: act.estado === 'C' }
+                        ]; track p.label) {
+                          <li [class.ev-paso--hecho]="p.hecho">
+                            <span class="ev-paso__punto"></span>
+                            <span class="ev-paso__lbl">{{ p.label }}</span>
+                            <span class="ev-paso__ts">{{ p.ts ? (p.ts | date:'dd/MM HH:mm') : '—' }}</span>
+                          </li>
+                        }
+                      </ol>
+
+                      @if (act.estado !== 'C' && act.estado !== 'V' && d.estado !== 'C') {
+                        @if (!puedeGestionarActuacion(act)) {
+                          <p class="ev-nota">
+                            <i class="fa-solid fa-lock" aria-hidden="true"></i>
+                            Asignado por {{ act.fuerzaDesc || 'otra fuerza' }} – {{ act.canalDesc || 'otro canal' }}.
+                            Solo ese canal puede gestionarlo.
+                          </p>
+                        } @else {
+                          <div class="ev-despacho__estado">
+                            <span class="ev-despacho__timer"
+                                  [class.ev-despacho__timer--alerta]="minutosEnEstadoActual(act) >= slaUmbralCritico">
+                              <i class="fa-regular fa-clock" aria-hidden="true"></i>
+                              {{ minutosEnEstadoActual(act) }} min en
+                              {{ act.estado === 'P' ? 'asignado' : act.estado === 'D' ? 'ruta' : 'sitio' }}
+                            </span>
+                            @if (act.solicitaApoyo) {
+                              <app-ui-badge label="¡Apoyo solicitado!" icon="fa-solid fa-tower-broadcast"
+                                            iconPosition="start" variant="danger" size="xs" />
+                            }
+                          </div>
+
+                          <div class="ev-despacho__acciones">
+                            @if (act.estado === 'P') {
+                              <app-ui-button
+                                variant="primary" size="sm" icon="fa-solid fa-truck-fast"
+                                [loading]="operandoActuacionId() === act.id"
+                                tooltip="Paso 2: marcar el recurso en ruta"
+                                (buttonClick)="marcarEnRuta(act)"
+                              >Salió en ruta</app-ui-button>
+                            }
+                            @if (act.estado === 'D') {
+                              <app-ui-button
+                                [variant]="sugiereLlegada(act) ? 'success' : 'warning'"
+                                size="sm" icon="fa-solid fa-map-pin"
+                                [loading]="operandoActuacionId() === act.id"
+                                [tooltip]="sugiereLlegada(act)
+                                  ? 'El GPS indica que el recurso ya llegó al lugar'
+                                  : 'Paso 3: marcar que el recurso llegó al lugar'"
+                                (buttonClick)="marcarEnSitio(act)"
+                              >{{ sugiereLlegada(act) ? '¿Llegó? el GPS lo ubica cerca' : 'Llegó al lugar' }}</app-ui-button>
+                            }
+                            @if (act.estado === 'A') {
+                              <app-ui-button
+                                variant="success" size="sm" icon="fa-solid fa-circle-check"
+                                [loading]="operandoActuacionId() === act.id"
+                                tooltip="Paso 4: registrar el resultado de la atención"
+                                (buttonClick)="abrirCierreActuacion(act)"
+                              >Atendió</app-ui-button>
+                            }
+                            <app-ui-button
+                              variant="danger" appearance="ghost" size="sm" icon="fa-solid fa-link-slash"
+                              [disabled]="operandoActuacionId() === act.id"
+                              [tooltip]="act.estado === 'P'
+                                ? 'Desasignar el recurso'
+                                : 'Cancelar un recurso ya despachado (requiere motivo)'"
+                              (buttonClick)="abrirModalDesasignar(act)"
+                            >{{ act.estado === 'P' ? 'Desasignar' : 'Cancelar' }}</app-ui-button>
+                            @if (act.solicitaApoyo) {
+                              <app-ui-button
+                                variant="success" appearance="ghost" size="sm" icon="fa-solid fa-check-double"
+                                [loading]="solicitandoApoyoId() === act.id"
+                                (buttonClick)="atenderApoyo(act)"
+                              >Apoyo atendido</app-ui-button>
+                            } @else {
+                              <app-ui-button
+                                variant="warning" appearance="ghost" size="sm" icon="fa-solid fa-tower-broadcast"
+                                [loading]="solicitandoApoyoId() === act.id"
+                                tooltip="Solicitar apoyo urgente (seguridad del funcionario)"
+                                (buttonClick)="solicitarApoyo(act)"
+                              >Solicitar apoyo</app-ui-button>
+                            }
+                            <app-ui-button
+                              variant="secondary" appearance="ghost" size="sm" icon="fa-solid fa-circle-exclamation"
+                              tooltip="Registrar una novedad sobre este recurso"
+                              (buttonClick)="abrirModalNovedad(act)"
+                            >Novedad@if (act.totalNotas) { ({{ act.totalNotas }}) }</app-ui-button>
+                          </div>
+                        }
+                      }
+                    </article>
+                  }
+                </div>
+              }
+            </app-ui-expansion-panel>
+
+          }
+
+          @case ('notas') {
+            <app-ui-expansion-panel
+              [title]="'Anotaciones (' + d.anotaciones.length + ')'"
+              icon="fa-solid fa-notes-medical"
+              [(expanded)]="anotacionesAbierto"
+            >
+              @if (d.estado !== 'C') {
+                <div class="ev-anot-form">
+                  <div class="ev-anot-form__fila">
+                    <app-ui-select
+                      class="ev-anot-form__campo"
+                      label="Tipo"
+                      [options]="opcionesTipoAnotacion"
+                      [clearable]="false"
+                      [ngModel]="nuevaAnotacion().tipoAnotacion"
+                      (ngModelChange)="onTipoAnotacionChange($event)"
+                    />
+                    <app-ui-input
+                      class="ev-anot-form__campo"
+                      label="Título"
+                      placeholder="Título breve…"
+                      [ngModel]="nuevaAnotacion().titulo"
+                      (ngModelChange)="setAnotacionTitulo($event)"
+                    />
+                  </div>
+
+                  @if (nuevaAnotacion().tipoAnotacion === 'OPERATIVA') {
+                    <app-ui-select
+                      label="Tipo de actividad"
+                      [options]="opcionesActividadAnotacion()"
+                      [clearable]="false"
+                      [ngModel]="anotActividadCodigo()"
+                      (ngModelChange)="onAnotActividadChange($event)"
+                    />
+                    @if (anotRequiereDelito()) {
+                      <div class="ev-anot-form__fila">
+                        <app-ui-input
+                          class="ev-anot-form__campo"
+                          label="Artículo del delito"
+                          placeholder="Ej.: Art. 239, Art. 103…"
+                          [ngModel]="anotDelitoArticulo()"
+                          (ngModelChange)="anotDelitoArticulo.set($event)"
+                        />
+                        <app-ui-input
+                          class="ev-anot-form__campo"
+                          label="Nombre del delito"
+                          placeholder="Ej.: Hurto calificado…"
+                          [ngModel]="anotDelitoDesc()"
+                          (ngModelChange)="anotDelitoDesc.set($event)"
+                        />
+                      </div>
+                    }
+                  }
+
+                  <app-ui-input
+                    label="Texto de la anotación"
+                    multiline [rows]="3" required
+                    [error]="nuevaAnotacion().anotacion.trim() ? '' : 'Obligatorio.'"
+                    placeholder="Registre la novedad o la información relevante…"
+                    [ngModel]="nuevaAnotacion().anotacion"
+                    (ngModelChange)="setAnotacionTexto($event)"
+                  />
+
+                  <div class="ev-plantillas">
+                    @for (p of plantillasAnotacion; track p.label) {
+                      <button type="button" (click)="aplicarPlantillaAnotacion(p.texto)" [title]="p.texto">
+                        <i class="fa-solid fa-bolt" aria-hidden="true"></i> {{ p.label }}
+                      </button>
+                    }
+                  </div>
+
+                  <div class="ev-anot-form__pie">
+                    <app-ui-button
+                      variant="primary" size="sm" icon="fa-solid fa-floppy-disk"
+                      [loading]="guardandoAnotacion()"
+                      [disabled]="guardandoAnotacion() || !nuevaAnotacion().anotacion.trim()"
+                      (buttonClick)="guardarAnotacion()"
+                    >Registrar anotación</app-ui-button>
+                    @if (mensajeAnotacion()) {
+                      <span class="ev-msg-ok">
+                        <i class="fa-solid fa-circle-check" aria-hidden="true"></i> {{ mensajeAnotacion() }}
+                      </span>
+                    }
+                  </div>
+                </div>
+              }
+
+              @if (!d.anotaciones.length) {
+                <p class="ev-nota">Sin anotaciones registradas.</p>
+              } @else {
+                <ul class="ev-anotaciones">
+                  @for (anot of d.anotaciones; track anot.id) {
+                    <li [attr.data-tipo]="anot.tipoAnotacion">
+                      <span class="ev-anotacion__head">
+                        <app-ui-badge [label]="getTipoAnotacionLabel(anot.tipoAnotacion)"
+                                      variant="neutral" size="xs" />
+                        @if (anot.titulo) { <strong>{{ anot.titulo }}</strong> }
+                        <small>{{ anot.usernameCreacion }} · {{ formatHora(anot.fechaCreacion) }}</small>
+                      </span>
+                      <p class="ev-anotacion__txt">{{ anot.anotacion }}</p>
+                    </li>
+                  }
+                </ul>
+              }
+            </app-ui-expansion-panel>
+          }
+
+          @case ('asistente') {
+            <app-ui-expansion-panel
+              title="Asistente — preguntas orientadoras"
+              icon="fa-solid fa-robot"
+              [description]="asistentePreguntas().length
+                ? asistenteRespondidas() + ' de ' + asistentePreguntas().length + ' respondidas'
+                : 'Guía de preguntas según el tipo de incidente.'"
+              [expanded]="asistenteAbierto"
+              (expandedChange)="onAsistenteAbiertoChange($event)"
+            >
+              <div class="ev-asistente">
+                @if (asistenteLoadingCat()) {
+                  <p class="ev-cargando"><app-ui-spinner size="sm" /> <span>Cargando categorías…</span></p>
+                } @else {
+                  <app-ui-select
+                    label="Tipo de incidente"
+                    [options]="opcionesCategoriaAsistente()"
+                    [clearable]="false"
+                    [ngModel]="asistenteCategoriaSel()"
+                    (ngModelChange)="onAsistenteCategoriaChange($event)"
+                  />
+                }
+
+                @if (asistenteLoadingPreg()) {
+                  <p class="ev-cargando"><app-ui-spinner size="sm" /> <span>Cargando preguntas…</span></p>
+                }
+                @if (!asistenteLoadingPreg() && asistenteCategoriaSel() && asistentePreguntas().length === 0) {
+                  <p class="ev-nota">Sin preguntas configuradas para esta categoría.</p>
+                }
+
+                @if (asistentePreguntas().length > 0) {
+                  <ol class="ev-preguntas">
+                    @for (preg of asistentePreguntas(); track preg.id) {
+                      <li [class.ev-pregunta--ok]="asistenteRespuestas()[preg.id]">
+                        <span class="ev-pregunta__q">
+                          {{ preg.pregunta }}
+                          @if (preg.obligatoria) { <em title="Obligatoria">*</em> }
+                        </span>
+                        @if (preg.ayuda) {
+                          <span class="ev-pregunta__ayuda">
+                            <i class="fa-solid fa-circle-info" aria-hidden="true"></i> {{ preg.ayuda }}
+                          </span>
+                        }
+
+                        @switch (preg.tipoRespuesta) {
+                          @case ('SINO') {
+                            <span class="ev-sino">
+                              <button type="button" class="ev-sino__opt"
+                                      [class.ev-sino__opt--sel]="asistenteRespuestas()[preg.id] === 'sí'"
+                                      [attr.aria-pressed]="asistenteRespuestas()[preg.id] === 'sí'"
+                                      (click)="responderAsistente(preg.id, 'sí')">Sí</button>
+                              <button type="button" class="ev-sino__opt"
+                                      [class.ev-sino__opt--sel]="asistenteRespuestas()[preg.id] === 'no'"
+                                      [attr.aria-pressed]="asistenteRespuestas()[preg.id] === 'no'"
+                                      (click)="responderAsistente(preg.id, 'no')">No</button>
+                            </span>
+                          }
+                          @case ('NUMERO') {
+                            <app-ui-input
+                              class="ev-pregunta__resp" type="number" placeholder="0"
+                              [ariaLabel]="preg.pregunta"
+                              [ngModel]="asistenteRespuestas()[preg.id]"
+                              (ngModelChange)="responderAsistente(preg.id, $event)"
+                            />
+                          }
+                          @case ('SELECCION') {
+                            <app-ui-select
+                              class="ev-pregunta__resp"
+                              [ariaLabel]="preg.pregunta"
+                              [options]="opcionesPregunta(preg)"
+                              [clearable]="false"
+                              [ngModel]="asistenteRespuestas()[preg.id]"
+                              (ngModelChange)="responderAsistente(preg.id, $event)"
+                            />
+                          }
+                          @default {
+                            <app-ui-input
+                              class="ev-pregunta__resp" placeholder="Respuesta…"
+                              [ariaLabel]="preg.pregunta"
+                              [ngModel]="asistenteRespuestas()[preg.id]"
+                              (ngModelChange)="responderAsistente(preg.id, $event)"
+                            />
+                          }
+                        }
+                      </li>
+                    }
+                  </ol>
+
+                  <!-- En el origen estos campos no estaban enlazados a nada: el
+                       despachador podía contestarlos todos y lo escrito se perdía. -->
+                  <div class="ev-asistente__pie">
+                    @if (asistentePendientes() > 0) {
+                      <span class="ev-nota">
+                        Faltan {{ asistentePendientes() }} pregunta(s) obligatoria(s).
+                      </span>
+                    }
+                    <app-ui-button
+                      variant="primary" size="sm" icon="fa-solid fa-arrow-down-to-line"
+                      [disabled]="asistenteRespondidas() === 0"
+                      tooltip="Copiar lo respondido al formulario de anotación"
+                      (buttonClick)="pasarAsistenteAAnotacion()"
+                    >Pasar a la anotación</app-ui-button>
+                  </div>
+                }
+              </div>
+            </app-ui-expansion-panel>
+
+          }
+
+          @case ('archivos') {
+            @if (adjuntos().length > 0) {
+              <app-ui-expansion-panel
+                title="Archivos del caso" icon="fa-solid fa-photo-film"
+                [description]="adjuntos().length + ' archivo(s)'"
+                [(expanded)]="fotosAbierto"
+              >
+                <app-adjuntos-caso [adjuntos]="adjuntos()" />
+              </app-ui-expansion-panel>
+            }
+          }
         }
-
-        <app-ui-input
-          label="Texto de la anotación"
-          multiline [rows]="3" required
-          [error]="nuevaAnotacion().anotacion.trim() ? '' : 'Obligatorio.'"
-          placeholder="Registre la novedad o la información relevante…"
-          [ngModel]="nuevaAnotacion().anotacion"
-          (ngModelChange)="setAnotacionTexto($event)"
-        />
-
-        <div class="ev-plantillas">
-          @for (p of plantillasAnotacion; track p.label) {
-            <button type="button" (click)="aplicarPlantillaAnotacion(p.texto)" [title]="p.texto">
-              <i class="fa-solid fa-bolt" aria-hidden="true"></i> {{ p.label }}
-            </button>
-          }
-        </div>
-
-        <div class="ev-anot-form__pie">
-          <app-ui-button
-            variant="primary" size="sm" icon="fa-solid fa-floppy-disk"
-            [loading]="guardandoAnotacion()"
-            [disabled]="guardandoAnotacion() || !nuevaAnotacion().anotacion.trim()"
-            (buttonClick)="guardarAnotacion()"
-          >Registrar anotación</app-ui-button>
-          @if (mensajeAnotacion()) {
-            <span class="ev-msg-ok">
-              <i class="fa-solid fa-circle-check" aria-hidden="true"></i> {{ mensajeAnotacion() }}
-            </span>
-          }
-        </div>
       </div>
-    }
-
-    @if (!d.anotaciones.length) {
-      <p class="ev-nota">Sin anotaciones registradas.</p>
-    } @else {
-      <ul class="ev-anotaciones">
-        @for (anot of d.anotaciones; track anot.id) {
-          <li [attr.data-tipo]="anot.tipoAnotacion">
-            <span class="ev-anotacion__head">
-              <app-ui-badge [label]="getTipoAnotacionLabel(anot.tipoAnotacion)"
-                            variant="neutral" size="xs" />
-              @if (anot.titulo) { <strong>{{ anot.titulo }}</strong> }
-              <small>{{ anot.usernameCreacion }} · {{ formatHora(anot.fechaCreacion) }}</small>
-            </span>
-            <p class="ev-anotacion__txt">{{ anot.anotacion }}</p>
-          </li>
-        }
-      </ul>
-    }
-  </app-ui-expansion-panel>
+    </aside>
+  </div>
+</div>
 }
+
 
 <!-- ═══════════════════════════════════════════════════════════════════════
      Cambiar el estado del evento
@@ -1563,3 +1662,4 @@ variant="primary" icon="fa-solid fa-share-from-square"
     >Remitir ({{ remitirTotalSelec() }})</app-ui-button>
   </div>
 </app-ui-modal>
+
