@@ -2361,6 +2361,65 @@ body > .cdk-overlay-container:has(.ui-tooltip-overlay-pane) {
   .ev-hecho__halo { animation: none; opacity: .5; }
 }
 
+/* Marcador del Mapa de Incidentes. Misma familia visual que el pin del hecho
+   en la consola de Eventos: gota, aro blanco y un símbolo dentro. El color lo
+   pone el componente en `--mi-color` según la prioridad. */
+.mi-pin {
+  position: relative;
+  width: 34px;
+  height: 44px;
+
+  &__halo {
+    position: absolute;
+    left: 50%;
+    top: 40px;                 /* el punto exacto de las coordenadas */
+    width: 28px;
+    height: 28px;
+    margin: -14px 0 0 -14px;
+    border-radius: 50%;
+    background: var(--mi-color, #0066cc);
+    opacity: .28;
+    pointer-events: none;
+  }
+
+  /* Solo Flash late: si latieran todas, no destacaría ninguna. */
+  &--flash &__halo { animation: mi-pin-latido 1.6s ease-out infinite; }
+
+  &__gota {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    margin-left: -16px;
+    border: 3px solid #fff;
+    /* Esquina inferior izquierda en punta que, girada -45°, apunta al suelo. */
+    border-radius: 50% 50% 50% 0;
+    transform: rotate(-45deg);
+    background: var(--mi-color, #0066cc);
+    box-shadow: 0 3px 9px rgb(0 0 0 / 42%);
+
+    i {
+      transform: rotate(45deg);   /* deshace el giro de la gota */
+      color: #fff;
+      font-size: 13px;
+    }
+  }
+}
+
+@keyframes mi-pin-latido {
+  0%   { transform: scale(.5);  opacity: .8; }
+  70%  { transform: scale(2.3); opacity: 0; }
+  100% { transform: scale(2.3); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mi-pin--flash .mi-pin__halo { animation: none; opacity: .45; }
+}
+
 .ev-popup {
   display: flex;
   flex-direction: column;

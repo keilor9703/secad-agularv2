@@ -13,10 +13,23 @@ $radius:         6px;
 
 // ── Contenedor principal ──────────────────────────────────────────────────────
 
+// El contenedor del router ya da el alto visible; de aquí para abajo solo hay
+// que propagarlo.
+:host {
+  display:    block;
+  height:     100%;
+  min-height: 0;
+}
+
 .mapa-wrapper {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 60px); // ajustar según el header del layout
+  // Era `calc(100vh - 60px)`, una resta a ojo del alto del encabezado. Se
+  // quedaba corta —hay barra superior, migas de pan y la barra de radio del
+  // pie— así que la franja de incidentes caía por debajo del borde inferior y
+  // no había forma de verla. Con el 100% del contenedor la resta sobra.
+  height: 100%;
+  min-height: 0;
   background: #f0f2f5;
   overflow: hidden;
 }
@@ -138,7 +151,8 @@ $radius:         6px;
 
 .mapa-contenido {
   display: flex;
-  flex: 1;
+  flex: 1 1 auto;
+  min-height: 0;
   position: relative;
   overflow: hidden;
 }

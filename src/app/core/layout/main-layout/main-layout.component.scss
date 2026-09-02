@@ -49,7 +49,14 @@
   overflow-x: hidden;
   overflow-y: hidden;
   padding-top: var(--header-height, 70px);
-  padding-bottom: 0;
+  // El hueco de la barra de radio se reserva AQUÍ, fuera del contenedor que
+  // desplaza. Estaba como `padding-bottom` de .main, que es quien tiene el
+  // `overflow-y: auto`: el navegador no cuenta ese relleno en el área
+  // desplazable, así que los últimos 56 px de toda página larga —el final de
+  // la trazabilidad de un pedido, por ejemplo— quedaban debajo de la barra sin
+  // forma de llegar a ellos. Medido: la última línea caía en y=892 con la
+  // barra empezando en y=844.
+  padding-bottom: var(--footer-height, 56px);
 }
 
 .main {
@@ -58,7 +65,6 @@
   display: flex;
   flex-direction: column;
   min-height: 0;
-  padding-bottom: var(--footer-height, 56px);
 }
 
 /*

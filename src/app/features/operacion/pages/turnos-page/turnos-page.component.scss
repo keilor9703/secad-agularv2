@@ -26,10 +26,6 @@
   height:             100%;
   min-height:         0;
   padding:            16px;
-
-  // En pantallas muy anchas las tres columnas se estiraban sin ganar nada:
-  // un tope y la consola centrada leen mejor que 700 px de aire por columna.
-  > * { width: 100%; max-width: 1800px; margin-inline: auto; }
 }
 
 .tr-panel {
@@ -51,8 +47,8 @@
   // igual todo lo demás y quedaban desproporcionadas. Ahora las dos primeras
   // van acotadas a lo que de verdad necesitan y medios se lleva el resto,
   // que es la columna con las líneas más largas (dos policías por patrulla).
-  grid-template-columns: clamp(320px, 21vw, 390px)
-                         clamp(320px, 23vw, 430px)
+  grid-template-columns: clamp(320px, 20vw, 420px)
+                         clamp(320px, 22vw, 460px)
                          minmax(0, 1fr);
   grid-template-rows:    minmax(0, 1fr);
   gap:                   16px;

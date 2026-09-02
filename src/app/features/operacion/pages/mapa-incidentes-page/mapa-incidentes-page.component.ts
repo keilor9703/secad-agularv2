@@ -291,40 +291,34 @@ export class MapaIncidentesPageComponent implements OnInit, AfterViewInit, OnDes
     }
   }
 
+  /**
+   * Marcador del incidente. Antes llevaba escrito «FLH», «INM» o «RUT» dentro
+   * de la gota: tres siglas inventadas que hay que aprenderse y que a 8 px no
+   * se leen. La prioridad ya la dice el color —y la leyenda del mapa lo
+   * explica—, así que dentro va un símbolo que se entiende solo: rayo para
+   * Flash, triángulo de aviso para Inmediata y punto para Rutina. Flash añade
+   * un latido, la única prioridad que justifica llamar la atención sola.
+   */
   private crearIcono(prioridad: string): any {
+    const p     = this.normalizarPrioridad(prioridad);
     const color = this.colorPorPrioridad(prioridad);
-    const label = this.labelPrioridadCorto(prioridad);
+    const glifo = p === 'FLASH'     ? 'fa-bolt'
+                : p === 'INMEDIATA' ? 'fa-triangle-exclamation'
+                : 'fa-circle-dot';
 
     return L.divIcon({
       className: '',
-      html: `
-        <div style="
-          position: relative;
-          width: 32px;
-          height: 42px;
-        ">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 42" width="32" height="42">
-            <path d="M16 0 C7.163 0 0 7.163 0 16 C0 27 16 42 16 42 C16 42 32 27 32 16 C32 7.163 24.837 0 16 0 Z"
-                  fill="${color}" stroke="rgba(0,0,0,0.4)" stroke-width="1.5"/>
-            <circle cx="16" cy="16" r="9" fill="rgba(255,255,255,0.25)"/>
-          </svg>
-          <span style="
-            position: absolute;
-            top: 6px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: #fff;
-            font-size: 8px;
-            font-weight: 700;
-            font-family: sans-serif;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.6);
-            white-space: nowrap;
-            line-height: 1;
-          ">${label}</span>
-        </div>`,
-      iconSize:    [32, 42],
-      iconAnchor:  [16, 42],
-      popupAnchor: [0, -44]
+      html: `<div class="mi-pin${p === 'FLASH' ? ' mi-pin--flash' : ''}" style="--mi-color:${color}">
+               <span class="mi-pin__halo" aria-hidden="true"></span>
+               <span class="mi-pin__gota">
+                 <i class="fa-solid ${glifo}" aria-hidden="true"></i>
+               </span>
+             </div>`,
+      // La punta de la gota cae en (17, 40) dentro de la caja: ahí va el ancla,
+      // que es el punto que marca las coordenadas del incidente.
+      iconSize:    [34, 44],
+      iconAnchor:  [17, 40],
+      popupAnchor: [0, -42]
     });
   }
 
@@ -606,13 +600,6 @@ export class MapaIncidentesPageComponent implements OnInit, AfterViewInit, OnDes
     if (p === 'INMEDIATA') return '#e67300';
     if (p === 'RUTINA')   return '#0066cc';
     return '#555555';
-  }
-
-  labelPrioridadCorto(prioridad: string): string {
-    const p = this.normalizarPrioridad(prioridad);
-    if (p === 'FLASH')    return 'FLH';
-    if (p === 'INMEDIATA') return 'INM';
-    return 'RUT';
   }
 
   normalizarPrioridad(prioridad: string): string {
