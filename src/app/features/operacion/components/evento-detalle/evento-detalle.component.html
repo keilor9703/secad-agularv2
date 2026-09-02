@@ -316,41 +316,6 @@
                 </div>
               </div>
 
-              <!-- Chat: sección propia, siempre visible mientras hay llamada,
-                   para que quien no puede hablar tenga a la vista cómo escribir. -->
-              <div class="ev-chat">
-                <p class="ev-chat__head">
-                  <i class="fa-solid fa-comment" aria-hidden="true"></i>
-                  Chat con el ciudadano
-                  <app-ui-badge
-                    [label]="videollamadaChatDisponible() ? 'Disponible' : 'Conectando…'"
-                    [variant]="videollamadaChatDisponible() ? 'success' : 'neutral'" size="xs" />
-                </p>
-                <div class="ev-chat__hilo">
-                  @if (videollamadaChatMensajes().length === 0) {
-                    <p class="ev-nota">Sin mensajes todavía. Escríbale si no puede hablar en voz alta.</p>
-                  }
-                  @for (m of videollamadaChatMensajes(); track $index) {
-                    <span class="ev-chat__burbuja" [class.ev-chat__burbuja--propia]="m.propio">
-                      <span>{{ m.texto }}</span>
-                      <small>{{ m.hora }}</small>
-                    </span>
-                  }
-                </div>
-                <form class="ev-chat__form" (submit)="enviarChatVideollamada(); $event.preventDefault()">
-                  <app-ui-input
-                    ariaLabel="Mensaje para el ciudadano"
-                    placeholder="Escriba un mensaje…"
-                    name="chatTexto"
-                    [(ngModel)]="videollamadaChatTexto"
-                  />
-                  <app-ui-button
-                    variant="primary" size="sm" icon="fa-solid fa-paper-plane" iconOnly
-                    ariaLabel="Enviar el mensaje" tooltip="Enviar"
-                    (buttonClick)="enviarChatVideollamada()"
-                  />
-                </form>
-              </div>
             }
           </div>
         } @else if (d.estado !== 'C') {
@@ -425,12 +390,15 @@
           <i class="fa-solid fa-notes-medical" aria-hidden="true"></i><span>Notas</span>
           @if (d.anotaciones.length) { <b class="ev-tabc__n">{{ d.anotaciones.length }}</b> }
         </button>
-        @if (mostrarSugerencia()) {
+        @if (llamadaEnCurso(d)) {
           <button type="button" role="tab" class="ev-tabc"
-                  [class.ev-tabc--sel]="panel() === 'cuadrantes'"
-                  [attr.aria-selected]="panel() === 'cuadrantes'"
-                  (click)="irAPanel('cuadrantes')">
-            <i class="fa-solid fa-location-crosshairs" aria-hidden="true"></i><span>Cuadrantes</span>
+                  [class.ev-tabc--sel]="panel() === 'chat'"
+                  [attr.aria-selected]="panel() === 'chat'"
+                  (click)="irAPanel('chat')">
+            <i class="fa-solid fa-comment" aria-hidden="true"></i><span>Chat</span>
+            @if (videollamadaChatMensajes().length) {
+              <b class="ev-tabc__n">{{ videollamadaChatMensajes().length }}</b>
+            }
           </button>
         }
         <button type="button" role="tab" class="ev-tabc"
@@ -1027,50 +995,43 @@
 
           }
 
-          @case ('cuadrantes') {
-          @if (mostrarSugerencia()) {
-            <div class="ev-sugerencia">
-              <p class="ev-sugerencia__head">
-                <i class="fa-solid fa-location-crosshairs" aria-hidden="true"></i>
-                Cuadrantes libres más cercanos al hecho
-                <app-ui-button
-                  variant="secondary" appearance="ghost" size="sm"
-                  icon="fa-solid fa-xmark" iconOnly
-                  ariaLabel="Cerrar la sugerencia" tooltip="Cerrar"
-                  (buttonClick)="mostrarSugerencia.set(false)"
-                />
+          @case ('chat') {
+            <!-- El chat vive en su pestaña: como sección bajo el video le
+                 quitaba 240 px a la columna y el panel de pestañas se
+                 quedaba en cero. Aquí dispone del alto entero. -->
+            <div class="ev-chat">
+              <p class="ev-chat__head">
+                <i class="fa-solid fa-comment" aria-hidden="true"></i>
+                Chat con el ciudadano
+                <app-ui-badge
+                  [label]="videollamadaChatDisponible() ? 'Disponible' : 'Conectando…'"
+                  [variant]="videollamadaChatDisponible() ? 'success' : 'neutral'" size="xs" />
               </p>
-              @if (cargandoSugerencia()) {
-                <p class="ev-cargando"><app-ui-spinner size="sm" /> <span>Buscando el más cercano…</span></p>
-              } @else if (errorSugerencia()) {
-                <p class="ev-nota">{{ errorSugerencia() }}</p>
-              } @else {
-                <ol class="ev-sugerencia__lista">
-                  @for (s of sugerenciasRecurso(); track s.medioId; let i = $index) {
-                    <li [class.ev-sugerencia__item--top]="i === 0">
-                      <span class="ev-sugerencia__rank">{{ i + 1 }}</span>
-                      <strong>{{ nombrePatrulla(s) }}</strong>
-                      <span class="ev-sugerencia__dist">
-                        {{ s.distanciaM < 1000
-                            ? s.distanciaM + ' m'
-                            : (s.distanciaM / 1000 | number:'1.1-1') + ' km' }}
-                        @if (etaMin(s.distanciaM / 1000, s.tipoMedio) !== null) {
-                          <small title="Estimación por distancia y tipo de recurso">
-                            ~{{ etaMin(s.distanciaM / 1000, s.tipoMedio) }} min
-                          </small>
-                        }
-                      </span>
-                      <app-ui-button
-                        variant="primary" size="sm"
-                        [disabled]="!!asignandoMedioId()"
-                        (buttonClick)="asignarSugerido(s)"
-                      >Asignar</app-ui-button>
-                    </li>
-                  }
-                </ol>
-              }
+              <div class="ev-chat__hilo">
+                @if (videollamadaChatMensajes().length === 0) {
+                  <p class="ev-nota">Sin mensajes todavía. Escríbale si no puede hablar en voz alta.</p>
+                }
+                @for (m of videollamadaChatMensajes(); track $index) {
+                  <span class="ev-chat__burbuja" [class.ev-chat__burbuja--propia]="m.propio">
+                    <span>{{ m.texto }}</span>
+                    <small>{{ m.hora }}</small>
+                  </span>
+                }
+              </div>
+              <form class="ev-chat__form" (submit)="enviarChatVideollamada(); $event.preventDefault()">
+                <app-ui-input
+                  ariaLabel="Mensaje para el ciudadano"
+                  placeholder="Escriba un mensaje…"
+                  name="chatTexto"
+                  [(ngModel)]="videollamadaChatTexto"
+                />
+                <app-ui-button
+                  variant="primary" size="sm" icon="fa-solid fa-paper-plane" iconOnly
+                  ariaLabel="Enviar el mensaje" tooltip="Enviar"
+                  (buttonClick)="enviarChatVideollamada()"
+                />
+              </form>
             </div>
-          }
           }
 
           @case ('archivos') {
@@ -1126,6 +1087,59 @@
           <div #mapaEvento class="ev-mapa"></div>
         </div>
       </div>
+
+      <!-- Cuadrantes más cercanos: franja bajo el mapa, no una pestaña más.
+           Se leen junto a las posiciones que el mapa ya está pintando, y en
+           horizontal para gastar el alto que le hace falta al mapa. -->
+      @if (mostrarSugerencia()) {
+        <div class="ev-escena__cuadrantes ev-cuadr">
+          <p class="ev-cuadr__cab">
+            <i class="fa-solid fa-location-crosshairs" aria-hidden="true"></i>
+            <span>Cuadrantes libres más cercanos al hecho</span>
+            <app-ui-button
+              variant="secondary" appearance="ghost" size="sm"
+              icon="fa-solid fa-xmark" iconOnly
+              ariaLabel="Cerrar la sugerencia" tooltip="Cerrar"
+              (buttonClick)="mostrarSugerencia.set(false)"
+            />
+          </p>
+          @if (cargandoSugerencia()) {
+            <p class="ev-cargando"><app-ui-spinner size="sm" /> <span>Buscando el más cercano…</span></p>
+          } @else if (errorSugerencia()) {
+            <p class="ev-nota ev-cuadr__vacio">{{ errorSugerencia() }}</p>
+          } @else if (sugerenciasRecurso().length === 0) {
+            <p class="ev-nota ev-cuadr__vacio">
+              Ningún cuadrante libre con posición conocida cerca del hecho.
+            </p>
+          } @else {
+            <ol class="ev-cuadr__rail">
+              @for (s of sugerenciasRecurso(); track s.medioId; let i = $index) {
+                <li class="ev-cuadr__tarjeta" [class.ev-cuadr__tarjeta--top]="i === 0">
+                  <span class="ev-cuadr__rank">{{ i + 1 }}</span>
+                  <span class="ev-cuadr__datos">
+                    <strong>{{ nombrePatrulla(s) }}</strong>
+                    <span class="ev-cuadr__dist">
+                      {{ s.distanciaM < 1000
+                          ? s.distanciaM + ' m'
+                          : (s.distanciaM / 1000 | number:'1.1-1') + ' km' }}
+                      @if (etaMin(s.distanciaM / 1000, s.tipoMedio) !== null) {
+                        <small title="Estimación por distancia y tipo de recurso">
+                          ~{{ etaMin(s.distanciaM / 1000, s.tipoMedio) }} min
+                        </small>
+                      }
+                    </span>
+                  </span>
+                  <app-ui-button
+                    variant="primary" size="sm"
+                    [disabled]="!!asignandoMedioId()"
+                    (buttonClick)="asignarSugerido(s)"
+                  >Asignar</app-ui-button>
+                </li>
+              }
+            </ol>
+          }
+        </div>
+      }
     </section>
 
   </div>

@@ -79,7 +79,7 @@ export interface CambioEstadoEvento {
  */
 /** Pestañas del panel lateral de la consola. */
 export type PanelConsola =
-  | 'caso' | 'recursos' | 'despacho' | 'asistente' | 'notas' | 'archivos' | 'cuadrantes';
+  | 'caso' | 'recursos' | 'despacho' | 'asistente' | 'notas' | 'archivos' | 'chat';
 
 @Component({
   selector: 'app-evento-detalle',
@@ -190,7 +190,14 @@ export class EventoDetalleComponent implements OnDestroy {
 
   private suscribirVideollamada(): void {
     const s = this.videoSvc;
-    this.videoSubs.add(s.estado$.subscribe(e => this.videollamadaEstado.set(e)));
+    this.videoSubs.add(s.estado$.subscribe(e => {
+      this.videollamadaEstado.set(e);
+      // La pestaña de chat solo existe mientras hay llamada; al colgar hay que
+      // devolver el foco a una que siga estando, o el panel se queda en blanco.
+      if ((e === 'inactiva' || e === 'finalizada') && this.panel() === 'chat') {
+        this.panel.set('caso');
+      }
+    }));
     this.videoSubs.add(s.remoteStream$.subscribe(v => this.videollamadaRemoteStream.set(v)));
     this.videoSubs.add(s.error$.subscribe(m => { if (m) this.toast.error('Videollamada', m); }));
     this.videoSubs.add(s.microfonoActivo$.subscribe(a => this.videollamadaMicActivo.set(a)));
@@ -1392,11 +1399,10 @@ export class EventoDetalleComponent implements OnDestroy {
     if (!d || this.canalCodigo() <= 0) return;
     const lat = parseFloat(d.latitudCaso  || '');
     const lng = parseFloat(d.longitudCaso || '');
+    // El resultado se ancla bajo el mapa, en su propia franja acotada: se lee
+    // junto a las posiciones que el mapa ya está mostrando, y por muchos
+    // cuadrantes que devuelva no le quita alto al mapa ni a las pestañas.
     this.mostrarSugerencia.set(true);
-    // El resultado vive en su propia pestaña. Antes se abría como un panel
-    // sobre el mapa y, con más de tres cuadrantes, empujaba hacia abajo todo
-    // lo que tenía debajo: el mapa perdía alto y el layout se descuadraba.
-    this.panel.set('cuadrantes');
     if (!isFinite(lat) || !isFinite(lng)) {
       this.errorSugerencia.set('El incidente no tiene coordenadas registradas.');
       return;

@@ -186,6 +186,7 @@
 .ev-layout {
   display:               grid;
   grid-template-columns: clamp(240px, 21vw, 330px) minmax(0, 1fr);
+  grid-template-rows:    minmax(0, 1fr);
   gap:                   12px;
   align-items:           stretch;
   min-height:            0;
@@ -215,11 +216,17 @@
 }
 
 .ev-detalle {
-  display:    grid;
+  display: grid;
+  // Una sola fila que ocupa TODO el alto disponible. Sin declararla, la fila
+  // implícita es `auto` y mide según su contenido: el `height: 100%` del
+  // componente medía entonces contra el contenido, no contra el hueco, y el
+  // mapa acababa cambiando de alto con cada pestaña (medido: 559 px en
+  // «Recursos», 240 px en «Asistente»).
+  grid-template-rows: minmax(0, 1fr);
   min-width:  0;
   min-height: 0;
 
-  app-evento-detalle { min-height: 0; }
+  app-evento-detalle { min-height: 0; height: 100%; }
 }
 
 // ── Filtros de la bandeja ─────────────────────────────────────────────────

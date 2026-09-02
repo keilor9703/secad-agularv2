@@ -149,6 +149,18 @@
   min-height:         0;
 }
 
+// Cada franja va a SU fila, dicha por su nombre.
+//
+// Sin esto, el bloque de avisos —que solo existe cuando hay duplicados,
+// historial o un error— se llevaba la fila 2 al aparecer, y al no estar el
+// cuerpo caía en esa fila `auto`, que mide según su contenido, dejando la
+// fila elástica vacía. Ese era el motivo real de que el mapa cambiara de alto
+// con cada pestaña: medido, las filas quedaban en `74px 322px 319px` con los
+// 319 px sin usar.
+.ev-consola__barra  { grid-row: 1; }
+.ev-consola__avisos { grid-row: 2; }
+.ev-consola__cuerpo { grid-row: 3; }
+
 // ── Franja de identidad ───────────────────────────────────────────────────
 .ev-consola__barra {
   display:               grid;
@@ -244,12 +256,11 @@
 // ── Cuerpo ────────────────────────────────────────────────────────────────
 .ev-consola__cuerpo {
   display: grid;
-  // El centro —videollamada y pestañas— se lleva el ancho sobrante; el mapa
-  // es una columna lateral de ancho acotado. Antes era al revés y el mapa se
-  // estiraba a lo ancho sin ganar nada: un mapa muy ancho y bajo enseña menos
-  // contexto útil que uno más cuadrado, y ese ancho le hacía falta a la ficha
-  // del caso, que quedaba en una sola columna con la mitad derecha en blanco.
-  grid-template-columns: minmax(0, 1fr) clamp(340px, 26vw, 560px);
+  // El mapa se lleva el ancho sobrante y la columna de videollamada+pestañas
+  // va acotada. Al revés —que es como estaba— el mapa se quedaba en 478 px
+  // frente a 696 px de las pestañas: la pieza que más se mira era la más
+  // estrecha. La ficha del caso no lo echa en falta porque va a dos columnas.
+  grid-template-columns: clamp(340px, 27vw, 440px) minmax(0, 1fr);
   gap:                   10px;
   min-height:            0;
 
@@ -265,8 +276,12 @@
 // pestaña que esté abierta al lado: al cambiar de pestaña el mapa se
 // redimensionaba, que además obliga a Leaflet a recalcularse a cada paso.
 .ev-escena {
-  display:            grid;
-  grid-template-rows: auto minmax(0, 1fr);
+  display: grid;
+  // barra · mapa · cuadrantes. La tercera fila solo existe cuando hay una
+  // sugerencia pedida, y está acotada: por muchos cuadrantes que devuelva no
+  // puede robarle alto al mapa, que es lo que pasaba cuando este bloque vivía
+  // encima.
+  grid-template-rows: auto minmax(0, 1fr) auto;
   gap:                8px;
   min-height:         0;
   min-width:          0;
@@ -275,6 +290,20 @@
 
   &__barra {
     .ev-vivo-barra { margin: 0; }
+  }
+
+  // Cada franja en SU fila: la de cuadrantes es condicional y, sin fijarla,
+  // al aparecer desplazaba el mapa a la fila `auto` y le quitaba el alto.
+  &__barra      { grid-row: 1; }
+  &__mapa       { grid-row: 2; }
+  &__cuadrantes { grid-row: 3; }
+
+  // La franja de cuadrantes se dimensiona por su contenido —una fila de
+  // tarjetas— y no pasa de aquí: lo que sobre se desplaza en horizontal.
+  &__cuadrantes {
+    min-height: 0;
+    max-height: 116px;
+    overflow:   hidden;
   }
 
   &__mapa {
@@ -288,9 +317,13 @@
 
 // ── Columna derecha ───────────────────────────────────────────────────────
 .ev-lateral {
-  display:            grid;
-  grid-template-rows: auto auto minmax(0, 1fr);
-  gap:                8px;
+  // Flexbox y no rejilla a propósito: en `grid`, el `max-height` del bloque de
+  // video acota el ELEMENTO pero no la PISTA, que se seguía dimensionando por
+  // su contenido (459 px medidos) y dejaba el cuerpo de pestañas en 0 px.
+  // En flex el tope sí reduce el reparto y el sobrante va a las pestañas.
+  display:        flex;
+  flex-direction: column;
+  gap:            8px;
   min-height:         0;
   min-width:          0;
   height:             100%;
@@ -298,7 +331,31 @@
   // empujando la columna y con ella el alto del mapa.
   overflow:           hidden;
 
-  &__video { min-height: 0; }
+  // Con la llamada abierta este bloque —marco, controles y chat— medía 589 px
+  // de los 641 de la columna y dejaba el panel de pestañas en CERO. Se le
+  // acota a poco menos de la mitad; lo que cede es el marco del video, que
+  // encoge, y no un recorte con scroll que partía la imagen por la mitad.
+  &__video {
+    flex:       0 1 auto;
+    min-height: 0;
+    max-height: 52%;
+    // En el peor caso —pantalla baja— se desplaza; nunca se corta un control.
+    overflow-y: auto;
+    display:    grid;
+    grid-template-rows: minmax(0, 1fr);
+  }
+
+  > nav { flex: 0 0 auto; }
+
+  // Base 0 a propósito: con `auto` el panel reclamaba el alto de SU contenido
+  // y el reparto recortaba el bloque de video por abajo (los controles de la
+  // llamada quedaban a medias). Así el video se queda con lo suyo y las
+  // pestañas con el sobrante, que es lo que desplazan por dentro.
+  > .ev-tabc-cuerpo { flex: 1 1 0; min-height: 0; }
+
+  // Sin llamada el hueco es una tarjeta pequeña y no necesita reservar mitad
+  // de columna.
+  &__video:not(:has(.ev-video-jefe)) { flex: 0 0 auto; max-height: none; }
 
   // Ventana flotante: la videollamada se despega para dejar la columna
   // entera al panel de pestañas sin perder de vista al ciudadano.
@@ -333,10 +390,18 @@
 
 .ev-video-jefe {
   position: relative;
+  // Eslabón de la cadena de altos: sin esto el marco no sabe cuánto puede
+  // ceder y el bloque se recortaba por abajo.
+  display:            grid;
+  grid-template-rows: minmax(0, 1fr);
+  min-height:         0;
+  height:             100%;
 
   &__mando {
     position: absolute;
-    top: 6px; left: 6px;
+    // A la derecha: a la izquierda se montaba encima de la insignia de estado
+    // («Conectada») y la dejaba a medio leer.
+    top: 6px; right: 6px;
     z-index: 2;
     display: flex;
     align-items: center;
@@ -346,7 +411,7 @@
   // En modo flotante la barra es el asa: ocupa todo el ancho para que haya
   // dónde agarrar, y el cursor lo anuncia.
   &__mando--asa {
-    right: 6px;
+    left: 6px;
     padding: 2px 6px;
     border-radius: 8px;
     background: rgb(15 23 42 / 55%);
@@ -677,41 +742,59 @@
 .ev-iniciar-llamada__tel { flex: 0 1 200px; }
 
 // Sugerencia de cuadrante
-.ev-sugerencia {
-  margin-bottom: 10px;
+// Franja de cuadrantes cercanos, anclada bajo el mapa. En horizontal a
+// propósito: en vertical, con cinco sugerencias, se comía 216 px del alto y
+// el mapa bajaba de 451 a 240 px cada vez que el despachador la pedía.
+.ev-cuadr {
   border: 1px solid var(--c-borde);
-  border-radius: 10px;
+  border-radius: 12px;
   background: var(--c-velo);
-  overflow: hidden;
 
-  &__head {
+  &__cab {
     @extend %fila;
     gap: 7px;
     margin: 0;
-    padding: 8px 12px;
-    border-bottom: 1px solid var(--c-borde);
-    font-size: var(--f-md);
+    padding: 4px 6px 4px 12px;
+    font-size: var(--f-sm);
     font-weight: 700;
+    color: var(--c-suave);
+    text-transform: uppercase;
+    letter-spacing: .3px;
+    span { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     app-ui-button { margin-left: auto; }
   }
 
-  &__lista {
-    margin: 0; padding: 0; list-style: none;
-
-    li {
-      @extend %fila;
-      gap: 9px;
-      padding: 8px 12px;
-      font-size: var(--f-md);
-      & + li { border-top: 1px solid var(--c-linea); }
-      strong { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    }
+  // Carril: las tarjetas van seguidas y se desplaza en horizontal, que es el
+  // eje que aquí sobra. Ninguna se encoge para que el nombre siga legible.
+  &__rail {
+    display: flex;
+    gap: 8px;
+    margin: 0;
+    padding: 0 10px 10px;
+    list-style: none;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: thin;
   }
 
-  &__item--top { background: var(--c-ok-bg); }
+  &__vacio { margin: 0; padding: 0 12px 10px; }
+
+  &__tarjeta {
+    @extend %fila;
+    flex: 0 0 auto;
+    gap: 8px;
+    width: 250px;
+    padding: 7px 9px;
+    border: 1px solid var(--c-linea);
+    border-radius: 10px;
+    background: var(--c-fondo);
+
+    &--top { border-color: var(--c-acento); background: var(--c-ok-bg); }
+  }
 
   &__rank {
     @extend %fila; @extend %cifras;
+    flex: 0 0 auto;
     justify-content: center;
     width: 20px; height: 20px;
     border-radius: 50%;
@@ -721,9 +804,19 @@
     font-weight: 800;
   }
 
+  &__datos {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-width: 0;
+    line-height: 1.25;
+    strong { font-size: var(--f-md); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  }
+
   &__dist {
     @extend %cifras;
     white-space: nowrap;
+    font-size: var(--f-sm);
     color: var(--c-suave);
     small { color: var(--c-acento); font-weight: 700; }
   }
@@ -808,7 +901,11 @@
 // ── Videollamada ──────────────────────────────────────────────────────────
 .ev-video {
   @extend %columna;
+  // estado · enlace · ubicación · marco · controles. El único que cede alto
+  // es el marco (`flex: 1 1 auto; min-height: 0`): al faltar sitio se ajusta
+  // la imagen, nunca los controles de la llamada, que deben seguir a mano.
   gap: 9px;
+  min-height: 0;
   min-width: 0;
   padding: 10px;
   border: 1px solid var(--c-borde);
@@ -835,7 +932,12 @@
 
   &__marco {
     position: relative;
+    // 16:9 como forma de partida, pero puede ceder alto: el `<video>` va en
+    // `object-fit: contain`, así que encoger recuadra la imagen, no la corta.
     aspect-ratio: 16 / 9;
+    flex: 1 1 auto;
+    min-height: 100px;  // encoger, sí; desaparecer, no
+    max-height: 32vh;   // 16:9 sí, pero sin llegar a ocupar media pantalla
     border-radius: 10px;
     overflow: hidden;
     background: #0f172a;
@@ -863,6 +965,10 @@
   @extend %columna;
   gap: 8px;
   min-width: 0;
+  // Ocupa el panel entero, pero con un suelo: en pantallas bajas prefiere que
+  // la pestaña se desplace antes que dejar el hilo en una rendija de 18 px.
+  height: 100%;
+  min-height: 230px;
   padding: 10px;
   border: 1px solid var(--c-borde);
   border-radius: 10px;
@@ -880,8 +986,7 @@
     @extend %columna;
     gap: 6px;
     flex: 1 1 auto;
-    min-height: 140px;
-    max-height: 300px;
+    min-height: 90px;
     overflow-y: auto;
     padding: 8px;
     border: 1px solid var(--c-borde);
