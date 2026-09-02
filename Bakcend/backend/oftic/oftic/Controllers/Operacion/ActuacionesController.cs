@@ -180,11 +180,14 @@ namespace Api.Controllers.Operacion
         ///   V = Anulada (no fue necesaria, duplicada, error)
         ///
         /// Tras el cierre, el sistema recalcula automáticamente el estado global
-        /// del evento usando fn_recalcular_estado_evento.
+        /// del evento usando fn_recalcular_estado_evento. Envíe
+        /// <c>cerrarEvento: false</c> para que el evento siga abierto aunque esta
+        /// fuera su última actuación; omitirlo mantiene el recálculo automático.
         /// </summary>
         /// <remarks>
         /// POST api/Actuaciones/{id}/cerrar
-        /// Body: { "estado": "C", "codigosCierre": [{ "orden": 1, "codigoCierre": "333" }] }
+        /// Body: { "estado": "C", "cerrarEvento": false,
+        ///         "codigosCierre": [{ "orden": 1, "codigoCierre": "333" }] }
         /// </remarks>
         [HttpPost("{id:long}/cerrar")]
         public async Task<IActionResult> CerrarActuacion(

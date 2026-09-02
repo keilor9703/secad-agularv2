@@ -1673,10 +1673,16 @@ export class EventoDetalleComponent implements OnDestroy {
     this.cerrandoActuacion.set(true);
     this.errorCierreActuacion.set('');
 
+    const cerrarTambienElEvento = this.cerrarEventoAlAtender() === true;
+
     const req: DtoCierreActuacionRequest = {
       estado: 'C',
       observacionCierre: this.cierreObservacion.trim() || undefined,
       codigosCierre:     this.cierreCodsSeleccionados,
+      // Sin este campo el backend recalculaba el estado del evento por su
+      // cuenta y, si esta era su única actuación, lo cerraba igualmente: el
+      // «No, solo esta actuación» del modal no llegaba a servir de nada.
+      cerrarEvento:      cerrarTambienElEvento,
       actividadCodigo:   this.cierreActividadSelec()?.codigo,
       actividadTipo:     this.cierreClasifActividad() || undefined,
       actividadDesc:     this.cierreActividadSelec()?.descripcion,
@@ -1691,7 +1697,7 @@ export class EventoDetalleComponent implements OnDestroy {
         this.actuacionACerrar.set(null);
 
         const d = this.detalle();
-        if (this.cerrarEventoAlAtender() && d) {
+        if (cerrarTambienElEvento && d) {
           this.cerrarEventoTrasAtender(d.id, req);
         } else {
           this.recargarActuaciones();
@@ -1707,9 +1713,11 @@ export class EventoDetalleComponent implements OnDestroy {
   }
 
   /**
-   * Si esta era la última actuación abierta, el backend ya cerró el evento por
-   * su cuenta antes de que llegue esta petición. Aun así hace falta: es la
-   * única que persiste los códigos de cierre y la observación.
+   * Cierre del evento encadenado al de la actuación, solo cuando el despachador
+   * lo pidió. Si esta era la última actuación abierta el backend ya habrá
+   * dejado el evento en 'C' al recalcular, pero esta llamada sigue haciendo
+   * falta: es la única que persiste los códigos de cierre y la observación
+   * del evento.
    */
   private cerrarEventoTrasAtender(pedidoId: string, req: DtoCierreActuacionRequest): void {
     this.eventoSvc.cerrar(pedidoId, {

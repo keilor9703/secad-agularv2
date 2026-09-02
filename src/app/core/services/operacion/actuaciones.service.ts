@@ -133,6 +133,12 @@ export interface DtoCierreActuacionRequest {
   clasifCierre?:      string;
   observacionCierre?: string;
   codigosCierre:      DtoCodigoCierreActuacion[];
+  /**
+   * Decisión del modal «Atendió»: si cerrar también el evento o solo esta
+   * actuación. En `false` el backend deja el evento abierto aunque esta fuera
+   * su última actuación; sin el campo, recalcula el estado por su cuenta.
+   */
+  cerrarEvento?:      boolean;
   /** Resultado operativo estructurado (V12) */
   actividadCodigo?:  string;
   actividadTipo?:    string;   // 'O' | 'P'

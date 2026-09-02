@@ -67,6 +67,16 @@ public class DtoActuacion
 
     // Sub-colecciones (se cargan en el endpoint de detalle)
     public List<DtoCodigoCierreActuacion> CodigosCierre { get; set; } = new();
+
+    /// <summary>
+    /// Decisión del despachador en el modal «Atendió»: si cerrar también el
+    /// evento o solo esta actuación. En <c>false</c> el evento se queda abierto
+    /// AUNQUE esta fuera su última actuación, que es justo lo que el
+    /// recálculo automático hacía por su cuenta pasando por encima de la
+    /// elección. <c>null</c> (no enviado) mantiene el comportamiento anterior,
+    /// para no cambiarle la semántica a los clientes que no envían el campo.
+    /// </summary>
+    public bool? CerrarEvento { get; set; }
     public List<DtoActuacionUnidad>       Unidades      { get; set; } = new();
     public List<DtoActuacionNota>         Notas         { get; set; } = new();
 }

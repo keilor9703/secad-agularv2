@@ -368,12 +368,19 @@ WHERE  actuacion_id = @actId";
                 }
 
                 // ── 1. Obtener evento_id + pedido_id para el recálculo ────────
-                long eventoId = 0;
-                long pedidoId = 0;
+                long   eventoId          = 0;
+                long   pedidoId          = 0;
+                string estadoEventoPrevio = "";
                 await using (var qEvt = conn.CreateCommand())
                 {
                     qEvt.Transaction = tx;
-                    qEvt.CommandText = "SELECT evento_id, pedido_id FROM cad_actuaciones WHERE id = @id";
+                    // El estado previo del evento hace falta para no «reabrir» uno
+                    // que ya estaba cerrado antes de esta operación.
+                    qEvt.CommandText = @"
+SELECT a.evento_id, a.pedido_id, COALESCE(e.estado, '')
+FROM   cad_actuaciones a
+LEFT   JOIN cad_eventos e ON e.id = a.evento_id
+WHERE  a.id = @id";
                     qEvt.Parameters.AddWithValue("id", req.ActuacionId);
                     await using var rEvt = await qEvt.ExecuteReaderAsync(ct);
                     if (!await rEvt.ReadAsync(ct))
@@ -387,8 +394,9 @@ WHERE  actuacion_id = @actId";
                             Message     = $"Actuación {req.ActuacionId} no encontrada."
                         };
                     }
-                    eventoId = rEvt.GetInt64(0);
-                    pedidoId = rEvt.GetInt64(1);
+                    eventoId           = rEvt.GetInt64(0);
+                    pedidoId           = rEvt.GetInt64(1);
+                    estadoEventoPrevio = rEvt.GetString(2).Trim();  // es CHAR(n): viene rellenado
                 }
 
                 // ── 2. UPDATE cad_actuaciones ─────────────────────────────────
@@ -500,13 +508,38 @@ ON CONFLICT (actuacion_id) DO UPDATE
                     await fnEvt.ExecuteNonQueryAsync(ct);
                 }
 
+                // ── 5a. La decisión del despachador manda sobre el recálculo ──
+                // fn_recalcular_estado_evento (y el trigger trg_actuaciones_estado)
+                // cierran el evento en cuanto TODAS sus actuaciones quedan cerradas.
+                // Eso pasaba por encima del «No, solo esta actuación» del modal
+                // «Atendió»: cerrar el único recurso asignado cerraba el evento
+                // entero. Si el despachador dijo que no, se deshace ese cierre
+                // automático —dentro de la misma transacción, así que nadie llega a
+                // ver el estado intermedio— y el evento vuelve a quedar pendiente
+                // de despacho. Solo aplica si NO venía ya cerrado de antes.
+                if (req.CerrarEvento == false && estadoEventoPrevio != "C")
+                {
+                    await using var reabrir = conn.CreateCommand();
+                    reabrir.Transaction = tx;
+                    reabrir.CommandText = @"
+UPDATE cad_eventos
+SET    estado             = 'P',
+       fecha_modificacion = NOW()
+WHERE  id     = @eventoId
+  AND  estado = 'C'";
+                    reabrir.Parameters.AddWithValue("eventoId", eventoId);
+                    await reabrir.ExecuteNonQueryAsync(ct);
+                }
+
                 // ── 5b. Sincronizar cad_pedidos si el recálculo cerró el evento ──
                 // fn_recalcular_estado_evento SOLO toca cad_eventos — nunca
                 // cad_pedidos. Sin este paso, cerrar la última actuación de un
-                // evento (con o sin elegir "cerrar el evento" en el modal Atendió)
-                // dejaba el pedido fantasma en 'En proceso' para siempre, aunque el
-                // evento ya estuviera cerrado (mismo patrón de bug ya corregido en
-                // los demás flujos de cierre — ver EstadoPedidoHelper).
+                // evento dejaba el pedido fantasma en 'En proceso' para siempre,
+                // aunque el evento ya estuviera cerrado (mismo patrón de bug ya
+                // corregido en los demás flujos de cierre — ver EstadoPedidoHelper).
+                // Va DESPUÉS del paso 5a: si el despachador pidió no cerrar el
+                // evento, este UPDATE no encuentra el evento en 'C' y no hace nada,
+                // que es justo lo que debe pasar.
                 await using (var syncPed = conn.CreateCommand())
                 {
                     syncPed.Transaction = tx;
