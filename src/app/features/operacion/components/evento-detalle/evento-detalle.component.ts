@@ -248,10 +248,10 @@ export class EventoDetalleComponent implements OnDestroy {
   asistenteAbierto        = false;
 
   // ── Tabs del nuevo layout ─────────────────────────────────────────────────
-  /** Zona central: 'mapa' siempre visible; 'video' al conectar una videollamada. */
+  /** PiP de video: 'video' = PiP expandido mostrando el stream; 'mapa' = PiP minimizado (solo badge de estado). */
   readonly tabMedia = signal<'mapa' | 'video'>('mapa');
   /** Panel derecho: tab activo de información secundaria. */
-  readonly tabInfo  = signal<'recursos' | 'despacho' | 'anotaciones' | 'asistente'>('recursos');
+  readonly tabInfo  = signal<'despacho' | 'anotaciones' | 'asistente'>('despacho');
 
   readonly canalesAsignados = signal<DtoCanalesAsignadosResult | null>(null);
 

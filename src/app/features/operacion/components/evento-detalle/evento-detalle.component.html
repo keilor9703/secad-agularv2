@@ -1,8 +1,9 @@
-
-<!-- ══════════════════════════════════════════════════════════════════════════
-     SECAD — Panel de gestión de evento. Nuevo layout "Centro de Mando":
-     sin scroll externo, todo visible en la pantalla.
-     ══════════════════════════════════════════════════════════════════════════ -->
+<!-- ═══════════════════════════════════════════════════════════════════════
+     SECAD — Panel de gestión de evento v2.
+     Layout: Header compacto + Cuerpo 2 columnas (52% media / 48% info).
+     El mapa tiene altura fija; el video flota como PiP encima del mapa.
+     Los recursos van DEBAJO del mapa en la columna izquierda.
+     ═══════════════════════════════════════════════════════════════════════ -->
 
 @if (cargandoDetalle()) {
   <div class="ed-loading">
@@ -14,17 +15,12 @@
 @if (detalle(); as d) {
 <div class="ed-shell">
 
-  <!-- ─── CABECERA COMPACTA ─────────────────────────────────────────────── -->
+  <!-- ─── CABECERA ──────────────────────────────────────────────────────── -->
   <div class="ed-head {{ getSemaforoClass(d) }}">
-
-    <!-- Botón volver + identificación del caso -->
     <div class="ed-head__left">
-      <app-ui-button
-        variant="secondary" appearance="ghost" size="sm"
-        icon="fa-solid fa-arrow-left" iconOnly
-        ariaLabel="Volver a la bandeja" tooltip="Volver (Esc)"
-        (buttonClick)="volverLista()"
-      />
+      <app-ui-button variant="secondary" appearance="ghost" size="sm"
+        icon="fa-solid fa-arrow-left" iconOnly ariaLabel="Volver" tooltip="Volver (Esc)"
+        (buttonClick)="volverLista()" />
       <div class="ed-head__id-block">
         <span class="ed-head__num">
           @if (d.codiPedido) { <strong>{{ d.codiPedido }}</strong> }
@@ -38,7 +34,6 @@
       </div>
     </div>
 
-    <!-- Badges + meta -->
     <div class="ed-head__center">
       <app-ui-badge [label]="getPrioridadLabel(d.prioridad)"
                     [variant]="getPrioridadVariante(d.prioridad)" size="sm" />
@@ -47,8 +42,7 @@
       <span class="ed-head__meta">
         <i class="fa-regular fa-clock" aria-hidden="true"></i>
         {{ getElapsedLabel(d) }}
-        <span class="ed-head__meta-sep">·</span>
-        <i class="fa-regular fa-calendar-check" aria-hidden="true"></i>
+        <span class="ed-head__sep">·</span>
         {{ getFechaCreacionLabel(d) }}
       </span>
       @if (presenciaUsuarios().length) {
@@ -60,61 +54,44 @@
       @if (d.pedidoPadreNum) {
         <span class="ed-vinculo">
           <i class="fa-solid fa-link" aria-hidden="true"></i>
-          Vinculado al caso #{{ d.pedidoPadreNum }}
-          <app-ui-button
-            variant="secondary" appearance="ghost" size="sm"
-            icon="fa-solid fa-xmark" iconOnly
-            ariaLabel="Quitar el vínculo" tooltip="Quitar el vínculo"
-            [disabled]="!!vinculandoId()"
-            (buttonClick)="desvincularCaso()"
-          />
+          Vinculado #{{ d.pedidoPadreNum }}
+          <app-ui-button variant="secondary" appearance="ghost" size="sm"
+            icon="fa-solid fa-xmark" iconOnly ariaLabel="Quitar vínculo"
+            [disabled]="!!vinculandoId()" (buttonClick)="desvincularCaso()" />
         </span>
       }
     </div>
 
-    <!-- Acciones rápidas -->
     <div class="ed-head__right">
       @if (d.estado !== 'C') {
-        <span class="ed-head__lbl-estado">Estado:</span>
+        <span class="ed-head__lbl">Estado:</span>
         @for (est of ESTADOS; track est.valor) {
           @if (est.valor !== 'C' && est.valor !== d.estado) {
-            <app-ui-button
-              variant="secondary" appearance="ghost" size="sm"
+            <app-ui-button variant="secondary" appearance="ghost" size="sm"
               [disabled]="cambiandoEstado()"
-              (buttonClick)="abrirModalCambiarEstado(est.valor)"
-            >{{ est.label }}</app-ui-button>
+              (buttonClick)="abrirModalCambiarEstado(est.valor)">{{ est.label }}</app-ui-button>
           }
         }
         @if (estadoHistorial().length) {
-          <app-ui-button
-            variant="secondary" appearance="ghost" size="sm"
+          <app-ui-button variant="secondary" appearance="ghost" size="sm"
             icon="fa-solid fa-clock-rotate-left"
-            tooltip="Historial de estados"
-            (buttonClick)="historialEstadoAbierto = !historialEstadoAbierto"
-          >{{ estadoHistorial().length }}</app-ui-button>
+            (buttonClick)="historialEstadoAbierto = !historialEstadoAbierto">
+            {{ estadoHistorial().length }}
+          </app-ui-button>
         }
-        <div class="ed-head__sep"></div>
-        <app-ui-button
-          variant="secondary" size="sm" icon="fa-solid fa-share-from-square"
-          tooltip="Remitir este caso"
-          (buttonClick)="abrirModalRemitir()"
-        >Remitir</app-ui-button>
-        <app-ui-button
-          variant="danger" size="sm" icon="fa-solid fa-lock"
-          (buttonClick)="abrirModalCerrar()"
-        >Cerrar</app-ui-button>
+        <span class="ed-head__divider"></span>
+        <app-ui-button variant="secondary" size="sm" icon="fa-solid fa-share-from-square"
+          (buttonClick)="abrirModalRemitir()">Remitir</app-ui-button>
+        <app-ui-button variant="danger" size="sm" icon="fa-solid fa-lock"
+          (buttonClick)="abrirModalCerrar()">Cerrar</app-ui-button>
       } @else {
-        <app-ui-button
-          variant="warning" size="sm" icon="fa-solid fa-lock-open"
-          [disabled]="cambiandoEstado()"
-          tooltip="Reabrir el caso"
-          (buttonClick)="reabrirEvento()"
-        >Reabrir</app-ui-button>
+        <app-ui-button variant="warning" size="sm" icon="fa-solid fa-lock-open"
+          [disabled]="cambiandoEstado()" (buttonClick)="reabrirEvento()">Reabrir</app-ui-button>
       }
     </div>
   </div>
 
-  <!-- Historial de estados (colapsable inline bajo el header) -->
+  <!-- historial de estados -->
   @if (historialEstadoAbierto && estadoHistorial().length) {
     <div class="ed-historial-bar">
       <ul class="ed-historial">
@@ -132,215 +109,215 @@
             <span class="ed-historial__meta">
               {{ h.username || '—' }} · {{ h.fecha | date:'dd/MM HH:mm' }}
             </span>
-            @if (h.motivo) { <span class="ed-historial__motivo">«{{ h.motivo }}»</span> }
+            @if (h.motivo) { <em class="ed-historial__motivo">«{{ h.motivo }}»</em> }
           </li>
         }
       </ul>
     </div>
   }
 
-  <!-- Alerta de duplicados (compacta, encima del body) -->
+  <!-- alerta duplicados -->
   @if (!duplicadosDescartados() && duplicados().length && d.estado !== 'C') {
-    <div class="ed-dupl-alert">
+    <div class="ed-dupl">
       <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
       <span>
-        <strong>{{ duplicados().length }} caso(s) reciente(s)</strong> en la misma zona.
+        <strong>{{ duplicados().length }} caso(s)</strong> recientes en la misma zona:
         @for (dup of duplicados(); track dup.id) {
-          <button type="button" class="ed-dupl-alert__btn"
+          <button type="button" class="ed-dupl__btn"
                   (click)="!d.pedidoPadreNum && vincularCaso(dup)"
-                  [title]="dup.direCaso || 'Sin dirección'">
-            {{ dup.distanciaMetros | number:'1.0-0' }}m · {{ dup.minutosAtras }}min atrás
+                  [title]="dup.direCaso">
+            {{ dup.distanciaMetros | number:'1.0-0' }}m · {{ dup.minutosAtras }}min
             @if (!d.pedidoPadreNum) { — Vincular }
           </button>
         }
       </span>
-      <button type="button" class="ed-dupl-alert__cerrar" (click)="descartarDuplicados()"
-              title="Descartar">
+      <button type="button" class="ed-dupl__close" (click)="descartarDuplicados()">
         <i class="fa-solid fa-xmark" aria-hidden="true"></i>
       </button>
     </div>
   }
 
-  <!-- ─── CUERPO PRINCIPAL ──────────────────────────────────────────────── -->
+  <!-- ─── CUERPO ─────────────────────────────────────────────────────────── -->
   <div class="ed-body">
 
-    <!-- ═══ COLUMNA MEDIA (Mapa / Video) ════════════════════════════════ -->
+    <!-- ═══ COLUMNA IZQUIERDA: Mapa + Recursos ═══════════════════════════ -->
     <div class="ed-col-media">
 
-      <!-- Tabs Mapa / Video -->
-      <div class="ed-media-tabs">
-        <button type="button" class="ed-media-tab"
-                [class.ed-media-tab--sel]="tabMedia() === 'mapa'"
-                (click)="tabMedia.set('mapa')">
-          <i class="fa-solid fa-map" aria-hidden="true"></i> Mapa
-        </button>
-        @if (llamadaEnCurso(d)) {
-          <button type="button" class="ed-media-tab"
-                  [class.ed-media-tab--sel]="tabMedia() === 'video'"
-                  (click)="tabMedia.set('video')">
-            <i class="fa-solid fa-video" aria-hidden="true"></i> Videollamada
-            @switch (videollamadaEstado()) {
-              @case ('esperando')  { <span class="ed-media-tab__dot ed-media-tab__dot--alerta"></span> }
-              @case ('conectando') { <span class="ed-media-tab__dot ed-media-tab__dot--alerta"></span> }
-              @case ('conectada')  { <span class="ed-media-tab__dot ed-media-tab__dot--ok"></span> }
-            }
+      <!-- Barra de controles del mapa -->
+      <div class="ed-mapa-bar">
+        @if (ultimaActRecursos()) {
+          <span class="ed-ts">
+            <i class="fa-regular fa-clock" aria-hidden="true"></i>
+            {{ ultimaActRecursos() | date:'HH:mm:ss' }}
+          </span>
+        }
+        <app-ui-chip [value]="recursos().length" label="recursos" variant="info" appearance="soft" size="xs" />
+        @if (d.latitudCaso || d.longitudCaso) {
+          <button type="button" class="ed-coords" (click)="centrarEnIncidente()" title="Centrar en el incidente">
+            <i class="fa-solid fa-location-dot" aria-hidden="true"></i>
+            {{ d.latitudCaso | number:'1.4-4' }}, {{ d.longitudCaso | number:'1.4-4' }}
           </button>
         }
+        <app-ui-button variant="secondary" appearance="ghost" size="sm"
+          icon="fa-solid fa-location-crosshairs"
+          tooltip="Sugerir cuadrante más cercano"
+          (buttonClick)="sugerirRecursoCercano()">Cuadrante</app-ui-button>
+        @if (errorRecursos()) {
+          <span class="ed-err-inline">
+            <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i> {{ errorRecursos() }}
+          </span>
+        }
 
-        <!-- Controles del mapa (siempre visibles en la barra de tabs) -->
-        <div class="ed-media-tabs__controles">
-          @if (ultimaActRecursos()) {
-            <span class="ed-vivo-ts">
-              <i class="fa-regular fa-clock" aria-hidden="true"></i>
-              {{ ultimaActRecursos() | date:'HH:mm:ss' }}
-            </span>
+        <!-- Videollamada: iniciar / reconectar -->
+        @if (!llamadaEnCurso(d) && d.estado !== 'C') {
+          @if (videollamadaReconectable(); as activa) {
+            <div class="ed-video-init">
+              <span class="ed-video-init__aviso">
+                <i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i>
+                Video en curso@if (activa.grabando) { <small>· grabando</small> }
+              </span>
+              <app-ui-button variant="primary" size="sm" icon="fa-solid fa-plug-circle-bolt"
+                [loading]="reconectandoVideollamada()" [disabled]="reconectandoVideollamada()"
+                (buttonClick)="reconectarVideollamada()">Reconectar</app-ui-button>
+            </div>
+          } @else {
+            <div class="ed-video-init">
+              <i class="fa-solid fa-video" aria-hidden="true"></i>
+              <app-ui-input class="ed-video-init__tel" ariaLabel="Teléfono del ciudadano"
+                placeholder="Teléfono…" inputmode="tel" [(ngModel)]="videollamadaTelefono" />
+              <app-ui-button variant="primary" size="sm" icon="fa-solid fa-video"
+                [loading]="creandoVideollamada()" [disabled]="creandoVideollamada()"
+                (buttonClick)="iniciarVideollamada()">Videollamada</app-ui-button>
+            </div>
           }
-          <app-ui-chip [value]="recursos().length" label="recursos"
-                       variant="info" appearance="soft" size="xs" />
-          @if (d.latitudCaso || d.longitudCaso) {
-            <button type="button" class="ed-coords" (click)="centrarEnIncidente()"
-                    title="Centrar en el incidente">
-              <i class="fa-solid fa-location-dot" aria-hidden="true"></i>
-              {{ d.latitudCaso | number:'1.4-4' }}, {{ d.longitudCaso | number:'1.4-4' }}
-            </button>
-          }
-          <app-ui-button
-            variant="secondary" appearance="ghost" size="sm"
-            icon="fa-solid fa-location-crosshairs"
-            tooltip="Sugerir cuadrante más cercano"
-            (buttonClick)="sugerirRecursoCercano()"
-          >Cuadrante</app-ui-button>
-          @if (errorRecursos()) {
-            <span class="ed-err-inline">
-              <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
-              {{ errorRecursos() }}
-            </span>
-          }
-        </div>
+        }
       </div>
 
-      <!-- Área de contenido de media: mapa siempre presente en el DOM,
-           el video se oculta/muestra con CSS para no remontar WebRTC. -->
-      <div class="ed-media-area">
+      <!-- Marco del mapa (altura fija) + PiP de video flotante -->
+      <div class="ed-mapa-frame">
 
-        <!-- MAPA — siempre en el DOM, visible según el tab activo -->
-        <div class="ed-mapa-wrap" [class.ed-mapa-wrap--oculto]="tabMedia() === 'video'">
-          <div #mapaEvento class="ed-mapa"></div>
-        </div>
+        <!-- El mapa siempre en el DOM -->
+        <div #mapaEvento class="ed-mapa"></div>
 
-        <!-- VIDEO — visible solo cuando el tab está en 'video' -->
-        <div class="ed-video-wrap" [class.ed-video-wrap--visible]="tabMedia() === 'video'">
-          @if (llamadaEnCurso(d)) {
-            <div class="ed-video">
+        <!-- PiP de videollamada: flota sobre el mapa en la esquina inferior derecha -->
+        @if (llamadaEnCurso(d)) {
+          <div class="ed-pip" [class.ed-pip--expandido]="tabMedia() === 'video'">
 
-              <!-- Estado de la llamada -->
-              <div class="ed-video__status-bar">
-                @switch (videollamadaEstado()) {
-                  @case ('esperando')  { <app-ui-badge label="Esperando al ciudadano…" variant="warning" size="xs" /> }
-                  @case ('conectando') { <app-ui-badge label="Conectando…" variant="warning" size="xs" /> }
-                  @case ('conectada')  { <app-ui-badge label="En vivo" variant="success" size="xs" /> }
-                  @case ('error')      { <app-ui-badge label="Error de conexión" variant="danger" size="xs" /> }
+            <!-- Cabecera del PiP: estado + botones -->
+            <div class="ed-pip__head">
+              @switch (videollamadaEstado()) {
+                @case ('esperando')  { <span class="ed-pip__dot ed-pip__dot--warn"></span><span>Esperando…</span> }
+                @case ('conectando') { <span class="ed-pip__dot ed-pip__dot--warn"></span><span>Conectando…</span> }
+                @case ('conectada')  { <span class="ed-pip__dot ed-pip__dot--ok"></span><span>En vivo</span> }
+                @case ('error')      { <span class="ed-pip__dot ed-pip__dot--err"></span><span>Error</span> }
+              }
+              @if (grabandoVideollamada()) {
+                <span class="ed-pip__rec">● REC</span>
+              }
+              <div class="ed-pip__acciones">
+                <button type="button" class="ed-pip__btn"
+                        (click)="tabMedia.set(tabMedia() === 'video' ? 'mapa' : 'video')"
+                        [title]="tabMedia() === 'video' ? 'Minimizar' : 'Ver video'">
+                  <i [class]="tabMedia() === 'video' ? 'fa-solid fa-chevron-down' : 'fa-solid fa-chevron-up'"
+                     aria-hidden="true"></i>
+                </button>
+                @if (videollamadaEstado() === 'conectada') {
+                  <button type="button" class="ed-pip__btn"
+                          (click)="verVideollamadaPantallaCompleta()" title="Pantalla completa">
+                    <i class="fa-solid fa-expand" aria-hidden="true"></i>
+                  </button>
                 }
-                @if (grabandoVideollamada()) {
-                  <app-ui-badge label="● Grabando" variant="danger" size="xs" />
-                }
+                <button type="button" class="ed-pip__btn ed-pip__btn--colgar"
+                        (click)="colgarVideollamada()" title="Colgar">
+                  <i class="fa-solid fa-phone-slash" aria-hidden="true"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Stream de video (solo si expandido y conectado) -->
+            @if (tabMedia() === 'video') {
+              @if (videollamadaEstado() === 'conectada') {
+                <div class="ed-pip__video">
+                  <video #videoRemoto autoplay playsinline
+                         [srcObject]="videollamadaRemoteStream()"></video>
+                </div>
+              }
+
+              <!-- Controles + ubicación + link -->
+              <div class="ed-pip__controles">
                 @if (videollamadaUbicacion(); as ubic) {
-                  <span class="ed-video__ubic-badge">
+                  <span class="ed-pip__ubic">
                     <i class="fa-solid fa-location-dot" aria-hidden="true"></i>
                     GPS ciudadano
                     @if (ubic.precision) { <small>~{{ ubic.precision | number:'1.0-0' }}m</small> }
-                    <app-ui-button
-                      variant="secondary" appearance="ghost" size="sm"
-                      icon="fa-solid fa-crosshairs" iconOnly
-                      ariaLabel="Centrar en ciudadano" tooltip="Centrar en el mapa"
-                      (buttonClick)="centrarEnCiudadano()"
-                    />
+                    <app-ui-button variant="secondary" appearance="ghost" size="sm"
+                      icon="fa-solid fa-crosshairs" iconOnly ariaLabel="Centrar"
+                      (buttonClick)="centrarEnCiudadano()" />
                   </span>
                 }
-              </div>
-
-              <!-- Link para compartir -->
-              @if (videollamadaLink()) {
-                <div class="ed-video__link-bar">
-                  <app-ui-input ariaLabel="Enlace de la videollamada" readonly
-                                [ngModel]="videollamadaLink()" />
-                  <app-ui-button
-                    variant="secondary" size="sm" icon="fa-solid fa-copy"
-                    tooltip="Copiar el enlace" (buttonClick)="copiarLinkVideollamada()"
-                  >Copiar</app-ui-button>
-                </div>
-                @if (videollamadaMensaje()) {
-                  <p class="ed-nota">{{ videollamadaMensaje() }}</p>
-                }
-              }
-
-              <!-- Marco de video -->
-              @if (videollamadaEstado() === 'conectada') {
-                <div class="ed-video__marco">
-                  <video #videoRemoto autoplay playsinline
-                         [srcObject]="videollamadaRemoteStream()"></video>
-                  <!-- Botones flotantes sobre el video -->
-                  <div class="ed-video__overlay-btns">
-                    <button type="button" class="ed-video__overlay-btn"
-                            title="Pantalla completa"
-                            (click)="verVideollamadaPantallaCompleta()">
-                      <i class="fa-solid fa-expand" aria-hidden="true"></i>
-                    </button>
-                    <button type="button" class="ed-video__overlay-btn"
-                            title="Ver mapa mientras habla — activar ventana flotante"
-                            (click)="tabMedia.set('mapa')">
-                      <i class="fa-solid fa-map" aria-hidden="true"></i>
-                    </button>
+                @if (videollamadaLink()) {
+                  <div class="ed-pip__link">
+                    <app-ui-input ariaLabel="Enlace" readonly [ngModel]="videollamadaLink()" />
+                    <app-ui-button variant="secondary" size="sm" icon="fa-solid fa-copy"
+                      tooltip="Copiar" (buttonClick)="copiarLinkVideollamada()">Copiar</app-ui-button>
                   </div>
-                </div>
-              }
-
-              <!-- Controles del video -->
-              <div class="ed-video__controles">
-                @if (videollamadaEstado() === 'conectada') {
-                  <app-ui-button
-                    [variant]="videollamadaMicActivo() ? 'secondary' : 'danger'"
-                    size="sm"
-                    [icon]="videollamadaMicActivo() ? 'fa-solid fa-microphone' : 'fa-solid fa-microphone-slash'"
-                    tooltip="Silenciar / activar micrófono"
-                    (buttonClick)="toggleMicVideollamada()"
-                  >{{ videollamadaMicActivo() ? 'Mic ON' : 'Mic OFF' }}</app-ui-button>
-                  <app-ui-button
-                    [variant]="grabandoVideollamada() ? 'danger' : 'secondary'"
-                    size="sm"
-                    [icon]="grabandoVideollamada() ? 'fa-solid fa-stop' : 'fa-solid fa-record-vinyl'"
-                    (buttonClick)="toggleGrabacionVideollamada()"
-                  >{{ grabandoVideollamada() ? 'Detener' : 'Grabar' }}</app-ui-button>
-                  <app-ui-button
-                    variant="secondary" size="sm" icon="fa-solid fa-expand"
-                    tooltip="Ver a pantalla completa"
-                    (buttonClick)="verVideollamadaPantallaCompleta()"
-                  >Pantalla completa</app-ui-button>
                 }
-                <app-ui-button
-                  variant="danger" size="sm" icon="fa-solid fa-phone-slash"
-                  (buttonClick)="colgarVideollamada()"
-                >Colgar</app-ui-button>
+                @if (videollamadaEstado() === 'conectada') {
+                  <div class="ed-pip__row">
+                    <app-ui-button [variant]="videollamadaMicActivo() ? 'secondary' : 'danger'" size="sm"
+                      [icon]="videollamadaMicActivo() ? 'fa-solid fa-microphone' : 'fa-solid fa-microphone-slash'"
+                      (buttonClick)="toggleMicVideollamada()">
+                      {{ videollamadaMicActivo() ? 'Mic' : 'Silenciado' }}
+                    </app-ui-button>
+                    <app-ui-button [variant]="grabandoVideollamada() ? 'danger' : 'secondary'" size="sm"
+                      [icon]="grabandoVideollamada() ? 'fa-solid fa-stop' : 'fa-solid fa-record-vinyl'"
+                      (buttonClick)="toggleGrabacionVideollamada()">
+                      {{ grabandoVideollamada() ? 'Detener' : 'Grabar' }}
+                    </app-ui-button>
+                  </div>
+                }
               </div>
 
-            </div>
-          }
-        </div>
+              <!-- Chat -->
+              <div class="ed-pip__chat">
+                <div class="ed-pip__chat-head">
+                  <i class="fa-solid fa-comment" aria-hidden="true"></i> Chat
+                  <app-ui-badge
+                    [label]="videollamadaChatDisponible() ? 'Disponible' : 'Conectando…'"
+                    [variant]="videollamadaChatDisponible() ? 'success' : 'neutral'" size="xs" />
+                </div>
+                <div class="ed-pip__hilo">
+                  @if (!videollamadaChatMensajes().length) {
+                    <p class="ed-pip__vacio">Sin mensajes. Escriba si no puede hablar.</p>
+                  }
+                  @for (m of videollamadaChatMensajes(); track $index) {
+                    <span class="ed-pip__burbuja" [class.ed-pip__burbuja--propia]="m.propio">
+                      <span>{{ m.texto }}</span>
+                      <small>{{ m.hora }}</small>
+                    </span>
+                  }
+                </div>
+                <form class="ed-pip__form" (submit)="enviarChatVideollamada(); $event.preventDefault()">
+                  <app-ui-input ariaLabel="Mensaje" placeholder="Escriba…"
+                    name="chatTexto" [(ngModel)]="videollamadaChatTexto" />
+                  <app-ui-button variant="primary" size="sm" icon="fa-solid fa-paper-plane"
+                    iconOnly ariaLabel="Enviar" (buttonClick)="enviarChatVideollamada()" />
+                </form>
+              </div>
+            }
+          </div>
+        }
+      </div><!-- /ed-mapa-frame -->
 
-      </div><!-- /ed-media-area -->
-
-      <!-- Sugerencia de cuadrante (colapsable bajo el mapa) -->
+      <!-- Sugerencia de cuadrante -->
       @if (mostrarSugerencia()) {
         <div class="ed-sugerencia">
           <div class="ed-sugerencia__head">
             <i class="fa-solid fa-location-crosshairs" aria-hidden="true"></i>
-            Cuadrantes libres más cercanos
-            <app-ui-button
-              variant="secondary" appearance="ghost" size="sm"
-              icon="fa-solid fa-xmark" iconOnly
-              ariaLabel="Cerrar" tooltip="Cerrar"
-              (buttonClick)="mostrarSugerencia.set(false)"
-            />
+            Cuadrantes cercanos
+            <app-ui-button variant="secondary" appearance="ghost" size="sm"
+              icon="fa-solid fa-xmark" iconOnly ariaLabel="Cerrar"
+              (buttonClick)="mostrarSugerencia.set(false)" />
           </div>
           @if (cargandoSugerencia()) {
             <p class="ed-cargando"><app-ui-spinner size="sm" /><span>Buscando…</span></p>
@@ -349,7 +326,7 @@
           } @else {
             <ol class="ed-sugerencia__lista">
               @for (s of sugerenciasRecurso(); track s.medioId; let i = $index) {
-                <li [class.ed-sugerencia__item--top]="i === 0">
+                <li [class.ed-sugerencia__top]="i === 0">
                   <span class="ed-sugerencia__rank">{{ i + 1 }}</span>
                   <strong>{{ nombrePatrulla(s) }}</strong>
                   <span class="ed-sugerencia__dist">
@@ -358,11 +335,9 @@
                       <small>~{{ etaMin(s.distanciaM / 1000, s.tipoMedio) }} min</small>
                     }
                   </span>
-                  <app-ui-button
-                    variant="primary" size="sm"
+                  <app-ui-button variant="primary" size="sm"
                     [disabled]="!!asignandoMedioId()"
-                    (buttonClick)="asignarSugerido(s)"
-                  >Asignar</app-ui-button>
+                    (buttonClick)="asignarSugerido(s)">Asignar</app-ui-button>
                 </li>
               }
             </ol>
@@ -371,118 +346,104 @@
       }
 
       @if (errorAsignacion()) {
-        <div class="ed-err-caja">
+        <div class="ed-err-box">
           <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
           <span>{{ errorAsignacion() }}</span>
-          <app-ui-button
-            variant="secondary" appearance="ghost" size="sm"
-            icon="fa-solid fa-xmark" iconOnly
-            ariaLabel="Descartar" tooltip="Descartar"
-            (buttonClick)="errorAsignacion.set('')"
-          />
+          <app-ui-button variant="secondary" appearance="ghost" size="sm"
+            icon="fa-solid fa-xmark" iconOnly ariaLabel="Cerrar"
+            (buttonClick)="errorAsignacion.set('')" />
         </div>
       }
 
-      <!-- Footer de media: iniciar/reconectar videollamada -->
-      <div class="ed-media-footer">
-        @if (!llamadaEnCurso(d) && d.estado !== 'C') {
-          @if (videollamadaReconectable(); as activa) {
-            <div class="ed-reconectar">
-              <span class="ed-reconectar__aviso">
-                <i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i>
-                Videollamada en curso
-                @if (activa.grabando) { <small>· con grabación</small> }
-              </span>
-              <app-ui-button
-                variant="primary" size="sm" icon="fa-solid fa-plug-circle-bolt"
-                [loading]="reconectandoVideollamada()" [disabled]="reconectandoVideollamada()"
-                (buttonClick)="reconectarVideollamada()"
-              >Reconectar</app-ui-button>
-            </div>
-          } @else {
-            <div class="ed-iniciar-llamada">
-              <i class="fa-solid fa-video" aria-hidden="true"></i>
-              <app-ui-input
-                class="ed-iniciar-llamada__tel"
-                ariaLabel="Teléfono del ciudadano"
-                placeholder="Teléfono del ciudadano…"
-                inputmode="tel"
-                [(ngModel)]="videollamadaTelefono"
-              />
-              <app-ui-button
-                variant="primary" size="sm" icon="fa-solid fa-video"
-                [loading]="creandoVideollamada()" [disabled]="creandoVideollamada()"
-                (buttonClick)="iniciarVideollamada()"
-              >Iniciar videollamada</app-ui-button>
-            </div>
+      <!-- ─── Recursos en turno (debajo del mapa) ──────────────────────── -->
+      <div class="ed-recursos-section">
+        <div class="ed-recursos-head">
+          <i class="fa-solid fa-car-side" aria-hidden="true"></i>
+          <span>Recursos en turno</span>
+          @if (cargandoRecursos()) {
+            <app-ui-spinner size="sm" />
           }
+          @if (recursos().length) {
+            <app-ui-chip [value]="recursos().length" label="" variant="info" appearance="soft" size="xs" />
+          }
+          @if (ultimaActRecursos()) {
+            <span class="ed-ts-sm">{{ ultimaActRecursos() | date:'HH:mm:ss' }}</span>
+          }
+        </div>
+
+        @if (!cargandoRecursos() && recursos().length === 0) {
+          <p class="ed-nota-vacia">
+            <i class="fa-solid fa-car-side" aria-hidden="true"></i>
+            Sin recursos en turno.
+          </p>
         }
 
-        @if (llamadaEnCurso(d)) {
-          <!-- Chat con el ciudadano (visible cuando hay videollamada activa) -->
-          <div class="ed-chat">
-            <div class="ed-chat__head">
-              <i class="fa-solid fa-comment" aria-hidden="true"></i>
-              Chat
-              <app-ui-badge
-                [label]="videollamadaChatDisponible() ? 'Disponible' : 'Conectando…'"
-                [variant]="videollamadaChatDisponible() ? 'success' : 'neutral'" size="xs" />
-            </div>
-            <div class="ed-chat__hilo">
-              @if (videollamadaChatMensajes().length === 0) {
-                <p class="ed-nota">Sin mensajes. Escriba si no puede hablar.</p>
-              }
-              @for (m of videollamadaChatMensajes(); track $index) {
-                <span class="ed-chat__burbuja" [class.ed-chat__burbuja--propia]="m.propio">
-                  <span>{{ m.texto }}</span>
-                  <small>{{ m.hora }}</small>
+        <div class="ed-recursos-lista">
+          @for (r of recursos(); track r.id) {
+            <div class="ed-recurso"
+                 [class.ed-recurso--ocupado]="r.estado === 28 || r.estado === 30"
+                 [class.ed-recurso--asignado]="medioAsignadoAEsteEvento(r)">
+              <button type="button" class="ed-recurso__head"
+                      (click)="centrarEnRecurso(r)"
+                      [title]="r.lat != null && r.lng != null ? 'Centrar en mapa' : 'Sin GPS'">
+                <i class="{{ iconoTipo(r.tipoMedio) }}" [title]="etiquetaTipoMedio(r.tipoMedio)"
+                   aria-hidden="true"></i>
+                <span class="ed-recurso__info">
+                  <strong>{{ nombrePatrulla(r) }}</strong>
+                  <small>{{ r.personalResumen || 'Sin personal' }}</small>
                 </span>
-              }
+                <span class="ed-gps" [class.ed-gps--on]="r.gpsActivo"
+                      [title]="r.gpsActivo ? 'GPS activo' : 'Sin GPS'"></span>
+              </button>
+              <div class="ed-recurso__meta">
+                <app-ui-badge [label]="r.estadoDesc"
+                              [variant]="varianteEstadoMedio(r.estado)" size="xs" />
+                @if (r.distanciaKm != null) {
+                  <span class="ed-recurso__dist" [class.ed-recurso__dist--cerca]="r.distanciaKm < 1">
+                    <i class="fa-solid fa-route" aria-hidden="true"></i>
+                    {{ formatDistancia(r.distanciaKm) }}
+                    @if (etaMin(r.distanciaKm, r.tipoMedio) !== null) {
+                      <small>~{{ etaMin(r.distanciaKm, r.tipoMedio) }} min</small>
+                    }
+                  </span>
+                } @else {
+                  <span class="ed-recurso__dist ed-recurso__dist--singps">
+                    <i class="fa-solid fa-location-crosshairs" aria-hidden="true"></i> Sin GPS
+                  </span>
+                }
+                @if (r.estado === 27 && !medioAsignadoAEsteEvento(r) && !r.eventoId) {
+                  <app-ui-button variant="primary" size="sm" icon="fa-solid fa-plus"
+                    [loading]="asignandoMedioId() === r.id"
+                    [disabled]="!!asignandoMedioId() || d.estado === 'C'"
+                    tooltip="Asignar al incidente"
+                    (buttonClick)="asignarRecursoAlEvento(r)">Asignar</app-ui-button>
+                }
+                @if (r.estado === 27 && r.eventoId && !medioAsignadoAEsteEvento(r)) {
+                  <app-ui-badge label="En otro caso" icon="fa-solid fa-link"
+                                iconPosition="start" variant="neutral" size="xs" />
+                }
+                @if (medioAsignadoAEsteEvento(r)) {
+                  <app-ui-badge label="Asignado aquí" icon="fa-solid fa-link"
+                                iconPosition="start" variant="info" size="xs" />
+                }
+              </div>
             </div>
-            <form class="ed-chat__form" (submit)="enviarChatVideollamada(); $event.preventDefault()">
-              <app-ui-input
-                ariaLabel="Mensaje"
-                placeholder="Escriba…"
-                name="chatTexto"
-                [(ngModel)]="videollamadaChatTexto"
-              />
-              <app-ui-button
-                variant="primary" size="sm" icon="fa-solid fa-paper-plane" iconOnly
-                ariaLabel="Enviar" tooltip="Enviar"
-                (buttonClick)="enviarChatVideollamada()"
-              />
-            </form>
-          </div>
-        }
-      </div>
+          }
+        </div>
+      </div><!-- /ed-recursos-section -->
 
     </div><!-- /ed-col-media -->
 
-    <!-- ═══ COLUMNA INFO (Datos + Tabs) ══════════════════════════════════ -->
+    <!-- ═══ COLUMNA DERECHA: Info del caso + Tabs ═══════════════════════ -->
     <div class="ed-col-info">
 
-      <!-- Card del caso (siempre visible) -->
+      <!-- Card del caso -->
       <div class="ed-caso-card">
         <div class="ed-caso-card__dir">
           <i class="fa-solid fa-location-dot" aria-hidden="true"></i>
           <span>{{ d.direCaso || '—' }}</span>
           @if (d.barrio) { <small>{{ d.barrio }}</small> }
         </div>
-
-        @if (d.codiPedido) {
-          <div class="ed-caso-card__codigo">
-            <span class="ed-codigo">
-              <strong>{{ d.codiPedido }}</strong>
-              <small>{{ d.descPedido }}</small>
-            </span>
-            @if (d.codiPedido2) {
-              <span class="ed-codigo ed-codigo--sec">
-                <strong>{{ d.codiPedido2 }}</strong>
-                <small>{{ d.descPedido2 }}</small>
-              </span>
-            }
-          </div>
-        }
 
         <dl class="ed-caso-card__datos">
           <div class="ed-dato">
@@ -515,6 +476,21 @@
           }
         </dl>
 
+        @if (d.codiPedido) {
+          <div class="ed-caso-card__codigo">
+            <span class="ed-codigo">
+              <strong>{{ d.codiPedido }}</strong>
+              @if (d.descPedido) { <small>{{ d.descPedido }}</small> }
+            </span>
+            @if (d.codiPedido2) {
+              <span class="ed-codigo ed-codigo--sec">
+                <strong>{{ d.codiPedido2 }}</strong>
+                @if (d.descPedido2) { <small>{{ d.descPedido2 }}</small> }
+              </span>
+            }
+          </div>
+        }
+
         @if (d.comentario) {
           <div class="ed-caso-card__relato">
             <i class="fa-solid fa-align-left" aria-hidden="true"></i>
@@ -522,21 +498,19 @@
           </div>
         }
 
-        <!-- Canales asignados (compacto) -->
+        <!-- Canales asignados compactos -->
         @if (canalesAsignados(); as ca) {
           @if (ca.canales.length > 1 || ca.agenciasExternas.length > 0) {
-            <div class="ed-canales-compact">
+            <div class="ed-canales">
               @for (c of ca.canales; track c.codigo + '-' + c.fuerzaId) {
-                <span class="ed-canal-chip" [class.ed-canal-chip--cerrado]="c.estado === 'C'">
-                  <i class="fa-solid"
-                     [class.fa-tower-broadcast]="c.estado !== 'C'"
-                     [class.fa-circle-check]="c.estado === 'C'"
-                     aria-hidden="true"></i>
+                <span class="ed-canal" [class.ed-canal--cerrado]="c.estado === 'C'">
+                  <i class="fa-solid" [class.fa-tower-broadcast]="c.estado !== 'C'"
+                     [class.fa-circle-check]="c.estado === 'C'" aria-hidden="true"></i>
                   {{ c.canalDescripcion || 'Canal ' + c.codigo }}
                 </span>
               }
               @for (a of ca.agenciasExternas; track a.agenciaId) {
-                <span class="ed-canal-chip ed-canal-chip--externa">
+                <span class="ed-canal ed-canal--ext">
                   <i class="fa-solid fa-building-shield" aria-hidden="true"></i>
                   {{ a.nombre }}
                 </span>
@@ -544,123 +518,37 @@
             </div>
           }
         }
-      </div>
+      </div><!-- /ed-caso-card -->
 
-      <!-- Tabs secundarios -->
+      <!-- Tabs de info -->
       <div class="ed-tabs">
-        <button type="button" class="ed-tab" [class.ed-tab--sel]="tabInfo() === 'recursos'"
-                (click)="tabInfo.set('recursos')">
-          <i class="fa-solid fa-car-side" aria-hidden="true"></i>
-          Recursos
-          @if (recursos().length) {
-            <span class="ed-tab__badge">{{ recursos().length }}</span>
-          }
-        </button>
         <button type="button" class="ed-tab" [class.ed-tab--sel]="tabInfo() === 'despacho'"
                 (click)="tabInfo.set('despacho')">
-          <i class="fa-solid fa-route" aria-hidden="true"></i>
-          Despacho
+          <i class="fa-solid fa-route" aria-hidden="true"></i> Despacho
           @if (actuacionesActivas().length) {
-            <span class="ed-tab__badge ed-tab__badge--activo">{{ actuacionesActivas().length }}</span>
+            <span class="ed-tab__badge ed-tab__badge--ok">{{ actuacionesActivas().length }}</span>
           }
         </button>
         <button type="button" class="ed-tab" [class.ed-tab--sel]="tabInfo() === 'anotaciones'"
                 (click)="tabInfo.set('anotaciones')">
-          <i class="fa-solid fa-notes-medical" aria-hidden="true"></i>
-          Notas
+          <i class="fa-solid fa-notes-medical" aria-hidden="true"></i> Notas
           @if (detalle()?.anotaciones?.length) {
             <span class="ed-tab__badge">{{ detalle()!.anotaciones.length }}</span>
           }
         </button>
         <button type="button" class="ed-tab" [class.ed-tab--sel]="tabInfo() === 'asistente'"
                 (click)="tabInfo.set('asistente')">
-          <i class="fa-solid fa-robot" aria-hidden="true"></i>
-          Asistente
+          <i class="fa-solid fa-robot" aria-hidden="true"></i> Asistente
           @if (asistentePendientes() > 0) {
             <span class="ed-tab__badge ed-tab__badge--alerta">{{ asistentePendientes() }}</span>
           }
         </button>
       </div>
 
-      <!-- Contenido del tab activo (con scroll interno) -->
+      <!-- Contenido del tab -->
       <div class="ed-tab-body">
 
-        <!-- ── TAB: RECURSOS ─────────────────────────────────────────── -->
-        @if (tabInfo() === 'recursos') {
-          <div class="ed-tab-content">
-            @if (cargandoRecursos() && recursos().length === 0) {
-              <p class="ed-cargando"><app-ui-spinner size="sm" /><span>Consultando recursos…</span></p>
-            } @else if (recursos().length === 0) {
-              <p class="ed-nota-vacia">
-                <i class="fa-solid fa-car-side" aria-hidden="true"></i>
-                Sin recursos en turno para este canal.
-              </p>
-            } @else {
-              <div class="ed-recursos-lista">
-                @for (r of recursos(); track r.id) {
-                  <div class="ed-recurso"
-                       [class.ed-recurso--ocupado]="r.estado === 28 || r.estado === 30"
-                       [class.ed-recurso--asignado]="medioAsignadoAEsteEvento(r)">
-                    <button type="button" class="ed-recurso__head"
-                            (click)="centrarEnRecurso(r)"
-                            [title]="r.lat != null && r.lng != null ? 'Centrar en mapa' : 'Sin GPS'">
-                      <i class="{{ iconoTipo(r.tipoMedio) }}" [title]="etiquetaTipoMedio(r.tipoMedio)"
-                         aria-hidden="true"></i>
-                      <span class="ed-recurso__info">
-                        <strong>{{ nombrePatrulla(r) }}</strong>
-                        <small>{{ r.personalResumen || 'Sin personal' }}</small>
-                      </span>
-                      <span class="ed-gps" [class.ed-gps--on]="r.gpsActivo"
-                            [title]="r.gpsActivo ? 'GPS activo' : 'Sin GPS'"></span>
-                    </button>
-                    <div class="ed-recurso__meta">
-                      <app-ui-badge [label]="r.estadoDesc"
-                                    [variant]="varianteEstadoMedio(r.estado)" size="xs" />
-                      @if (r.distanciaKm != null) {
-                        <span class="ed-recurso__dist" [class.ed-recurso__dist--cerca]="r.distanciaKm < 1">
-                          <i class="fa-solid fa-route" aria-hidden="true"></i>
-                          {{ formatDistancia(r.distanciaKm) }}
-                          @if (etaMin(r.distanciaKm, r.tipoMedio) !== null) {
-                            <small>~{{ etaMin(r.distanciaKm, r.tipoMedio) }} min</small>
-                          }
-                        </span>
-                      } @else {
-                        <span class="ed-recurso__dist ed-recurso__dist--singps">
-                          <i class="fa-solid fa-location-crosshairs" aria-hidden="true"></i> Sin GPS
-                        </span>
-                      }
-                    </div>
-                    <div class="ed-recurso__acciones">
-                      @if (r.estado === 27 && !medioAsignadoAEsteEvento(r) && !r.eventoId) {
-                        <app-ui-button
-                          variant="primary" size="sm" icon="fa-solid fa-plus"
-                          [loading]="asignandoMedioId() === r.id"
-                          [disabled]="!!asignandoMedioId() || d.estado === 'C'"
-                          tooltip="Asignar al incidente"
-                          (buttonClick)="asignarRecursoAlEvento(r)"
-                        >Asignar</app-ui-button>
-                      }
-                      @if (r.estado === 27 && r.eventoId && !medioAsignadoAEsteEvento(r)) {
-                        <app-ui-badge label="En otro caso" icon="fa-solid fa-link"
-                                      iconPosition="start" variant="neutral" size="xs" />
-                      }
-                      @if (medioAsignadoAEsteEvento(r)) {
-                        <app-ui-badge label="Asignado aquí" icon="fa-solid fa-link"
-                                      iconPosition="start" variant="info" size="xs" />
-                      }
-                      @if (r.estado === 30 || r.estado === 28) {
-                        <app-ui-badge [label]="etiquetaEstadoMedio(r.estado)"
-                                      [variant]="varianteEstadoMedio(r.estado)" size="xs" />
-                      }
-                    </div>
-                  </div>
-                }
-              </div>
-            }
-          </div>
-        }
-
-        <!-- ── TAB: DESPACHO ─────────────────────────────────────────── -->
+        <!-- TAB DESPACHO -->
         @if (tabInfo() === 'despacho') {
           <div class="ed-tab-content">
             @if (errorActuaciones()) {
@@ -670,19 +558,18 @@
               </p>
             }
             @if (cargandoActuaciones() && actuaciones().length === 0) {
-              <p class="ed-cargando"><app-ui-spinner size="sm" /><span>Cargando actuaciones…</span></p>
+              <p class="ed-cargando"><app-ui-spinner size="sm" /><span>Cargando…</span></p>
             } @else if (actuaciones().length === 0) {
               <p class="ed-nota-vacia">
                 <i class="fa-solid fa-route" aria-hidden="true"></i>
-                Sin recursos asignados. Use <strong>Asignar</strong> en la pestaña de Recursos.
+                Sin recursos asignados. Use <strong>Asignar</strong> en la lista de recursos.
               </p>
             } @else {
               <div class="ed-despachos">
                 @for (act of actuaciones(); track act.id; let i = $index) {
                   @if (act.estado === 'V' && (i === 0 || actuaciones()[i - 1].estado !== 'V')) {
                     <p class="ed-despachos__sep">
-                      <i class="fa-solid fa-link-slash" aria-hidden="true"></i>
-                      Anulados / desasignados
+                      <i class="fa-solid fa-link-slash" aria-hidden="true"></i> Anulados
                     </p>
                   }
                   <article class="ed-despacho"
@@ -739,55 +626,48 @@
                         </div>
                         <div class="ed-despacho__acciones">
                           @if (act.estado === 'P') {
-                            <app-ui-button
-                              variant="primary" size="sm" icon="fa-solid fa-truck-fast"
+                            <app-ui-button variant="primary" size="sm" icon="fa-solid fa-truck-fast"
                               [loading]="operandoActuacionId() === act.id"
                               tooltip="Marcar el recurso en ruta"
-                              (buttonClick)="marcarEnRuta(act)"
-                            >En ruta</app-ui-button>
+                              (buttonClick)="marcarEnRuta(act)">En ruta</app-ui-button>
                           }
                           @if (act.estado === 'D') {
-                            <app-ui-button
-                              [variant]="sugiereLlegada(act) ? 'success' : 'warning'"
+                            <app-ui-button [variant]="sugiereLlegada(act) ? 'success' : 'warning'"
                               size="sm" icon="fa-solid fa-map-pin"
                               [loading]="operandoActuacionId() === act.id"
-                              [tooltip]="sugiereLlegada(act) ? 'GPS indica que llegó' : 'Marcar llegada al lugar'"
-                              (buttonClick)="marcarEnSitio(act)"
-                            >{{ sugiereLlegada(act) ? '¿Llegó? — GPS cercano' : 'Llegó al lugar' }}</app-ui-button>
+                              [tooltip]="sugiereLlegada(act) ? 'GPS indica que llegó' : 'Marcar llegada'"
+                              (buttonClick)="marcarEnSitio(act)">
+                              {{ sugiereLlegada(act) ? '¿Llegó? — GPS cerca' : 'Llegó al lugar' }}
+                            </app-ui-button>
                           }
                           @if (act.estado === 'A') {
-                            <app-ui-button
-                              variant="success" size="sm" icon="fa-solid fa-circle-check"
+                            <app-ui-button variant="success" size="sm" icon="fa-solid fa-circle-check"
                               [loading]="operandoActuacionId() === act.id"
-                              tooltip="Registrar el resultado de la atención"
-                              (buttonClick)="abrirCierreActuacion(act)"
-                            >Atendió</app-ui-button>
+                              tooltip="Registrar la atención"
+                              (buttonClick)="abrirCierreActuacion(act)">Atendió</app-ui-button>
                           }
-                          <app-ui-button
-                            variant="danger" appearance="ghost" size="sm" icon="fa-solid fa-link-slash"
+                          <app-ui-button variant="danger" appearance="ghost" size="sm"
+                            icon="fa-solid fa-link-slash"
                             [disabled]="operandoActuacionId() === act.id"
-                            [tooltip]="act.estado === 'P' ? 'Desasignar el recurso' : 'Cancelar (requiere motivo)'"
-                            (buttonClick)="abrirModalDesasignar(act)"
-                          >{{ act.estado === 'P' ? 'Desasignar' : 'Cancelar' }}</app-ui-button>
+                            (buttonClick)="abrirModalDesasignar(act)">
+                            {{ act.estado === 'P' ? 'Desasignar' : 'Cancelar' }}
+                          </app-ui-button>
                           @if (act.solicitaApoyo) {
-                            <app-ui-button
-                              variant="success" appearance="ghost" size="sm" icon="fa-solid fa-check-double"
+                            <app-ui-button variant="success" appearance="ghost" size="sm"
+                              icon="fa-solid fa-check-double"
                               [loading]="solicitandoApoyoId() === act.id"
-                              (buttonClick)="atenderApoyo(act)"
-                            >Apoyo atendido</app-ui-button>
+                              (buttonClick)="atenderApoyo(act)">Apoyo atendido</app-ui-button>
                           } @else {
-                            <app-ui-button
-                              variant="warning" appearance="ghost" size="sm" icon="fa-solid fa-tower-broadcast"
+                            <app-ui-button variant="warning" appearance="ghost" size="sm"
+                              icon="fa-solid fa-tower-broadcast"
                               [loading]="solicitandoApoyoId() === act.id"
-                              tooltip="Solicitar apoyo urgente"
-                              (buttonClick)="solicitarApoyo(act)"
-                            >Apoyo</app-ui-button>
+                              (buttonClick)="solicitarApoyo(act)">Apoyo</app-ui-button>
                           }
-                          <app-ui-button
-                            variant="secondary" appearance="ghost" size="sm" icon="fa-solid fa-circle-exclamation"
-                            tooltip="Registrar novedad"
-                            (buttonClick)="abrirModalNovedad(act)"
-                          >Novedad@if (act.totalNotas) { ({{ act.totalNotas }}) }</app-ui-button>
+                          <app-ui-button variant="secondary" appearance="ghost" size="sm"
+                            icon="fa-solid fa-circle-exclamation"
+                            (buttonClick)="abrirModalNovedad(act)">
+                            Novedad@if (act.totalNotas) { ({{ act.totalNotas }}) }
+                          </app-ui-button>
                         </div>
                       }
                     }
@@ -798,12 +678,13 @@
           </div>
         }
 
-        <!-- ── TAB: ANOTACIONES ──────────────────────────────────────── -->
+        <!-- TAB ANOTACIONES -->
         @if (tabInfo() === 'anotaciones') {
           <div class="ed-tab-content">
+
             @if (adjuntos().length > 0) {
-              <div class="ed-adjuntos-sec">
-                <p class="ed-sec-label">
+              <div class="ed-sec">
+                <p class="ed-sec__label">
                   <i class="fa-solid fa-photo-film" aria-hidden="true"></i>
                   Archivos ({{ adjuntos().length }})
                 </p>
@@ -814,60 +695,36 @@
             @if (d.estado !== 'C') {
               <div class="ed-anot-form">
                 <div class="ed-anot-form__fila">
-                  <app-ui-select
-                    class="ed-anot-form__campo"
-                    label="Tipo"
-                    [options]="opcionesTipoAnotacion"
-                    [clearable]="false"
+                  <app-ui-select class="ed-anot-form__campo" label="Tipo"
+                    [options]="opcionesTipoAnotacion" [clearable]="false"
                     [ngModel]="nuevaAnotacion().tipoAnotacion"
-                    (ngModelChange)="onTipoAnotacionChange($event)"
-                  />
-                  <app-ui-input
-                    class="ed-anot-form__campo"
-                    label="Título"
+                    (ngModelChange)="onTipoAnotacionChange($event)" />
+                  <app-ui-input class="ed-anot-form__campo" label="Título"
                     placeholder="Título breve…"
                     [ngModel]="nuevaAnotacion().titulo"
-                    (ngModelChange)="setAnotacionTitulo($event)"
-                  />
+                    (ngModelChange)="setAnotacionTitulo($event)" />
                 </div>
-
                 @if (nuevaAnotacion().tipoAnotacion === 'OPERATIVA') {
-                  <app-ui-select
-                    label="Tipo de actividad"
-                    [options]="opcionesActividadAnotacion()"
-                    [clearable]="false"
+                  <app-ui-select label="Tipo de actividad"
+                    [options]="opcionesActividadAnotacion()" [clearable]="false"
                     [ngModel]="anotActividadCodigo()"
-                    (ngModelChange)="onAnotActividadChange($event)"
-                  />
+                    (ngModelChange)="onAnotActividadChange($event)" />
                   @if (anotRequiereDelito()) {
                     <div class="ed-anot-form__fila">
-                      <app-ui-input
-                        class="ed-anot-form__campo"
-                        label="Artículo del delito"
-                        placeholder="Art. 239…"
-                        [ngModel]="anotDelitoArticulo()"
-                        (ngModelChange)="anotDelitoArticulo.set($event)"
-                      />
-                      <app-ui-input
-                        class="ed-anot-form__campo"
-                        label="Nombre del delito"
-                        placeholder="Hurto calificado…"
-                        [ngModel]="anotDelitoDesc()"
-                        (ngModelChange)="anotDelitoDesc.set($event)"
-                      />
+                      <app-ui-input class="ed-anot-form__campo" label="Artículo del delito"
+                        placeholder="Art. 239…" [ngModel]="anotDelitoArticulo()"
+                        (ngModelChange)="anotDelitoArticulo.set($event)" />
+                      <app-ui-input class="ed-anot-form__campo" label="Nombre del delito"
+                        placeholder="Hurto calificado…" [ngModel]="anotDelitoDesc()"
+                        (ngModelChange)="anotDelitoDesc.set($event)" />
                     </div>
                   }
                 }
-
-                <app-ui-input
-                  label="Anotación"
-                  multiline [rows]="3" required
+                <app-ui-input label="Anotación" multiline [rows]="3" required
                   [error]="nuevaAnotacion().anotacion.trim() ? '' : 'Obligatorio.'"
                   placeholder="Registre la novedad o información relevante…"
                   [ngModel]="nuevaAnotacion().anotacion"
-                  (ngModelChange)="setAnotacionTexto($event)"
-                />
-
+                  (ngModelChange)="setAnotacionTexto($event)" />
                 <div class="ed-plantillas">
                   @for (p of plantillasAnotacion; track p.label) {
                     <button type="button" (click)="aplicarPlantillaAnotacion(p.texto)" [title]="p.texto">
@@ -875,14 +732,11 @@
                     </button>
                   }
                 </div>
-
                 <div class="ed-anot-form__pie">
-                  <app-ui-button
-                    variant="primary" size="sm" icon="fa-solid fa-floppy-disk"
+                  <app-ui-button variant="primary" size="sm" icon="fa-solid fa-floppy-disk"
                     [loading]="guardandoAnotacion()"
                     [disabled]="guardandoAnotacion() || !nuevaAnotacion().anotacion.trim()"
-                    (buttonClick)="guardarAnotacion()"
-                  >Registrar</app-ui-button>
+                    (buttonClick)="guardarAnotacion()">Registrar</app-ui-button>
                   @if (mensajeAnotacion()) {
                     <span class="ed-msg-ok">
                       <i class="fa-solid fa-circle-check" aria-hidden="true"></i>
@@ -916,29 +770,24 @@
           </div>
         }
 
-        <!-- ── TAB: ASISTENTE ────────────────────────────────────────── -->
+        <!-- TAB ASISTENTE -->
         @if (tabInfo() === 'asistente') {
           <div class="ed-tab-content">
             <div class="ed-asistente">
               @if (asistenteLoadingCat()) {
                 <p class="ed-cargando"><app-ui-spinner size="sm" /><span>Cargando categorías…</span></p>
               } @else {
-                <app-ui-select
-                  label="Tipo de incidente"
-                  [options]="opcionesCategoriaAsistente()"
-                  [clearable]="false"
+                <app-ui-select label="Tipo de incidente"
+                  [options]="opcionesCategoriaAsistente()" [clearable]="false"
                   [ngModel]="asistenteCategoriaSel()"
-                  (ngModelChange)="onAsistenteCategoriaChange($event)"
-                />
+                  (ngModelChange)="onAsistenteCategoriaChange($event)" />
               }
-
               @if (asistenteLoadingPreg()) {
                 <p class="ed-cargando"><app-ui-spinner size="sm" /><span>Cargando preguntas…</span></p>
               }
               @if (!asistenteLoadingPreg() && asistenteCategoriaSel() && asistentePreguntas().length === 0) {
                 <p class="ed-nota">Sin preguntas para esta categoría.</p>
               }
-
               @if (asistentePreguntas().length > 0) {
                 <ol class="ed-preguntas">
                   @for (preg of asistentePreguntas(); track preg.id) {
@@ -964,46 +813,34 @@
                           </span>
                         }
                         @case ('NUMERO') {
-                          <app-ui-input
-                            class="ed-pregunta__resp" type="number" placeholder="0"
+                          <app-ui-input class="ed-pregunta__resp" type="number" placeholder="0"
                             [ariaLabel]="preg.pregunta"
                             [ngModel]="asistenteRespuestas()[preg.id]"
-                            (ngModelChange)="responderAsistente(preg.id, $event)"
-                          />
+                            (ngModelChange)="responderAsistente(preg.id, $event)" />
                         }
                         @case ('SELECCION') {
-                          <app-ui-select
-                            class="ed-pregunta__resp"
-                            [ariaLabel]="preg.pregunta"
-                            [options]="opcionesPregunta(preg)"
-                            [clearable]="false"
+                          <app-ui-select class="ed-pregunta__resp" [ariaLabel]="preg.pregunta"
+                            [options]="opcionesPregunta(preg)" [clearable]="false"
                             [ngModel]="asistenteRespuestas()[preg.id]"
-                            (ngModelChange)="responderAsistente(preg.id, $event)"
-                          />
+                            (ngModelChange)="responderAsistente(preg.id, $event)" />
                         }
                         @default {
-                          <app-ui-input
-                            class="ed-pregunta__resp" placeholder="Respuesta…"
+                          <app-ui-input class="ed-pregunta__resp" placeholder="Respuesta…"
                             [ariaLabel]="preg.pregunta"
                             [ngModel]="asistenteRespuestas()[preg.id]"
-                            (ngModelChange)="responderAsistente(preg.id, $event)"
-                          />
+                            (ngModelChange)="responderAsistente(preg.id, $event)" />
                         }
                       }
                     </li>
                   }
                 </ol>
-
                 <div class="ed-asistente__pie">
                   @if (asistentePendientes() > 0) {
                     <span class="ed-nota">Faltan {{ asistentePendientes() }} pregunta(s) obligatoria(s).</span>
                   }
-                  <app-ui-button
-                    variant="primary" size="sm" icon="fa-solid fa-arrow-down-to-line"
+                  <app-ui-button variant="primary" size="sm" icon="fa-solid fa-arrow-down-to-line"
                     [disabled]="asistenteRespondidas() === 0"
-                    tooltip="Copiar respuestas a la anotación"
-                    (buttonClick)="pasarAsistenteAAnotacion()"
-                  >Pasar a anotación</app-ui-button>
+                    (buttonClick)="pasarAsistenteAAnotacion()">Pasar a anotación</app-ui-button>
                 </div>
               }
             </div>
@@ -1011,64 +848,41 @@
         }
 
       </div><!-- /ed-tab-body -->
-
     </div><!-- /ed-col-info -->
 
   </div><!-- /ed-body -->
-
 </div><!-- /ed-shell -->
 }
 
 
-<!-- ═══════════════════════════════════════════════════════════════════════
-     MODALES (sin cambios funcionales, solo se preservan)
-     ═══════════════════════════════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════════════════════════════════════════
+     MODALES (sin cambios funcionales)
+     ══════════════════════════════════════════════════════════════════════ -->
 
 <!-- Cambiar estado -->
-<app-ui-modal
-  [open]="modalCambiarEstadoVisible()"
+<app-ui-modal [open]="modalCambiarEstadoVisible()"
   [title]="'Cambiar estado a «' + getEstadoLabel(estadoNuevoPendiente()) + '»'"
-  icon="fa-solid fa-arrows-rotate"
-  (closeRequested)="cancelarCambiarEstado()"
->
+  icon="fa-solid fa-arrows-rotate" (closeRequested)="cancelarCambiarEstado()">
   <div modal-body>
-    <p class="ed-nota">
-      <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
-      El cambio queda en la trazabilidad del caso junto con su motivo.
-    </p>
-    <app-ui-input
-      label="Motivo del cambio"
-      multiline [rows]="3" required
+    <p class="ed-nota"><i class="fa-solid fa-circle-info" aria-hidden="true"></i> El cambio queda en la trazabilidad.</p>
+    <app-ui-input label="Motivo del cambio" multiline [rows]="3" required
       [error]="motivoCambioEstado.trim() ? '' : 'Obligatorio.'"
-      placeholder="Explique brevemente por qué cambia el estado…"
-      [(ngModel)]="motivoCambioEstado"
-    />
+      placeholder="Explique brevemente…" [(ngModel)]="motivoCambioEstado" />
     @if (errorCambioEstado()) {
-      <p class="ed-err-inline">
-        <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
-        {{ errorCambioEstado() }}
-      </p>
+      <p class="ed-err-inline"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i> {{ errorCambioEstado() }}</p>
     }
   </div>
   <div modal-actions>
-    <app-ui-button variant="secondary" appearance="ghost"
-                   (buttonClick)="cancelarCambiarEstado()">Cancelar</app-ui-button>
-    <app-ui-button
-      variant="primary" icon="fa-solid fa-check"
-      [loading]="cambiandoEstado()"
-      [disabled]="cambiandoEstado() || !motivoCambioEstado.trim()"
-      (buttonClick)="confirmarCambiarEstado()"
-    >Confirmar</app-ui-button>
+    <app-ui-button variant="secondary" appearance="ghost" (buttonClick)="cancelarCambiarEstado()">Cancelar</app-ui-button>
+    <app-ui-button variant="primary" icon="fa-solid fa-check"
+      [loading]="cambiandoEstado()" [disabled]="cambiandoEstado() || !motivoCambioEstado.trim()"
+      (buttonClick)="confirmarCambiarEstado()">Confirmar</app-ui-button>
   </div>
 </app-ui-modal>
 
-<!-- Desasignar recurso -->
-<app-ui-modal
-  [open]="modalDesasignarVisible()"
-  title="Retirar el recurso del evento"
-  icon="fa-solid fa-link-slash"
-  (closeRequested)="cancelarDesasignar()"
->
+<!-- Desasignar -->
+<app-ui-modal [open]="modalDesasignarVisible()" title="Retirar el recurso del evento"
+  icon="fa-solid fa-link-slash" (closeRequested)="cancelarDesasignar()">
   <div modal-body>
     @if (actuacionADesasignar(); as act) {
       <p class="ed-modal-recurso">
@@ -1078,50 +892,30 @@
                       [variant]="varianteEstadoActuacion(act.estado)" size="xs" />
       </p>
       @if (act.estado === 'P') {
-        <p class="ed-nota">
-          <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
-          El recurso aún no ha salido: se libera sin más trámite.
-        </p>
+        <p class="ed-nota"><i class="fa-solid fa-circle-info" aria-hidden="true"></i> El recurso aún no salió: se libera sin más trámite.</p>
       } @else {
-        <p class="ed-nota ed-nota--alerta">
-          <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
-          El recurso ya salió o está en sitio. Explique el motivo.
-        </p>
+        <p class="ed-nota ed-nota--alerta"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i> El recurso ya salió. Explique el motivo.</p>
       }
-      <app-ui-input
-        label="Motivo"
-        multiline [rows]="3"
+      <app-ui-input label="Motivo" multiline [rows]="3"
         [required]="act.estado !== 'P'"
         [error]="act.estado !== 'P' && !desasignarMotivo.trim() ? 'Obligatorio.' : ''"
-        placeholder="Asignado por error, recurso no disponible…"
-        [(ngModel)]="desasignarMotivo"
-      />
+        placeholder="Asignado por error…" [(ngModel)]="desasignarMotivo" />
     }
     @if (errorDesasignar()) {
-      <p class="ed-err-inline">
-        <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
-        {{ errorDesasignar() }}
-      </p>
+      <p class="ed-err-inline"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i> {{ errorDesasignar() }}</p>
     }
   </div>
   <div modal-actions>
-    <app-ui-button variant="secondary" appearance="ghost"
-                   (buttonClick)="cancelarDesasignar()">Cancelar</app-ui-button>
-    <app-ui-button
-      variant="danger" icon="fa-solid fa-link-slash"
+    <app-ui-button variant="secondary" appearance="ghost" (buttonClick)="cancelarDesasignar()">Cancelar</app-ui-button>
+    <app-ui-button variant="danger" icon="fa-solid fa-link-slash"
       [loading]="desasignando()" [disabled]="desasignando()"
-      (buttonClick)="confirmarDesasignar()"
-    >Retirar el recurso</app-ui-button>
+      (buttonClick)="confirmarDesasignar()">Retirar el recurso</app-ui-button>
   </div>
 </app-ui-modal>
 
-<!-- Novedad operativa -->
-<app-ui-modal
-  [open]="modalNovedadVisible()"
-  title="Registrar una novedad"
-  icon="fa-solid fa-circle-exclamation"
-  (closeRequested)="cancelarNovedad()"
->
+<!-- Novedad -->
+<app-ui-modal [open]="modalNovedadVisible()" title="Registrar una novedad"
+  icon="fa-solid fa-circle-exclamation" (closeRequested)="cancelarNovedad()">
   <div modal-body>
     @if (actuacionNovedad(); as act) {
       <p class="ed-modal-recurso">
@@ -1131,87 +925,50 @@
                       [variant]="varianteEstadoActuacion(act.estado)" size="xs" />
       </p>
     }
-    <app-ui-select
-      label="Tipo"
-      [options]="opcionesTipoNovedad"
-      [clearable]="false"
-      [ngModel]="novedadTipo()"
-      (ngModelChange)="novedadTipo.set($event)"
-    />
-    <app-ui-input
-      label="Descripción"
-      multiline [rows]="3" required
+    <app-ui-select label="Tipo" [options]="opcionesTipoNovedad" [clearable]="false"
+      [ngModel]="novedadTipo()" (ngModelChange)="novedadTipo.set($event)" />
+    <app-ui-input label="Descripción" multiline [rows]="3" required
       [error]="novedadTexto.trim() ? '' : 'Obligatorio.'"
-      placeholder="Qué ocurrió durante el recorrido o la atención…"
-      [(ngModel)]="novedadTexto"
-    />
+      placeholder="Qué ocurrió…" [(ngModel)]="novedadTexto" />
     @if (errorNovedad()) {
-      <p class="ed-err-inline">
-        <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
-        {{ errorNovedad() }}
-      </p>
+      <p class="ed-err-inline"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i> {{ errorNovedad() }}</p>
     }
   </div>
   <div modal-actions>
-    <app-ui-button variant="secondary" appearance="ghost"
-                   (buttonClick)="cancelarNovedad()">Cancelar</app-ui-button>
-    <app-ui-button
-      variant="primary" icon="fa-solid fa-floppy-disk"
-      [loading]="guardandoNovedad()"
-      [disabled]="guardandoNovedad() || !novedadTexto.trim()"
-      (buttonClick)="confirmarNovedad()"
-    >Registrar</app-ui-button>
+    <app-ui-button variant="secondary" appearance="ghost" (buttonClick)="cancelarNovedad()">Cancelar</app-ui-button>
+    <app-ui-button variant="primary" icon="fa-solid fa-floppy-disk"
+      [loading]="guardandoNovedad()" [disabled]="guardandoNovedad() || !novedadTexto.trim()"
+      (buttonClick)="confirmarNovedad()">Registrar</app-ui-button>
   </div>
 </app-ui-modal>
 
-<!-- Cierre de actuación — «Atendió» -->
-<app-ui-modal
-  [open]="modalCierreActuacion()"
-  title="Registrar el resultado de la atención"
-  icon="fa-solid fa-circle-check"
-  size="lg"
-  (closeRequested)="cancelarCierreActuacion()"
->
+<!-- Cierre de actuación -->
+<app-ui-modal [open]="modalCierreActuacion()" title="Resultado de la atención"
+  icon="fa-solid fa-circle-check" size="lg" (closeRequested)="cancelarCierreActuacion()">
   <div modal-body class="ed-cierre">
     @if (actuacionACerrar(); as act) {
       <p class="ed-modal-recurso">
         <i class="fa-solid fa-car-side" aria-hidden="true"></i>
         <strong>{{ nombreUnidad(act) }}</strong>
         @if (act.canalDesc) { <span>· {{ act.canalDesc }}</span> }
-        @if (act.fechaCreacion) {
-          <span><i class="fa-regular fa-clock" aria-hidden="true"></i>
-            Asignado {{ act.fechaCreacion | date:'dd/MM HH:mm' }}</span>
-        }
-        @if (act.fechaLlegada) {
-          <span><i class="fa-solid fa-map-pin" aria-hidden="true"></i>
-            En sitio {{ act.fechaLlegada | date:'dd/MM HH:mm' }}</span>
-        }
+        @if (act.fechaCreacion) { <span><i class="fa-regular fa-clock" aria-hidden="true"></i> {{ act.fechaCreacion | date:'dd/MM HH:mm' }}</span> }
       </p>
     }
-
     <section class="ed-cierre__bloque">
       <app-ui-section-header title="Códigos de tipificación" icon="fa-solid fa-tag" appearance="divider" />
       <div class="ed-auto">
-        <app-ui-input
-          label="Buscar código"
-          placeholder="Código o descripción…"
-          [ngModel]="cierreCodBusqueda"
-          (ngModelChange)="onCierreCodInput($event)"
-          (blur)="cerrarSugerenciasCierre()"
-        />
-        <app-ui-button
-          variant="secondary" size="sm" icon="fa-solid fa-plus"
+        <app-ui-input label="Buscar código" placeholder="Código o descripción…"
+          [ngModel]="cierreCodBusqueda" (ngModelChange)="onCierreCodInput($event)"
+          (blur)="cerrarSugerenciasCierre()" />
+        <app-ui-button variant="secondary" size="sm" icon="fa-solid fa-plus"
           [disabled]="!cierreCodBusqueda.trim()"
-          tooltip="Agregar el código tal como está escrito"
-          (buttonClick)="agregarCierreCodManual()"
-        >Agregar</app-ui-button>
+          (buttonClick)="agregarCierreCodManual()">Agregar</app-ui-button>
         @if (mostrarSugerenciasCierre() && cierreSugerencias().length > 0) {
           <ul class="ed-auto__lista">
             @for (s of cierreSugerencias(); track s.codigo) {
               <li>
                 <button type="button" (mousedown)="seleccionarCierreCod(s)">
-                  <strong>{{ s.codigo }}</strong>
-                  @if (s.descripcion) { <span>{{ s.descripcion }}</span> }
+                  <strong>{{ s.codigo }}</strong> @if (s.descripcion) { <span>{{ s.descripcion }}</span> }
                 </button>
               </li>
             }
@@ -1225,8 +982,7 @@
               <span class="ed-chip__n">{{ cod.orden }}</span>
               <strong>{{ cod.codigoCierre }}</strong>
               @if (cod.descripcionLibre) { <small>{{ cod.descripcionLibre }}</small> }
-              <button type="button" (click)="quitarCierreCod(cod.orden - 1)"
-                      [attr.aria-label]="'Quitar ' + cod.codigoCierre">
+              <button type="button" (click)="quitarCierreCod(cod.orden - 1)" [attr.aria-label]="'Quitar ' + cod.codigoCierre">
                 <i class="fa-solid fa-xmark" aria-hidden="true"></i>
               </button>
             </span>
@@ -1236,53 +992,40 @@
         <p class="ed-nota ed-nota--alerta">Agregue al menos un código de cierre.</p>
       }
     </section>
-
     <section class="ed-cierre__bloque">
       <app-ui-section-header title="Clasificación de la actividad" icon="fa-solid fa-shield-halved" appearance="divider" />
       <div class="ed-opciones">
         @for (op of [
-          { valor: 'O', label: 'Operativa',      icono: 'fa-solid fa-bolt' },
-          { valor: 'P', label: 'Preventiva',      icono: 'fa-solid fa-shield' },
-          { valor: '',  label: 'Sin clasificar',  icono: 'fa-solid fa-minus' }
+          { valor: 'O', label: 'Operativa',    icono: 'fa-solid fa-bolt' },
+          { valor: 'P', label: 'Preventiva',   icono: 'fa-solid fa-shield' },
+          { valor: '',  label: 'Sin clasif.',   icono: 'fa-solid fa-minus' }
         ]; track op.valor) {
           <button type="button" class="ed-opcion"
                   [class.ed-opcion--sel]="cierreClasifActividad() === op.valor"
-                  [attr.aria-pressed]="cierreClasifActividad() === op.valor"
                   (click)="onClasifActividadChange($any(op.valor))">
             <i class="{{ op.icono }}" aria-hidden="true"></i> {{ op.label }}
           </button>
         }
       </div>
       @if (cierreClasifActividad() && actividadesFiltradas().length > 0) {
-        <app-ui-select
-          label="Tipo de actividad"
-          [options]="opcionesActividadCierre()"
-          [clearable]="false"
-          [ngModel]="cierreActividadSelec()?.codigo ?? ''"
-          (ngModelChange)="onActividadChange($event)"
-        />
+        <app-ui-select label="Tipo de actividad" [options]="opcionesActividadCierre()"
+          [clearable]="false" [ngModel]="cierreActividadSelec()?.codigo ?? ''"
+          (ngModelChange)="onActividadChange($event)" />
       }
     </section>
-
     @if (cierreActividadSelec()?.requiereDelito) {
       <section class="ed-cierre__bloque">
-        <app-ui-section-header title="Delito — Código Penal (Ley 599 de 2000)"
-                               icon="fa-solid fa-gavel" appearance="divider" />
+        <app-ui-section-header title="Delito" icon="fa-solid fa-gavel" appearance="divider" />
         <div class="ed-auto">
-          <app-ui-input
-            label="Buscar el delito"
-            placeholder="Artículo o nombre del delito…"
-            [ngModel]="cierreDelitoBusqueda"
-            (ngModelChange)="onCierreDelitoInput($event)"
-            (blur)="cerrarSugerenciasDelito()"
-          />
+          <app-ui-input label="Buscar el delito" placeholder="Artículo o nombre…"
+            [ngModel]="cierreDelitoBusqueda" (ngModelChange)="onCierreDelitoInput($event)"
+            (blur)="cerrarSugerenciasDelito()" />
           @if (mostrarSugerenciasDelito() && cierreDelitoSugs().length > 0) {
             <ul class="ed-auto__lista">
               @for (dl of cierreDelitoSugs(); track dl.id) {
                 <li>
                   <button type="button" (mousedown)="seleccionarCierreDelito(dl)">
-                    <strong>{{ dl.articulo }}</strong>
-                    <span>{{ dl.descripcion }}</span>
+                    <strong>{{ dl.articulo }}</strong> <span>{{ dl.descripcion }}</span>
                     @if (dl.bienJuridico) { <small>{{ dl.bienJuridico }}</small> }
                   </button>
                 </li>
@@ -1295,103 +1038,66 @@
             <i class="fa-solid fa-circle-check" aria-hidden="true"></i>
             <strong>{{ dl.articulo }}</strong> — {{ dl.descripcion }}
             @if (dl.bienJuridico) { <small>{{ dl.bienJuridico }}</small> }
-            <app-ui-button
-              variant="secondary" appearance="ghost" size="sm"
-              icon="fa-solid fa-xmark" iconOnly
-              ariaLabel="Quitar el delito" tooltip="Quitar"
-              (buttonClick)="quitarCierreDelito()"
-            />
+            <app-ui-button variant="secondary" appearance="ghost" size="sm"
+              icon="fa-solid fa-xmark" iconOnly ariaLabel="Quitar" (buttonClick)="quitarCierreDelito()" />
           </p>
         }
       </section>
     }
-
     <section class="ed-cierre__bloque">
-      <app-ui-input
-        label="Observación"
-        multiline [rows]="3"
-        placeholder="Resultado de la atención (opcional)…"
-        [(ngModel)]="cierreObservacion"
-      />
+      <app-ui-input label="Observación" multiline [rows]="3"
+        placeholder="Resultado de la atención (opcional)…" [(ngModel)]="cierreObservacion" />
     </section>
-
-    <section class="ed-cierre__bloque ed-cierre__bloque--decision">
-      <app-ui-section-header
-        title="¿Cerrar también el evento?"
+    <section class="ed-cierre__bloque ed-cierre__decision">
+      <app-ui-section-header title="¿Cerrar también el evento?"
         icon="fa-solid fa-circle-question"
-        description="Sí cierra esta actuación y el evento. No cierra solo la actuación; el evento sigue activo."
-        appearance="divider"
-      />
+        description="Sí: cierra la actuación y el evento. No: solo esta actuación, el evento sigue activo."
+        appearance="divider" />
       <div class="ed-opciones">
-        <button type="button" class="ed-opcion"
-                [class.ed-opcion--sel]="cerrarEventoAlAtender() === true"
-                [attr.aria-pressed]="cerrarEventoAlAtender() === true"
+        <button type="button" class="ed-opcion" [class.ed-opcion--sel]="cerrarEventoAlAtender() === true"
                 (click)="cerrarEventoAlAtender.set(true)">
           <i class="fa-solid fa-lock" aria-hidden="true"></i> Sí, cerrar el evento
         </button>
-        <button type="button" class="ed-opcion"
-                [class.ed-opcion--sel]="cerrarEventoAlAtender() === false"
-                [attr.aria-pressed]="cerrarEventoAlAtender() === false"
+        <button type="button" class="ed-opcion" [class.ed-opcion--sel]="cerrarEventoAlAtender() === false"
                 (click)="cerrarEventoAlAtender.set(false)">
           <i class="fa-solid fa-check" aria-hidden="true"></i> No, solo esta actuación
         </button>
       </div>
     </section>
-
     @if (errorCierreActuacion()) {
-      <p class="ed-err-inline">
-        <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
-        {{ errorCierreActuacion() }}
-      </p>
+      <p class="ed-err-inline"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i> {{ errorCierreActuacion() }}</p>
     }
   </div>
   <div modal-actions>
-    <app-ui-button variant="secondary" appearance="ghost"
-                   (buttonClick)="cancelarCierreActuacion()">Cancelar</app-ui-button>
-    <app-ui-button
-      variant="success" icon="fa-solid fa-circle-check"
+    <app-ui-button variant="secondary" appearance="ghost" (buttonClick)="cancelarCierreActuacion()">Cancelar</app-ui-button>
+    <app-ui-button variant="success" icon="fa-solid fa-circle-check"
       [loading]="cerrandoActuacion()"
       [disabled]="cerrandoActuacion() || !cierreCodsSeleccionados.length || cerrarEventoAlAtender() === null"
-      (buttonClick)="confirmarCierreActuacion()"
-    >Confirmar la atención</app-ui-button>
+      (buttonClick)="confirmarCierreActuacion()">Confirmar la atención</app-ui-button>
   </div>
 </app-ui-modal>
 
 <!-- Cerrar el evento -->
-<app-ui-modal
-  [open]="modalCerrarVisible()"
-  title="Cerrar el evento"
-  icon="fa-solid fa-lock"
-  size="lg"
-  (closeRequested)="cancelarCierre()"
->
+<app-ui-modal [open]="modalCerrarVisible()" title="Cerrar el evento"
+  icon="fa-solid fa-lock" size="lg" (closeRequested)="cancelarCierre()">
   <div modal-body>
     @if (detalle(); as d) {
-      <p class="ed-nota">
-        <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+      <p class="ed-nota"><i class="fa-solid fa-circle-info" aria-hidden="true"></i>
         {{ d.direCaso || 'Sin dirección' }}@if (d.codiPedido) { · {{ d.codiPedido }} }
       </p>
     }
     <div class="ed-auto">
-      <app-ui-input
-        label="Códigos de cierre"
-        placeholder="Buscar el código de tipificación…"
-        [ngModel]="eventoCodBusqueda"
-        (ngModelChange)="onEventoCodInput($event)"
-        (blur)="cerrarSugerenciasEvento()"
-      />
-      <app-ui-button
-        variant="secondary" size="sm" icon="fa-solid fa-plus"
-        [disabled]="!eventoCodBusqueda.trim()"
-        (buttonClick)="agregarEventoCodManual()"
-      >Agregar</app-ui-button>
+      <app-ui-input label="Códigos de cierre" placeholder="Buscar el código…"
+        [ngModel]="eventoCodBusqueda" (ngModelChange)="onEventoCodInput($event)"
+        (blur)="cerrarSugerenciasEvento()" />
+      <app-ui-button variant="secondary" size="sm" icon="fa-solid fa-plus"
+        [disabled]="!eventoCodBusqueda.trim()" (buttonClick)="agregarEventoCodManual()">Agregar</app-ui-button>
       @if (mostrarSugerenciasEvento() && eventoSugerencias().length > 0) {
         <ul class="ed-auto__lista">
           @for (s of eventoSugerencias(); track s.codigo) {
             <li>
               <button type="button" (mousedown)="seleccionarEventoCod(s)">
-                <strong>{{ s.codigo }}</strong>
-                @if (s.descripcion) { <span>{{ s.descripcion }}</span> }
+                <strong>{{ s.codigo }}</strong> @if (s.descripcion) { <span>{{ s.descripcion }}</span> }
               </button>
             </li>
           }
@@ -1404,44 +1110,31 @@
           <span class="ed-chip">
             <strong>{{ cod.codigo }}</strong>
             @if (cod.descripcion) { <small>{{ cod.descripcion }}</small> }
-            <button type="button" (click)="quitarEventoCod($index)"
-                    [attr.aria-label]="'Quitar ' + cod.codigo">
+            <button type="button" (click)="quitarEventoCod($index)" [attr.aria-label]="'Quitar ' + cod.codigo">
               <i class="fa-solid fa-xmark" aria-hidden="true"></i>
             </button>
           </span>
         }
       </div>
     }
-    <app-ui-input
-      label="Observación de cierre"
-      multiline [rows]="3"
-      placeholder="Resultado final del evento…"
-      [(ngModel)]="cerrarComentario"
-    />
+    <app-ui-input label="Observación de cierre" multiline [rows]="3"
+      placeholder="Resultado final del evento…" [(ngModel)]="cerrarComentario" />
     <label class="ed-confirmar">
       <input type="checkbox" [(ngModel)]="cierreConfirmado" />
       <span>Confirmo el cierre. La acción no se puede deshacer.</span>
     </label>
   </div>
   <div modal-actions>
-    <app-ui-button variant="secondary" appearance="ghost"
-                   (buttonClick)="cancelarCierre()">Cancelar</app-ui-button>
-    <app-ui-button
-      variant="danger" icon="fa-solid fa-lock"
+    <app-ui-button variant="secondary" appearance="ghost" (buttonClick)="cancelarCierre()">Cancelar</app-ui-button>
+    <app-ui-button variant="danger" icon="fa-solid fa-lock"
       [loading]="cerrandoEvento()" [disabled]="cerrandoEvento() || !cierreConfirmado"
-      (buttonClick)="confirmarCierre()"
-    >Cerrar el evento</app-ui-button>
+      (buttonClick)="confirmarCierre()">Cerrar el evento</app-ui-button>
   </div>
 </app-ui-modal>
 
-<!-- Remitir el caso -->
-<app-ui-modal
-  [open]="modalRemitirVisible()"
-  title="Remitir el caso"
-  icon="fa-solid fa-share-from-square"
-  size="lg"
-  (closeRequested)="cancelarRemitir()"
->
+<!-- Remitir -->
+<app-ui-modal [open]="modalRemitirVisible()" title="Remitir el caso"
+  icon="fa-solid fa-share-from-square" size="lg" (closeRequested)="cancelarRemitir()">
   <div modal-body>
     <div class="ed-tabs-modal">
       <button type="button" [class.ed-tabs-modal__on]="remitirTab() === 'secad'"
@@ -1453,24 +1146,18 @@
         <i class="fa-solid fa-building-shield" aria-hidden="true"></i> Agencia externa
       </button>
     </div>
-
     @if (remitirTab() === 'secad') {
-      <p class="ed-nota">
-        El evento quedará visible en la cola de los canales elegidos.
-      </p>
+      <p class="ed-nota">El evento quedará visible en la cola de los canales elegidos.</p>
       @if (remitirCanalesGrupos().length === 0) {
         <p class="ed-cargando"><app-ui-spinner size="sm" /><span>Cargando canales…</span></p>
       }
       @for (grupo of remitirCanalesGrupos(); track grupo.fuerza) {
         <div class="ed-remitir-grupo">
-          <p class="ed-remitir-grupo__head">
-            <i class="fa-solid fa-shield-halved" aria-hidden="true"></i> {{ grupo.fuerza }}
-          </p>
+          <p class="ed-remitir-grupo__head"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i> {{ grupo.fuerza }}</p>
           <div class="ed-destinos">
             @for (c of grupo.canales; track c.codigo + ':' + c.fuerzaId) {
               <button type="button" class="ed-destino"
                       [class.ed-destino--sel]="remitirCanalesSelec().has(canalKey(c))"
-                      [attr.aria-pressed]="remitirCanalesSelec().has(canalKey(c))"
                       (click)="toggleRemitirCanal(c)">
                 <i class="fa-solid fa-tower-broadcast" aria-hidden="true"></i>
                 <span>{{ c.descripcion }}</span>
@@ -1483,44 +1170,32 @@
         </div>
       }
       @if (remitirCanalesSelec().size > 0) {
-        <section class="ed-cierre__bloque ed-cierre__bloque--decision">
-          <app-ui-section-header
-            title="¿Qué hacer con su canal actual?"
+        <div class="ed-cierre__decision" style="margin-top:12px">
+          <app-ui-section-header title="¿Qué hacer con su canal actual?"
             icon="fa-solid fa-circle-question"
             description="Mantener: gestión conjunta. Remover: llegó al canal equivocado."
-            appearance="divider"
-          />
+            appearance="divider" />
           <div class="ed-opciones">
-            <button type="button" class="ed-opcion"
-                    [class.ed-opcion--sel]="remitirMantenerCanalOrigen()"
-                    [attr.aria-pressed]="remitirMantenerCanalOrigen()"
+            <button type="button" class="ed-opcion" [class.ed-opcion--sel]="remitirMantenerCanalOrigen()"
                     (click)="remitirMantenerCanalOrigen.set(true)">
               <i class="fa-solid fa-people-arrows" aria-hidden="true"></i> Mantener en mi canal
             </button>
-            <button type="button" class="ed-opcion"
-                    [class.ed-opcion--sel]="!remitirMantenerCanalOrigen()"
-                    [attr.aria-pressed]="!remitirMantenerCanalOrigen()"
+            <button type="button" class="ed-opcion" [class.ed-opcion--sel]="!remitirMantenerCanalOrigen()"
                     (click)="remitirMantenerCanalOrigen.set(false)">
               <i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i> Remover de mi canal
             </button>
           </div>
-        </section>
+        </div>
       }
     } @else {
-      <p class="ed-nota">
-        Los datos del caso se envían a la API de la agencia elegida.
-      </p>
+      <p class="ed-nota">Los datos del caso se envían a la API de la agencia elegida.</p>
       @if (remitirAgencias().length === 0) {
-        <p class="ed-nota-vacia">
-          <i class="fa-solid fa-building-shield" aria-hidden="true"></i>
-          No hay agencias externas configuradas.
-        </p>
+        <p class="ed-nota-vacia"><i class="fa-solid fa-building-shield" aria-hidden="true"></i> No hay agencias externas configuradas.</p>
       } @else {
         <div class="ed-destinos">
           @for (ag of remitirAgencias(); track ag.id) {
             <button type="button" class="ed-destino"
                     [class.ed-destino--sel]="remitirAgenciasSelec().has(ag.id)"
-                    [attr.aria-pressed]="remitirAgenciasSelec().has(ag.id)"
                     (click)="toggleRemitirAgencia(ag.id)">
               <i class="fa-solid {{ getAgenciaIcon(ag.tipoAgencia) }}" aria-hidden="true"></i>
               <span>{{ ag.nombre }}</span>
@@ -1532,14 +1207,9 @@
         </div>
       }
     }
-
     @if (remitirError()) {
-      <p class="ed-err-inline">
-        <i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i>
-        {{ remitirError() }}
-      </p>
+      <p class="ed-err-inline"><i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i> {{ remitirError() }}</p>
     }
-
     @if (remitirTotalSelec() > 0) {
       <label class="ed-confirmar">
         <input type="checkbox" [(ngModel)]="remitirConfirmado" />
@@ -1548,13 +1218,10 @@
     }
   </div>
   <div modal-actions>
-    <app-ui-button variant="secondary" appearance="ghost"
-                   (buttonClick)="cancelarRemitir()">Cancelar</app-ui-button>
-    <app-ui-button
-      variant="primary" icon="fa-solid fa-share-from-square"
+    <app-ui-button variant="secondary" appearance="ghost" (buttonClick)="cancelarRemitir()">Cancelar</app-ui-button>
+    <app-ui-button variant="primary" icon="fa-solid fa-share-from-square"
       [loading]="remitirEnviando()"
       [disabled]="remitirEnviando() || remitirTotalSelec() === 0 || !remitirConfirmado"
-      (buttonClick)="confirmarRemitir()"
-    >Remitir ({{ remitirTotalSelec() }})</app-ui-button>
+      (buttonClick)="confirmarRemitir()">Remitir ({{ remitirTotalSelec() }})</app-ui-button>
   </div>
 </app-ui-modal>

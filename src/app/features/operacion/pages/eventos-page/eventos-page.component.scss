@@ -171,19 +171,15 @@
 // ── Distribución general ──────────────────────────────────────────────────
 .ev-layout {
   display:               grid;
-  grid-template-columns: minmax(0, 400px) minmax(0, 1fr);
-  // La cuadrícula ocupa el alto disponible en el viewport (menos el encabezado
-  // de la página y el espacio que ya se comió el page-header). Así el panel de
-  // detalle nunca tiene scroll externo: cada zona tiene el suyo propio.
+  grid-template-columns: minmax(0, 320px) minmax(0, 1fr);
   height:                calc(100vh - var(--header-height, 70px) - 120px);
   min-height:            0;
-  gap:                   14px;
+  gap:                   12px;
 
   @media (max-width: 1280px) { grid-template-columns: minmax(0, 1fr); }
 }
 
-// La bandeja es la brújula del despachador: se queda a la vista mientras se
-// recorre un detalle que mide varias pantallas.
+// La bandeja permanece fija mientras se trabaja en el detalle.
 .ev-bandeja {
   position:   sticky;
   top:        8px;
@@ -193,14 +189,13 @@
   @media (max-width: 1280px) { position: static; max-height: none; }
 }
 
-// El detalle ocupa el espacio restante del grid sin overflow externo.
-// El alto 100% lo hereda ed-shell que es display:flex flex-direction:column.
+// El detalle ocupa el resto del grid y cede la altura al ed-shell interior.
 .ev-detalle {
-  display:   flex;
+  display:        flex;
   flex-direction: column;
-  min-width: 0;
-  min-height: 0;
-  overflow:  hidden;
+  min-width:      0;
+  min-height:     0;
+  overflow:       hidden;
 }
 
 // ── Filtros de la bandeja ─────────────────────────────────────────────────
