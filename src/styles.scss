@@ -2290,6 +2290,77 @@ body > .cdk-overlay-container:has(.ui-tooltip-overlay-pane) {
   box-shadow: 0 1px 3px rgb(0 0 0 / 40%);
 }
 
+/* Marcador del hecho: una sola gota roja, distinta de los pines redondos de
+   recurso, con un latido que la ubica de un vistazo entre muchas patrullas. */
+.ev-hecho {
+  position: relative;
+  width: 44px;
+  height: 44px;
+
+  &__halo {
+    position: absolute;
+    left: 50%;
+    top: 41px;                 /* el punto exacto de las coordenadas */
+    width: 30px;
+    height: 30px;
+    margin: -15px 0 0 -15px;
+    border-radius: 50%;
+    background: rgb(220 38 38 / 30%);
+    pointer-events: none;      /* no se come los clics de las capas de abajo */
+    animation: ev-hecho-latido 2.4s ease-out infinite;
+  }
+
+  &__gota {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    margin-left: -17px;
+    border: 3px solid #fff;
+    /* Esquina inferior izquierda en punta que, girada -45°, apunta al suelo. */
+    border-radius: 50% 50% 50% 0;
+    transform: rotate(-45deg);
+    background: linear-gradient(145deg, #f05252, #b91c1c);
+    box-shadow: 0 3px 10px rgb(0 0 0 / 45%);
+
+    i {
+      transform: rotate(45deg);   /* deshace el giro de la gota */
+      color: #fff;
+      font-size: 15px;
+    }
+  }
+
+  &__rotulo {
+    position: absolute;
+    left: 50%;
+    top: 50px;      /* 9 px por debajo de la punta: no la tapa */
+    transform: translateX(-50%);
+    padding: 1px 7px;
+    border-radius: 5px;
+    background: rgb(153 27 27 / 90%);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: .4px;
+    white-space: nowrap;
+    box-shadow: 0 1px 3px rgb(0 0 0 / 40%);
+  }
+}
+
+@keyframes ev-hecho-latido {
+  0%   { transform: scale(.5);  opacity: .85; }
+  70%  { transform: scale(2.2); opacity: 0; }
+  100% { transform: scale(2.2); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ev-hecho__halo { animation: none; opacity: .5; }
+}
+
 .ev-popup {
   display: flex;
   flex-direction: column;

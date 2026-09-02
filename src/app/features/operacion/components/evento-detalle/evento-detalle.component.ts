@@ -1881,10 +1881,9 @@ export class EventoDetalleComponent implements OnDestroy {
       }).addTo(this.mapa);
 
       if (hayCoords) {
-        this.marcadorIncidente = L.marker([lat, lng])
+        this.marcadorIncidente = L.marker([lat, lng], { icon: this.iconoIncidente(), zIndexOffset: 1000 })
           .addTo(this.mapa)
-          .bindPopup(`<b>${escaparHtml(d.direCaso)}</b>`)
-          .openPopup();
+          .bindPopup(`<b>${escaparHtml(d.direCaso)}</b>`);
       }
       this.pintarRecursosEnMapa();
     } catch (e) {
@@ -1905,6 +1904,33 @@ export class EventoDetalleComponent implements OnDestroy {
       try { this.mapa.remove(); } catch { /* ya removido */ }
       this.mapa = null;
     }
+  }
+
+  /**
+   * Marcador del hecho. El origen usaba el icono por defecto de Leaflet, cuyas
+   * imágenes (`marker-icon.png`, `marker-shadow.png`) no viajan en el bundle:
+   * en pantalla salía el recuadro roto con el texto alternativo «Mark…».
+   *
+   * Va en forma de gota y no de círculo para que no se confunda con los pines
+   * de recurso, que sí son redondos: en el mapa hay un solo hecho y muchas
+   * patrullas, y a un vistazo tienen que distinguirse por la silueta.
+   */
+  private iconoIncidente(): L.DivIcon {
+    return L.divIcon({
+      className: '',
+      html: `<div class="ev-hecho">
+               <span class="ev-hecho__halo" aria-hidden="true"></span>
+               <span class="ev-hecho__gota">
+                 <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
+               </span>
+             </div>
+             <div class="ev-hecho__rotulo">HECHO</div>`,
+      // La punta de la gota cae en (22, 41) dentro de la caja: ahí va el ancla,
+      // que es el punto que de verdad marca las coordenadas del caso.
+      iconSize:    [44, 66],
+      iconAnchor:  [22, 41],
+      popupAnchor: [0, -42],
+    });
   }
 
   private static readonly COLOR_ESTADO_RECURSO: Record<number, string> = {
