@@ -6,16 +6,36 @@
 //  la rejilla de tres columnas y las tarjetas de turno, unidad y medio.
 // ══════════════════════════════════════════════════════════════════════════
 
+// La cadena de alturas empieza aquí. Sin esto el host se dimensiona por su
+// contenido, `height: 100%` de .tr-page no resuelve contra nada y las tres
+// listas crecen hasta 2.200 px: el scroll acaba siendo el del navegador y no
+// el de cada columna. (Misma pieza que ya tiene la consola de Eventos.)
+:host {
+  display:    block;
+  height:     100%;
+  min-height: 0;
+}
+
 .tr-page {
-  display:        flex;
-  flex-direction: column;
-  gap:            16px;
-  padding:        16px;
+  // Rejilla y no columna flex: la última fila —las tres columnas— tiene que
+  // quedarse con el alto sobrante y no crecer con su contenido. Antes la
+  // página entera se estiraba y el scroll acababa siendo el del navegador.
+  display:            grid;
+  grid-template-rows: auto auto auto minmax(0, 1fr);
+  gap:                16px;
+  height:             100%;
+  min-height:         0;
+  padding:            16px;
+
+  // En pantallas muy anchas las tres columnas se estiraban sin ganar nada:
+  // un tope y la consola centrada leen mejor que 700 px de aire por columna.
+  > * { width: 100%; max-width: 1800px; margin-inline: auto; }
 }
 
 .tr-panel {
   display:        flex;
   flex-direction: column;
+  min-height:     0;
   border:         1px solid rgba(21, 27, 59, .12);
   border-radius:  10px;
   overflow:       hidden;
@@ -26,20 +46,38 @@
 // leen de izquierda a derecha. Se apilan cuando dejan de caber.
 .tr-layout {
   display:               grid;
-  grid-template-columns: 340px minmax(0, 1fr) minmax(0, 1fr);
+  // Turnos tenía 340 px fijos y el nombre de la fuerza —«POLICIA
+  // METROPOLITANA DE BOGOTA»— no cabía; unidades y medios se repartían por
+  // igual todo lo demás y quedaban desproporcionadas. Ahora las dos primeras
+  // van acotadas a lo que de verdad necesitan y medios se lleva el resto,
+  // que es la columna con las líneas más largas (dos policías por patrulla).
+  grid-template-columns: clamp(320px, 21vw, 390px)
+                         clamp(320px, 23vw, 430px)
+                         minmax(0, 1fr);
+  grid-template-rows:    minmax(0, 1fr);
   gap:                   16px;
-  align-items:           start;
+  align-items:           stretch;   // `start` dejaba las columnas a su alto
+  min-height:            0;
 
-  @media (max-width: 1240px) { grid-template-columns: 320px minmax(0, 1fr); }
-  @media (max-width: 900px)  { grid-template-columns: minmax(0, 1fr); }
+  @media (max-width: 1240px) {
+    grid-template-columns: clamp(300px, 30vw, 380px) minmax(0, 1fr);
+    grid-template-rows:    minmax(0, 1fr);
+  }
+  @media (max-width: 900px) {
+    grid-template-columns: minmax(0, 1fr);
+    grid-auto-rows:        minmax(220px, 1fr);
+    overflow-y:            auto;    // apiladas, el scroll sí es de la página
+  }
 }
 
-.tr-col { min-height: 260px; }
+.tr-col { min-height: 0; }
 
+// El ÚNICO sitio con scroll propio de cada columna.
 .tr-lista {
   display:        flex;
   flex-direction: column;
-  max-height:     560px;
+  flex:           1 1 auto;
+  min-height:     0;
   overflow-y:     auto;
 }
 
@@ -122,11 +160,13 @@
     font-weight: 700;
   }
 
+  // «POLICIA METROPOLITANA DE BOGOTA» no cabe en una línea de esta columna a
+  // 1366 px. Antes que recortarlo con puntos suspensivos —es el dato que
+  // identifica el turno— se deja pasar a una segunda línea.
   &__fuerza {
-    overflow:      hidden;
-    font-size:     calc(11.5px * var(--font-size-scale, 1));
-    text-overflow: ellipsis;
-    white-space:   nowrap;
+    font-size:   calc(11.5px * var(--font-size-scale, 1));
+    line-height: 1.3;
+    overflow-wrap: anywhere;
   }
 
   &__meta {
@@ -148,15 +188,24 @@
     flex:           1;
     min-width:      0;
 
-    strong { font-size: calc(12.5px * var(--font-size-scale, 1)); }
+    strong {
+      overflow:      hidden;
+      font-size:     calc(12.5px * var(--font-size-scale, 1));
+      text-overflow: ellipsis;
+      white-space:   nowrap;
+    }
   }
 
-  &__desc {
-    overflow:      hidden;
-    color:         var(--ui-text-muted, #6b7280);
-    font-size:     calc(11px * var(--font-size-scale, 1));
-    text-overflow: ellipsis;
-    white-space:   nowrap;
+  // El código bajo el nombre: mismo papel que la matrícula de un vehículo,
+  // se lee cuando hace falta pero no compite con el nombre de la estación.
+  &__codigo {
+    overflow:       hidden;
+    color:          var(--ui-text-muted, #6b7280);
+    font-size:      calc(10.5px * var(--font-size-scale, 1));
+    font-variant-numeric: tabular-nums;
+    letter-spacing: .02em;
+    text-overflow:  ellipsis;
+    white-space:    nowrap;
   }
 
   &__meta {
@@ -303,12 +352,18 @@
     align-items: center;
     gap:         8px;
     font-size:   calc(12.5px * var(--font-size-scale, 1));
+
+    // El nombre de la patrulla puede ser largo; la insignia de estado no se
+    // deja empujar fuera de la tarjeta.
+    strong { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   }
 
-  &__desc {
-    margin:    2px 0 0;
-    color:     var(--ui-text-muted, #6b7280);
-    font-size: calc(11px * var(--font-size-scale, 1));
+  &__codigo {
+    margin:               2px 0 0;
+    color:                var(--ui-text-muted, #6b7280);
+    font-size:            calc(10.5px * var(--font-size-scale, 1));
+    font-variant-numeric: tabular-nums;
+    letter-spacing:       .02em;
   }
 
   &__dato {
@@ -335,7 +390,9 @@
   i { font-size: 1.2rem; opacity: .4; }
 
   &--grande {
+    flex:           1 1 auto;
     flex-direction: column;
+    justify-content: center;
     padding:        60px 20px;
     font-style:     normal;
     text-align:     center;
