@@ -98,6 +98,9 @@ TENANT_FILES=(
   "V53__video_sesion_ubicacion.sql"
   "V54__video_grabacion_resiliente.sql"
   "V55__video_chat_mensajes.sql"
+  "V56__menu_admin_faltantes.sql"
+  "V57__reparar_menu_v56.sql"
+  "V58__unificar_menu_duplicado.sql"
 )
 
 case "$SCOPE" in

@@ -7,7 +7,7 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "postinstall": "powershell -Command \"Get-ChildItem -Path 'node_modules/zod' -Filter 'tests' -Recurse | Remove-Item -Recurse -Force\" && patch-package",
+    "postinstall": "node scripts/postinstall.js",
     "check:a11y": "powershell -ExecutionPolicy Bypass -File ./check-accessibility.ps1"
   },
   "prettier": {

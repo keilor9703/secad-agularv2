@@ -1,0 +1,16 @@
+# El contexto de build no necesita nada de esto, y sin excluirlo el `COPY . .`
+# arrastra cientos de megas (node_modules del host, la caché de Angular, el
+# historial de git) y además pisaría el node_modules que instaló `npm ci`
+# dentro de la imagen con el del host, que puede traer binarios de otra
+# plataforma.
+node_modules
+dist
+.angular
+.git
+.github
+.vscode
+Bakcend
+docs
+src/pilot
+*.md
+check-accessibility.ps1
