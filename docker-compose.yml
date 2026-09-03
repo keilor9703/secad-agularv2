@@ -141,6 +141,42 @@ services:
       # esta línea y la entrada correspondiente de `networks:` al final.
       - proxy-externa
 
+  # ── pgAdmin — consola de la base de datos (OPCIONAL) ──────────────────────
+  # No arranca con el sistema: lleva `profiles`, así que un `docker compose
+  # up -d` normal lo ignora. Se levanta a propósito y se apaga al terminar:
+  #
+  #   docker compose --profile herramientas up -d pgadmin
+  #   docker compose --profile herramientas stop pgadmin
+  #
+  # El puerto se publica SOLO en 127.0.0.1: desde fuera del servidor no se
+  # alcanza. Para usarlo, un túnel SSH desde tu equipo:
+  #
+  #   ssh -L 5050:localhost:5050 ubuntu@<ip-del-servidor>
+  #   y abrir http://localhost:5050
+  #
+  # Es acceso de ESCRITURA a las tres bases; exponerlo a internet sería
+  # publicar una consola de administración de la base de un sistema policial.
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: secad-pgadmin
+    profiles: [herramientas]
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_EMAIL:-admin@secad.local}
+      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_PASSWORD}
+      - PGADMIN_DISABLE_POSTFIX=True
+      - PGADMIN_CONFIG_SERVER_MODE=True
+      # Los tres servidores ya registrados: no hay que darlos de alta a mano.
+      # La contraseña de cada uno la pide al conectar, que es lo correcto.
+      - PGADMIN_SERVER_JSON_FILE=/pgadmin4/servers.json
+      - TZ=America/Bogota
+    ports:
+      - "127.0.0.1:${PGADMIN_PORT:-5050}:80"
+    volumes:
+      - pgadmin:/var/lib/pgadmin
+      - ./docs/pgadmin-servers.json:/pgadmin4/servers.json:ro
+    restart: unless-stopped
+    networks: [secad-network]
+
 volumes:
   # El `name:` fija el nombre REAL del volumen, sin el prefijo del proyecto.
   # Así el stack sigue usando los datos que ya están en el servidor aunque
@@ -153,6 +189,10 @@ volumes:
     name: ${VOL_PGDATA_BOGOTA:-secad_pgdata_bogota}
   uploads:
     name: ${VOL_UPLOADS:-secad_uploads}
+  # Preferencias y consultas guardadas de pgAdmin. No contiene datos del
+  # sistema, así que se puede borrar sin consecuencias.
+  pgadmin:
+    name: ${VOL_PGADMIN:-secad_pgadmin}
 
 networks:
   secad-network:

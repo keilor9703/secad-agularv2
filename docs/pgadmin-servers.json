@@ -1,0 +1,34 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "SECAD · maestra",
+      "Group": "SECAD",
+      "Comment": "Registro de tenants (secad_tenants) y enrutamiento a la base de cada CAD.",
+      "Host": "postgres",
+      "Port": 5432,
+      "MaintenanceDB": "Secad",
+      "Username": "secad_app",
+      "SSLMode": "prefer"
+    },
+    "2": {
+      "Name": "SECAD · CAD Bogotá D.C. (11001)",
+      "Group": "SECAD",
+      "Comment": "Datos operativos del CAD: ctr_menu, cad_pedidos, cad_eventos, cad_actuaciones…",
+      "Host": "postgres-bogota",
+      "Port": 5432,
+      "MaintenanceDB": "Secad_Bogota",
+      "Username": "secad_bogota_app",
+      "SSLMode": "prefer"
+    },
+    "3": {
+      "Name": "SECAD · CAD Cali",
+      "Group": "SECAD",
+      "Comment": "Datos operativos del CAD de Cali.",
+      "Host": "postgres-cali",
+      "Port": 5432,
+      "MaintenanceDB": "Secad_Cali",
+      "Username": "secad_cali_app",
+      "SSLMode": "prefer"
+    }
+  }
+}
