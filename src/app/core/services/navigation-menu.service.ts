@@ -119,6 +119,8 @@ export class NavigationMenuService {
     const childrenByParent = new Map<number, NormalizedDbMenuItem[]>();
 
     for (const item of normalized) {
+      // Una raíz se apunta a sí misma (ver más abajo): no es hija de nadie.
+      if (item.idPadre === item.idMenu) continue;
       const siblings = childrenByParent.get(item.idPadre) ?? [];
       siblings.push(item);
       childrenByParent.set(item.idPadre, siblings);
@@ -128,9 +130,28 @@ export class NavigationMenuService {
       siblings.sort((left, right) => left.posicion - right.posicion || left.idMenu - right.idMenu);
     }
 
+    /*
+     * Raíces del menú, según la convención que documenta la propia migración
+     * que sembró la tabla (V10):
+     *
+     *     idpadre = 0 → nodo raíz visible
+     *     -- auto-referencia cuando idpadre = 0
+     *     UPDATE ctr_menu SET idpadre = v_id_operacion WHERE id_menu = v_id_operacion;
+     *
+     * O sea: una raíz se apunta A SÍ MISMA. Antes aquí había otra cosa —se
+     * descartaba el id 1 fuera cual fuera, y se tomaba `idPadre === 1` como
+     * «nivel superior»—, que es cierto solo por casualidad: «Operación» resultó
+     * ser la primera fila y quedó con id 1. El resultado era que «Operación»
+     * desaparecía del lateral y sus ocho pantallas se publicaban sueltas, como
+     * si no tuvieran grupo. Ningún id va escrito aquí.
+     */
     const roots = normalized
-      .filter((item) => item.idMenu !== 1)
-      .filter((item) => item.idPadre === 0 || item.idPadre === 1 || !itemsById.has(item.idPadre))
+      .filter(
+        (item) =>
+          item.idPadre === 0 ||
+          item.idPadre === item.idMenu ||
+          !itemsById.has(item.idPadre),
+      )
       .sort((left, right) => left.posicion - right.posicion || left.idMenu - right.idMenu);
 
     const buildNode = (
@@ -150,8 +171,11 @@ export class NavigationMenuService {
       const target = resolveMenuTarget(item.tipo, item.detalle);
       const route = this.resolveDestination(target, item.detalle);
 
-      // Los contenedores sin ruta son válidos; los destinos rotos no se publican.
-      if (target !== 'group' && !route && children.length === 0) {
+      // No se publica lo que no lleva a ninguna parte: ni un destino roto ni un
+      // grupo que se quedó sin hijos. Lo segundo aparece cuando una base trae
+      // una fila centinela de «raíz» —sin descripción útil ni ruta— de la que
+      // ya no cuelga nada: pintarla dejaría un desplegable vacío en el lateral.
+      if (!route && children.length === 0) {
         return null;
       }
 

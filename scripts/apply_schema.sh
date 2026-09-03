@@ -101,6 +101,7 @@ TENANT_FILES=(
   "V56__menu_admin_faltantes.sql"
   "V57__reparar_menu_v56.sql"
   "V58__unificar_menu_duplicado.sql"
+  "V59__menu_grupos_a_raiz.sql"
 )
 
 case "$SCOPE" in

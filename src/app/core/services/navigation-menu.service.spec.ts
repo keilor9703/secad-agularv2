@@ -12,8 +12,11 @@ import { NavigationMenuService } from './navigation-menu.service';
  * anterior que apuntan a la misma pantalla.
  */
 const MENU_OPERACION: DbMenuItem[] = [
-  { idMenu: 1, descripcion: 'Raíz',      idPadre: 1, posicion: 0,  tipo: 'GRUPO', icono: null, detalle: null, vigente: 1 },
-  { idMenu: 5, descripcion: 'Operación', idPadre: 1, posicion: 20, tipo: 'GRUPO', icono: 'fa-solid fa-tower-broadcast', detalle: null, vigente: 1 },
+  // Una raíz se apunta A SÍ MISMA: es la convención que documenta V10 y la
+  // que trae la tabla de un tenant real. El fixture tenía antes una fila
+  // aparte llamada «Raíz» con idMenu 1, que no existe en ninguna base: venía
+  // de suponer que el 1 era un centinela.
+  { idMenu: 5, descripcion: 'Operación', idPadre: 5, posicion: 20, tipo: 'GRUPO', icono: 'fa-solid fa-tower-broadcast', detalle: null, vigente: 1 },
 
   // Filas de las migraciones (traen ícono).
   { idMenu: 10, descripcion: 'Recepción', idPadre: 5, posicion: 10, tipo: 'ENLACE', icono: 'fa-solid fa-headset',        detalle: '/operacion/recepcion',        vigente: 1 },
@@ -95,7 +98,6 @@ describe('NavigationMenuService', () => {
     // tomando prestado el ícono de la copia que sí lo trae.
     configurar([
       MENU_OPERACION[0],
-      MENU_OPERACION[1],
       { idMenu: 30, descripcion: 'Pedido', idPadre: 5, posicion: 10, tipo: 'ENLACE', icono: null, detalle: '/operacion/pedido', vigente: 1 },
       { idMenu: 31, descripcion: 'Pedido', idPadre: 5, posicion: 20, tipo: 'ENLACE', icono: 'fa-solid fa-truck-fast', detalle: '/operacion/pedido', vigente: 1 },
     ] as DbMenuItem[]);
@@ -105,6 +107,46 @@ describe('NavigationMenuService', () => {
 
     expect(hijos.length).toBe(1);
     expect(hijos[0].icon).toBe('fa-solid fa-truck-fast');
+  });
+
+  // ── La forma real de ctr_menu ───────────────────────────────────────────
+
+  it('publica como grupo la raíz que se apunta a sí misma, con sus pantallas dentro', async () => {
+    // La tabla del CAD Bogotá, reducida: «Operación» es la fila 1 y se
+    // autorreferencia; «Administración» es otro grupo raíz. Antes el servicio
+    // descartaba el id 1 pasara lo que pasara y trataba idPadre = 1 como nivel
+    // superior, así que «Operación» desaparecía y sus pantallas se publicaban
+    // sueltas junto a los demás grupos.
+    configurar([
+      { idMenu: 1,  descripcion: 'Operación',      idPadre: 1, posicion: 20, tipo: 'GRUPO',  icono: null, detalle: null, vigente: 1 },
+      { idMenu: 2,  descripcion: 'Recepción',      idPadre: 1, posicion: 10, tipo: 'ENLACE', icono: null, detalle: '/operacion/recepcion', vigente: 1 },
+      { idMenu: 3,  descripcion: 'Eventos',        idPadre: 1, posicion: 20, tipo: 'ENLACE', icono: null, detalle: '/operacion/eventos',   vigente: 1 },
+      { idMenu: 9,  descripcion: 'Administración', idPadre: 9, posicion: 40, tipo: 'GRUPO',  icono: null, detalle: null, vigente: 1 },
+      { idMenu: 17, descripcion: 'Usuarios',       idPadre: 9, posicion: 10, tipo: 'ENLACE', icono: null, detalle: '/administracion/usuarios', vigente: 1 },
+    ] as DbMenuItem[]);
+
+    const menu = await firstValueFrom(service.loadMenu());
+
+    // El servicio antepone «Inicio», que no sale de ctr_menu.
+    expect(menu.map((i) => i.label)).toEqual(['Inicio', 'Operación', 'Administración']);
+    expect((operacionDe(menu).children ?? []).map((h) => h.route)).toEqual([
+      '/operacion/recepcion',
+      '/operacion/eventos',
+    ]);
+  });
+
+  it('no publica un grupo que se quedó sin hijos', async () => {
+    // Una fila centinela de «raíz» sin ruta ni descendencia no debe pintar un
+    // desplegable vacío en el lateral.
+    configurar([
+      { idMenu: 1, descripcion: 'Raíz',      idPadre: 1, posicion: 0,  tipo: 'GRUPO',  icono: null, detalle: null, vigente: 1 },
+      { idMenu: 5, descripcion: 'Operación', idPadre: 5, posicion: 20, tipo: 'GRUPO',  icono: null, detalle: null, vigente: 1 },
+      { idMenu: 6, descripcion: 'Eventos',   idPadre: 5, posicion: 10, tipo: 'ENLACE', icono: null, detalle: '/operacion/eventos', vigente: 1 },
+    ] as DbMenuItem[]);
+
+    const menu = await firstValueFrom(service.loadMenu());
+
+    expect(menu.map((i) => i.label)).toEqual(['Inicio', 'Operación']);
   });
 
   // ── Caché ───────────────────────────────────────────────────────────────
