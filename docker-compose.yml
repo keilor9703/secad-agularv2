@@ -1,0 +1,162 @@
+# ══════════════════════════════════════════════════════════════════════════
+#  SECAD — stack completo. Todo sale de ESTE repositorio:
+#    · API      → Dockerfile.api  (Bakcend/backend/oftic/)
+#    · Frontend → Dockerfile      (src/, Angular)
+#
+#  Sustituye al docker-compose.yml que vivía en secad_angular, que ya no hace
+#  falta en el servidor.
+#
+#  ⚠ VOLÚMENES: los tres Postgres y las subidas de archivos guardan sus datos
+#  en volúmenes con nombre. Al mover el stack de un repositorio a otro cambia
+#  el nombre del proyecto de Compose y, con él, el prefijo de los volúmenes
+#  que crearía por su cuenta: el resultado sería arrancar contra bases VACÍAS
+#  y parecer una pérdida total de datos. Por eso cada volumen lleva aquí su
+#  nombre explícito, tomado del .env — apúntalos a los que ya existen en el
+#  servidor (`docker volume ls | grep -i secad`) antes del primer arranque.
+# ══════════════════════════════════════════════════════════════════════════
+name: secad
+
+services:
+  # ── Base maestra: registro de tenants y enrutamiento a la BD de cada CAD ──
+  postgres:
+    image: postgres:16-alpine
+    container_name: secad-postgres
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB:-Secad}
+      - POSTGRES_USER=${POSTGRES_USER:-secad_app}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - TZ=America/Bogota
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks: [secad-network]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-secad_app} -d ${POSTGRES_DB:-Secad}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Postgres del tenant Cali ──────────────────────────────────────────────
+  # Instancia propia y aislada, con su volumen. Se registra en SECAD desde
+  # Super Admin → Tenants con dbHost=postgres-cali (el nombre de este
+  # servicio, que resuelve por el DNS interno de Docker).
+  postgres-cali:
+    image: postgres:16-alpine
+    container_name: secad-postgres-cali
+    environment:
+      - POSTGRES_DB=${POSTGRES_CALI_DB:-Secad_Cali}
+      - POSTGRES_USER=${POSTGRES_CALI_USER:-secad_cali_app}
+      - POSTGRES_PASSWORD=${POSTGRES_CALI_PASSWORD}
+      - TZ=America/Bogota
+    volumes:
+      - pgdata_cali:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks: [secad-network]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_CALI_USER:-secad_cali_app} -d ${POSTGRES_CALI_DB:-Secad_Cali}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Postgres del tenant 11001 (CAD Bogotá D.C.) ───────────────────────────
+  postgres-bogota:
+    image: postgres:16-alpine
+    container_name: secad-postgres-bogota
+    environment:
+      - POSTGRES_DB=${POSTGRES_BOGOTA_DB:-Secad_Bogota}
+      - POSTGRES_USER=${POSTGRES_BOGOTA_USER:-secad_bogota_app}
+      - POSTGRES_PASSWORD=${POSTGRES_BOGOTA_PASSWORD}
+      - TZ=America/Bogota
+    volumes:
+      - pgdata_bogota:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks: [secad-network]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_BOGOTA_USER:-secad_bogota_app} -d ${POSTGRES_BOGOTA_DB:-Secad_Bogota}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── API (.NET 8) ──────────────────────────────────────────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    image: secad-api:latest
+    container_name: secad-api
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "${API_PORT:-8088}:8088"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - TZ=America/Bogota
+      # La única cadena que Program.cs exige al arrancar. "postgres" es el
+      # nombre del servicio de arriba, no un host externo. (Oracle solo se usa
+      # para la integración GESPO, que se configura aparte en appsettings.)
+      - ConnectionStrings__MasterDb=Host=postgres;Port=5432;Database=${POSTGRES_DB:-Secad};Username=${POSTGRES_USER:-secad_app};Password=${POSTGRES_PASSWORD}
+      # appsettings.json trae Jwt:Key como marcador de posición
+      # ("CAMBIAR_EN_PRODUCCION…"): sin este valor la API firmaría los tokens
+      # con una clave pública y conocida.
+      - Jwt__Key=${JWT_KEY}
+      # Igual que la anterior: protege los endpoints de ingesta externa
+      # (PlantaTel/Chat/SMS) y en appsettings.json es un marcador.
+      - RecepcionExterna__ApiKey=${RECEPCION_EXTERNA_API_KEY}
+      - AppSettings__UploadsPath=/app/uploads
+      # Dominio público real de este despliegue. VideoLlamadaController lo usa
+      # para armar el enlace .../video/{token} que recibe el ciudadano; sin
+      # esto apuntaría al dominio que trae appsettings.json por defecto.
+      - ApiSettings__SecadBaseUrl=${SECAD_BASE_URL}
+      # El proveedor de SMS ya no va por entorno: se administra desde
+      # Administración → Proveedor SMS (tabla ctr_config_sms), sin redespliegue.
+    volumes:
+      - uploads:/app/uploads
+    restart: unless-stopped
+    networks: [secad-network]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8088/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ── Frontend (Angular + nginx) ────────────────────────────────────────────
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: secad-frontend:latest
+    container_name: secad-frontend
+    ports:
+      - "${FRONTEND_PORT:-80}:80"
+    depends_on:
+      - api
+    restart: unless-stopped
+    networks:
+      - secad-network
+      # Red del nginx compartido que ya publica el dominio en este servidor.
+      # Es la que permite que ese nginx alcance a este contenedor por nombre
+      # ("secad-frontend") sin que aquí haya que publicar el 80/443, que ese
+      # otro proyecto ya tiene tomados. Si en tu servidor no existe, quita
+      # esta línea y la entrada correspondiente de `networks:` al final.
+      - proxy-externa
+
+volumes:
+  # El `name:` fija el nombre REAL del volumen, sin el prefijo del proyecto.
+  # Así el stack sigue usando los datos que ya están en el servidor aunque
+  # haya cambiado de carpeta y de repositorio. Ver el aviso de la cabecera.
+  pgdata:
+    name: ${VOL_PGDATA:-secad_pgdata}
+  pgdata_cali:
+    name: ${VOL_PGDATA_CALI:-secad_pgdata_cali}
+  pgdata_bogota:
+    name: ${VOL_PGDATA_BOGOTA:-secad_pgdata_bogota}
+  uploads:
+    name: ${VOL_UPLOADS:-secad_uploads}
+
+networks:
+  secad-network:
+    driver: bridge
+  proxy-externa:
+    external: true
+    name: ${RED_PROXY_EXTERNA:-falcon-deploy_default}

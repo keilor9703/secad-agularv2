@@ -9,8 +9,14 @@ dist
 .git
 .github
 .vscode
-Bakcend
 docs
 src/pilot
 *.md
 check-accessibility.ps1
+
+# Restos de compilación de .NET del entorno de desarrollo — 25 MB que además
+# harían que la imagen partiera de artefactos de otra máquina.
+Bakcend/**/bin
+Bakcend/**/obj
+Bakcend/**/.vs
+Bakcend/**/*.user
