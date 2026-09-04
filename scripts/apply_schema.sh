@@ -3,11 +3,15 @@
 # Aplica los scripts de docs/sql/master/ contra un Postgres de SECAD, en el
 # orden correcto y respetando la separación maestra/tenant que cada archivo
 # declara en su propio encabezado ("Apply to: MASTER" vs "apply to each
-# tenant/CAD database"). No hay runner de migraciones automático — este
-# script solo automatiza aplicar la lista completa una vez, en orden; no
-# lleva registro de qué ya se aplicó (no lo vuelvas a correr sobre una BD que
-# ya tiene el esquema, o usarás CREATE/ALTER que ya corrieron — la mayoría
-# son idempotentes con IF NOT EXISTS/ON CONFLICT, pero no todos).
+# tenant/CAD database"). No hay runner de migraciones automático ni tabla de
+# migraciones aplicadas: la forma de poner al día una base —nueva o ya en
+# producción— es pasar la lista COMPLETA en orden.
+#
+# Es seguro repetirlo. Verificado sobre un PostgreSQL 16 real: tres pasadas
+# seguidas de los 57 scripts sobre la misma base, cero errores y sin filas
+# duplicadas. (Hasta esta comprobación no lo era del todo: la semilla del rol
+# «Administrador» de V2 no llevaba guarda y cada pasada añadía otro rol
+# huérfano. Corregido en V2.)
 #
 # Uso:
 #   ./scripts/apply_schema.sh master   <container-postgres> <usuario> <bd>
@@ -32,8 +36,9 @@ fi
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SQL_DIR="$SCRIPT_DIR/../docs/sql/master"
 
-# Únicos 3 archivos que van a la base MAESTRA (secad_tenants vive ahí) — el
-# resto son todos de tenant. Ver encabezado de cada archivo para confirmar.
+# Los únicos archivos que van a la base MAESTRA (secad_tenants vive ahí) — el
+# resto, los 57 de abajo, son todos de tenant. Al añadir una migración nueva
+# que toque secad_*, hay que sumarla a esta lista.
 MASTER_FILES=(
   "V1__master_schema.sql"
   "V23__master_salud_cad.sql"

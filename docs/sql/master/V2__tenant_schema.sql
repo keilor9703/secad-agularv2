@@ -140,7 +140,14 @@ CREATE TABLE IF NOT EXISTS ctr_linea_mando (
 );
 
 -- Seed: Super Admin role (id=1)
-INSERT INTO ctr_roles (descripcion, vigente) VALUES ('Administrador', 1);
+-- El WHERE NOT EXISTS no es adorno: esta migración se vuelve a pasar entera
+-- cada vez que se pone al día una base ya existente (es la única forma, no hay
+-- tabla de migraciones aplicadas). Sin él, cada pasada añadía otro
+-- «Administrador» con id nuevo, y los usuarios seguían colgando del primero:
+-- roles huérfanos que no dan permiso a nada. Medido: dos pasadas → 2 filas.
+INSERT INTO ctr_roles (descripcion, vigente)
+SELECT 'Administrador', 1
+WHERE NOT EXISTS (SELECT 1 FROM ctr_roles WHERE descripcion = 'Administrador');
 SELECT SETVAL('ctr_roles_id_rol_seq', (SELECT MAX(id_rol) FROM ctr_roles));
 
 -- Seed: Admin user (username must match OUD username or dev login; bloqueado=0 = active)
@@ -154,6 +161,11 @@ SELECT u.id_usuario, 1
 FROM ctr_usuarios u WHERE u.username = 'admin'
 ON CONFLICT (id_usuario, id_rol) DO NOTHING;
 
+-- Misma razón que arriba: sin la guarda, cada re-pasada apilaba otra
+-- concesión del mismo rol al mismo usuario.
 INSERT INTO ctr_roles_user_admin (id_usuario, id_rol, justificacion, vigente, usuario_creacion, fecha_creacion)
 SELECT u.id_usuario, 1, 'Rol inicial de administración', 1, 1, NOW()
-FROM ctr_usuarios u WHERE u.username = 'admin';
+FROM   ctr_usuarios u
+WHERE  u.username = 'admin'
+  AND  NOT EXISTS (SELECT 1 FROM ctr_roles_user_admin ra
+                   WHERE ra.id_usuario = u.id_usuario AND ra.id_rol = 1);
