@@ -14,6 +14,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { startWith } from 'rxjs';
 
+import { esContenedorMenu } from '../../../../../core/navigation/menu-destination';
 import {
   DbMenuItem,
   MenuRolCatalogItem,
@@ -230,13 +231,23 @@ export class MenuAdminTreeComponent {
     const labels: Record<string, string> = {
       S: 'Submenú',
       GRUPO: 'Grupo',
-      ENLACE: 'Enlace',
+      ENLACE: 'Submenú',
       frm: 'Formulario',
       url: 'Enlace',
       pdf: 'PDF',
     };
 
     return labels[type] || type || 'Sin tipo';
+  }
+
+  /**
+   * ¿Se le puede colgar un submenú? Lo decide el destino, no la etiqueta.
+   * Antes la plantilla preguntaba `tipo === 'S'`, que en esta tabla es
+   * justamente el tipo de las PANTALLAS: el botón salía en las hojas y no en
+   * los grupos, al revés de lo que hace falta.
+   */
+  puedeContenerSubmenus(item: DbMenuItem): boolean {
+    return esContenedorMenu(item.tipo, item.detalle);
   }
 
   private buildVisibleRows(): MenuTreeRow[] {
@@ -315,9 +326,31 @@ export class MenuAdminTreeComponent {
       append(root, 0, index === visibleRoots.length - 1);
     }
 
-    // Salvaguarda: cualquier elemento no alcanzado desde las raíces se muestra en nivel 0
+    // Salvaguarda para HUÉRFANOS de verdad: filas cuya cadena de padres no
+    // llega a ninguna raíz (un idpadre que apunta a una fila borrada, o un
+    // ciclo). Sin ellas no habría forma de verlas ni de repararlas.
+    //
+    // Antes esta salvaguarda miraba `visited`, y `visited` solo contiene lo
+    // que se llegó a pintar: los hijos de un grupo PLEGADO no están ahí. El
+    // resultado era que todo lo que colgaba de un grupo cerrado reaparecía
+    // suelto en el primer nivel —Recepción, Eventos y Turnos al lado de
+    // Operación, en vez de dentro— y el árbol dejaba de parecer un árbol.
+    const alcanzables = new Set<number>();
+    const marcarRama = (item: DbMenuItem): void => {
+      if (alcanzables.has(item.idMenu)) {
+        return;
+      }
+      alcanzables.add(item.idMenu);
+      for (const child of childrenByParent.get(item.idMenu) ?? []) {
+        marcarRama(child);
+      }
+    };
+    for (const root of roots) {
+      marcarRama(root);
+    }
+
     for (const item of source) {
-      if (!visited.has(item.idMenu) && branchMatches(item)) {
+      if (!alcanzables.has(item.idMenu) && !visited.has(item.idMenu) && branchMatches(item)) {
         append(item, 0, false);
       }
     }

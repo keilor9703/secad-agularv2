@@ -15,6 +15,7 @@ import { startWith } from 'rxjs';
 import {
   isMenuDestinationType,
   MenuDestinationType,
+  normalizeMenuType,
 } from '../../../../../core/navigation/menu-destination';
 import { DbMenuItem, MenuSaveRequest } from '../../../../../core/services/menu.service';
 import { UiButtonComponent } from '../../../../../shared/components/ui-button/ui-button.component';
@@ -36,6 +37,7 @@ type MenuFormField =
   | 'detalle';
 
 const MENU_TYPE_OPTIONS: UiSelectOption<string>[] = [
+  { value: 'GRUPO', label: 'Grupo (contenedor, sin ruta)' },
   { value: 'S', label: 'Submenú' },
   { value: 'frm', label: 'Formulario interno' },
   { value: 'url', label: 'Hipervínculo' },
@@ -96,9 +98,15 @@ export class MenuAdminFormComponent {
   readonly selectedType = signal<MenuDestinationType>('S');
   readonly isInternalDestination = computed(() => this.selectedType() === 'frm');
   readonly usesInternalRoute = computed(
-    () => this.selectedType() === 'frm' || this.selectedType() === 'S',
+    () =>
+      this.selectedType() === 'frm' ||
+      this.selectedType() === 'S' ||
+      this.selectedType() === 'GRUPO',
   );
-  readonly isContainerDestination = computed(() => this.selectedType() === 'S');
+  // Un grupo es contenedor siempre; un 'S' lo es mientras no tenga ruta.
+  readonly isContainerDestination = computed(
+    () => this.selectedType() === 'GRUPO' || this.selectedType() === 'S',
+  );
 
   readonly form = this.fb.group({
     descripcion: ['', [Validators.required, Validators.maxLength(255)]],
@@ -190,8 +198,11 @@ export class MenuAdminFormComponent {
   }
 
   private writeForm(item: DbMenuItem | null, createParentId = 0, suggestedPosition = 0): void {
-    const rawType = item?.tipo ?? 'S';
-    const type = rawType === 'GRUPO' ? 'S' : rawType;
+    // Antes aquí se hacía `rawType === 'GRUPO' ? 'S' : rawType`: abrir un grupo
+    // ya lo dejaba escrito como submenú en el formulario, así que guardarlo sin
+    // tocar nada le cambiaba el tipo. Se conserva lo que hay y solo se traduce
+    // lo que esta pantalla no sabe ofrecer ('ENLACE' → 'frm').
+    const type = item ? normalizeMenuType(item.tipo) : 'S';
     const parentId = item
       ? item.idPadre === item.idMenu || item.idPadre <= 0
         ? 0

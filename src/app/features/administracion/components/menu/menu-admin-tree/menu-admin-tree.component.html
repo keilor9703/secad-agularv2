@@ -145,7 +145,7 @@
             </div>
 
             <div class="menu-tree-item__actions">
-              @if (row.item.tipo === 'S') {
+              @if (puedeContenerSubmenus(row.item)) {
                 <app-ui-button
                   size="sm"
                   variant="primary"
