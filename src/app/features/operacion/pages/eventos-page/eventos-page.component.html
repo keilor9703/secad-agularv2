@@ -26,12 +26,15 @@
   </app-ui-page-header>
 
   @if (canalSeleccionado() <= 0 && !mostrarSelectorCanal()) {
-    <p class="ev-aviso">
-      <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
-      <span>No tiene un canal de despacho configurado.</span>
+    <div class="ev-aviso" role="status">
+      <i class="fa-solid fa-tower-broadcast ev-aviso__icono" aria-hidden="true"></i>
+      <span class="ev-aviso__txt">
+        <strong>Sin canal de despacho.</strong>
+        <small>La bandeja muestra la cola sin filtrar. Elija un canal para trabajar sólo el suyo.</small>
+      </span>
       <app-ui-button variant="primary" size="sm" icon="fa-solid fa-tower-broadcast"
                      (buttonClick)="cambiarCanal()">Elegir canal</app-ui-button>
-    </p>
+    </div>
   }
 
   <div class="ev-layout">

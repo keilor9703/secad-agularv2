@@ -90,13 +90,26 @@
 // La pantalla completa es una consola: cabecera fija arriba y, debajo, una
 // rejilla que llena lo que queda. El scroll vive dentro de los paneles, no en
 // el documento — el despachador no debería tener que buscar el mapa.
+//
+// Va en FLEX y no en rejilla a propósito. Con `grid-template-rows: auto
+// minmax(0,1fr)` sólo hay dos pistas declaradas, y entre la cabecera y el
+// layout puede aparecer un tercer hijo: el aviso de «no tiene canal». Cuando
+// aparecía, se llevaba la pista elástica entera —cientos de píxeles de banda
+// ocre vacía, con el texto a media altura y el botón flotando al otro
+// extremo— y la consola caía a la fila implícita `auto`, encogida contra su
+// contenido. En flex, cada hijo opcional se limita a ocupar lo suyo y sólo
+// `.ev-layout` crece.
 .ev-page {
-  display:            grid;
-  grid-template-rows: auto minmax(0, 1fr);
-  gap:                12px;
-  height:             100%;
-  min-height:         0;
-  padding-bottom:     8px;
+  display:        flex;
+  flex-direction: column;
+  gap:            12px;
+  height:         100%;
+  min-height:     0;
+  padding-bottom: 8px;
+
+  > app-ui-page-header,
+  > .ev-aviso  { flex: 0 0 auto; }
+  > .ev-layout { flex: 1 1 0; min-height: 0; }
 }
 
 .ev-panel {
@@ -168,10 +181,12 @@
 
 .ev-msg-ok { @extend %linea; gap: 6px; font-size: var(--f-md); color: var(--c-ok); }
 
+// Franja de una sola línea alta, no un cartel: informa sin robarle sitio a la
+// consola, que es lo que el despachador ha venido a mirar.
 .ev-aviso {
   @extend %fila;
   flex-wrap:     wrap;
-  gap:           10px;
+  gap:           10px 12px;
   margin:        0;
   padding:       10px 14px;
   border:        1px solid var(--c-alerta-bd);
@@ -179,7 +194,18 @@
   background:    var(--c-alerta-bg);
   font-size:     var(--f-lg);
   color:         var(--c-alerta);
-  span { flex: 1 1 200px; }
+
+  &__icono { font-size: 1.05rem; opacity: .8; }
+
+  &__txt {
+    @extend %columna;
+    flex: 1 1 240px;
+    gap:  1px;
+    min-width: 0;
+
+    strong { font-weight: 700; }
+    small  { font-size: var(--f-md); opacity: .85; }
+  }
 }
 
 // ── Distribución general ──────────────────────────────────────────────────
