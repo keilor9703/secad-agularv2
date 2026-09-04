@@ -2456,3 +2456,56 @@ body > .cdk-overlay-container:has(.ui-tooltip-overlay-pane) {
     &:disabled { opacity: .6; cursor: default; }
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Botones sobre los encabezados oscuros
+   ───────────────────────────────────────────────────────────────────────────
+   `ui-page-header` pinta siempre un degradado azul oscuro, y
+   `ui-panel-header` hace lo mismo en su variante institucional. Los botones
+   que se proyectan ahí con appearance `ghost`, `outline` o `soft` traen el
+   color de texto pensado para fondo CLARO —el azul de `--policia-medio`—, de
+   modo que sobre ese degradado quedaban prácticamente invisibles: en la
+   pantalla de Unidades, «Exportar» e «Importar» estaban ahí, se podían pulsar
+   y no se veían. Solo se salvaban los `solid`, que llevan su propio fondo.
+
+   Se corrige aquí, en la hoja global, y no en cada pantalla: el problema es
+   de la combinación botón-sobre-encabezado, no de un módulo concreto.
+
+   Por qué se redefinen VARIABLES y no `color` directamente: el botón ya lee
+   `var(--ui-button-custom-text, …)`, así que basta con darle valor y no hay
+   que pelear especificidades con los estilos encapsulados del componente
+   —que ganarían—. Y como las entradas `backgroundColor`/`textColor`/
+   `borderColor` se aplican en línea, un botón que las use expresamente sigue
+   mandando sobre esto.
+   ═══════════════════════════════════════════════════════════════════════════ */
+.ui-page-header .ui-btn--ghost,
+.ui-page-header .ui-btn--outline,
+.ui-page-header .ui-btn--soft,
+.ui-panel-header.is-institutional .ui-btn--ghost,
+.ui-panel-header.is-institutional .ui-btn--outline,
+.ui-panel-header.is-institutional .ui-btn--soft {
+  --ui-button-custom-text: #ffffff;
+  --ui-button-icon-color: #ffffff;
+}
+
+/* Solo el contorno: `ghost` es transparente por definición y darle borde lo
+   convertiría en otra cosa.
+   NO se toca el FONDO a propósito. Un velo blanco aquí aclara el terreno bajo
+   el texto y perjudica a los botones que ya traen su propio `textColor` —
+   medido: uno con texto lima pasaba de 8,01:1 a 3,27:1—. Sin velo, cada
+   appearance conserva el suyo y el blanco se apoya en el degradado oscuro. */
+.ui-page-header .ui-btn--outline,
+.ui-page-header .ui-btn--soft,
+.ui-panel-header.is-institutional .ui-btn--outline,
+.ui-panel-header.is-institutional .ui-btn--soft {
+  --ui-button-custom-border: rgba(255, 255, 255, 0.34);
+}
+
+/* El foco por teclado también tiene que verse sobre el degradado: el halo
+   celeste del kit se pierde contra el azul del encabezado. */
+.ui-page-header .ui-btn:focus-visible,
+.ui-panel-header.is-institutional .ui-btn:focus-visible {
+  box-shadow:
+    0 0 0 3px rgba(255, 255, 255, 0.55),
+    0 5px 14px rgba(15, 23, 42, 0.2);
+}
