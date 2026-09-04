@@ -15,6 +15,7 @@ import { UiSectionHeaderComponent } from '../../../../shared/components/ui-secti
 import { UiSegmentedTabsComponent } from '../../../../shared/components/ui-segmented-tabs/ui-segmented-tabs.component';
 import { UiButtonComponent } from '../../../../shared/components/ui-button/ui-button.component';
 import { UiInputComponent } from '../../../../shared/components/ui-input/ui-input.component';
+import { UiDateTimePickerComponent } from '../../../../shared/components/ui-date-time-picker/ui-date-time-picker.component';
 import { UiSelectComponent } from '../../../../shared/components/ui-select/ui-select.component';
 import { UiBadgeComponent } from '../../../../shared/components/ui-badge/ui-badge.component';
 import { UiSpinnerComponent } from '../../../../shared/components/ui-spinner/ui-spinner.component';
@@ -52,6 +53,7 @@ Chart.register(...registerables);
     UiBadgeComponent,
     UiSpinnerComponent,
     UiTableComponent,
+    UiDateTimePickerComponent,
   ],
   templateUrl: './reportes-page.component.html',
   styleUrls: ['./reportes-page.component.scss'],

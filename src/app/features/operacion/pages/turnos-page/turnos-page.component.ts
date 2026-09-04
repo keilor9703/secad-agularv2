@@ -12,6 +12,7 @@ import { UiPageHeaderComponent } from '../../../../shared/components/ui-page-hea
 import { UiPanelHeaderComponent } from '../../../../shared/components/ui-panel-header/ui-panel-header.component';
 import { UiButtonComponent } from '../../../../shared/components/ui-button/ui-button.component';
 import { UiInputComponent } from '../../../../shared/components/ui-input/ui-input.component';
+import { UiDateTimePickerComponent } from '../../../../shared/components/ui-date-time-picker/ui-date-time-picker.component';
 import { UiSelectComponent } from '../../../../shared/components/ui-select/ui-select.component';
 import { UiToggleComponent } from '../../../../shared/components/ui-toggle/ui-toggle.component';
 import { UiBadgeComponent } from '../../../../shared/components/ui-badge/ui-badge.component';
@@ -67,6 +68,7 @@ interface FormMedio extends DtoAgregarMedioRequest {
     UiChipComponent,
     UiSpinnerComponent,
     UiModalComponent,
+    UiDateTimePickerComponent,
   ],
   templateUrl: './turnos-page.component.html',
   styleUrls: ['./turnos-page.component.scss'],

@@ -6,6 +6,7 @@ import { UiPageHeaderComponent } from '../../../../shared/components/ui-page-hea
 import { UiPanelHeaderComponent } from '../../../../shared/components/ui-panel-header/ui-panel-header.component';
 import { UiButtonComponent } from '../../../../shared/components/ui-button/ui-button.component';
 import { UiInputComponent } from '../../../../shared/components/ui-input/ui-input.component';
+import { UiDateTimePickerComponent } from '../../../../shared/components/ui-date-time-picker/ui-date-time-picker.component';
 import { UiModalComponent } from '../../../../shared/components/ui-modal/ui-modal.component';
 import { UiSpinnerComponent } from '../../../../shared/components/ui-spinner/ui-spinner.component';
 import { UiPaginationComponent } from '../../../../shared/components/ui-pagination/ui-pagination.component';
@@ -24,7 +25,8 @@ import {
   imports: [
     CommonModule, FormsModule, ReactiveFormsModule,
     UiPageHeaderComponent, UiPanelHeaderComponent, UiButtonComponent,
-    UiInputComponent, UiModalComponent, UiSpinnerComponent, UiPaginationComponent
+    UiInputComponent, UiModalComponent, UiSpinnerComponent, UiPaginationComponent,
+    UiDateTimePickerComponent,
   ],
   templateUrl: './anotaciones-turno-page.component.html',
   styleUrls: ['./anotaciones-turno-page.component.scss'],

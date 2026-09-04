@@ -25,7 +25,7 @@
       [clearable]="false"
       [(ngModel)]="fuerzaFiltro"
     />
-    <app-ui-input class="tr-filtros__fecha" label="Fecha" type="date" [(ngModel)]="fechaBusqueda" />
+    <app-ui-date-time-picker class="tr-filtros__fecha" label="Fecha" mode="date" [(ngModel)]="fechaBusqueda" />
     <app-ui-button
       variant="primary"
       icon="fa-solid fa-magnifying-glass"
@@ -282,8 +282,8 @@
       />
     </div>
     <div class="tr-form__par">
-      <app-ui-input label="Inicio" type="datetime-local" required [(ngModel)]="formCrear._inicio" />
-      <app-ui-input label="Fin" type="datetime-local" required [(ngModel)]="formCrear._fin" />
+      <app-ui-date-time-picker label="Inicio" mode="datetime" required [(ngModel)]="formCrear._inicio" />
+      <app-ui-date-time-picker label="Fin" mode="datetime" required [(ngModel)]="formCrear._fin" />
     </div>
     <label class="tr-campo">
       <span class="tr-campo__lbl">Consignas generales</span>
@@ -331,8 +331,8 @@
       (ngModelChange)="onClaseTurnoCopiar($event)"
     />
     <div class="tr-form__par">
-      <app-ui-input label="Inicio" type="datetime-local" required [(ngModel)]="formCopiar._inicio" />
-      <app-ui-input label="Fin" type="datetime-local" required [(ngModel)]="formCopiar._fin" />
+      <app-ui-date-time-picker label="Inicio" mode="datetime" required [(ngModel)]="formCopiar._inicio" />
+      <app-ui-date-time-picker label="Fin" mode="datetime" required [(ngModel)]="formCopiar._fin" />
     </div>
     @if (errorCopiar()) {
       <p class="tr-error"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i> {{ errorCopiar() }}</p>

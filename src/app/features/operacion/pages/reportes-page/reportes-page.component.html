@@ -35,17 +35,17 @@
     </div>
 
     <div class="rep-filtros__campos">
-      <app-ui-input
+      <app-ui-date-time-picker
         class="rep-filtros__fecha"
         label="Desde"
-        type="date"
+        mode="date"
         [(ngModel)]="desde"
         (ngModelChange)="onFiltroChange()"
       />
-      <app-ui-input
+      <app-ui-date-time-picker
         class="rep-filtros__fecha"
         label="Hasta"
-        type="date"
+        mode="date"
         [(ngModel)]="hasta"
         (ngModelChange)="onFiltroChange()"
       />

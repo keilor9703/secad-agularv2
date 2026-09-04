@@ -246,15 +246,15 @@
                millones de casos, así que sin él la lista sólo trae la página
                más reciente. -->
           <div class="pd-filtros__fila pd-filtros__fila--fechas">
-            <app-ui-input
+            <app-ui-date-time-picker
               class="pd-filtros__campo"
-              label="Desde" type="date"
+              label="Desde" mode="date"
               [ngModel]="filtroFechaDesde()"
               (ngModelChange)="filtroFechaDesde.set($event)"
             />
-            <app-ui-input
+            <app-ui-date-time-picker
               class="pd-filtros__campo"
-              label="Hasta" type="date"
+              label="Hasta" mode="date"
               [ngModel]="filtroFechaHasta()"
               (ngModelChange)="filtroFechaHasta.set($event)"
             />

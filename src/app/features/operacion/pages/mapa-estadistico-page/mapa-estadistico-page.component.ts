@@ -17,6 +17,7 @@ import { UiPageHeaderComponent } from '../../../../shared/components/ui-page-hea
 import { UiSectionHeaderComponent } from '../../../../shared/components/ui-section-header/ui-section-header.component';
 import { UiButtonComponent } from '../../../../shared/components/ui-button/ui-button.component';
 import { UiInputComponent } from '../../../../shared/components/ui-input/ui-input.component';
+import { UiDateTimePickerComponent } from '../../../../shared/components/ui-date-time-picker/ui-date-time-picker.component';
 import { UiSelectComponent } from '../../../../shared/components/ui-select/ui-select.component';
 import { UiToggleComponent } from '../../../../shared/components/ui-toggle/ui-toggle.component';
 import { UiSpinnerComponent } from '../../../../shared/components/ui-spinner/ui-spinner.component';
@@ -82,6 +83,7 @@ type CapaMapa = 'puntos' | 'calor' | 'clusters';
     UiSelectComponent,
     UiToggleComponent,
     UiSpinnerComponent,
+    UiDateTimePickerComponent,
   ],
   templateUrl: './mapa-estadistico-page.component.html',
   styleUrls: ['./mapa-estadistico-page.component.scss'],

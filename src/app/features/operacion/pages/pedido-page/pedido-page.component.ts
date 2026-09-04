@@ -14,6 +14,7 @@ import { UiSegmentedTabsComponent } from '../../../../shared/components/ui-segme
 import { UiSegmentedTabItem } from '../../../../shared/components/ui-segmented-tabs/ui-segmented-tabs.types';
 import { UiButtonComponent } from '../../../../shared/components/ui-button/ui-button.component';
 import { UiInputComponent } from '../../../../shared/components/ui-input/ui-input.component';
+import { UiDateTimePickerComponent } from '../../../../shared/components/ui-date-time-picker/ui-date-time-picker.component';
 import { UiSelectComponent } from '../../../../shared/components/ui-select/ui-select.component';
 import { UiSearchInputComponent } from '../../../../shared/components/ui-search-input/ui-search-input.component';
 import { UiBadgeComponent } from '../../../../shared/components/ui-badge/ui-badge.component';
@@ -140,6 +141,7 @@ interface OperadorStat {
     UiPaginationComponent,
     UiTableComponent,
     AdjuntosCasoComponent,
+    UiDateTimePickerComponent,
   ],
   templateUrl: './pedido-page.component.html',
   styleUrls: ['./pedido-page.component.scss'],

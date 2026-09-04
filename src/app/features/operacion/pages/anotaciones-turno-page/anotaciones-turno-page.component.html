@@ -78,12 +78,12 @@
     <div class="anot-list-panel">
 
       <div class="anot-filtros">
-        <app-ui-input class="anot-filtros__fecha" type="date" label="Desde"
-                      [ngModel]="filtroDesde" (ngModelChange)="filtroDesde = $event"
-                      [ngModelOptions]="{ standalone: true }" />
-        <app-ui-input class="anot-filtros__fecha" type="date" label="Hasta"
-                      [ngModel]="filtroHasta" (ngModelChange)="filtroHasta = $event"
-                      [ngModelOptions]="{ standalone: true }" />
+        <app-ui-date-time-picker class="anot-filtros__fecha" mode="date" label="Desde"
+                                 [ngModel]="filtroDesde" (ngModelChange)="filtroDesde = $event"
+                                 [ngModelOptions]="{ standalone: true }" />
+        <app-ui-date-time-picker class="anot-filtros__fecha" mode="date" label="Hasta"
+                                 [ngModel]="filtroHasta" (ngModelChange)="filtroHasta = $event"
+                                 [ngModelOptions]="{ standalone: true }" />
         <app-ui-button
           variant="primary" icon="fa-solid fa-magnifying-glass"
           [loading]="cargando()" [disabled]="cargando()" (buttonClick)="cargar()"

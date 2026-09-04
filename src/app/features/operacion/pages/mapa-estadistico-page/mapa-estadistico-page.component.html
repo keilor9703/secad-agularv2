@@ -29,8 +29,8 @@
 
       <div class="gis-filtros__campos">
         <div class="gis-filtros__par">
-          <app-ui-input label="Desde" type="date" [(ngModel)]="filtro.desde" />
-          <app-ui-input label="Hasta" type="date" [(ngModel)]="filtro.hasta" />
+          <app-ui-date-time-picker label="Desde" mode="date" [(ngModel)]="filtro.desde" />
+          <app-ui-date-time-picker label="Hasta" mode="date" [(ngModel)]="filtro.hasta" />
         </div>
 
         <app-ui-input
