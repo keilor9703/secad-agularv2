@@ -430,13 +430,16 @@ export class RolesAdminPageComponent implements OnInit {
 
   /** Construye una etiqueta jerárquica legible para el selector de permisos. */
   private formatMenuLabel(menu: DbMenuItem): string {
-    const prefix = menu.idPadre === 1 ? '' : '↳ ';
+    const isTop = menu.idPadre === 0 || menu.idPadre === menu.idMenu;
+    const prefix = isTop ? '' : '↳ ';
     return `${prefix}${menu.descripcion} · ID ${menu.idMenu}`;
   }
 
-  /** Excluye la raíz técnica, porque no representa un permiso navegable. */
+  /** Excluye la raíz técnica ficticia si existiese, pero no ítems reales. */
   private isRootMenu(item: DbMenuItem): boolean {
-    return item.idMenu === 1 || (item.descripcion ?? '').trim().toUpperCase() === 'RAIZ';
+    const desc = (item.descripcion ?? '').trim().toUpperCase();
+    const tipo = (item.tipo ?? '').trim().toUpperCase();
+    return desc === 'RAIZ' || tipo === 'RAIZ';
   }
 
   /** Devuelve siempre un nombre seguro para confirmaciones y mensajes. */

@@ -86,16 +86,34 @@ export class MenuAdminTreeComponent {
     { initialValue: '' },
   );
   private readonly expandedIds = signal<ReadonlySet<number>>(new Set<number>());
+  private expansionInitialized = false;
 
-  readonly totalItems = computed(() => this.items().filter((item) => !this.isRoot(item)).length);
+  readonly totalItems = computed(() => this.items().filter((item) => !this.isSentinelRoot(item)).length);
   readonly visibleRows = computed<MenuTreeRow[]>(() => this.buildVisibleRows());
+
   constructor() {
     effect(() => {
-      const validIds = new Set(this.items().map((item) => item.idMenu));
+      const items = this.items().filter((item) => !this.isSentinelRoot(item));
+      const validIds = new Set(items.map((item) => item.idMenu));
       const current = this.expandedIds();
       const normalized = new Set([...current].filter((id) => validIds.has(id)));
 
-      if (normalized.size !== current.size) {
+      if (!this.expansionInitialized && items.length > 0) {
+        // Al cargar los datos, expandir automáticamente todos los contenedores con hijos
+        const parentIdsWithChildren = new Set(
+          items
+            .filter((item) => item.idPadre !== 0 && item.idPadre !== item.idMenu)
+            .map((item) => item.idPadre),
+        );
+        for (const id of parentIdsWithChildren) {
+          if (validIds.has(id)) {
+            normalized.add(id);
+          }
+        }
+        this.expansionInitialized = true;
+      }
+
+      if (normalized.size !== current.size || !this.expansionInitialized) {
         this.expandedIds.set(normalized);
       }
     });
@@ -152,6 +170,20 @@ export class MenuAdminTreeComponent {
     });
   }
 
+  expandAll(): void {
+    const items = this.items().filter((item) => !this.isSentinelRoot(item));
+    const parentIdsWithChildren = new Set(
+      items
+        .filter((item) => item.idPadre !== 0 && item.idPadre !== item.idMenu)
+        .map((item) => item.idPadre),
+    );
+    this.expandedIds.set(parentIdsWithChildren);
+  }
+
+  collapseAll(): void {
+    this.expandedIds.set(new Set<number>());
+  }
+
   isExpanded(itemId: number): boolean {
     return this.expandedIds().has(itemId);
   }
@@ -171,13 +203,15 @@ export class MenuAdminTreeComponent {
   itemIcon(item: DbMenuItem): string {
     return (
       item.icono?.trim() ||
-      (item.tipo === 'S' ? 'fa-solid fa-folder-tree' : 'fa-regular fa-file-lines')
+      (item.tipo === 'S' || item.tipo === 'GRUPO' ? 'fa-solid fa-folder-tree' : 'fa-regular fa-file-lines')
     );
   }
 
   typeLabel(type: string): string {
     const labels: Record<string, string> = {
       S: 'Submenú',
+      GRUPO: 'Grupo',
+      ENLACE: 'Enlace',
       frm: 'Formulario',
       url: 'Enlace',
       pdf: 'PDF',
@@ -187,11 +221,15 @@ export class MenuAdminTreeComponent {
   }
 
   private buildVisibleRows(): MenuTreeRow[] {
-    const source = this.items().filter((item) => !this.isRoot(item));
+    const source = this.items().filter((item) => !this.isSentinelRoot(item));
     const itemIds = new Set(source.map((item) => item.idMenu));
     const childrenByParent = new Map<number, DbMenuItem[]>();
 
     for (const item of source) {
+      // Las raíces o grupos autorreferenciados no son hijos de sí mismos
+      if (item.idPadre === item.idMenu || item.idPadre === 0) {
+        continue;
+      }
       const siblings = childrenByParent.get(item.idPadre) ?? [];
       siblings.push(item);
       childrenByParent.set(item.idPadre, siblings);
@@ -202,7 +240,7 @@ export class MenuAdminTreeComponent {
     }
 
     const roots = source
-      .filter((item) => item.idPadre === 1 || !itemIds.has(item.idPadre))
+      .filter((item) => this.isTopLevel(item, itemIds))
       .sort((a, b) => a.posicion - b.posicion || a.idMenu - b.idMenu);
     const term = this.searchTerm().trim().toLocaleLowerCase('es');
     const branchMatchCache = new Map<number, boolean>();
@@ -258,6 +296,13 @@ export class MenuAdminTreeComponent {
       append(root, 0, index === visibleRoots.length - 1);
     }
 
+    // Salvaguarda: cualquier elemento no alcanzado desde las raíces se muestra en nivel 0
+    for (const item of source) {
+      if (!visited.has(item.idMenu) && branchMatches(item)) {
+        append(item, 0, false);
+      }
+    }
+
     return rows;
   }
 
@@ -267,12 +312,19 @@ export class MenuAdminTreeComponent {
       .toLocaleLowerCase('es');
   }
 
-  private isRoot(item: DbMenuItem): boolean {
-    return item.idMenu === 1 || item.descripcion.trim().toLocaleUpperCase('es') === 'RAIZ';
+  private isSentinelRoot(item: DbMenuItem): boolean {
+    const desc = (item.descripcion ?? '').trim().toLocaleUpperCase('es');
+    const tipo = (item.tipo ?? '').trim().toLocaleUpperCase('es');
+    return desc === 'RAIZ' || tipo === 'RAIZ';
+  }
+
+  private isTopLevel(item: DbMenuItem, itemIds: ReadonlySet<number>): boolean {
+    return item.idPadre === 0 || item.idPadre === item.idMenu || !itemIds.has(item.idPadre);
   }
 
   private expandAncestors(menuId: number, items: readonly DbMenuItem[]): void {
     const byId = new Map(items.map((item) => [item.idMenu, item]));
+    const itemIds = new Set(items.map((item) => item.idMenu));
     const next = new Set(this.expandedIds());
     const visited = new Set<number>();
     let current = byId.get(menuId);
@@ -280,9 +332,16 @@ export class MenuAdminTreeComponent {
 
     while (current && !visited.has(current.idMenu)) {
       visited.add(current.idMenu);
+      if (this.isTopLevel(current, itemIds)) {
+        break;
+      }
       const parent = byId.get(current.idPadre);
 
-      if (!parent || this.isRoot(parent)) {
+      if (!parent || this.isSentinelRoot(parent) || this.isTopLevel(parent, itemIds)) {
+        if (parent && !this.isSentinelRoot(parent)) {
+          next.add(parent.idMenu);
+          changed = true;
+        }
         break;
       }
 

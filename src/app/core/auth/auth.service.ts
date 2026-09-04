@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { catchError, map, Observable, of, switchMap, tap, timeout } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { decodeBase64Utf8, fixMojibake } from '../../shared/utils/string-encoding.util';
 
 interface LoginRequest {
   Usuario: string;
@@ -154,10 +155,10 @@ export class AuthService {
       codDane,
       homeCodDane:  String(p?.['home_cod_dane'] ?? codDane),
       idUsuario:    Number(p?.['id_usuario'] ?? p?.['nameid'] ?? 0),
-      usuario:      String(p?.[nameKey] ?? p?.['unique_name'] ?? p?.['name'] ?? ''),
+      usuario:      fixMojibake(String(p?.[nameKey] ?? p?.['unique_name'] ?? p?.['name'] ?? '')),
       esAdmin:      p?.['es_admin'] === 'true',
       esSuperAdmin: p?.['es_super_admin'] === 'true',
-      nombreCad:    String(p?.['nombre_cad'] ?? ''),
+      nombreCad:    fixMojibake(String(p?.['nombre_cad'] ?? '')),
     };
   }
 
@@ -376,15 +377,17 @@ export class AuthService {
       return null;
     }
 
-    const normalized = payload.replace(/-/g, '+').replace(/_/g, '/');
-    const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, '=');
-    const decoded = atob(padded);
-    if (!decoded || decoded.length > this.maxJwtPayloadJsonLength) {
+    try {
+      const decoded = decodeBase64Utf8(payload);
+      if (!decoded || decoded.length > this.maxJwtPayloadJsonLength) {
+        return null;
+      }
+
+      const parsed: unknown = JSON.parse(decoded);
+      return this.isRecord(parsed) ? parsed : null;
+    } catch {
       return null;
     }
-
-    const parsed: unknown = JSON.parse(decoded);
-    return this.isRecord(parsed) ? parsed : null;
   }
 
   private isRecord(value: unknown): value is JwtPayload {

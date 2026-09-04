@@ -199,6 +199,12 @@ export class UsuarioAdminService {
       );
   }
 
+  getRolesCatalogo(): Observable<DtoRolCatalogo[]> {
+    return this.http.get<DtoRolCatalogo[]>(`${this.baseUrl}/Roles`).pipe(
+      catchError(() => of([])),
+    );
+  }
+
   getListadoUsuarios(nombre?: string): Observable<UsuarioListadoItem[]> {
     const term = (nombre ?? '').trim();
     return this.http.get<UsuarioListadoItem[]>(`${this.baseUrl}/Listado`, {

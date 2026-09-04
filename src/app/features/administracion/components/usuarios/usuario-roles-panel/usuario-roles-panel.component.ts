@@ -65,7 +65,7 @@ export class UsuarioRolesPanelComponent implements OnChanges {
   @Input() savingRole = false;
   @Input() deletingRoleId: number | null = null;
   @Input() roleDeleteRevision = 0;
-  @Input() superAdministradorRolId = 1;
+  @Input() superAdministradorRolId = 2;
 
   @Output() agregarRol = new EventEmitter<void>();
   @Output() guardarRol = new EventEmitter<void>();

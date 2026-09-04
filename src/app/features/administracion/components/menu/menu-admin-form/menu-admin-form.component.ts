@@ -111,7 +111,7 @@ export class MenuAdminFormComponent {
   });
 
   readonly parentSelectOptions = computed<UiSelectOption<number>[]>(() => [
-    { value: 0, label: 'Sin padre' },
+    { value: 0, label: 'Menú principal (nivel superior / raíz)' },
     ...this.parentOptions().map((item) => ({
       value: item.idMenu,
       label: `${item.descripcion} · ID ${item.idMenu}`,
@@ -190,11 +190,19 @@ export class MenuAdminFormComponent {
   }
 
   private writeForm(item: DbMenuItem | null, createParentId = 0, suggestedPosition = 0): void {
+    const rawType = item?.tipo ?? 'S';
+    const type = rawType === 'GRUPO' ? 'S' : rawType;
+    const parentId = item
+      ? item.idPadre === item.idMenu || item.idPadre <= 0
+        ? 0
+        : item.idPadre
+      : createParentId;
+
     this.form.reset({
       descripcion: item?.descripcion ?? '',
-      idPadre: item?.idPadre ?? createParentId,
+      idPadre: parentId,
       posicion: String(item?.posicion ?? Math.max(0, suggestedPosition)),
-      tipo: item?.tipo ?? 'S',
+      tipo: type,
       icono: item?.icono ?? '',
       vigente: item?.vigente === 0 ? 0 : 1,
       detalle: item?.detalle ?? '',

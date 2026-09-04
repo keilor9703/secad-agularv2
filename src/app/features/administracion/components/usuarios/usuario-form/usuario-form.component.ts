@@ -59,7 +59,7 @@ export class UsuarioFormComponent implements OnChanges {
   @Input() roleSaveRevision = 0;
   @Input() roleDeleteRevision = 0;
   @Input() deletingRoleId: number | null = null;
-  @Input() superAdministradorRolId = 1;
+  @Input() superAdministradorRolId = 2;
   @Input() focusBasicInfoRevision = 0;
 
   @Output() consultar = new EventEmitter<string>();

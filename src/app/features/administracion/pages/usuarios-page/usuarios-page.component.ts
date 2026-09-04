@@ -84,7 +84,7 @@ export class UsuariosPageComponent implements OnInit, OnDestroy {
   private readonly rolesCatalogoState = signal<DtoRolCatalogo[]>([]);
   readonly basicInfoFocusRevision = signal(0);
 
-  public readonly superAdministradorRolId = 1;
+  public readonly superAdministradorRolId = 2;
   private canAssignSuperAdministrador = false;
 
   minimized = false;
@@ -238,7 +238,19 @@ export class UsuariosPageComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.canAssignSuperAdministrador = this.authService.isCurrentUserSuperAdmin();
+    this.cargarRolesCatalogo();
     this.cargarListadoUsuarios();
+  }
+
+  cargarRolesCatalogo(): void {
+    this.usuarioAdminService.getRolesCatalogo().subscribe({
+      next: (roles) => {
+        if (roles && roles.length > 0) {
+          this.rolesCatalogo = this.filtrarRolesCatalogo(roles);
+        }
+      },
+      error: () => {},
+    });
   }
 
   ngOnDestroy(): void {
@@ -259,7 +271,6 @@ export class UsuariosPageComponent implements OnInit, OnDestroy {
   prepararNuevoUsuario(): void {
     this.user = null;
     this.searchIdentification = '';
-    this.rolesCatalogo = [];
     this.lastUnsavedAlertKey = '';
   }
 
@@ -956,11 +967,23 @@ export class UsuariosPageComponent implements OnInit, OnDestroy {
   }
 
   private filtrarRolesCatalogo(roles: DtoRolCatalogo[]): DtoRolCatalogo[] {
-    if (!this.canAssignSuperAdministrador) {
+    if (!roles || roles.length === 0) {
       return [];
     }
 
-    return roles ?? [];
+    if (!this.canAssignSuperAdministrador) {
+      return roles.filter((role) => {
+        const nombre = (role.nombre ?? '').trim().toLowerCase();
+        return (
+          role.id !== this.superAdministradorRolId &&
+          nombre !== 'superadministrador' &&
+          nombre !== 'super administrador' &&
+          nombre !== 'superadmin'
+        );
+      });
+    }
+
+    return roles;
   }
 
   /** Reconstruye el índice únicamente con el listado completo persistido. */

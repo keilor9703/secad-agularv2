@@ -25,6 +25,28 @@
       [showButton]="false"
       [clearable]="true"
     />
+    <div class="menu-tree-card__toolbar-actions">
+      <app-ui-button
+        size="sm"
+        variant="neutral"
+        appearance="ghost"
+        icon="fa-solid fa-angles-down"
+        tooltip="Expandir todos los grupos"
+        (buttonClick)="expandAll()"
+      >
+        Expandir todo
+      </app-ui-button>
+      <app-ui-button
+        size="sm"
+        variant="neutral"
+        appearance="ghost"
+        icon="fa-solid fa-angles-up"
+        tooltip="Contraer todos los grupos"
+        (buttonClick)="collapseAll()"
+      >
+        Contraer todo
+      </app-ui-button>
+    </div>
   </div>
 
   <div class="menu-tree-card__body">

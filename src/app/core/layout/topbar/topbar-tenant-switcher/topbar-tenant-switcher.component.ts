@@ -13,6 +13,7 @@ import { Router } from '@angular/router';
 import { AuthService } from '../../../auth/auth.service';
 import { SuperAdminService, TenantPublico } from '../../../services/super-admin.service';
 import { ToastService } from '../../../services/toast.service';
+import { fixMojibake } from '../../../../shared/utils/string-encoding.util';
 
 /**
  * Selector de CAD (tenant) para el superadministrador.
@@ -74,7 +75,7 @@ export class TopbarTenantSwitcherComponent implements OnInit {
     }
 
     this.contextoCambiado.set(this.auth.isContextSwitched());
-    this.nombreCad.set(claims.nombreCad);
+    this.nombreCad.set(fixMojibake(claims.nombreCad));
     this.codDaneActivo.set(claims.codDane);
     this.codDaneOrigen = claims.homeCodDane;
 
@@ -84,7 +85,10 @@ export class TopbarTenantSwitcherComponent implements OnInit {
       .subscribe({
         // Sin la lista el selector queda sin opciones, pero el botón sigue
         // mostrando en qué CAD se está: eso no debe perderse por un fallo.
-        next: (lista) => this.tenants.set(lista.filter((t) => t.activo)),
+        next: (lista) =>
+          this.tenants.set(
+            lista.filter((t) => t.activo).map((t) => ({ ...t, nombre: fixMojibake(t.nombre) })),
+          ),
         error: () => this.tenants.set([]),
       });
   }

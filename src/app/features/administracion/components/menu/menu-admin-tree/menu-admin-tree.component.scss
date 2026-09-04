@@ -12,8 +12,23 @@
 }
 
 .menu-tree-card__toolbar {
-  padding: 17px 15px 12px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 15px 12px;
   border-bottom: 1px solid var(--ui-border, #d8dee8);
+
+  app-ui-search-input {
+    flex: 1 1 240px;
+    min-width: 0;
+  }
+}
+
+.menu-tree-card__toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .menu-tree-card__body {

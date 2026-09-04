@@ -49,7 +49,7 @@
           textColor="#102342"
           borderColor="rgba(149, 191, 0, 0.72)"
           iconColor="#102342"
-          [disabled]="loading() || rootMenu() === null"
+          [disabled]="loading()"
           ariaLabel="Crear un menú principal"
           (buttonClick)="startRootMenu()"
         >
@@ -62,7 +62,7 @@
           <app-menu-admin-form
             [editingItem]="editingItem()"
             [creating]="creatingMenu()"
-            [createParent]="rootMenu()"
+            [createParent]="null"
             [suggestedPosition]="rootMenuSuggestedPosition()"
             [parentOptions]="parentOptions()"
             [saving]="saving()"

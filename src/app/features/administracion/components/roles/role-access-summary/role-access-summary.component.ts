@@ -42,13 +42,16 @@ export class RoleAccessSummaryComponent {
     const children = new Map<number, DbMenuItem[]>();
 
     for (const item of items) {
+      if (item.idPadre === item.idMenu || item.idPadre === 0) {
+        continue;
+      }
       const siblings = children.get(item.idPadre) ?? [];
       siblings.push(item);
       children.set(item.idPadre, siblings);
     }
 
     const roots = items
-      .filter((item) => item.idPadre === 1 || !ids.has(item.idPadre))
+      .filter((item) => item.idPadre === 0 || item.idPadre === item.idMenu || !ids.has(item.idPadre))
       .sort((a, b) => a.posicion - b.posicion || a.descripcion.localeCompare(b.descripcion, 'es'));
 
     const countDescendants = (menuId: number, visited = new Set<number>()): number => {

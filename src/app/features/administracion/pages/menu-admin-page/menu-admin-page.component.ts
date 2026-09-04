@@ -68,24 +68,17 @@ export class MenuAdminPageComponent implements OnInit {
   readonly savingRole = signal(false);
   readonly removingRoleId = signal<number | null>(null);
 
-  readonly menuCount = computed(() => this.menuItems().filter((item) => !this.isRoot(item)).length);
+  readonly menuCount = computed(() => this.menuItems().filter((item) => !this.isSentinelRoot(item)).length);
   readonly activeMenuCount = computed(
-    () => this.menuItems().filter((item) => !this.isRoot(item) && item.vigente === 1).length,
+    () => this.menuItems().filter((item) => !this.isSentinelRoot(item) && item.vigente === 1).length,
   );
-  readonly rootMenu = computed(() => this.menuItems().find((item) => this.isRoot(item)) ?? null);
   readonly editorVisible = computed(() => this.creatingMenu() || this.editingItem() !== null);
   readonly rootMenuSuggestedPosition = computed(() => {
-    const rootId = this.rootMenu()?.idMenu;
-
-    if (rootId === undefined) {
-      return 0;
-    }
-
     const positions = this.menuItems()
-      .filter((item) => item.idPadre === rootId)
+      .filter((item) => this.isTopLevel(item))
       .map((item) => item.posicion);
 
-    return positions.length > 0 ? Math.max(...positions) + 1 : 0;
+    return positions.length > 0 ? Math.max(...positions) + 1 : 10;
   });
   readonly submenuSuggestedPosition = computed(() => {
     const parentId = this.selectedSubmenuParent()?.idMenu;
@@ -112,8 +105,8 @@ export class MenuAdminPageComponent implements OnInit {
 
     return this.menuItems()
       .filter((item) => !excludedIds.has(item.idMenu))
-      .filter((item) => item.idMenu === 1 || !this.isRoot(item))
-      .filter((item) => item.idMenu === 1 || item.tipo === 'S')
+      .filter((item) => !this.isSentinelRoot(item))
+      .filter((item) => item.tipo === 'S' || item.tipo === 'GRUPO' || this.isTopLevel(item))
       .slice()
       .sort((a, b) => a.descripcion.localeCompare(b.descripcion, 'es'));
   });
@@ -194,16 +187,6 @@ export class MenuAdminPageComponent implements OnInit {
   }
 
   startRootMenu(): void {
-    const root = this.rootMenu();
-
-    if (!root) {
-      this.toast.warning(
-        'Crear menú principal',
-        'No se encontró el nodo RAIZ requerido para crear elementos de primer nivel.',
-      );
-      return;
-    }
-
     this.closeRoles();
     this.closeSubmenu();
     this.editingItem.set(null);
@@ -619,7 +602,14 @@ export class MenuAdminPageComponent implements OnInit {
     return descendants;
   }
 
-  private isRoot(item: DbMenuItem): boolean {
-    return item.idMenu === 1 || item.descripcion.trim().toLocaleUpperCase('es') === 'RAIZ';
+  private isSentinelRoot(item: DbMenuItem): boolean {
+    const desc = (item.descripcion ?? '').trim().toLocaleUpperCase('es');
+    const tipo = (item.tipo ?? '').trim().toLocaleUpperCase('es');
+    return desc === 'RAIZ' || tipo === 'RAIZ';
+  }
+
+  private isTopLevel(item: DbMenuItem): boolean {
+    const itemIds = new Set(this.menuItems().map((i) => i.idMenu));
+    return item.idPadre === 0 || item.idPadre === item.idMenu || !itemIds.has(item.idPadre);
   }
 }
