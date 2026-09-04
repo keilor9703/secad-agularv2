@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Comun.Dtos;
 using Datos.Interfaz;
@@ -79,69 +79,83 @@ namespace ofic.Controllers.Administracion
                     return BadRequest(new { message = "Identificación requerida" });
                 }
 
-                // Obtener token tÃ©cnico de API externa configurado en ApiSettings.
-                var tokenPip = await GetTechnicalTokenAsync(HttpContext.RequestAborted);
-                
-                if (string.IsNullOrEmpty(tokenPip))
+                DtoFuncionario? empleado = null;
+
+                // 1. Intento con API externa PIP (si está disponible y accesible)
+                try
                 {
-                    return Unauthorized(new { message = "No se pudo obtener token de la API" });
+                    var tokenPip = await GetTechnicalTokenAsync(HttpContext.RequestAborted);
+                    if (!string.IsNullOrEmpty(tokenPip))
+                    {
+                        empleado = await _apiWebToken.GetFuncionarioAsync(tokenPip, identificacion);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "API PIP externa no disponible para identificacion={Identificacion}. Se buscará en BD local.", identificacion);
                 }
 
-                // Consultar empleado
-                var empleado = await _apiWebToken.GetFuncionarioAsync(tokenPip, identificacion);
+                // 2. Fallback resiliente: si PIP no respondió (ej. OCI en la nube sin Polired/VPN) o falló,
+                // buscar directamente en la base de datos local del tenant (ctr_usuarios).
+                if (empleado is null)
+                {
+                    empleado = await _dbUsuarioRepository.GetFuncionarioLocalAsync(identificacion, HttpContext.RequestAborted);
+                    if (empleado is not null)
+                    {
+                        _logger.LogInformation("Funcionario/usuario cargado desde base de datos local: identificacion={Identificacion}, usuario={Usuario}",
+                            empleado.identificacion, empleado.usuario);
+                    }
+                }
 
                 if (empleado is null)
                 {
-                    return NotFound(new { message = "No se encuentra información del funcionario." });
+                    return NotFound(new { message = "No se encuentra información del usuario ni en API externa ni en la base de datos local." });
                 }
 
-                // Validar situaciÃ³n laboral
+                // Validar situación laboral (solo si viene de PIP externa con valor específico)
                 var situacionLaboral = (empleado.situacionLaboral ?? string.Empty).Trim().ToUpperInvariant();
-                if (situacionLaboral != "LABORANDO" && situacionLaboral != "COMISION DEL SERVICIO" && situacionLaboral != "COMISION DE ESTUDIOS")
+                if (!string.IsNullOrWhiteSpace(situacionLaboral)
+                    && situacionLaboral != "LABORANDO"
+                    && situacionLaboral != "COMISION DEL SERVICIO"
+                    && situacionLaboral != "COMISION DE ESTUDIOS")
                 {
                     return BadRequest(new
                     {
                         success = false,
-                        message = $"Usuario no está¡ en situación laboral válida. Situación actual: '{empleado.situacionLaboral ?? "No reportada"}'. Solo se permiten 'LABORANDO' o 'COMISIÓN DEL SERVICIO'."
+                        message = $"Usuario no está en situación laboral válida. Situación actual: '{empleado.situacionLaboral ?? "No reportada"}'. Solo se permiten 'LABORANDO' o 'COMISIÓN DEL SERVICIO'."
                     });
                 }
 
                 // Persistir automáticamente en DB local si no existe; capturar idUsuario resultante.
-                if (empleado is not null)
+                try
                 {
-                    try
-                    {
-                        empleado.idUsuario = await _dbUsuarioRepository.EnsureUsuarioExistsAsync(empleado, HttpContext.RequestAborted);
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogWarning(
-                            ex,
-                            "No se pudo persistir el usuario local para identificacion={Identificacion}, usuario={Usuario}",
-                            empleado.identificacion,
-                            empleado.usuario);
-                    }
+                    empleado.idUsuario = await _dbUsuarioRepository.EnsureUsuarioExistsAsync(empleado, HttpContext.RequestAborted);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(
+                        ex,
+                        "No se pudo persistir el usuario local para identificacion={Identificacion}, usuario={Usuario}",
+                        empleado.identificacion,
+                        empleado.usuario);
                 }
 
                 // Si el usuario existe en BD local, reflejar estado real (bloqueado/activo).
-                if (empleado is not null)
+                try
                 {
-                    try
+                    var activoDb = await _dbUsuarioRepository.GetActivoByIdentificacionOrUsernameAsync(
+                        empleado.identificacion,
+                        empleado.usuario,
+                        HttpContext.RequestAborted);
+                    if (activoDb.HasValue)
                     {
-                        var activoDb = await _dbUsuarioRepository.GetActivoByIdentificacionOrUsernameAsync(
-                            empleado.identificacion,
-                            empleado.usuario,
-                            HttpContext.RequestAborted);
-                        if (activoDb.HasValue)
-                        {
-                            empleado.activo = activoDb.Value;
-                        }
+                        empleado.activo = activoDb.Value;
                     }
-                    catch (Exception ex)
-                    {
-                        _logger.LogWarning(ex, "No se pudo resolver estado local de usuario. identificacion={Identificacion}, usuario={Usuario}",
-                            empleado.identificacion, empleado.usuario);
-                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "No se pudo resolver estado local de usuario. identificacion={Identificacion}, usuario={Usuario}",
+                        empleado.identificacion, empleado.usuario);
                 }
 
                 return Ok(empleado);
@@ -160,24 +174,22 @@ namespace ofic.Controllers.Administracion
             {
                 if (string.IsNullOrEmpty(identificacion))
                 {
-                    return BadRequest(new { message = "IdentificaciÃ³n requerida" });
+                    return BadRequest(new { message = "Identificación requerida" });
                 }
 
                 var tokenPip = await GetTechnicalTokenAsync(HttpContext.RequestAborted);
-                
                 if (string.IsNullOrEmpty(tokenPip))
                 {
-                    return Unauthorized(new { message = "No se pudo obtener token de la API" });
+                    return Ok(string.Empty);
                 }
 
                 var fotoBase64 = await _apiWebToken.GetFotoFuncionarioAsync(tokenPip, identificacion);
-
-                return Ok(fotoBase64);
+                return Ok(fotoBase64 ?? string.Empty);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error consultando foto");
-                return StatusCode(500, new { message = "Error al consultar foto" });
+                _logger.LogWarning(ex, "No se pudo obtener foto externa para identificacion={Identificacion}", identificacion);
+                return Ok(string.Empty);
             }
         }
 
@@ -202,22 +214,22 @@ namespace ofic.Controllers.Administracion
 
                 if (string.IsNullOrWhiteSpace(identificacion))
                 {
-                    return NotFound(new { message = "No se encontrÃ³ identificaciÃ³n para el usuario autenticado." });
+                    return Ok(string.Empty);
                 }
 
                 var tokenPip = await GetTechnicalTokenAsync(HttpContext.RequestAborted);
                 if (string.IsNullOrEmpty(tokenPip))
                 {
-                    return Unauthorized(new { message = "No se pudo obtener token de la API" });
+                    return Ok(string.Empty);
                 }
 
                 var fotoBase64 = await _apiWebToken.GetFotoFuncionarioAsync(tokenPip, identificacion.Trim());
-                return Ok(fotoBase64);
+                return Ok(fotoBase64 ?? string.Empty);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error consultando foto del usuario autenticado");
-                return StatusCode(500, new { message = "Error al consultar foto del usuario autenticado" });
+                _logger.LogWarning(ex, "No se pudo obtener foto del usuario autenticado");
+                return Ok(string.Empty);
             }
         }
 
@@ -240,28 +252,36 @@ namespace ofic.Controllers.Administracion
                     username.Trim(),
                     HttpContext.RequestAborted);
 
-                if (string.IsNullOrWhiteSpace(identificacion))
+                DtoFuncionario? empleado = null;
+
+                try
                 {
-                    return NotFound(new { message = "No se encontrÃ³ identificaciÃ³n para el usuario autenticado." });
+                    var tokenPip = await GetTechnicalTokenAsync(HttpContext.RequestAborted);
+                    if (!string.IsNullOrEmpty(tokenPip) && !string.IsNullOrWhiteSpace(identificacion))
+                    {
+                        empleado = await _apiWebToken.GetFuncionarioAsync(tokenPip, identificacion.Trim());
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "No se pudo obtener perfil desde PIP para username={Username}", username);
                 }
 
-                var tokenPip = await GetTechnicalTokenAsync(HttpContext.RequestAborted);
-                if (string.IsNullOrEmpty(tokenPip))
-                {
-                    return Unauthorized(new { message = "No se pudo obtener token de la API" });
-                }
-
-                var empleado = await _apiWebToken.GetFuncionarioAsync(tokenPip, identificacion.Trim());
                 if (empleado is null)
                 {
-                    return NotFound(new { message = "No se encontrÃ³ informaciÃ³n de perfil." });
+                    empleado = await _dbUsuarioRepository.GetFuncionarioLocalAsync(username.Trim(), HttpContext.RequestAborted);
+                }
+
+                if (empleado is null)
+                {
+                    return NotFound(new { message = "No se encontró información de perfil." });
                 }
 
                 var nombreCompleto = $"{(empleado.nombres ?? string.Empty).Trim()} {(empleado.apellidos ?? string.Empty).Trim()}".Trim();
 
                 return Ok(new
                 {
-                    identificacion = (empleado.identificacion ?? identificacion).Trim(),
+                    identificacion = (empleado.identificacion ?? identificacion ?? string.Empty).Trim(),
                     grado = (empleado.nombreGrado ?? string.Empty).Trim(),
                     nombreCompleto,
                     cargo = (empleado.cargo ?? string.Empty).Trim(),

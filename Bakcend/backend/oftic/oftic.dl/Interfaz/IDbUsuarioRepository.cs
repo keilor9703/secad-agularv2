@@ -62,5 +62,11 @@ namespace Datos.Interfaz
         /// Usado para administrar usuarios civiles / otras entidades.
         /// </summary>
         Task<DtoUsuarioLocalDetalle?> GetLocalUsuarioAsync(string username, CancellationToken ct);
+
+        /// <summary>
+        /// Obtiene los datos de un usuario o funcionario directamente desde ctr_usuarios del tenant,
+        /// mapeado a DtoFuncionario para permitir la edición local cuando la API PIP externa no esté disponible.
+        /// </summary>
+        Task<DtoFuncionario?> GetFuncionarioLocalAsync(string identificacionOrUsername, CancellationToken ct);
     }
 }

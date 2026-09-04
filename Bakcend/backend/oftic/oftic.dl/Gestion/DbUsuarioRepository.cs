@@ -587,6 +587,65 @@ LIMIT 1";
             };
         }
 
+        public async Task<DtoFuncionario?> GetFuncionarioLocalAsync(string identificacionOrUsername, CancellationToken ct)
+        {
+            if (string.IsNullOrWhiteSpace(identificacionOrUsername)) return null;
+
+            await using var conn = await _tenant.DataSource.OpenConnectionAsync(ct);
+            await using var cmd = conn.CreateCommand();
+            cmd.CommandText = @"
+SELECT id_usuario,
+       username,
+       COALESCE(identificacion, '')                       AS identificacion,
+       COALESCE(nombres, '')                              AS nombres,
+       COALESCE(apellidos, '')                            AS apellidos,
+       COALESCE(email, '')                                AS email,
+       COALESCE(grad_alfabetico, '')                      AS cargo,
+       COALESCE(tipo_usuario, 'POLICIA')                  AS tipo_usuario,
+       CASE WHEN bloqueado = 0 THEN TRUE ELSE FALSE END   AS activo,
+       COALESCE(funcionario, 0)                           AS funcionario,
+       COALESCE(unde_laborando, 0)                        AS unde_laborando,
+       COALESCE(codigo_cargo, 0)                          AS codigo_cargo
+FROM ctr_usuarios
+WHERE identificacion = @val OR UPPER(username) = UPPER(@val)
+LIMIT 1";
+            cmd.Parameters.AddWithValue("val", Trim(identificacionOrUsername));
+
+            await using var reader = await cmd.ExecuteReaderAsync(ct);
+            if (!await reader.ReadAsync(ct)) return null;
+
+            var idUsuario = reader.IsDBNull(0) ? 0 : Convert.ToInt64(reader.GetValue(0));
+            var username = reader.IsDBNull(1) ? string.Empty : reader.GetString(1);
+            var identificacion = reader.IsDBNull(2) ? string.Empty : reader.GetString(2);
+            var nombres = reader.IsDBNull(3) ? string.Empty : reader.GetString(3);
+            var apellidos = reader.IsDBNull(4) ? string.Empty : reader.GetString(4);
+            var email = reader.IsDBNull(5) ? string.Empty : reader.GetString(5);
+            var cargo = reader.IsDBNull(6) ? string.Empty : reader.GetString(6);
+            var tipoUsuario = reader.IsDBNull(7) ? "POLICIA" : reader.GetString(7);
+            var activo = !reader.IsDBNull(8) && reader.GetBoolean(8);
+            var funcionario = reader.IsDBNull(9) ? 0 : reader.GetInt32(9);
+            var undeLaborando = reader.IsDBNull(10) ? 0 : reader.GetInt32(10);
+            var codigoCargo = reader.IsDBNull(11) ? 0 : reader.GetInt32(11);
+
+            return new DtoFuncionario
+            {
+                idUsuario = idUsuario,
+                identificacion = !string.IsNullOrWhiteSpace(identificacion) ? identificacion : identificacionOrUsername,
+                usuario = username,
+                nombres = nombres,
+                apellidos = apellidos,
+                correo = email,
+                gradAlfabetico = cargo,
+                nombreGrado = cargo,
+                cargo = cargo,
+                situacionLaboral = "LABORANDO",
+                activo = activo,
+                funcionarioCodigo = !string.IsNullOrWhiteSpace(identificacion) ? identificacion : funcionario.ToString(),
+                undeLaborandoCodigo = undeLaborando.ToString(),
+                codigoCargo = codigoCargo.ToString()
+            };
+        }
+
         public async Task<DtoGuardarUsuarioResult> CreateCivilUsuarioAsync(
             DtoCivilUsuarioRequest request,
             string usuarioAuditoria,
