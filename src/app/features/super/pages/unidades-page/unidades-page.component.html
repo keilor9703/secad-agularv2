@@ -1,0 +1,285 @@
+<div class="und-page">
+
+  <!-- ── Encabezado ──────────────────────────────────────────────────────── -->
+  <app-ui-page-header
+    title="Unidades y Municipios"
+    subtitle="Catálogo maestro de unidades institucionales, departamentos, municipios y códigos DANE"
+  >
+    <div actions class="und-acciones-header">
+      <app-ui-button
+        variant="secondary"
+        appearance="ghost"
+        icon="fa-solid fa-arrows-rotate"
+        [loading]="loading()"
+        [disabled]="loading()"
+        (buttonClick)="cargarUnidades()"
+      >Refrescar</app-ui-button>
+
+      <app-ui-button
+        variant="primary"
+        icon="fa-solid fa-plus"
+        (buttonClick)="openCreate()"
+      >Nueva unidad</app-ui-button>
+    </div>
+  </app-ui-page-header>
+
+  <!-- ── Barra de filtros ────────────────────────────────────────────────── -->
+  <div class="und-filtros-bar" [formGroup]="filtroForm">
+    <div class="und-filtros-inputs">
+      <app-ui-input
+        class="und-filtro-buscar"
+        formControlName="texto"
+        placeholder="Buscar por dependencia, sigla, municipio, DANE o consecutivo..."
+        icon="fa-solid fa-magnifying-glass"
+      />
+
+      <app-ui-select
+        class="und-filtro-dep"
+        formControlName="departamento"
+        [options]="opcionesDepartamentosFiltro()"
+        placeholder="Filtrar por departamento"
+        [searchable]="true"
+        [clearable]="true"
+      />
+
+      @if (filtroTexto() || filtroDepartamento()) {
+        <app-ui-button
+          variant="secondary"
+          appearance="ghost"
+          icon="fa-solid fa-filter-circle-xmark"
+          (buttonClick)="limpiarFiltros()"
+        >Limpiar</app-ui-button>
+      }
+    </div>
+
+    <div class="und-filtros-meta">
+      <span class="und-meta-total">
+        <strong>{{ totalCount() }}</strong> unidades registradas
+      </span>
+    </div>
+  </div>
+
+  <!-- ── Tabla ──────────────────────────────────────────────────────────── -->
+  <app-ui-table
+    [columns]="columns"
+    [rows]="unidades()"
+    [loading]="loading()"
+    [actions]="acciones"
+    loadingMessage="Cargando unidades…"
+    emptyMessage="No se encontraron unidades con los filtros seleccionados."
+    actionDisplay="row-hover"
+    actionsPosition="right"
+    (actionClick)="onAccion($event)"
+  />
+
+  <!-- ── Paginador ──────────────────────────────────────────────────────── -->
+  @if (totalPages() > 1) {
+    <div class="und-paginador">
+      <span class="und-paginador-info">
+        Página {{ page() }} de {{ totalPages() }} ({{ totalCount() }} resultados)
+      </span>
+      <div class="und-paginador-botones">
+        <app-ui-button
+          variant="secondary"
+          appearance="ghost"
+          icon="fa-solid fa-chevron-left"
+          [disabled]="page() <= 1 || loading()"
+          (buttonClick)="cambiarPagina(page() - 1)"
+        >Anterior</app-ui-button>
+        <app-ui-button
+          variant="secondary"
+          appearance="ghost"
+          icon="fa-solid fa-chevron-right"
+          iconPosition="end"
+          [disabled]="page() >= totalPages() || loading()"
+          (buttonClick)="cambiarPagina(page() + 1)"
+        >Siguiente</app-ui-button>
+      </div>
+    </div>
+  }
+
+  <!-- ── Celdas personalizadas ──────────────────────────────────────────── -->
+  <ng-template #celdaUnidad let-row="row">
+    <div class="und-nombre-wrap">
+      <span class="und-nombre">{{ row.descripcionDependencia }}</span>
+      @if (row.siglaPapa) {
+        <span class="und-sub">Padre: {{ row.siglaPapa }}</span>
+      }
+    </div>
+  </ng-template>
+
+  <ng-template #celdaUbicacion let-row="row">
+    <div class="und-ubicacion-wrap">
+      <span class="und-municipio">{{ row.municipio }}</span>
+      <span class="und-sub">{{ row.departamento }}</span>
+    </div>
+  </ng-template>
+
+  <ng-template #celdaVigente let-row="row">
+    <app-ui-badge
+      [label]="row.vigente === 'SI' ? 'Vigente' : 'No vigente'"
+      [variant]="row.vigente === 'SI' ? 'success' : 'danger'"
+      [icon]="row.vigente === 'SI' ? 'fa-solid fa-circle-check' : 'fa-solid fa-circle-xmark'"
+      iconPosition="start"
+    />
+  </ng-template>
+
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     Modal: Registrar / editar unidad
+     ══════════════════════════════════════════════════════════════════════ -->
+<app-ui-modal
+  [open]="showModal()"
+  [title]="modalMode() === 'create' ? 'Registrar unidad institucional' : 'Editar unidad institucional'"
+  [icon]="modalMode() === 'create' ? 'fa-solid fa-plus-circle' : 'fa-solid fa-pen-to-square'"
+  size="lg"
+  (closeRequested)="closeModal()"
+>
+  <form modal-body [formGroup]="form" class="und-form">
+
+    <app-ui-section-header
+      title="Identificación institucional"
+      icon="fa-solid fa-building-shield"
+    />
+
+    <div class="und-row">
+      <app-ui-input
+        formControlName="descripcionDependencia"
+        label="Descripción de la dependencia"
+        placeholder="Ej: DEPARTAMENTO DE POLICIA VALLE"
+        [maxlength]="250"
+        required
+        [error]="errorDescripcion()"
+      />
+    </div>
+
+    <div class="und-row">
+      <app-ui-input
+        formControlName="siglaFisica"
+        label="Sigla Física"
+        placeholder="Ej: DEVAL"
+        [maxlength]="50"
+        hint="Sigla oficial de la unidad"
+      />
+      <app-ui-input
+        formControlName="siglaPapa"
+        label="Sigla Depende / Padre"
+        placeholder="Ej: DIPON"
+        [maxlength]="50"
+      />
+      <app-ui-select
+        class="und-corto"
+        formControlName="vigente"
+        label="Vigencia"
+        [options]="opcionesVigente"
+        [clearable]="false"
+        [searchable]="false"
+      />
+    </div>
+
+    <app-ui-section-header
+      title="Ubicación y jurisdicción"
+      icon="fa-solid fa-map-location-dot"
+    />
+
+    <div class="und-row">
+      <app-ui-input
+        formControlName="departamento"
+        label="Departamento"
+        placeholder="Ej: VALLE DEL CAUCA"
+        [maxlength]="150"
+        required
+        [error]="errorDepartamento()"
+      />
+      <app-ui-input
+        formControlName="municipio"
+        label="Municipio"
+        placeholder="Ej: CALI"
+        [maxlength]="150"
+        required
+        [error]="errorMunicipio()"
+      />
+      <app-ui-input
+        class="und-corto"
+        formControlName="codigoDane"
+        label="Código DANE"
+        placeholder="Ej: 76001"
+        [maxlength]="20"
+        required
+        [error]="errorCodigoDane()"
+      />
+    </div>
+
+    <div class="und-row">
+      <app-ui-input
+        formControlName="descRegional"
+        label="Regional de Policía"
+        placeholder="Ej: REGION DE POLICIA No. CUATRO"
+        [maxlength]="150"
+      />
+      <app-ui-input
+        class="und-corto"
+        formControlName="codRegional"
+        label="Cód. Regional"
+        type="number"
+        placeholder="Ej: 4"
+      />
+    </div>
+
+    <app-ui-section-header
+      title="Contacto y datos adicionales"
+      icon="fa-solid fa-address-book"
+    />
+
+    <div class="und-row">
+      <app-ui-input
+        formControlName="direccion"
+        label="Dirección de la sede"
+        placeholder="Ej: Calle 21 No. 3-10"
+        [maxlength]="250"
+      />
+      <app-ui-input
+        formControlName="telefono"
+        label="Teléfono"
+        placeholder="Ej: (2) 8821000"
+        [maxlength]="50"
+      />
+    </div>
+
+    <div class="und-row">
+      <app-ui-input
+        formControlName="telefonoIp"
+        label="Teléfono IP / Red interna"
+        placeholder="Ej: Ext. 2005"
+        [maxlength]="50"
+      />
+      <app-ui-input
+        formControlName="email"
+        label="Correo institucional"
+        type="email"
+        placeholder="Ej: deval.coman@policia.gov.co"
+        [maxlength]="150"
+      />
+    </div>
+
+  </form>
+
+  <div modal-actions class="und-acciones">
+    <app-ui-button
+      variant="secondary"
+      appearance="ghost"
+      icon="fa-solid fa-xmark"
+      [disabled]="saving()"
+      (buttonClick)="closeModal()"
+    >Cancelar</app-ui-button>
+
+    <app-ui-button
+      variant="primary"
+      icon="fa-solid fa-floppy-disk"
+      [loading]="saving()"
+      [disabled]="saving()"
+      (buttonClick)="save()"
+    >{{ saving() ? 'Guardando…' : 'Guardar unidad' }}</app-ui-button>
+  </div>
+</app-ui-modal>

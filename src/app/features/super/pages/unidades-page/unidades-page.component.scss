@@ -1,0 +1,141 @@
+.und-page {
+  display:        flex;
+  flex-direction: column;
+  gap:            16px;
+  padding:        16px;
+}
+
+.und-acciones-header {
+  display: flex;
+  gap:     8px;
+}
+
+.und-filtros-bar {
+  display:         flex;
+  flex-wrap:       wrap;
+  align-items:     center;
+  justify-content: space-between;
+  gap:             12px;
+  padding:         12px 16px;
+  background:      var(--ui-card-bg, #ffffff);
+  border:          1px solid var(--ui-card-border, #e5e7eb);
+  border-radius:   10px;
+}
+
+.und-filtros-inputs {
+  display:     flex;
+  flex-wrap:   wrap;
+  align-items: center;
+  gap:         12px;
+  flex:        1 1 auto;
+}
+
+.und-filtro-buscar {
+  min-width: 320px;
+  flex:      1 1 320px;
+}
+
+.und-filtro-dep {
+  min-width: 220px;
+  flex:      0 1 240px;
+}
+
+.und-filtros-meta {
+  display:     flex;
+  align-items: center;
+  gap:         8px;
+}
+
+.und-meta-total {
+  font-size: calc(12px * var(--font-size-scale, 1));
+  color:     var(--ui-text-muted, #6b7280);
+
+  strong {
+    color: var(--ui-text-color, #111827);
+  }
+}
+
+.und-nombre-wrap,
+.und-ubicacion-wrap {
+  display:        flex;
+  flex-direction: column;
+  gap:            2px;
+}
+
+.und-nombre {
+  font-weight: 600;
+  font-size:   calc(12.5px * var(--font-size-scale, 1));
+  color:       var(--ui-text-color, #1f2937);
+}
+
+.und-municipio {
+  font-weight: 500;
+  font-size:   calc(12.5px * var(--font-size-scale, 1));
+  color:       var(--ui-text-color, #1f2937);
+}
+
+.und-sub {
+  font-size: calc(11px * var(--font-size-scale, 1));
+  color:     var(--ui-text-muted, #6b7280);
+}
+
+.und-paginador {
+  display:         flex;
+  align-items:     center;
+  justify-content: space-between;
+  padding:         8px 4px;
+  gap:             12px;
+
+  &-info {
+    font-size: calc(12px * var(--font-size-scale, 1));
+    color:     var(--ui-text-muted, #6b7280);
+  }
+
+  &-botones {
+    display: flex;
+    gap:     8px;
+  }
+}
+
+.und-form {
+  display:        flex;
+  flex-direction: column;
+  gap:            14px;
+}
+
+.und-row {
+  display: flex;
+  gap:     12px;
+
+  > * { flex: 1 1 0; min-width: 0; }
+
+  .und-corto { flex: 0 0 140px; }
+
+  @media (max-width: 640px) {
+    flex-direction: column;
+    .und-corto { flex: 1 1 auto; }
+  }
+}
+
+.und-acciones {
+  display:         flex;
+  gap:             8px;
+  justify-content: flex-end;
+}
+
+:host-context(html.dark-mode) {
+  .und-filtros-bar {
+    background:   var(--ui-card-bg, #1e293b);
+    border-color: var(--ui-card-border, #334155);
+  }
+  .und-nombre,
+  .und-municipio {
+    color: #f1f5f9;
+  }
+  .und-sub {
+    color: #94a3b8;
+  }
+  .und-meta-total strong {
+    color: #f8fafc;
+  }
+}

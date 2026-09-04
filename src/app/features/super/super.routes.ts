@@ -24,4 +24,13 @@ export const superRoutes: Routes = [
       ),
     data: { breadcrumb: 'Salud de CADs' },
   },
+  {
+    path: 'unidades',
+    canActivate: [superAdminGuard],
+    loadComponent: () =>
+      import('./pages/unidades-page/unidades-page.component').then(
+        (m) => m.UnidadesPageComponent,
+      ),
+    data: { breadcrumb: 'Unidades y Municipios' },
+  },
 ];

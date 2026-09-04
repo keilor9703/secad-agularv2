@@ -75,12 +75,22 @@
     </div>
 
     <div class="civil-form__fila">
-      <app-ui-input
-        formControlName="entidad"
-        label="Entidad"
-        placeholder="Ej: Bomberos Bogotá"
-        hint="Opcional."
-      />
+      <div class="civil-form__col-entidad">
+        <app-ui-select
+          formControlName="entidad"
+          label="Entidad"
+          [options]="opcionesEntidad()"
+          [placeholder]="tieneEntidades() ? 'Seleccione una entidad' : 'Primero debe crear una entidad'"
+          [error]="errorEntidad()"
+          required
+        />
+        @if (!tieneEntidades() && !cargandoEntidades()) {
+          <div class="civil-form__bloqueo-aviso">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            <span>No hay entidades creadas. Primero debe crear una entidad en Administración &gt; Entidades / Fuerzas.</span>
+          </div>
+        }
+      </div>
       <app-ui-input
         formControlName="cargo"
         label="Cargo"

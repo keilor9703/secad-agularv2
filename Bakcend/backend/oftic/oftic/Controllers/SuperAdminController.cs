@@ -175,5 +175,87 @@ namespace Api.Controllers
             var data = await _masterRepo.GetSaludHistorialAsync(codDane, limit, ct);
             return Ok(data);
         }
+
+        // ── Unidades y Municipios Institucionales ─────────────────────────────
+
+        /// <summary>Lista única de departamentos registrados en las unidades institucionales.</summary>
+        [HttpGet("unidades/departamentos")]
+        public async Task<IActionResult> GetDepartamentos(CancellationToken ct)
+        {
+            var data = await _masterRepo.GetDepartamentosAsync(ct);
+            return Ok(data);
+        }
+
+        /// <summary>Lista de municipios de un departamento con códigos DANE y siglas.</summary>
+        [HttpGet("unidades/municipios")]
+        public async Task<IActionResult> GetMunicipios([FromQuery] string departamento, CancellationToken ct)
+        {
+            if (string.IsNullOrWhiteSpace(departamento))
+                return BadRequest(new { success = false, message = "Departamento requerido." });
+
+            var data = await _masterRepo.GetMunicipiosByDepartamentoAsync(departamento, ct);
+            return Ok(data);
+        }
+
+        /// <summary>Listado paginado de unidades institucionales con filtros por texto y departamento.</summary>
+        [HttpGet("unidades")]
+        public async Task<IActionResult> GetUnidades(
+            [FromQuery] string? filtro = null,
+            [FromQuery] string? departamento = null,
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 20,
+            CancellationToken ct = default)
+        {
+            var data = await _masterRepo.GetUnidadesAsync(filtro, departamento, page, pageSize, ct);
+            return Ok(data);
+        }
+
+        /// <summary>Crea una nueva unidad o municipio institucional.</summary>
+        [HttpPost("unidades")]
+        public async Task<IActionResult> CreateUnidad([FromBody] DtoUnidadSaveRequest request, CancellationToken ct)
+        {
+            if (string.IsNullOrWhiteSpace(request.DescripcionDependencia) ||
+                string.IsNullOrWhiteSpace(request.Departamento) ||
+                string.IsNullOrWhiteSpace(request.Municipio) ||
+                string.IsNullOrWhiteSpace(request.CodigoDane))
+            {
+                return BadRequest(new { success = false, message = "DescripcionDependencia, Departamento, Municipio y CodigoDane son obligatorios." });
+            }
+
+            var usuario = User.Identity?.Name ?? "SISTEMA";
+            var (success, message, consecutivo) = await _masterRepo.SaveUnidadAsync(request, usuario, ct);
+            if (!success) return Conflict(new { success, message });
+
+            return Ok(new { success, message, consecutivo });
+        }
+
+        /// <summary>Actualiza una unidad o municipio institucional existente.</summary>
+        [HttpPut("unidades/{consecutivo:decimal}")]
+        public async Task<IActionResult> UpdateUnidad(decimal consecutivo, [FromBody] DtoUnidadSaveRequest request, CancellationToken ct)
+        {
+            request.Consecutivo = consecutivo;
+            if (string.IsNullOrWhiteSpace(request.DescripcionDependencia) ||
+                string.IsNullOrWhiteSpace(request.Departamento) ||
+                string.IsNullOrWhiteSpace(request.Municipio) ||
+                string.IsNullOrWhiteSpace(request.CodigoDane))
+            {
+                return BadRequest(new { success = false, message = "DescripcionDependencia, Departamento, Municipio y CodigoDane son obligatorios." });
+            }
+
+            var usuario = User.Identity?.Name ?? "SISTEMA";
+            var (success, message, id) = await _masterRepo.SaveUnidadAsync(request, usuario, ct);
+            if (!success) return NotFound(new { success, message });
+
+            return Ok(new { success, message, consecutivo = id });
+        }
+
+        /// <summary>Alterna la vigencia (activo/inactivo) de una unidad institucional.</summary>
+        [HttpPatch("unidades/{consecutivo:decimal}/toggle")]
+        public async Task<IActionResult> ToggleUnidad(decimal consecutivo, CancellationToken ct)
+        {
+            var (success, message) = await _masterRepo.ToggleUnidadVigenteAsync(consecutivo, ct);
+            if (!success) return NotFound(new { success, message });
+            return Ok(new { success, message });
+        }
     }
 }

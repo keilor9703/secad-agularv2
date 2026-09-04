@@ -29,6 +29,34 @@
     @media (max-width: 720px) { flex-direction: column; }
   }
 
+  &__col-entidad {
+    display:        flex;
+    flex-direction: column;
+    gap:            6px;
+    flex:           1 1 0;
+    min-width:      0;
+  }
+
+  &__bloqueo-aviso {
+    display:       flex;
+    align-items:   flex-start;
+    gap:           8px;
+    padding:       7px 10px;
+    border-radius: 6px;
+    background:    rgba(234, 179, 8, 0.12);
+    border:        1px solid rgba(234, 179, 8, 0.3);
+    color:         #b45309;
+    font-size:     calc(11.5px * var(--font-size-scale, 1));
+    line-height:   1.35;
+
+    i {
+      font-size:   13px;
+      color:       #d97706;
+      margin-top:  2px;
+      flex-shrink: 0;
+    }
+  }
+
   // El ojo de la contraseña se alinea con la caja del campo, no con su etiqueta.
   &__ojo   { flex: 0 0 auto; margin-top: 18px; }
   &__estado { flex: 0 0 150px; }
@@ -42,4 +70,10 @@
 
 :host-context(html.dark-mode) {
   .civil-form__nota { background: rgba(8, 166, 203, .14); }
+  .civil-form__bloqueo-aviso {
+    background:   rgba(234, 179, 8, 0.18);
+    border-color: rgba(234, 179, 8, 0.4);
+    color:        #fcd34d;
+    i { color:    #fbbf24; }
+  }
 }

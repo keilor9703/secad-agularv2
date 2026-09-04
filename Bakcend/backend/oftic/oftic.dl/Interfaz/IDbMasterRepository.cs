@@ -43,6 +43,22 @@ namespace Datos.Interfaz
 
         /// <summary>Returns the last N health history records for a given CAD.</summary>
         Task<List<DtoSaludHistorial>> GetSaludHistorialAsync(string codDane, int limit, CancellationToken ct);
+
+        // ── SuperAdmin: Unidades y Municipios Institucionales ────────────────
+        /// <summary>Lista única de departamentos institucionales.</summary>
+        Task<List<DtoDepartamentoItem>> GetDepartamentosAsync(CancellationToken ct);
+
+        /// <summary>Lista de municipios pertenecientes a un departamento.</summary>
+        Task<List<DtoMunicipioItem>> GetMunicipiosByDepartamentoAsync(string departamento, CancellationToken ct);
+
+        /// <summary>Listado paginado y filtrable de unidades institucionales.</summary>
+        Task<DtoUnidadesPaginadas> GetUnidadesAsync(string? filtro, string? departamento, int page, int pageSize, CancellationToken ct);
+
+        /// <summary>Crea o actualiza una unidad institucional.</summary>
+        Task<(bool success, string message, decimal consecutivo)> SaveUnidadAsync(DtoUnidadSaveRequest request, string usuarioAuditoria, CancellationToken ct);
+
+        /// <summary>Alterna el estado vigente (SI/NO) de una unidad institucional.</summary>
+        Task<(bool success, string message)> ToggleUnidadVigenteAsync(decimal consecutivo, CancellationToken ct);
     }
 
     public class DtoSaludHistorial

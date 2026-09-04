@@ -98,8 +98,21 @@
     />
 
     <div class="tn-row">
-      <app-ui-input formControlName="departamento" label="Departamento" [maxlength]="50" />
-      <app-ui-input formControlName="municipio"    label="Municipio"    [maxlength]="100" />
+      <app-ui-select
+        formControlName="departamento"
+        label="Departamento"
+        [options]="opcionesDepartamento()"
+        placeholder="Seleccione departamento..."
+        [searchable]="true"
+      />
+      <app-ui-select
+        formControlName="municipio"
+        label="Municipio"
+        [options]="opcionesMunicipio()"
+        [placeholder]="form.controls.departamento.value ? 'Seleccione municipio...' : 'Primero seleccione departamento'"
+        [disabled]="!form.controls.departamento.value"
+        [searchable]="true"
+      />
     </div>
 
     <div class="tn-row">

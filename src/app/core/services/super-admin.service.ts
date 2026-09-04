@@ -59,6 +59,76 @@ export interface ContextSwitchResult {
   homeCodDane: string;
 }
 
+export interface DepartamentoItem {
+  departamento: string;
+  codigoDepartamento?: number;
+  totalMunicipios: number;
+}
+
+export interface MunicipioItem {
+  consecutivo: number;
+  municipio: string;
+  departamento: string;
+  codigoDane: string;
+  siglaFisica?: string;
+  descripcionDependencia?: string;
+  descRegional?: string;
+}
+
+export interface UnidadItem {
+  consecutivo: number;
+  fuerza?: number;
+  descripcionDependencia: string;
+  vigente: string;
+  siglaFisica?: string;
+  siglaPapa?: string;
+  siglaDepende?: string;
+  departamento?: string;
+  codigoDepartamento?: number;
+  municipio?: string;
+  codigoDane?: string;
+  descRegional?: string;
+  codRegional?: number;
+  direccion?: string;
+  telefono?: string;
+  telefonoIp?: string;
+  email?: string;
+  zona?: string;
+  tipo?: string;
+  tipoDescripcion?: string;
+  fechaCreacion?: string;
+  fechaActualiza?: string;
+}
+
+export interface UnidadSaveRequest {
+  consecutivo?: number;
+  fuerza?: number;
+  descripcionDependencia: string;
+  vigente?: string;
+  siglaFisica?: string;
+  siglaPapa?: string;
+  departamento: string;
+  codigoDepartamento?: number;
+  municipio: string;
+  codigoDane: string;
+  descRegional?: string;
+  codRegional?: number;
+  direccion?: string;
+  telefono?: string;
+  telefonoIp?: string;
+  email?: string;
+  zona?: string;
+  tipo?: string;
+  tipoDescripcion?: string;
+}
+
+export interface UnidadesPaginadas {
+  items: UnidadItem[];
+  totalCount: number;
+  page: number;
+  pageSize: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class SuperAdminService {
   private readonly http = inject(HttpClient);
@@ -105,6 +175,51 @@ export class SuperAdminService {
   getHistorial(codDane: string, limit = 48): Observable<SaludHistorial[]> {
     return this.http.get<SaludHistorial[]>(
       `${this.base}/salud/${codDane}/historial?limit=${limit}`
+    );
+  }
+
+  // ── Unidades y Municipios Institucionales ───────────────────────────────────
+
+  getDepartamentos(): Observable<DepartamentoItem[]> {
+    return this.http.get<DepartamentoItem[]>(`${this.base}/unidades/departamentos`);
+  }
+
+  getMunicipios(departamento: string): Observable<MunicipioItem[]> {
+    return this.http.get<MunicipioItem[]>(`${this.base}/unidades/municipios`, {
+      params: { departamento },
+    });
+  }
+
+  getUnidades(params?: {
+    filtro?: string;
+    departamento?: string;
+    page?: number;
+    pageSize?: number;
+  }): Observable<UnidadesPaginadas> {
+    let httpParams: Record<string, string> = {};
+    if (params?.filtro) httpParams['filtro'] = params.filtro;
+    if (params?.departamento) httpParams['departamento'] = params.departamento;
+    if (params?.page) httpParams['page'] = String(params.page);
+    if (params?.pageSize) httpParams['pageSize'] = String(params.pageSize);
+
+    return this.http.get<UnidadesPaginadas>(`${this.base}/unidades`, { params: httpParams });
+  }
+
+  createUnidad(request: UnidadSaveRequest): Observable<{ success: boolean; message: string; consecutivo?: number }> {
+    return this.http.post<{ success: boolean; message: string; consecutivo?: number }>(
+      `${this.base}/unidades`, request
+    );
+  }
+
+  updateUnidad(consecutivo: number, request: UnidadSaveRequest): Observable<{ success: boolean; message: string; consecutivo?: number }> {
+    return this.http.put<{ success: boolean; message: string; consecutivo?: number }>(
+      `${this.base}/unidades/${consecutivo}`, request
+    );
+  }
+
+  toggleUnidad(consecutivo: number): Observable<{ success: boolean; message: string }> {
+    return this.http.patch<{ success: boolean; message: string }>(
+      `${this.base}/unidades/${consecutivo}/toggle`, {}
     );
   }
 

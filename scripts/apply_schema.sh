@@ -42,6 +42,7 @@ MASTER_FILES=(
   # mismo archivo — cada bloque se protege comprobando que su tabla exista,
   # así que es seguro correrlo contra ambas bases (ver el archivo).
   "V31__tenant_sitio_grabacion_codane.sql"
+  "V60__master_unidades.sql"
 )
 
 # Todos los demás, EN ORDEN — aplican a cada base de datos de tenant/CAD.

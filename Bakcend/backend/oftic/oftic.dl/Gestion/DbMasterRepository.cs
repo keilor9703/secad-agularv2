@@ -391,6 +391,241 @@ ON CONFLICT (username) DO UPDATE SET
             return list;
         }
 
+        // ── SuperAdmin: Unidades y Municipios Institucionales ────────────────
+
+        public async Task<List<DtoDepartamentoItem>> GetDepartamentosAsync(CancellationToken ct)
+        {
+            await using var conn = await _masterDb.OpenConnectionAsync(ct);
+            await using var cmd = conn.CreateCommand();
+            cmd.CommandText = @"
+                SELECT departamento, MIN(codigo_departamento) AS codigo_departamento, COUNT(DISTINCT municipio) AS total_municipios
+                FROM secad_unidades
+                WHERE departamento IS NOT NULL AND TRIM(departamento) <> ''
+                GROUP BY departamento
+                ORDER BY departamento ASC";
+
+            var list = new List<DtoDepartamentoItem>();
+            await using var reader = await cmd.ExecuteReaderAsync(ct);
+            while (await reader.ReadAsync(ct))
+            {
+                list.Add(new DtoDepartamentoItem
+                {
+                    Departamento = reader.GetString(0),
+                    CodigoDepartamento = reader.IsDBNull(1) ? null : reader.GetDecimal(1),
+                    TotalMunicipios = Convert.ToInt32(reader.GetInt64(2))
+                });
+            }
+            return list;
+        }
+
+        public async Task<List<DtoMunicipioItem>> GetMunicipiosByDepartamentoAsync(string departamento, CancellationToken ct)
+        {
+            await using var conn = await _masterDb.OpenConnectionAsync(ct);
+            await using var cmd = conn.CreateCommand();
+            cmd.CommandText = @"
+                SELECT consecutivo, municipio, departamento, COALESCE(codigo_dane, '') AS codigo_dane,
+                       sigla_fisica, descripcion_dependencia, desc_regional
+                FROM secad_unidades
+                WHERE UPPER(TRIM(departamento)) = UPPER(TRIM(@dep))
+                  AND municipio IS NOT NULL AND TRIM(municipio) <> ''
+                ORDER BY municipio ASC, consecutivo ASC";
+            cmd.Parameters.AddWithValue("dep", departamento);
+
+            var list = new List<DtoMunicipioItem>();
+            await using var reader = await cmd.ExecuteReaderAsync(ct);
+            while (await reader.ReadAsync(ct))
+            {
+                list.Add(new DtoMunicipioItem
+                {
+                    Consecutivo = reader.GetDecimal(0),
+                    Municipio = reader.GetString(1),
+                    Departamento = reader.GetString(2),
+                    CodigoDane = reader.GetString(3),
+                    SiglaFisica = reader.IsDBNull(4) ? null : reader.GetString(4),
+                    DescripcionDependencia = reader.IsDBNull(5) ? null : reader.GetString(5),
+                    DescRegional = reader.IsDBNull(6) ? null : reader.GetString(6)
+                });
+            }
+            return list;
+        }
+
+        public async Task<DtoUnidadesPaginadas> GetUnidadesAsync(string? filtro, string? departamento, int page, int pageSize, CancellationToken ct)
+        {
+            page = page < 1 ? 1 : page;
+            pageSize = pageSize < 1 ? 20 : (pageSize > 200 ? 200 : pageSize);
+            int offset = (page - 1) * pageSize;
+
+            await using var conn = await _masterDb.OpenConnectionAsync(ct);
+            
+            var whereClauses = new List<string>();
+            await using var cmdCount = conn.CreateCommand();
+            
+            if (!string.IsNullOrWhiteSpace(departamento))
+            {
+                whereClauses.Add("UPPER(TRIM(departamento)) = UPPER(TRIM(@dep))");
+                cmdCount.Parameters.AddWithValue("dep", departamento);
+            }
+            if (!string.IsNullOrWhiteSpace(filtro))
+            {
+                whereClauses.Add("(descripcion_dependencia ILIKE @filtro OR sigla_fisica ILIKE @filtro OR municipio ILIKE @filtro OR codigo_dane ILIKE @filtro OR CAST(consecutivo AS TEXT) ILIKE @filtro)");
+                cmdCount.Parameters.AddWithValue("filtro", $"%{filtro.Trim()}%");
+            }
+
+            string whereSql = whereClauses.Count > 0 ? "WHERE " + string.Join(" AND ", whereClauses) : "";
+
+            cmdCount.CommandText = $"SELECT COUNT(*) FROM secad_unidades {whereSql}";
+            var totalCountObj = await cmdCount.ExecuteScalarAsync(ct);
+            int totalCount = Convert.ToInt32(totalCountObj);
+
+            await using var cmdList = conn.CreateCommand();
+            foreach (NpgsqlParameter p in cmdCount.Parameters)
+            {
+                cmdList.Parameters.AddWithValue(p.ParameterName, p.Value!);
+            }
+            cmdList.CommandText = $@"
+                SELECT consecutivo, fuerza, descripcion_dependencia, vigente, sigla_fisica, sigla_papa,
+                       sigla_depende, departamento, codigo_departamento, municipio, codigo_dane, desc_regional,
+                       cod_regional, direccion, telefono, telefono_ip, email, zona, tipo, tipo_descripcion,
+                       fecha_creacion, fecha_actualiza
+                FROM secad_unidades
+                {whereSql}
+                ORDER BY departamento ASC, municipio ASC, consecutivo ASC
+                LIMIT @limit OFFSET @offset";
+            cmdList.Parameters.AddWithValue("limit", pageSize);
+            cmdList.Parameters.AddWithValue("offset", offset);
+
+            var items = new List<DtoUnidadItem>();
+            await using var reader = await cmdList.ExecuteReaderAsync(ct);
+            while (await reader.ReadAsync(ct))
+            {
+                items.Add(new DtoUnidadItem
+                {
+                    Consecutivo = reader.GetDecimal(0),
+                    Fuerza = reader.IsDBNull(1) ? null : reader.GetDecimal(1),
+                    DescripcionDependencia = reader.GetString(2),
+                    Vigente = reader.IsDBNull(3) ? "SI" : reader.GetString(3),
+                    SiglaFisica = reader.IsDBNull(4) ? null : reader.GetString(4),
+                    SiglaPapa = reader.IsDBNull(5) ? null : reader.GetString(5),
+                    SiglaDepende = reader.IsDBNull(6) ? null : reader.GetString(6),
+                    Departamento = reader.IsDBNull(7) ? null : reader.GetString(7),
+                    CodigoDepartamento = reader.IsDBNull(8) ? null : reader.GetDecimal(8),
+                    Municipio = reader.IsDBNull(9) ? null : reader.GetString(9),
+                    CodigoDane = reader.IsDBNull(10) ? null : reader.GetString(10),
+                    DescRegional = reader.IsDBNull(11) ? null : reader.GetString(11),
+                    CodRegional = reader.IsDBNull(12) ? null : reader.GetDecimal(12),
+                    Direccion = reader.IsDBNull(13) ? null : reader.GetString(13),
+                    Telefono = reader.IsDBNull(14) ? null : reader.GetString(14),
+                    TelefonoIp = reader.IsDBNull(15) ? null : reader.GetString(15),
+                    Email = reader.IsDBNull(16) ? null : reader.GetString(16),
+                    Zona = reader.IsDBNull(17) ? null : reader.GetString(17),
+                    Tipo = reader.IsDBNull(18) ? null : reader.GetString(18),
+                    TipoDescripcion = reader.IsDBNull(19) ? null : reader.GetString(19),
+                    FechaCreacion = reader.IsDBNull(20) ? null : reader.GetDateTime(20),
+                    FechaActualiza = reader.IsDBNull(21) ? null : reader.GetDateTime(21)
+                });
+            }
+
+            return new DtoUnidadesPaginadas
+            {
+                Items = items,
+                TotalCount = totalCount,
+                Page = page,
+                PageSize = pageSize
+            };
+        }
+
+        public async Task<(bool success, string message, decimal consecutivo)> SaveUnidadAsync(DtoUnidadSaveRequest request, string usuarioAuditoria, CancellationToken ct)
+        {
+            await using var conn = await _masterDb.OpenConnectionAsync(ct);
+            decimal consecutivo = request.Consecutivo ?? 0;
+
+            if (consecutivo <= 0)
+            {
+                await using var cmdNext = conn.CreateCommand();
+                cmdNext.CommandText = "SELECT COALESCE(MAX(consecutivo), 0) + 1 FROM secad_unidades";
+                var res = await cmdNext.ExecuteScalarAsync(ct);
+                consecutivo = Convert.ToDecimal(res);
+            }
+
+            await using var cmd = conn.CreateCommand();
+            cmd.CommandText = @"
+                INSERT INTO secad_unidades (
+                    consecutivo, fuerza, descripcion_dependencia, vigente, sigla_fisica, sigla_papa,
+                    departamento, codigo_departamento, municipio, codigo_dane, desc_regional, cod_regional,
+                    direccion, telefono, telefono_ip, email, zona, tipo, tipo_descripcion,
+                    creado_por, fecha_creacion, actualizado_por, fecha_actualiza
+                ) VALUES (
+                    @consecutivo, @fuerza, @descripcion, @vigente, @siglaFisica, @siglaPapa,
+                    @departamento, @codDepartamento, @municipio, @codigoDane, @descRegional, @codRegional,
+                    @direccion, @telefono, @telefonoIp, @email, @zona, @tipo, @tipoDescripcion,
+                    @usuario, NOW(), @usuario, NOW()
+                )
+                ON CONFLICT (consecutivo) DO UPDATE SET
+                    fuerza = EXCLUDED.fuerza,
+                    descripcion_dependencia = EXCLUDED.descripcion_dependencia,
+                    vigente = EXCLUDED.vigente,
+                    sigla_fisica = EXCLUDED.sigla_fisica,
+                    sigla_papa = EXCLUDED.sigla_papa,
+                    departamento = EXCLUDED.departamento,
+                    codigo_departamento = EXCLUDED.codigo_departamento,
+                    municipio = EXCLUDED.municipio,
+                    codigo_dane = EXCLUDED.codigo_dane,
+                    desc_regional = EXCLUDED.desc_regional,
+                    cod_regional = EXCLUDED.cod_regional,
+                    direccion = EXCLUDED.direccion,
+                    telefono = EXCLUDED.telefono,
+                    telefono_ip = EXCLUDED.telefono_ip,
+                    email = EXCLUDED.email,
+                    zona = EXCLUDED.zona,
+                    tipo = EXCLUDED.tipo,
+                    tipo_descripcion = EXCLUDED.tipo_descripcion,
+                    actualizado_por = EXCLUDED.actualizado_por,
+                    fecha_actualiza = NOW()";
+
+            cmd.Parameters.AddWithValue("consecutivo", consecutivo);
+            cmd.Parameters.AddWithValue("fuerza", (object?)request.Fuerza ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("descripcion", request.DescripcionDependencia.Trim());
+            cmd.Parameters.AddWithValue("vigente", string.IsNullOrWhiteSpace(request.Vigente) ? "SI" : request.Vigente.Trim().ToUpper());
+            cmd.Parameters.AddWithValue("siglaFisica", (object?)request.SiglaFisica?.Trim() ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("siglaPapa", (object?)request.SiglaPapa?.Trim() ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("departamento", request.Departamento.Trim());
+            cmd.Parameters.AddWithValue("codDepartamento", (object?)request.CodigoDepartamento ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("municipio", request.Municipio.Trim());
+            cmd.Parameters.AddWithValue("codigoDane", request.CodigoDane.Trim());
+            cmd.Parameters.AddWithValue("descRegional", (object?)request.DescRegional?.Trim() ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("codRegional", (object?)request.CodRegional ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("direccion", (object?)request.Direccion?.Trim() ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("telefono", (object?)request.Telefono?.Trim() ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("telefonoIp", (object?)request.TelefonoIp?.Trim() ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("email", (object?)request.Email?.Trim() ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("zona", (object?)request.Zona?.Trim() ?? "UR");
+            cmd.Parameters.AddWithValue("tipo", (object?)request.Tipo?.Trim() ?? "DE");
+            cmd.Parameters.AddWithValue("tipoDescripcion", (object?)request.TipoDescripcion?.Trim() ?? "CM");
+            cmd.Parameters.AddWithValue("usuario", string.IsNullOrWhiteSpace(usuarioAuditoria) ? "SISTEMA" : usuarioAuditoria);
+
+            await cmd.ExecuteNonQueryAsync(ct);
+            return (true, "Unidad institucional guardada correctamente.", consecutivo);
+        }
+
+        public async Task<(bool success, string message)> ToggleUnidadVigenteAsync(decimal consecutivo, CancellationToken ct)
+        {
+            await using var conn = await _masterDb.OpenConnectionAsync(ct);
+            await using var cmd = conn.CreateCommand();
+            cmd.CommandText = @"
+                UPDATE secad_unidades
+                SET vigente = CASE WHEN UPPER(vigente) = 'SI' THEN 'NO' ELSE 'SI' END,
+                    fecha_actualiza = NOW()
+                WHERE consecutivo = @consecutivo
+                RETURNING vigente";
+            cmd.Parameters.AddWithValue("consecutivo", consecutivo);
+
+            var res = await cmd.ExecuteScalarAsync(ct);
+            if (res == null)
+                return (false, "Unidad no encontrada.");
+
+            return (true, $"Vigencia actualizada a '{res}'.");
+        }
+
         // ── Mappers ────────────────────────────────────────────────────────────
 
         // Columnas (0-11): id, cod_dane, cod_unidad, nombre, departamento, municipio,

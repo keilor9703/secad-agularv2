@@ -3,7 +3,10 @@ import {
   inject, signal, computed
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { SuperAdminService, TenantPublico, TenantRequest } from '../../../../core/services/super-admin.service';
+import {
+  SuperAdminService, TenantPublico, TenantRequest,
+  DepartamentoItem, MunicipioItem
+} from '../../../../core/services/super-admin.service';
 import { ToastService } from '../../../../core/services/toast.service';
 
 import { UiPageHeaderComponent } from '../../../../shared/components/ui-page-header/ui-page-header.component';
@@ -45,6 +48,12 @@ export class TenantsPageComponent implements OnInit {
   readonly modalMode = signal<ModalMode>('create');
   readonly editId    = signal(0);
 
+  // Departamentos y municipios institucionales desde Master
+  readonly departamentos = signal<DepartamentoItem[]>([]);
+  readonly cargandoDepartamentos = signal(false);
+  readonly municipios = signal<MunicipioItem[]>([]);
+  readonly cargandoMunicipios = signal(false);
+
   readonly form = this.fb.nonNullable.group({
     codDane:      ['', [Validators.required]],
     codUnidad:    [''],
@@ -59,6 +68,30 @@ export class TenantsPageComponent implements OnInit {
     dbUsername:   [''],
     dbPassword:   [''],
     activo:       [true]
+  });
+
+  readonly opcionesDepartamento = computed<UiSelectOption<string>[]>(() => {
+    const list: UiSelectOption<string>[] = this.departamentos().map(d => ({
+      label: d.departamento,
+      value: d.departamento
+    }));
+    const cur = this.form.controls.departamento.value;
+    if (cur && !list.some(o => o.value.toUpperCase() === cur.toUpperCase())) {
+      list.unshift({ label: cur, value: cur });
+    }
+    return list;
+  });
+
+  readonly opcionesMunicipio = computed<UiSelectOption<string>[]>(() => {
+    const list: UiSelectOption<string>[] = this.municipios().map(m => ({
+      label: `${m.municipio} (${m.codigoDane})`,
+      value: m.municipio
+    }));
+    const cur = this.form.controls.municipio.value;
+    if (cur && !list.some(o => o.value.toUpperCase() === cur.toUpperCase())) {
+      list.unshift({ label: cur, value: cur });
+    }
+    return list;
   });
 
   // ── Tabla ────────────────────────────────────────────────────────────────
@@ -124,6 +157,13 @@ export class TenantsPageComponent implements OnInit {
       }
     ];
 
+    this.form.controls.departamento.valueChanges.subscribe(dep => {
+      this.onDepartamentoChange(dep);
+    });
+    this.form.controls.municipio.valueChanges.subscribe(mun => {
+      this.onMunicipioChange(mun);
+    });
+
     this.load();
   }
 
@@ -143,12 +183,66 @@ export class TenantsPageComponent implements OnInit {
     });
   }
 
+  cargarDepartamentos(): void {
+    if (this.departamentos().length > 0) return;
+    this.cargandoDepartamentos.set(true);
+    this.service.getDepartamentos().subscribe({
+      next: deps => {
+        this.departamentos.set(deps);
+        this.cargandoDepartamentos.set(false);
+      },
+      error: () => this.cargandoDepartamentos.set(false)
+    });
+  }
+
+  cargarMunicipios(dep: string): void {
+    if (!dep) {
+      this.municipios.set([]);
+      return;
+    }
+    this.cargandoMunicipios.set(true);
+    this.service.getMunicipios(dep).subscribe({
+      next: muns => {
+        this.municipios.set(muns);
+        this.cargandoMunicipios.set(false);
+      },
+      error: () => {
+        this.municipios.set([]);
+        this.cargandoMunicipios.set(false);
+      }
+    });
+  }
+
+  onDepartamentoChange(dep: string): void {
+    if (!dep) {
+      this.municipios.set([]);
+      return;
+    }
+    this.cargarMunicipios(dep);
+  }
+
+  onMunicipioChange(munNombre: string): void {
+    if (!munNombre) return;
+    if (this.modalMode() !== 'create') return;
+    const item = this.municipios().find(m => m.municipio.toUpperCase() === munNombre.toUpperCase());
+    if (item) {
+      if (item.codigoDane) this.form.controls.codDane.setValue(item.codigoDane);
+      if (item.siglaFisica) this.form.controls.codUnidad.setValue(item.siglaFisica);
+      const curNombre = this.form.controls.nombre.value.trim();
+      if (!curNombre || curNombre.startsWith('CAD ')) {
+        this.form.controls.nombre.setValue(`CAD ${item.municipio}`);
+      }
+    }
+  }
+
   openCreate(): void {
     this.form.reset(this.emptyForm());
     this.intentoGuardar.set(false);
     this.modalMode.set('create');
     this.editId.set(0);
+    this.municipios.set([]);
     this.showModal.set(true);
+    this.cargarDepartamentos();
   }
 
   openEdit(t: TenantPublico): void {
@@ -171,6 +265,12 @@ export class TenantsPageComponent implements OnInit {
       activo:       t.activo
     });
     this.showModal.set(true);
+    this.cargarDepartamentos();
+    if (t.departamento) {
+      this.cargarMunicipios(t.departamento);
+    } else {
+      this.municipios.set([]);
+    }
   }
 
   closeModal(): void {

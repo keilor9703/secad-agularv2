@@ -64,6 +64,7 @@ export const APP_ROUTE_CATALOG: readonly AppRouteCatalogItem[] = [
   // filtra por rol es la base (ctr_menu_roles) y, en la ruta, superAdminGuard.
   { route: '/super/tenants', label: 'Gestión de Tenants', area: 'Super Admin' },
   { route: '/super/salud-cads', label: 'Salud de CADs', area: 'Super Admin' },
+  { route: '/super/unidades', label: 'Unidades y Municipios', area: 'Super Admin' },
 
   // ── Operación ────────────────────────────────────────────────────────────
   // Solo lo ya portado. Al portar eventos o pedido, agregarlos aquí o no

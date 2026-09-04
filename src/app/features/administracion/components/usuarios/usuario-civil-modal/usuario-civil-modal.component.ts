@@ -6,6 +6,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { UsuarioAdminService } from '../../../services/usuario-admin.service';
+import { FuerzaService, DtoFuerza } from '../../../services/fuerza.service';
 import { ToastService } from '../../../../../core/services/toast.service';
 import { UiModalComponent } from '../../../../../shared/components/ui-modal/ui-modal.component';
 import { UiInputComponent } from '../../../../../shared/components/ui-input/ui-input.component';
@@ -38,12 +39,16 @@ const MIN_PASSWORD = 8;
 })
 export class UsuarioCivilModalComponent {
   private readonly usuarioAdminService = inject(UsuarioAdminService);
+  private readonly fuerzaService = inject(FuerzaService);
   private readonly toast = inject(ToastService);
   private readonly fb = inject(FormBuilder);
 
   @Input() set abierto(valor: boolean) {
     this._abierto = valor;
-    if (valor) this.limpiar();
+    if (valor) {
+      this.limpiar();
+      this.cargarEntidades();
+    }
   }
   get abierto(): boolean { return this._abierto; }
   private _abierto = false;
@@ -55,6 +60,8 @@ export class UsuarioCivilModalComponent {
   readonly guardando = signal(false);
   readonly verPassword = signal(false);
   readonly intentoGuardar = signal(false);
+  readonly cargandoEntidades = signal(false);
+  readonly fuerzas = signal<DtoFuerza[]>([]);
 
   readonly form = this.fb.nonNullable.group({
     username:       ['', [Validators.required]],
@@ -63,10 +70,18 @@ export class UsuarioCivilModalComponent {
     nombres:        ['', [Validators.required]],
     apellidos:      ['', [Validators.required]],
     email:          [''],
-    entidad:        [''],
+    entidad:        ['', [Validators.required]],
     cargo:          [''],
     activo:         [true],
   });
+
+  readonly opcionesEntidad = computed<UiSelectOption<string>[]>(() =>
+    this.fuerzas()
+      .filter((f) => f.vigente === 'S')
+      .map((f) => ({ label: f.descripcion, value: f.descripcion }))
+  );
+
+  readonly tieneEntidades = computed(() => this.opcionesEntidad().length > 0);
 
   readonly opcionesEstado: UiSelectOption<boolean>[] = [
     { label: 'Activo',   value: true  },
@@ -86,6 +101,12 @@ export class UsuarioCivilModalComponent {
     this.intentoGuardar() && !this.form.controls.apellidos.value.trim()
       ? 'Los apellidos son obligatorios.' : '');
 
+  readonly errorEntidad = computed(() => {
+    if (!this.intentoGuardar()) return '';
+    if (!this.tieneEntidades()) return 'Primero debe registrar una entidad.';
+    return !this.form.controls.entidad.value.trim() ? 'La entidad es obligatoria.' : '';
+  });
+
   readonly errorPassword = computed(() => {
     if (!this.intentoGuardar()) return '';
     const p = this.form.controls.password.value.trim();
@@ -98,11 +119,37 @@ export class UsuarioCivilModalComponent {
     this.verPassword.update(v => !v);
   }
 
+  cargarEntidades(): void {
+    this.cargandoEntidades.set(true);
+    this.fuerzaService.getFuerzas().subscribe({
+      next: (resp) => {
+        this.cargandoEntidades.set(false);
+        const lista = resp?.data ?? [];
+        this.fuerzas.set(lista);
+        if (this.tieneEntidades()) {
+          this.form.controls.entidad.enable();
+        } else {
+          this.form.controls.entidad.disable();
+        }
+      },
+      error: () => {
+        this.cargandoEntidades.set(false);
+        this.fuerzas.set([]);
+        this.form.controls.entidad.disable();
+      },
+    });
+  }
+
   private limpiar(): void {
     this.form.reset({
       username: '', password: '', identificacion: '', nombres: '',
       apellidos: '', email: '', entidad: '', cargo: '', activo: true,
     });
+    if (!this.tieneEntidades()) {
+      this.form.controls.entidad.disable();
+    } else {
+      this.form.controls.entidad.enable();
+    }
     this.verPassword.set(false);
     this.intentoGuardar.set(false);
   }
@@ -114,8 +161,13 @@ export class UsuarioCivilModalComponent {
 
   guardar(): void {
     this.intentoGuardar.set(true);
+    if (!this.tieneEntidades()) {
+      this.toast.warning('Entidad requerida', 'No hay entidades registradas. Debe crear primero una entidad en Administración > Entidades / Fuerzas.');
+      return;
+    }
+
     if (this.errorUsername() || this.errorNombres() ||
-        this.errorApellidos() || this.errorPassword()) return;
+        this.errorApellidos() || this.errorEntidad() || this.errorPassword()) return;
 
     const v = this.form.getRawValue();
     this.guardando.set(true);
