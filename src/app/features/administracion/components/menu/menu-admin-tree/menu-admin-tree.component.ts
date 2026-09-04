@@ -8,6 +8,7 @@ import {
   input,
   output,
   signal,
+  untracked,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
@@ -92,10 +93,16 @@ export class MenuAdminTreeComponent {
   readonly visibleRows = computed<MenuTreeRow[]>(() => this.buildVisibleRows());
 
   constructor() {
+    // Este efecto ESCRIBE expandedIds, así que no puede LEERLA de forma
+    // reactiva: cada escritura lo volvería a disparar. Dos salvaguardas, y
+    // las dos hacen falta —ver la explicación de cada una abajo.
     effect(() => {
       const items = this.items().filter((item) => !this.isSentinelRoot(item));
       const validIds = new Set(items.map((item) => item.idMenu));
-      const current = this.expandedIds();
+
+      // 1. `untracked`: leer sin suscribirse. Sin esto, el efecto depende de
+      //    la señal que él mismo escribe y se realimenta.
+      const current = untracked(() => this.expandedIds());
       const normalized = new Set([...current].filter((id) => validIds.has(id)));
 
       if (!this.expansionInitialized && items.length > 0) {
@@ -113,7 +120,19 @@ export class MenuAdminTreeComponent {
         this.expansionInitialized = true;
       }
 
-      if (normalized.size !== current.size || !this.expansionInitialized) {
+      // 2. Escribir solo si el CONTENIDO cambió. Una señal compara por
+      //    referencia, y un Set recién construido siempre es una referencia
+      //    nueva: escribirlo «por si acaso» notifica aunque no haya cambiado
+      //    nada. La condición anterior era
+      //        normalized.size !== current.size || !this.expansionInitialized
+      //    y ese segundo término se cumplía siempre mientras la lista llegaba
+      //    vacía —justo al entrar al módulo, con la petición en vuelo—, de
+      //    modo que el efecto se reescribía a sí mismo sin fin y la pestaña
+      //    se congelaba antes de que llegara la respuesta.
+      const cambio =
+        normalized.size !== current.size || [...normalized].some((id) => !current.has(id));
+
+      if (cambio) {
         this.expandedIds.set(normalized);
       }
     });
