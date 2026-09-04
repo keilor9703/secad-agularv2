@@ -249,6 +249,33 @@ namespace Api.Controllers
             return Ok(new { success, message, consecutivo = id });
         }
 
+        /// <summary>
+        /// Importación masiva de unidades desde el Excel de la pantalla.
+        /// Todo el archivo va en una transacción; una fila inválida se informa
+        /// con su número de fila pero no tumba a las demás.
+        /// </summary>
+        /// <remarks>
+        /// POST api/SuperAdmin/unidades/importar
+        /// Body: [{ "fila": 2, "descripcionDependencia": "…", "departamento": "…",
+        ///          "municipio": "…", "codigoDane": "…" }, …]
+        /// </remarks>
+        [HttpPost("unidades/importar")]
+        public async Task<IActionResult> ImportarUnidades([FromBody] List<DtoUnidadImportItem> items, CancellationToken ct)
+        {
+            if (items is null || items.Count == 0)
+                return BadRequest(new { success = false, message = "El archivo no trae filas para importar." });
+
+            // Tope de seguridad: el catálogo DANE completo ronda las 1.100 filas,
+            // así que 5.000 deja margen de sobra y evita que una subida absurda
+            // mantenga una transacción abierta indefinidamente.
+            if (items.Count > 5000)
+                return BadRequest(new { success = false, message = "El archivo supera las 5.000 filas por importación." });
+
+            var usuario = User.Identity?.Name ?? "SISTEMA";
+            var resultado = await _masterRepo.ImportarUnidadesAsync(items, usuario, ct);
+            return Ok(resultado);
+        }
+
         /// <summary>Alterna la vigencia (activo/inactivo) de una unidad institucional.</summary>
         [HttpPatch("unidades/{consecutivo:decimal}/toggle")]
         public async Task<IActionResult> ToggleUnidad(decimal consecutivo, CancellationToken ct)

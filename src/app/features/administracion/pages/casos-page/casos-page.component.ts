@@ -36,6 +36,7 @@ import {
   UiTableColumn,
 } from '../../../../shared/interfaces/ui-table.interface';
 import { UiSelectOption } from '../../../../shared/interfaces/ui-select-option.interface';
+import { cargarExcelJS, descargarLibroExcel } from '../../../../shared/utils/exceljs-loader.util';
 
 type ModalMode = 'create' | 'edit';
 
@@ -300,19 +301,9 @@ export class CasosPageComponent implements OnInit {
     this.resultadoImport.set(null);
   }
 
-  /**
-   * ExcelJS se carga solo cuando de verdad se va a leer o escribir un libro.
-   * Importado arriba de forma estática se llevaba casi 700 kB al paquete de
-   * esta pantalla, que el navegador descargaba al ENTRAR aunque nadie fuera a
-   * importar ni exportar nada.
-   */
-  private async cargarExcelJS(): Promise<typeof import('exceljs')> {
-    return import('exceljs');
-  }
-
   /** Primera hoja: columna A = código, columna B = descripción, fila 1 = encabezado. */
   private async leerExcel(file: File): Promise<{ codigo: string; descripcion: string }[]> {
-    const ExcelJS = await this.cargarExcelJS();
+    const ExcelJS = await cargarExcelJS();
     const workbook = new ExcelJS.Workbook();
     await workbook.xlsx.load(await file.arrayBuffer());
 
@@ -337,7 +328,7 @@ export class CasosPageComponent implements OnInit {
   }
 
   async descargarPlantilla(): Promise<void> {
-    const ExcelJS = await this.cargarExcelJS();
+    const ExcelJS = await cargarExcelJS();
     const workbook = new ExcelJS.Workbook();
     const hoja = workbook.addWorksheet('Códigos de caso');
     hoja.columns = [
@@ -347,15 +338,9 @@ export class CasosPageComponent implements OnInit {
     hoja.addRow({ codigo: '904', descripcion: 'Hurto calificado' });
     hoja.addRow({ codigo: '934', descripcion: 'Riña' });
 
-    const buffer = await workbook.xlsx.writeBuffer();
-    const blob = new Blob([buffer], {
-      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'plantilla_codigos_caso.xlsx';
-    a.click();
-    URL.revokeObjectURL(url);
+    descargarLibroExcel(
+      await workbook.xlsx.writeBuffer() as ArrayBuffer,
+      'plantilla_codigos_caso.xlsx',
+    );
   }
 }

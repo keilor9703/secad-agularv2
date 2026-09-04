@@ -5,7 +5,11 @@
     title="Unidades y Municipios"
     subtitle="Catálogo maestro de unidades institucionales, departamentos, municipios y códigos DANE"
   >
-    <div actions class="und-acciones-header">
+    <!-- El slot de este encabezado es `page-header-actions`. Con `actions`
+         a secas, Angular no proyectaba NADA: la pantalla llevaba sus botones
+         escritos pero invisibles, así que no había forma de crear una unidad
+         ni de refrescar la lista. -->
+    <div page-header-actions class="und-acciones-header">
       <app-ui-button
         variant="secondary"
         appearance="ghost"
@@ -14,6 +18,24 @@
         [disabled]="loading()"
         (buttonClick)="cargarUnidades()"
       >Refrescar</app-ui-button>
+
+      <app-ui-button
+        variant="secondary"
+        appearance="ghost"
+        icon="fa-solid fa-file-arrow-down"
+        tooltip="Descargar en Excel todo lo que cumple el filtro actual"
+        [loading]="exportando()"
+        [disabled]="exportando() || loading()"
+        (buttonClick)="exportar()"
+      >Exportar</app-ui-button>
+
+      <app-ui-button
+        variant="secondary"
+        appearance="ghost"
+        icon="fa-solid fa-file-arrow-up"
+        tooltip="Cargar unidades desde un archivo de Excel"
+        (buttonClick)="abrirImportar()"
+      >Importar</app-ui-button>
 
       <app-ui-button
         variant="primary"
@@ -281,5 +303,81 @@
       [disabled]="saving()"
       (buttonClick)="save()"
     >{{ saving() ? 'Guardando…' : 'Guardar unidad' }}</app-ui-button>
+  </div>
+</app-ui-modal>
+
+<!-- ═══ Importar desde Excel ══════════════════════════════════════════════ -->
+<app-ui-modal
+  [open]="showImportar()"
+  title="Importar unidades desde Excel"
+  icon="fa-solid fa-file-arrow-up"
+  size="md"
+  (closeRequested)="cerrarImportar()"
+>
+  <div modal-body class="und-importar">
+    <app-ui-section-header
+      title="Cómo tiene que venir el archivo"
+      icon="fa-solid fa-circle-info"
+      description="Primera hoja, fila 1 de encabezado y las columnas en el orden de la plantilla. La columna «Consecutivo» decide qué pasa con cada fila: con un consecutivo existente ACTUALIZA esa unidad; en blanco, se busca por código DANE y dependencia, y si no aparece se CREA."
+      appearance="divider"
+    >
+      <app-ui-button
+        header-actions
+        variant="secondary"
+        appearance="ghost"
+        size="sm"
+        icon="fa-solid fa-download"
+        (buttonClick)="descargarPlantilla()"
+      >Descargar plantilla</app-ui-button>
+    </app-ui-section-header>
+
+    <p class="und-importar__aviso">
+      <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
+      El archivo entero se guarda en una sola transacción: si algo falla a
+      mitad, no queda el catálogo cargado a medias. Un exportado de esta misma
+      pantalla se puede corregir y volver a importar sin duplicar nada.
+    </p>
+
+    <app-ui-file-upload
+      label="Archivo de unidades"
+      accept=".xlsx"
+      buttonText="Elegir archivo…"
+      emptyText="Ningún archivo seleccionado"
+      hint="Solo .xlsx; se importa al elegirlo."
+      [fileName]="nombreArchivo()"
+      [loading]="importando()"
+      (fileSelected)="onArchivo($event)"
+      (clearRequested)="limpiarArchivo()"
+    />
+
+    @if (resultadoImport(); as r) {
+      <div class="und-resultado" [class.und-resultado--error]="!r.success">
+        <p class="und-resultado__cifras">
+          <strong>{{ r.creadas }}</strong> creada(s) ·
+          <strong>{{ r.actualizadas }}</strong> actualizada(s)
+          @if (r.errores.length) {
+            · <strong>{{ r.errores.length }}</strong> sin importar
+          }
+        </p>
+        @if (r.errores.length) {
+          <!-- Con desplazamiento propio: un archivo de cientos de filas puede
+               fallar en muchas y la lista no debe estirar el modal. -->
+          <ul class="und-resultado__errores">
+            @for (e of r.errores; track e.fila) {
+              <li>
+                <strong>Fila {{ e.fila }}</strong>
+                @if (e.descripcion) { — {{ e.descripcion }} }
+                : {{ e.motivo }}
+              </li>
+            }
+          </ul>
+        }
+      </div>
+    }
+  </div>
+
+  <div modal-actions>
+    <app-ui-button variant="secondary" appearance="ghost"
+                   (buttonClick)="cerrarImportar()">Cerrar</app-ui-button>
   </div>
 </app-ui-modal>

@@ -3,10 +3,11 @@ import {
   inject, signal, computed
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { firstValueFrom } from 'rxjs';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import {
   SuperAdminService, UnidadItem, UnidadSaveRequest,
-  DepartamentoItem
+  DepartamentoItem, UnidadImportItem, ImportarUnidadesResult
 } from '../../../../core/services/super-admin.service';
 import { ToastService } from '../../../../core/services/toast.service';
 
@@ -18,6 +19,8 @@ import { UiInputComponent } from '../../../../shared/components/ui-input/ui-inpu
 import { UiSelectComponent } from '../../../../shared/components/ui-select/ui-select.component';
 import { UiBadgeComponent } from '../../../../shared/components/ui-badge/ui-badge.component';
 import { UiSectionHeaderComponent } from '../../../../shared/components/ui-section-header/ui-section-header.component';
+import { UiFileUploadComponent } from '../../../../shared/components/ui-file-upload/ui-file-upload.component';
+import { cargarExcelJS, descargarLibroExcel } from '../../../../shared/utils/exceljs-loader.util';
 import { UiTableAction, UiTableActionEvent, UiTableColumn } from '../../../../shared/interfaces/ui-table.interface';
 import { UiSelectOption } from '../../../../shared/interfaces/ui-select-option.interface';
 
@@ -31,7 +34,8 @@ type ModalMode = 'create' | 'edit';
   imports: [
     CommonModule, ReactiveFormsModule,
     UiPageHeaderComponent, UiButtonComponent, UiTableComponent, UiModalComponent,
-    UiInputComponent, UiSelectComponent, UiBadgeComponent, UiSectionHeaderComponent
+    UiInputComponent, UiSelectComponent, UiBadgeComponent, UiSectionHeaderComponent,
+    UiFileUploadComponent
   ],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
@@ -57,6 +61,13 @@ export class UnidadesPageComponent implements OnInit {
     texto: [''],
     departamento: [''],
   });
+
+  // ── Excel ─────────────────────────────────────────────────────────────────
+  readonly showImportar   = signal(false);
+  readonly importando     = signal(false);
+  readonly exportando     = signal(false);
+  readonly nombreArchivo  = signal('');
+  readonly resultadoImport = signal<ImportarUnidadesResult | null>(null);
 
   // Modal
   readonly showModal = signal(false);
@@ -312,6 +323,241 @@ export class UnidadesPageComponent implements OnInit {
         this.toast.error('Error', err?.error?.message || 'Error al guardar la unidad institucional.');
       }
     });
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  //  Excel: exportar, plantilla e importar
+  // ══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Las columnas del archivo, en orden. Es la MISMA lista para exportar, para
+   * la plantilla y para leer al importar: si se toca aquí, las tres cosas se
+   * mueven juntas y no hay forma de que un exportado deje de poder importarse.
+   *
+   * `consecutivo` va primero a propósito: es lo que permite exportar, corregir
+   * en Excel y volver a importar sin duplicar nada.
+   */
+  private static readonly COLUMNAS: { header: string; campo: keyof UnidadItem; ancho: number }[] = [
+    { header: 'Consecutivo',            campo: 'consecutivo',            ancho: 14 },
+    { header: 'Dependencia',            campo: 'descripcionDependencia', ancho: 46 },
+    { header: 'Sigla física',           campo: 'siglaFisica',            ancho: 18 },
+    { header: 'Sigla papá',             campo: 'siglaPapa',              ancho: 18 },
+    { header: 'Departamento',           campo: 'departamento',           ancho: 24 },
+    { header: 'Código departamento',    campo: 'codigoDepartamento',     ancho: 20 },
+    { header: 'Municipio',              campo: 'municipio',              ancho: 26 },
+    { header: 'Código DANE',            campo: 'codigoDane',             ancho: 14 },
+    { header: 'Regional',               campo: 'descRegional',           ancho: 24 },
+    { header: 'Código regional',        campo: 'codRegional',            ancho: 16 },
+    { header: 'Dirección',              campo: 'direccion',              ancho: 34 },
+    { header: 'Teléfono',               campo: 'telefono',               ancho: 16 },
+    { header: 'Teléfono IP',            campo: 'telefonoIp',             ancho: 16 },
+    { header: 'Correo',                 campo: 'email',                  ancho: 28 },
+    { header: 'Zona',                   campo: 'zona',                   ancho: 8  },
+    { header: 'Vigente',                campo: 'vigente',                ancho: 10 },
+    { header: 'Fuerza',                 campo: 'fuerza',                 ancho: 10 },
+  ];
+
+  private hoja(workbook: import('exceljs').Workbook): import('exceljs').Worksheet {
+    const hoja = workbook.addWorksheet('Unidades');
+    hoja.columns = UnidadesPageComponent.COLUMNAS.map(c => ({
+      header: c.header, key: String(c.campo), width: c.ancho,
+    }));
+    hoja.getRow(1).font = { bold: true };
+    hoja.views = [{ state: 'frozen', ySplit: 1 }];
+    return hoja;
+  }
+
+  /**
+   * Exporta TODO lo que cumple los filtros de la pantalla, no solo la página
+   * a la vista: exportar 15 de 1.100 municipios no le sirve a nadie.
+   */
+  async exportar(): Promise<void> {
+    if (this.exportando()) return;
+    this.exportando.set(true);
+    try {
+      const filas = await this.traerTodasLasUnidades();
+      if (filas.length === 0) {
+        this.toast.warning('Exportar', 'No hay unidades que cumplan el filtro actual.');
+        return;
+      }
+
+      const ExcelJS = await cargarExcelJS();
+      const workbook = new ExcelJS.Workbook();
+      const hoja = this.hoja(workbook);
+      for (const u of filas) {
+        const fila: Record<string, unknown> = {};
+        for (const c of UnidadesPageComponent.COLUMNAS) fila[String(c.campo)] = u[c.campo] ?? '';
+        hoja.addRow(fila);
+      }
+
+      const sufijo = new Date().toISOString().slice(0, 10);
+      descargarLibroExcel(await workbook.xlsx.writeBuffer() as ArrayBuffer, `unidades_${sufijo}.xlsx`);
+      this.toast.success('Exportar', `${filas.length} unidad(es) exportada(s).`);
+    } catch {
+      this.toast.error('Exportar', 'No se pudo generar el archivo.');
+    } finally {
+      this.exportando.set(false);
+    }
+  }
+
+  /** Recorre la paginación del backend hasta juntar el listado completo. */
+  private async traerTodasLasUnidades(): Promise<UnidadItem[]> {
+    const TAMANO = 500;
+    const todas: UnidadItem[] = [];
+    let pagina = 1;
+    let total = 0;
+
+    do {
+      const resp = await firstValueFrom(this.service.getUnidades({
+        filtro: this.filtroTexto().trim() || undefined,
+        departamento: this.filtroDepartamento().trim() || undefined,
+        page: pagina,
+        pageSize: TAMANO,
+      }));
+      total = resp.totalCount;
+      todas.push(...resp.items);
+      pagina++;
+      // Cortafuegos: si el backend devolviera una página vacía, no se gira
+      // indefinidamente esperando llegar a totalCount.
+      if (resp.items.length === 0) break;
+    } while (todas.length < total);
+
+    return todas;
+  }
+
+  async descargarPlantilla(): Promise<void> {
+    const ExcelJS = await cargarExcelJS();
+    const workbook = new ExcelJS.Workbook();
+    const hoja = this.hoja(workbook);
+    hoja.addRow({
+      consecutivo: '', descripcionDependencia: 'ESTACION DE POLICIA EJEMPLO',
+      siglaFisica: 'EPEJE', siglaPapa: '', departamento: 'CUNDINAMARCA',
+      codigoDepartamento: 25, municipio: 'SOACHA', codigoDane: '25754',
+      descRegional: 'REGIONAL 1', codRegional: 1, direccion: 'Calle 1 # 2-3',
+      telefono: '6011234567', telefonoIp: '', email: 'ejemplo@policia.gov.co',
+      zona: 'UR', vigente: 'SI', fuerza: 6,
+    });
+    descargarLibroExcel(await workbook.xlsx.writeBuffer() as ArrayBuffer, 'plantilla_unidades.xlsx');
+  }
+
+  abrirImportar(): void {
+    this.nombreArchivo.set('');
+    this.resultadoImport.set(null);
+    this.showImportar.set(true);
+  }
+
+  cerrarImportar(): void {
+    this.showImportar.set(false);
+  }
+
+  limpiarArchivo(): void {
+    this.nombreArchivo.set('');
+    this.resultadoImport.set(null);
+  }
+
+  async onArchivo(file: File): Promise<void> {
+    this.nombreArchivo.set(file.name);
+    this.importando.set(true);
+    this.resultadoImport.set(null);
+
+    let items: UnidadImportItem[];
+    try {
+      items = await this.leerExcel(file);
+    } catch {
+      this.importando.set(false);
+      this.toast.error('Importar', 'No se pudo leer el archivo. Compruebe que sea un Excel (.xlsx) válido.');
+      return;
+    }
+
+    if (items.length === 0) {
+      this.importando.set(false);
+      this.toast.warning('Importar', 'El archivo no tiene filas para importar.');
+      return;
+    }
+
+    this.service.importarUnidades(items).subscribe({
+      next: resp => {
+        this.importando.set(false);
+        this.resultadoImport.set(resp);
+        if (resp.success) {
+          this.toast.success('Importar', resp.message);
+        } else {
+          this.toast.warning('Importar', resp.message);
+        }
+        this.cargarUnidades();
+        this.cargarDepartamentos();
+      },
+      error: err => {
+        this.importando.set(false);
+        this.toast.error('Importar', err?.error?.message ?? 'Error al importar el archivo.');
+      },
+    });
+  }
+
+  /**
+   * Lee la primera hoja con las columnas de COLUMNAS, en ese orden y con la
+   * fila 1 de encabezado. Se salta las filas totalmente vacías, que es lo que
+   * suele quedar al final de un archivo editado a mano.
+   */
+  private async leerExcel(file: File): Promise<UnidadImportItem[]> {
+    const ExcelJS = await cargarExcelJS();
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.load(await file.arrayBuffer());
+
+    const hoja = workbook.worksheets[0];
+    const items: UnidadImportItem[] = [];
+    if (!hoja) return items;
+
+    const texto = (v: unknown): string => {
+      if (v === null || v === undefined) return '';
+      // Una celda con fórmula o con hipervínculo llega como objeto.
+      if (typeof v === 'object') {
+        const o = v as { result?: unknown; text?: unknown };
+        return String(o.result ?? o.text ?? '').trim();
+      }
+      return String(v).trim();
+    };
+    const numero = (v: unknown): number | undefined => {
+      const t = texto(v).replace(',', '.');
+      if (!t) return undefined;
+      const n = Number(t);
+      return Number.isFinite(n) ? n : undefined;
+    };
+
+    hoja.eachRow((row, numeroFila) => {
+      if (numeroFila === 1) return;
+
+      const celda = (i: number) => row.getCell(i).value;
+      const dependencia = texto(celda(2));
+      const departamento = texto(celda(5));
+      const municipio = texto(celda(7));
+      const dane = texto(celda(8));
+
+      if (!dependencia && !departamento && !municipio && !dane) return; // fila vacía
+
+      items.push({
+        fila: numeroFila,
+        consecutivo:            numero(celda(1)),
+        descripcionDependencia: dependencia,
+        siglaFisica:            texto(celda(3)) || undefined,
+        siglaPapa:              texto(celda(4)) || undefined,
+        departamento,
+        codigoDepartamento:     numero(celda(6)),
+        municipio,
+        codigoDane:             dane,
+        descRegional:           texto(celda(9)) || undefined,
+        codRegional:            numero(celda(10)),
+        direccion:              texto(celda(11)) || undefined,
+        telefono:               texto(celda(12)) || undefined,
+        telefonoIp:             texto(celda(13)) || undefined,
+        email:                  texto(celda(14)) || undefined,
+        zona:                   texto(celda(15)) || 'UR',
+        vigente:                (texto(celda(16)) || 'SI').toUpperCase(),
+        fuerza:                 numero(celda(17)) ?? 6,
+      });
+    });
+
+    return items;
   }
 
   toggle(u: UnidadItem): void {

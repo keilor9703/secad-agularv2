@@ -57,6 +57,13 @@ namespace Datos.Interfaz
         /// <summary>Crea o actualiza una unidad institucional.</summary>
         Task<(bool success, string message, decimal consecutivo)> SaveUnidadAsync(DtoUnidadSaveRequest request, string usuarioAuditoria, CancellationToken ct);
 
+        /// <summary>
+        /// Importación masiva desde Excel. Una sola transacción para todo el
+        /// archivo: o entra completo o no entra nada, de modo que un corte a
+        /// mitad no deja el catálogo a medias.
+        /// </summary>
+        Task<DtoImportarUnidadesResult> ImportarUnidadesAsync(List<DtoUnidadImportItem> items, string usuarioAuditoria, CancellationToken ct);
+
         /// <summary>Alterna el estado vigente (SI/NO) de una unidad institucional.</summary>
         Task<(bool success, string message)> ToggleUnidadVigenteAsync(decimal consecutivo, CancellationToken ct);
     }

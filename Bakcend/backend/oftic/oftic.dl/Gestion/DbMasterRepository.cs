@@ -607,6 +607,182 @@ ON CONFLICT (username) DO UPDATE SET
             return (true, "Unidad institucional guardada correctamente.", consecutivo);
         }
 
+        /// <summary>
+        /// Importación masiva de unidades desde el Excel de la pantalla de
+        /// Super Admin. Todo el archivo va en UNA transacción: si algo revienta
+        /// a mitad, no queda medio catálogo cargado.
+        ///
+        /// Cómo decide si una fila es alta o actualización:
+        ///   · Si el archivo trae `consecutivo`, manda ese —es lo que permite
+        ///     exportar, editar en Excel y volver a importar sin duplicar—.
+        ///   · Si no lo trae, busca por (código DANE + descripción de la
+        ///     dependencia), que es lo que identifica una fila en la práctica:
+        ///     el DANE solo no basta, porque un mismo municipio tiene varias
+        ///     dependencias.
+        ///   · Si tampoco aparece así, es nueva y se le asigna el siguiente
+        ///     consecutivo.
+        ///
+        /// Una fila inválida no aborta el archivo: se anota con su número de
+        /// fila y se sigue con las demás.
+        /// </summary>
+        public async Task<DtoImportarUnidadesResult> ImportarUnidadesAsync(
+            List<DtoUnidadImportItem> items, string usuarioAuditoria, CancellationToken ct)
+        {
+            var resultado = new DtoImportarUnidadesResult();
+            if (items is null || items.Count == 0)
+            {
+                resultado.Success = false;
+                resultado.Message = "El archivo no trae filas para importar.";
+                return resultado;
+            }
+
+            var usuario = string.IsNullOrWhiteSpace(usuarioAuditoria) ? "SISTEMA" : usuarioAuditoria;
+
+            await using var conn = await _masterDb.OpenConnectionAsync(ct);
+            await using var tx = await conn.BeginTransactionAsync(ct);
+
+            try
+            {
+                foreach (var item in items)
+                {
+                    if (string.IsNullOrWhiteSpace(item.DescripcionDependencia) ||
+                        string.IsNullOrWhiteSpace(item.Departamento) ||
+                        string.IsNullOrWhiteSpace(item.Municipio) ||
+                        string.IsNullOrWhiteSpace(item.CodigoDane))
+                    {
+                        resultado.Errores.Add(new DtoImportarUnidadesError
+                        {
+                            Fila = item.Fila,
+                            Descripcion = item.DescripcionDependencia ?? string.Empty,
+                            Motivo = "Faltan campos obligatorios (dependencia, departamento, municipio o código DANE).",
+                        });
+                        continue;
+                    }
+
+                    decimal consecutivo = item.Consecutivo ?? 0;
+
+                    // Sin consecutivo en el archivo: buscar la fila equivalente.
+                    if (consecutivo <= 0)
+                    {
+                        await using var buscar = conn.CreateCommand();
+                        buscar.Transaction = tx;
+                        buscar.CommandText = @"
+                            SELECT consecutivo FROM secad_unidades
+                            WHERE  UPPER(TRIM(codigo_dane))              = UPPER(TRIM(@dane))
+                              AND  UPPER(TRIM(descripcion_dependencia))  = UPPER(TRIM(@desc))
+                            ORDER  BY consecutivo
+                            LIMIT  1";
+                        buscar.Parameters.AddWithValue("dane", item.CodigoDane.Trim());
+                        buscar.Parameters.AddWithValue("desc", item.DescripcionDependencia.Trim());
+                        var hallado = await buscar.ExecuteScalarAsync(ct);
+                        if (hallado is not null && hallado != DBNull.Value)
+                        {
+                            consecutivo = Convert.ToDecimal(hallado);
+                        }
+                    }
+
+                    // ¿Existe ya esa fila? Decide si cuenta como alta o como cambio.
+                    bool existia = false;
+                    if (consecutivo > 0)
+                    {
+                        await using var comprobar = conn.CreateCommand();
+                        comprobar.Transaction = tx;
+                        comprobar.CommandText = "SELECT 1 FROM secad_unidades WHERE consecutivo = @c";
+                        comprobar.Parameters.AddWithValue("c", consecutivo);
+                        existia = await comprobar.ExecuteScalarAsync(ct) is not null;
+                    }
+
+                    if (consecutivo <= 0)
+                    {
+                        await using var siguiente = conn.CreateCommand();
+                        siguiente.Transaction = tx;
+                        siguiente.CommandText = "SELECT COALESCE(MAX(consecutivo), 0) + 1 FROM secad_unidades";
+                        consecutivo = Convert.ToDecimal(await siguiente.ExecuteScalarAsync(ct));
+                    }
+
+                    await using var guardar = conn.CreateCommand();
+                    guardar.Transaction = tx;
+                    guardar.CommandText = @"
+                        INSERT INTO secad_unidades (
+                            consecutivo, fuerza, descripcion_dependencia, vigente, sigla_fisica, sigla_papa,
+                            departamento, codigo_departamento, municipio, codigo_dane, desc_regional, cod_regional,
+                            direccion, telefono, telefono_ip, email, zona, tipo, tipo_descripcion,
+                            creado_por, fecha_creacion, actualizado_por, fecha_actualiza
+                        ) VALUES (
+                            @consecutivo, @fuerza, @descripcion, @vigente, @siglaFisica, @siglaPapa,
+                            @departamento, @codDepartamento, @municipio, @codigoDane, @descRegional, @codRegional,
+                            @direccion, @telefono, @telefonoIp, @email, @zona, @tipo, @tipoDescripcion,
+                            @usuario, NOW(), @usuario, NOW()
+                        )
+                        ON CONFLICT (consecutivo) DO UPDATE SET
+                            fuerza = EXCLUDED.fuerza,
+                            descripcion_dependencia = EXCLUDED.descripcion_dependencia,
+                            vigente = EXCLUDED.vigente,
+                            sigla_fisica = EXCLUDED.sigla_fisica,
+                            sigla_papa = EXCLUDED.sigla_papa,
+                            departamento = EXCLUDED.departamento,
+                            codigo_departamento = EXCLUDED.codigo_departamento,
+                            municipio = EXCLUDED.municipio,
+                            codigo_dane = EXCLUDED.codigo_dane,
+                            desc_regional = EXCLUDED.desc_regional,
+                            cod_regional = EXCLUDED.cod_regional,
+                            direccion = EXCLUDED.direccion,
+                            telefono = EXCLUDED.telefono,
+                            telefono_ip = EXCLUDED.telefono_ip,
+                            email = EXCLUDED.email,
+                            zona = EXCLUDED.zona,
+                            tipo = EXCLUDED.tipo,
+                            tipo_descripcion = EXCLUDED.tipo_descripcion,
+                            actualizado_por = EXCLUDED.actualizado_por,
+                            fecha_actualiza = NOW()";
+
+                    guardar.Parameters.AddWithValue("consecutivo", consecutivo);
+                    guardar.Parameters.AddWithValue("fuerza", (object?)item.Fuerza ?? 6m);
+                    guardar.Parameters.AddWithValue("descripcion", item.DescripcionDependencia.Trim());
+                    guardar.Parameters.AddWithValue("vigente", string.IsNullOrWhiteSpace(item.Vigente) ? "SI" : item.Vigente.Trim().ToUpper());
+                    guardar.Parameters.AddWithValue("siglaFisica", (object?)item.SiglaFisica?.Trim() ?? DBNull.Value);
+                    guardar.Parameters.AddWithValue("siglaPapa", (object?)item.SiglaPapa?.Trim() ?? DBNull.Value);
+                    guardar.Parameters.AddWithValue("departamento", item.Departamento.Trim());
+                    guardar.Parameters.AddWithValue("codDepartamento", (object?)item.CodigoDepartamento ?? DBNull.Value);
+                    guardar.Parameters.AddWithValue("municipio", item.Municipio.Trim());
+                    guardar.Parameters.AddWithValue("codigoDane", item.CodigoDane.Trim());
+                    guardar.Parameters.AddWithValue("descRegional", (object?)item.DescRegional?.Trim() ?? DBNull.Value);
+                    guardar.Parameters.AddWithValue("codRegional", (object?)item.CodRegional ?? DBNull.Value);
+                    guardar.Parameters.AddWithValue("direccion", (object?)item.Direccion?.Trim() ?? DBNull.Value);
+                    guardar.Parameters.AddWithValue("telefono", (object?)item.Telefono?.Trim() ?? DBNull.Value);
+                    guardar.Parameters.AddWithValue("telefonoIp", (object?)item.TelefonoIp?.Trim() ?? DBNull.Value);
+                    guardar.Parameters.AddWithValue("email", (object?)item.Email?.Trim() ?? DBNull.Value);
+                    guardar.Parameters.AddWithValue("zona", (object?)item.Zona?.Trim() ?? "UR");
+                    guardar.Parameters.AddWithValue("tipo", (object?)item.Tipo?.Trim() ?? "DE");
+                    guardar.Parameters.AddWithValue("tipoDescripcion", (object?)item.TipoDescripcion?.Trim() ?? "CM");
+                    guardar.Parameters.AddWithValue("usuario", usuario);
+
+                    await guardar.ExecuteNonQueryAsync(ct);
+
+                    if (existia) resultado.Actualizadas++;
+                    else resultado.Creadas++;
+                }
+
+                await tx.CommitAsync(ct);
+
+                resultado.Success = resultado.Errores.Count == 0;
+                resultado.Message = resultado.Errores.Count == 0
+                    ? $"Importación completa: {resultado.Creadas} creada(s) y {resultado.Actualizadas} actualizada(s)."
+                    : $"{resultado.Creadas} creada(s), {resultado.Actualizadas} actualizada(s) y {resultado.Errores.Count} fila(s) sin importar.";
+                return resultado;
+            }
+            catch (Exception ex)
+            {
+                await tx.RollbackAsync(ct);
+                _logger.LogError(ex, "ImportarUnidades error");
+                resultado.Success = false;
+                resultado.Creadas = 0;
+                resultado.Actualizadas = 0;
+                resultado.Message = "No se importó nada: " + ex.Message;
+                return resultado;
+            }
+        }
+
         public async Task<(bool success, string message)> ToggleUnidadVigenteAsync(decimal consecutivo, CancellationToken ct)
         {
             await using var conn = await _masterDb.OpenConnectionAsync(ct);

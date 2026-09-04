@@ -122,6 +122,26 @@ export interface UnidadSaveRequest {
   tipoDescripcion?: string;
 }
 
+/** Una fila del Excel importado: los mismos campos del alta, más su número de fila. */
+export interface UnidadImportItem extends UnidadSaveRequest {
+  /** Fila del archivo, para poder señalar dónde está el error. */
+  fila: number;
+}
+
+export interface ImportarUnidadesError {
+  fila: number;
+  descripcion: string;
+  motivo: string;
+}
+
+export interface ImportarUnidadesResult {
+  success: boolean;
+  message: string;
+  creadas: number;
+  actualizadas: number;
+  errores: ImportarUnidadesError[];
+}
+
 export interface UnidadesPaginadas {
   items: UnidadItem[];
   totalCount: number;
@@ -215,6 +235,14 @@ export class SuperAdminService {
     return this.http.put<{ success: boolean; message: string; consecutivo?: number }>(
       `${this.base}/unidades/${consecutivo}`, request
     );
+  }
+
+  /**
+   * Importación masiva. El backend la resuelve en una sola transacción, así
+   * que no hay que trocear el archivo ni preocuparse por quedarse a medias.
+   */
+  importarUnidades(items: UnidadImportItem[]): Observable<ImportarUnidadesResult> {
+    return this.http.post<ImportarUnidadesResult>(`${this.base}/unidades/importar`, items);
   }
 
   toggleUnidad(consecutivo: number): Observable<{ success: boolean; message: string }> {

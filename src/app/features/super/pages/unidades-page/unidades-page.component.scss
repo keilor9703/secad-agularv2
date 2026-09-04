@@ -139,3 +139,53 @@
     color: #f8fafc;
   }
 }
+
+// ── Importar desde Excel ──────────────────────────────────────────────────
+.und-importar {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+
+  &__aviso {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin: 0;
+    padding: 9px 11px;
+    border: 1px solid rgba(8, 166, 203, .3);
+    border-radius: 8px;
+    background: rgba(8, 166, 203, .08);
+    font-size: calc(11.5px * var(--font-size-scale, 1));
+    line-height: 1.45;
+
+    i { margin-top: 2px; color: #0e7490; }
+  }
+}
+
+.und-resultado {
+  padding: 10px 12px;
+  border: 1px solid rgba(22, 163, 74, .35);
+  border-radius: 8px;
+  background: rgba(22, 163, 74, .08);
+  font-size: calc(11.5px * var(--font-size-scale, 1));
+
+  &--error {
+    border-color: rgba(230, 115, 0, .4);
+    background: rgba(230, 115, 0, .08);
+  }
+
+  &__cifras { margin: 0; }
+
+  &__errores {
+    // Alto acotado y desplazamiento propio: un archivo largo puede fallar en
+    // muchas filas y la lista no debe estirar el modal sin fin.
+    max-height: 190px;
+    margin: 8px 0 0;
+    padding-left: 18px;
+    overflow-y: auto;
+    line-height: 1.5;
+  }
+}
+
+// El encabezado gana un botón más; en pantallas estrechas se envuelven.
+.und-acciones-header { flex-wrap: wrap; }

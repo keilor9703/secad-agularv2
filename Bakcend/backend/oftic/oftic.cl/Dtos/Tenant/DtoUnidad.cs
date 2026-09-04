@@ -83,6 +83,40 @@ namespace Comun.Dtos.Tenant
     }
 
     /// <summary>
+    /// Resultado de una importación masiva desde Excel.
+    /// </summary>
+    public class DtoImportarUnidadesResult
+    {
+        public bool Success { get; set; }
+        public string Message { get; set; } = string.Empty;
+        public int Creadas { get; set; }
+        public int Actualizadas { get; set; }
+        /// <summary>
+        /// Filas que no se pudieron guardar, con el número de fila del archivo
+        /// para que quien importa sepa dónde mirar. No se corta la importación
+        /// por una fila mala: las demás sí entran.
+        /// </summary>
+        public List<DtoImportarUnidadesError> Errores { get; set; } = new();
+    }
+
+    public class DtoImportarUnidadesError
+    {
+        public int Fila { get; set; }
+        public string Descripcion { get; set; } = string.Empty;
+        public string Motivo { get; set; } = string.Empty;
+    }
+
+    /// <summary>
+    /// Una fila del archivo importado. Es el mismo juego de campos que el alta
+    /// manual, más el número de fila para poder señalar los errores.
+    /// </summary>
+    public class DtoUnidadImportItem : DtoUnidadSaveRequest
+    {
+        /// <summary>Fila del Excel de la que salió, para el informe de errores.</summary>
+        public int Fila { get; set; }
+    }
+
+    /// <summary>
     /// Respuesta paginada de unidades institucionales.
     /// </summary>
     public class DtoUnidadesPaginadas
