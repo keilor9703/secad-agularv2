@@ -76,17 +76,22 @@ GROUP BY f.id, f.sitio_graba, f.descripcion, f.abreviatura, f.vigente";
                 if (id.HasValue && id.Value > 0)
                 {
                     // Actualizar
+                    // sitio_graba solo se toca si la petición lo trae: un
+                    // cliente viejo, que no manda el campo, no debe mover de
+                    // unidad a una fuerza que ya está bien clasificada.
                     await using var cmd = conn.CreateCommand();
                     cmd.CommandText = @"
 UPDATE cad_fuerzas
    SET descripcion = @desc,
        abreviatura = @abr,
-       vigente     = @vigente
+       vigente     = @vigente,
+       sitio_graba = CASE WHEN @sitio > 0 THEN @sitio ELSE sitio_graba END
  WHERE id = @id";
                     cmd.Parameters.AddWithValue("id",      id.Value);
                     cmd.Parameters.AddWithValue("desc",    request.descripcion.Trim());
                     cmd.Parameters.AddWithValue("abr",     (object?)(request.abreviatura?.Trim()) ?? DBNull.Value);
                     cmd.Parameters.AddWithValue("vigente", request.vigente ?? "S");
+                    cmd.Parameters.AddWithValue("sitio",   request.sitioGraba);
                     await cmd.ExecuteNonQueryAsync(ct);
                     return new DtoFuerzaResult { success = true, id = id.Value, message = "Fuerza actualizada." };
                 }
@@ -111,7 +116,10 @@ UPDATE cad_fuerzas
 INSERT INTO cad_fuerzas (id, sitio_graba, descripcion, abreviatura, vigente)
 VALUES (@id, @sitio, @desc, @abr, @vigente)";
                     cmd.Parameters.AddWithValue("id",      request.id);
-                    cmd.Parameters.AddWithValue("sitio",   sitioGraba);
+                    // La unidad la elige quien crea la fuerza; si no eligió, se
+                    // queda con la del administrador (que es 0 cuando no tiene
+                    // una asignada, o sea «sin clasificar»).
+                    cmd.Parameters.AddWithValue("sitio",   request.sitioGraba > 0 ? request.sitioGraba : sitioGraba);
                     cmd.Parameters.AddWithValue("desc",    request.descripcion.Trim());
                     cmd.Parameters.AddWithValue("abr",     (object?)(request.abreviatura?.Trim()) ?? DBNull.Value);
                     cmd.Parameters.AddWithValue("vigente", request.vigente ?? "S");
@@ -305,11 +313,13 @@ SELECT u.cadcana_fuerza_id,
        u.sitio_grabacion,
        f.descripcion   AS fuerza_descripcion,
        f.abreviatura   AS fuerza_abreviatura,
-       c.descripcion   AS canal_descripcion
+       c.descripcion   AS canal_descripcion,
+       s.descripcion   AS sitio_descripcion
 FROM ctr_usuarios u
 LEFT JOIN cad_fuerzas f ON f.id = u.cadcana_fuerza_id
 LEFT JOIN cad_canales c ON c.cadfuerz_id = u.cadcana_fuerza_id
                        AND c.codigo = u.cadcana_codigo
+LEFT JOIN cad_sitios_grabacion s ON s.consecutivo = u.sitio_grabacion
 WHERE u.id_usuario = @id
 LIMIT 1";
             cmd.Parameters.AddWithValue("id", idUsuario);
@@ -325,7 +335,8 @@ LIMIT 1";
                 sitioGrabacion    = reader.IsDBNull(3) ? 0 : reader.GetInt32(3),
                 fuerzaDescripcion = reader.IsDBNull(4) ? null : reader.GetString(4),
                 fuerzaAbreviatura = reader.IsDBNull(5) ? null : reader.GetString(5),
-                canalDescripcion  = reader.IsDBNull(6) ? null : reader.GetString(6)
+                canalDescripcion  = reader.IsDBNull(6) ? null : reader.GetString(6),
+                sitioDescripcion  = reader.IsDBNull(7) ? null : reader.GetString(7)
             };
         }
 
@@ -335,16 +346,33 @@ LIMIT 1";
             {
                 await using var conn = await _tenant.DataSource.OpenConnectionAsync(ct);
 
-                // Derivar sitio_grabacion desde la fuerza seleccionada
-                int sitioGraba = 0;
+                // El sitio de la fuerza elegida: sirve de valor por defecto y,
+                // cuando el administrador eligió sitio a mano, de verificación.
+                int sitioDeLaFuerza = 0;
                 if (request.cadcanaFuerzaId > 0)
                 {
                     await using var cmdSitio = conn.CreateCommand();
                     cmdSitio.CommandText = "SELECT sitio_graba FROM cad_fuerzas WHERE id = @id LIMIT 1";
                     cmdSitio.Parameters.AddWithValue("id", request.cadcanaFuerzaId);
                     var val = await cmdSitio.ExecuteScalarAsync(ct);
-                    if (val is not null and not DBNull) sitioGraba = Convert.ToInt32(val);
+                    if (val is not null and not DBNull) sitioDeLaFuerza = Convert.ToInt32(val);
                 }
+
+                // Manda lo que eligió el administrador. Si no eligió nada —o si
+                // la petición viene de un cliente viejo que ni siquiera manda el
+                // campo— se hereda el de la fuerza, que es como funcionaba antes.
+                var sitioGraba = request.sitioGrabacion > 0 ? request.sitioGrabacion : sitioDeLaFuerza;
+
+                // Un usuario de una unidad no puede quedar despachando el canal
+                // de otra: es justamente lo que el sitio de grabación separa
+                // cuando dos unidades comparten el mismo CAD físico.
+                if (request.sitioGrabacion > 0 && sitioDeLaFuerza > 0 && request.sitioGrabacion != sitioDeLaFuerza)
+                    return new DtoFuerzaResult
+                    {
+                        success = false,
+                        message = "La fuerza elegida pertenece a otro sitio de grabación. " +
+                                  "Elija una fuerza del mismo sitio que el usuario."
+                    };
 
                 await using var cmd = conn.CreateCommand();
                 cmd.CommandText = @"

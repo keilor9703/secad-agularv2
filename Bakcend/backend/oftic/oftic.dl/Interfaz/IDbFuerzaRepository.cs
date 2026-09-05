@@ -35,7 +35,10 @@ namespace Datos.Interfaz
         /// <summary>Lee los datos operacionales de un usuario (fuerza, canal, ACD) con nombres enriquecidos.</summary>
         Task<DtoUsuarioOperacion?> GetUsuarioOperacionAsync(long idUsuario, CancellationToken ct);
 
-        /// <summary>Guarda fuerza, canal y ACD en ctr_usuarios. Autoderива sitio_grabacion de la fuerza.</summary>
+        /// <summary>
+        /// Guarda sitio de grabación, fuerza, canal y ACD en ctr_usuarios.
+        /// Si la petición no trae sitio, se hereda el de la fuerza elegida.
+        /// </summary>
         Task<DtoFuerzaResult> SaveUsuarioOperacionAsync(long idUsuario, DtoUsuarioOperacionRequest request, CancellationToken ct);
     }
 }

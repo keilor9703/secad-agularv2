@@ -41,6 +41,11 @@ export const APP_ROUTE_CATALOG: readonly AppRouteCatalogItem[] = [
     area: 'Administración',
   },
   {
+    route: '/administracion/sitios-grabacion',
+    label: 'Sitios de grabación',
+    area: 'Administración',
+  },
+  {
     route: '/administracion/agencias-externas',
     label: 'Agencias externas',
     area: 'Administración',

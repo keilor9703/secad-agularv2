@@ -121,7 +121,9 @@ export class UsuarioCivilModalComponent {
 
   cargarEntidades(): void {
     this.cargandoEntidades.set(true);
-    this.fuerzaService.getFuerzas().subscribe({
+    // sitio=0 → todas las del CAD: quien administra puede crear un usuario
+    // civil para cualquiera de las unidades que el CAD aloja, no solo la suya.
+    this.fuerzaService.getFuerzas(0).subscribe({
       next: (resp) => {
         this.cargandoEntidades.set(false);
         const lista = resp?.data ?? [];

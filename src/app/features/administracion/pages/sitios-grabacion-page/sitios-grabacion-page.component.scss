@@ -1,0 +1,51 @@
+// ══════════════════════════════════════════════════════════════════════════
+//  Sitios de grabación
+//
+//  Tabla, insignias, modal y campos los resuelven los componentes ui-*. Aquí
+//  queda solo lo propio de la pantalla: la rejilla del formulario y la sigla
+//  bajo el nombre de la unidad.
+// ══════════════════════════════════════════════════════════════════════════
+
+.sg-page {
+  display:        flex;
+  flex-direction: column;
+  gap:            16px;
+  padding:        16px;
+}
+
+.sg-resumen {
+  display:   flex;
+  gap:       8px;
+  flex-wrap: wrap;
+}
+
+.sg-sigla {
+  font-size:      calc(11px * var(--font-size-scale, 1));
+  font-weight:    600;
+  letter-spacing: 0.04em;
+  color:          var(--ui-text-muted, #6b7280);
+}
+
+.sg-form {
+  display:        flex;
+  flex-direction: column;
+  gap:            14px;
+}
+
+.sg-row {
+  display: flex;
+  gap:     12px;
+
+  &__grow { flex: 1 1 auto; min-width: 0; }
+  &__side { flex: 1 1 170px; min-width: 0; }
+
+  @media (max-width: 640px) {
+    flex-direction: column;
+  }
+}
+
+.sg-acciones {
+  display:         flex;
+  gap:             8px;
+  justify-content: flex-end;
+}

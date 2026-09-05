@@ -220,6 +220,26 @@
   letter-spacing:  .03em;
 }
 
+// Unidad policial de la fuerza. Solo aparece cuando el CAD aloja más de una:
+// es lo que impide confundir el despacho de una con el de la otra.
+.ent-sitio-pill {
+  display:        inline-flex;
+  align-items:    center;
+  gap:            4px;
+  padding:        1px 7px;
+  border-radius:  999px;
+  background:     rgba(100, 116, 139, .12);
+  color:          #475569;
+  font-size:      calc(10.5px * var(--font-size-scale, 1));
+  font-weight:    600;
+  max-width:      100%;
+  overflow:       hidden;
+  text-overflow:  ellipsis;
+  white-space:    nowrap;
+
+  i { font-size: calc(9.5px * var(--font-size-scale, 1)); }
+}
+
 .ent-stat-pill {
   display:       inline-flex;
   align-items:   center;

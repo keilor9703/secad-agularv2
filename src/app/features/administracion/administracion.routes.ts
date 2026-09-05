@@ -27,6 +27,14 @@ export const administracionRoutes: Routes = [
     data: { breadcrumb: 'Entidades / Fuerzas' },
   },
   {
+    path: 'sitios-grabacion',
+    loadComponent: () =>
+      import('./pages/sitios-grabacion-page/sitios-grabacion-page.component').then(
+        (m) => m.SitiosGrabacionPageComponent,
+      ),
+    data: { breadcrumb: 'Sitios de grabación' },
+  },
+  {
     path: 'agencias-externas',
     loadComponent: () =>
       import('./pages/agencias-externas-page/agencias-externas-page.component').then(

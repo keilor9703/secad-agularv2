@@ -24,18 +24,32 @@ namespace ofic.Controllers.Administracion
         private int SitioGraba =>
             int.TryParse(User.FindFirstValue("sitio_graba"), out var v) ? v : 0;
 
+        /// <summary>Administrador del CAD o superadministrador del sistema.</summary>
+        private bool EsAdministrativo =>
+            string.Equals(User.FindFirstValue("es_admin"), "true", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(User.FindFirstValue("es_super_admin"), "true", StringComparison.OrdinalIgnoreCase);
+
         // ── GET /api/Fuerza ───────────────────────────────────────────────────
+        /// <param name="sitio">
+        /// Sitio de grabación por el que filtrar. Solo lo puede usar un
+        /// administrador, y existe porque administrar es cosa del CAD entero:
+        /// si un CAD aloja dos unidades, el administrador tiene que poder ver y
+        /// asignar las fuerzas de ambas, no solo las de la suya. Sin este
+        /// parámetro se sigue filtrando por el sitio del que consulta, que es
+        /// lo que necesitan las pantallas de operación.
+        /// </param>
         [HttpGet]
-        public async Task<IActionResult> GetFuerzas(CancellationToken ct)
+        public async Task<IActionResult> GetFuerzas([FromQuery] int? sitio, CancellationToken ct)
         {
+            var sitioFiltro = sitio.HasValue && EsAdministrativo ? Math.Max(sitio.Value, 0) : SitioGraba;
             try
             {
-                var fuerzas = await _repo.GetFuerzasAsync(SitioGraba, ct);
+                var fuerzas = await _repo.GetFuerzasAsync(sitioFiltro, ct);
                 return Ok(new { success = true, data = fuerzas });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error listando fuerzas sitioGraba={Sitio}", SitioGraba);
+                _logger.LogError(ex, "Error listando fuerzas sitioGraba={Sitio}", sitioFiltro);
                 return StatusCode(500, new { success = false, message = "Error al listar fuerzas." });
             }
         }

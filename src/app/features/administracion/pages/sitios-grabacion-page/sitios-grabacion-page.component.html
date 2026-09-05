@@ -1,0 +1,134 @@
+<div class="sg-page">
+
+  <app-ui-page-header
+    title="Sitios de grabación — Unidades del CAD"
+    icon="fa-solid fa-tower-cell"
+    description="La unidad policial que opera dentro de este CAD. Un mismo CAD puede alojar
+                 varias, y el sitio es lo que mantiene separados los registros de cada una."
+    [minimizable]="false"
+  >
+    <div page-header-actions class="sg-resumen">
+      <app-ui-chip appearance="glass" size="xs" icon="fa-solid fa-tower-cell"
+                   [value]="sitios().length" label="sitios" />
+      <app-ui-chip appearance="glass" size="xs" icon="fa-solid fa-circle-check"
+                   [value]="totalVigentes()" label="vigentes" />
+      <app-ui-chip appearance="glass" size="xs" icon="fa-solid fa-users"
+                   [value]="totalUsuarios()" label="usuarios" />
+    </div>
+
+    <app-ui-button
+      page-header-actions
+      variant="primary"
+      icon="fa-solid fa-plus"
+      (buttonClick)="abrirCreacion()"
+    >
+      Nuevo sitio
+    </app-ui-button>
+  </app-ui-page-header>
+
+  <app-ui-table
+    [columns]="columns"
+    [rows]="sitios()"
+    [actions]="acciones"
+    [loading]="loading()"
+    loadingMessage="Cargando sitios de grabación…"
+    emptyMessage="Este CAD todavía no tiene sitios de grabación registrados."
+    actionDisplay="row-hover"
+    actionsPosition="right"
+    actionMenuLabel="Acciones del sitio"
+    (actionClick)="onAccion($event)"
+  />
+
+  <ng-template #celdaUnidad let-row="row">
+    <strong>{{ row.descripcion }}</strong>
+    @if (row.abreviatura) {
+      <div class="sg-sigla">{{ row.abreviatura }}</div>
+    }
+  </ng-template>
+
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     Crear / editar sitio
+     ══════════════════════════════════════════════════════════════════════ -->
+<app-ui-modal
+  [open]="showModal()"
+  [title]="modo() === 'crear' ? 'Nuevo sitio de grabación' : 'Editar sitio de grabación'"
+  [icon]="modo() === 'crear' ? 'fa-solid fa-plus-circle' : 'fa-solid fa-pen-to-square'"
+  size="md"
+  (closeRequested)="cerrarModal()"
+>
+  <form modal-body [formGroup]="form" class="sg-form">
+
+    <div class="sg-row">
+      <app-ui-input
+        class="sg-row__side"
+        formControlName="consecutivo"
+        label="Código"
+        type="number"
+        required
+        [error]="errorConsecutivo()"
+        [hint]="modo() === 'crear'
+                  ? 'Debe coincidir con el que usa la planta telefónica.'
+                  : 'No se puede cambiar: identifica al sitio en los registros históricos.'"
+      />
+      <app-ui-input
+        class="sg-row__grow"
+        formControlName="descripcion"
+        label="Unidad policial"
+        placeholder="Ej: Metropolitana de Barranquilla"
+        [maxlength]="200"
+        required
+        [error]="errorDescripcion()"
+      />
+    </div>
+
+    <div class="sg-row">
+      <app-ui-input
+        class="sg-row__side"
+        formControlName="abreviatura"
+        label="Sigla"
+        placeholder="MEBAR"
+        [maxlength]="20"
+        hint="Como se nombra la unidad en la operación."
+      />
+      <app-ui-input
+        class="sg-row__side"
+        formControlName="codDane"
+        label="Código DANE"
+        placeholder="08001"
+        [maxlength]="10"
+        hint="Municipio de la unidad."
+      />
+      <app-ui-select
+        class="sg-row__side"
+        formControlName="vigente"
+        label="Estado"
+        [options]="opcionesVigencia"
+        [clearable]="false"
+        [searchable]="false"
+      />
+    </div>
+
+  </form>
+
+  <div modal-actions class="sg-acciones">
+    <app-ui-button
+      variant="secondary"
+      appearance="ghost"
+      icon="fa-solid fa-xmark"
+      (buttonClick)="cerrarModal()"
+    >
+      Cancelar
+    </app-ui-button>
+    <app-ui-button
+      variant="primary"
+      icon="fa-solid fa-floppy-disk"
+      [loading]="saving()"
+      [disabled]="saving()"
+      (buttonClick)="guardar()"
+    >
+      {{ saving() ? 'Guardando…' : 'Guardar' }}
+    </app-ui-button>
+  </div>
+</app-ui-modal>

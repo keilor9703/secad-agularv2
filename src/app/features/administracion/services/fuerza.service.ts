@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 
@@ -21,6 +21,11 @@ export interface DtoFuerzaRequest {
   descripcion: string;
   abreviatura?: string;
   vigente: string;
+  /**
+   * Sitio de grabación (unidad policial) al que pertenece la fuerza.
+   * 0 = no se indica y el backend conserva el que ya tenía.
+   */
+  sitioGraba?: number;
 }
 
 export interface DtoCanalFuerza {
@@ -55,12 +60,15 @@ export interface DtoUsuarioOperacion {
   cadcanaCodigo: number;
   acd: number;
   sitioGrabacion: number;
+  sitioDescripcion?: string;
   fuerzaDescripcion?: string;
   fuerzaAbreviatura?: string;
   canalDescripcion?: string;
 }
 
 export interface DtoUsuarioOperacionRequest {
+  /** Unidad policial del usuario dentro del CAD. Es la marca que separa sus registros. */
+  sitioGrabacion: number;
   cadcanaFuerzaId: number;
   cadcanaCodigo: number;
   acd: number;
@@ -76,8 +84,18 @@ export class FuerzaService {
 
   // ── Fuerzas ────────────────────────────────────────────────────────────────
 
-  getFuerzas(): Observable<{ success: boolean; data: DtoFuerza[] }> {
-    return this.http.get<{ success: boolean; data: DtoFuerza[] }>(this.base);
+  /**
+   * @param sitio Sitio de grabación por el que filtrar. 0 = todas las del CAD.
+   *   Solo lo atiende el backend para administradores: administrar es cosa del
+   *   CAD entero, así que quien administra tiene que ver las fuerzas de todas
+   *   sus unidades, no solo las de la suya. Sin el parámetro se filtra por el
+   *   sitio de quien consulta, que es lo que necesita la operación.
+   */
+  getFuerzas(sitio?: number): Observable<{ success: boolean; data: DtoFuerza[] }> {
+    const options = sitio === undefined
+      ? {}
+      : { params: new HttpParams().set('sitio', sitio) };
+    return this.http.get<{ success: boolean; data: DtoFuerza[] }>(this.base, options);
   }
 
   getFuerza(id: number): Observable<{ success: boolean; data: DtoFuerza }> {

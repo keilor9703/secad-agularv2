@@ -115,6 +115,12 @@
                     @if (f.abreviatura) {
                       <span class="ent-abrev-pill" title="Sigla operativa">{{ f.abreviatura }}</span>
                     }
+                    @if (hayVariosSitios()) {
+                      <span class="ent-sitio-pill" title="Sitio de grabación (unidad policial)">
+                        <i class="fa-solid fa-tower-cell" aria-hidden="true"></i>
+                        {{ nombreSitio(f.sitioGraba) }}
+                      </span>
+                    }
                     <app-ui-badge
                       [label]="f.vigente === 'S' ? 'Activa' : 'Inactiva'"
                       [variant]="f.vigente === 'S' ? 'success' : 'danger'"
@@ -199,6 +205,14 @@
               formControlName="abreviatura"
               label="Abreviatura / Sigla"
               placeholder="Ej: PONAL, BOM, CR"
+            />
+            <app-ui-select
+              class="ent-form__campo-corto"
+              formControlName="sitioGraba"
+              label="Sitio de grabación"
+              [options]="opcionesSitio()"
+              [clearable]="false"
+              hint="Unidad policial que despacha esta fuerza"
             />
             <app-ui-select
               class="ent-form__campo-corto"

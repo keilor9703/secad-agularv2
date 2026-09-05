@@ -93,14 +93,34 @@ lo demás llega **vacío** y sin ello la operación no arranca:
 
 | Catálogo | Se carga desde | Sin esto… |
 |---|---|---|
-| `cad_sitios_grabacion` | **SQL** — no hay pantalla | el tenant no puede apuntar a un sitio válido |
+| `cad_sitios_grabacion` | Administración → Sitios de grabación | el tenant no puede apuntar a un sitio válido |
 | `cad_lugares_geograficos`, `cad_barrios` | **SQL** — la app solo los lee | Recepción no resuelve ciudad ni barrio |
 | `cad_fuerzas` y `cad_canales` | Administración → Entidades | no hay canal de despacho que elegir |
 | `cad_casos` | Administración → Códigos de Caso (importa Excel) | no se puede tipificar un pedido |
 | `cad_medios_disponibles` | Turnos (alta manual o importación SIVICC) | no hay recursos que despachar |
 | `secad_unidades` (maestra, común) | Super Admin → Unidades | — |
 
-El sitio de grabación es el primero, porque el paso 4 lo necesita:
+### El sitio de grabación va primero
+
+El paso 4 lo necesita. **Administración → Sitios de grabación → Nuevo sitio.**
+
+Un sitio de grabación es la **unidad policial** que opera en el CAD, y no es lo
+mismo que el tenant: el tenant es el CAD *físico*. Un mismo CAD puede alojar
+**varias** unidades, porque hay municipios que no pueden montar una sala con
+todo su equipamiento y comparten la del vecino. Barranquilla es el caso típico:
+un solo CAD, dos sitios —**MEBAR** (Metropolitana de Barranquilla) y **DEATA**
+(Departamento de Atlántico)—, y los registros de cada unidad separados.
+
+Por eso, en un CAD compartido, **dé de alta un sitio por unidad** y no uno solo:
+el sitio es la marca que separa lo que recibe y despacha cada una. De él cuelgan
+las fuerzas (Administración → Entidades) y los usuarios (Administración →
+Usuarios → Asignación de Sitio, Fuerza, Canal y ACD).
+
+Campos: **código** (el consecutivo; debe coincidir con el que usa la planta
+telefónica), **unidad policial**, **sigla**, **DANE** del municipio y estado.
+
+Si prefiere hacerlo por SQL —o el CAD todavía no tiene la migración V70— el
+equivalente es:
 
 ```sql
 -- En la base DEL TENANT

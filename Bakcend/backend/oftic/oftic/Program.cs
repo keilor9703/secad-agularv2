@@ -223,6 +223,9 @@ builder.Services.AddScoped<IDbAsistenteRepository, DbAsistenteRepository>();
 // Módulo Entidades/Fuerzas — gestión de fuerzas, canales y datos operacionales de usuarios
 builder.Services.AddScoped<IDbFuerzaRepository, DbFuerzaRepository>();
 
+// Catálogo de sitios de grabación (las unidades policiales que operan en el CAD)
+builder.Services.AddScoped<IDbSitioGrabacionRepository, DbSitioGrabacionRepository>();
+
 // Módulo §6.1 — Agencias externas (despacho interagencial por API)
 builder.Services.AddScoped<IDbAgenciaExternaRepository, DbAgenciaExternaRepository>();
 builder.Services.AddScoped<IDbAgenciaExternaService,    DbAgenciaExternaService>();

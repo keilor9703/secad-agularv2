@@ -211,7 +211,10 @@ WITH esperado(orden, migracion, tipo, objeto, condicional) AS (
     (180, 'V54', 'INDICE', 'idx_video_sesion_pedido_activa', false),
     (181, 'V55', 'TABLA', 'cad_video_chat_mensajes', false),
     (182, 'V55', 'INDICE', 'idx_video_chat_pedido', false),
-    (183, 'V55', 'INDICE', 'idx_video_chat_sesion', false)
+    (183, 'V55', 'INDICE', 'idx_video_chat_sesion', false),
+    (184, 'V69', 'COLUMNA', 'ctr_roles.es_admin', false),
+    (185, 'V70', 'COLUMNA', 'cad_sitios_grabacion.abreviatura', false),
+    (186, 'V70', 'COLUMNA', 'cad_sitios_grabacion.vigente', false)
 ),
 evaluado AS (
   SELECT

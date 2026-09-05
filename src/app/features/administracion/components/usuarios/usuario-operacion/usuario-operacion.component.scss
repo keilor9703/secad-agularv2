@@ -28,12 +28,15 @@
     i    { color: #0e7490; }
   }
 
-  // Fuerza y canal ocupan lo mismo; el ACD es corto y no debe estirarse.
+  // Sitio, fuerza y canal ocupan lo mismo y bajan de línea cuando no caben
+  // los tres —los nombres de unidad son largos—; el ACD es corto y no se
+  // estira.
   &__form {
-    display: flex;
-    gap:     12px;
+    display:   flex;
+    flex-wrap: wrap;
+    gap:       12px;
 
-    > *:not(.usr-op__acd) { flex: 1 1 0; min-width: 0; }
+    > *:not(.usr-op__acd) { flex: 1 1 220px; min-width: 0; }
   }
 
   &__acd { flex: 0 0 130px; }

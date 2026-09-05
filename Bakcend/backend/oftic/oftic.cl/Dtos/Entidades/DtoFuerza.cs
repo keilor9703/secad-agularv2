@@ -29,6 +29,13 @@ namespace Comun.Dtos.Entidades
         public string  descripcion { get; set; } = string.Empty;
         public string? abreviatura { get; set; }
         public string  vigente     { get; set; } = "S";
+        /// <summary>
+        /// Sitio de grabación (unidad policial) al que pertenece la fuerza.
+        /// 0 = no se indicó: se conserva el que tenga, y al crear se usa el
+        /// del administrador que la da de alta. Importa porque un CAD puede
+        /// alojar varias unidades y cada una despacha lo suyo.
+        /// </summary>
+        public int     sitioGraba  { get; set; }
     }
 
     /// <summary>Request para crear o actualizar un canal dentro de una fuerza.</summary>
@@ -57,9 +64,15 @@ namespace Comun.Dtos.Entidades
         public int    acd              { get; set; }
     }
 
-    /// <summary>Request para guardar datos operacionales de un usuario (fuerza, canal, ACD).</summary>
+    /// <summary>Request para guardar datos operacionales de un usuario (sitio, fuerza, canal, ACD).</summary>
     public class DtoUsuarioOperacionRequest
     {
+        /// <summary>
+        /// Unidad policial a la que pertenece el usuario dentro del CAD.
+        /// Es la marca que separa los registros cuando dos unidades comparten
+        /// sala. 0 = no se indicó: se deduce de la fuerza elegida.
+        /// </summary>
+        public int sitioGrabacion  { get; set; }
         public int cadcanaFuerzaId { get; set; }
         public int cadcanaCodigo   { get; set; }
         public int acd             { get; set; }
@@ -72,6 +85,8 @@ namespace Comun.Dtos.Entidades
         public int    cadcanaCodigo     { get; set; }
         public int    acd               { get; set; }
         public int    sitioGrabacion    { get; set; }
+        /// <summary>Nombre de la unidad policial, para mostrarlo sin otra consulta.</summary>
+        public string? sitioDescripcion  { get; set; }
         public string? fuerzaDescripcion { get; set; }
         public string? fuerzaAbreviatura { get; set; }
         public string? canalDescripcion  { get; set; }

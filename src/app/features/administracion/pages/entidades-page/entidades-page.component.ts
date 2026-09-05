@@ -21,6 +21,7 @@ import {
   DtoCanalFuerza, DtoCanalRequest,
   DtoUsuarioEnFuerza
 } from '../../services/fuerza.service';
+import { SitioGrabacionService, DtoSitioGrabacion } from '../../services/sitio-grabacion.service';
 
 @Component({
   selector: 'app-entidades-page',
@@ -38,6 +39,7 @@ import {
 })
 export class EntidadesPageComponent implements OnInit {
   private readonly fuerzaService = inject(FuerzaService);
+  private readonly sitioService  = inject(SitioGrabacionService);
   private readonly toast         = inject(ToastService);
   private readonly fb            = inject(FormBuilder);
 
@@ -87,12 +89,36 @@ export class EntidadesPageComponent implements OnInit {
     this.fuerzas().reduce((sum, f) => sum + (f.totalUsuarios || 0), 0)
   );
 
+  // ── Sitios de grabación (unidades del CAD) ─────────────────────────────────
+  // Cada fuerza pertenece a una unidad. Cuando el CAD aloja más de una —dos
+  // municipios que comparten sala—, es lo que mantiene separado su despacho.
+  readonly sitios = signal<DtoSitioGrabacion[]>([]);
+
+  readonly opcionesSitio = computed<UiSelectOption<number>[]>(() => [
+    { label: 'Sin clasificar', value: 0 },
+    ...this.sitios().map(s => ({ label: this.sitioService.etiqueta(s), value: s.consecutivo })),
+  ]);
+
+  /**
+   * Solo cuando el CAD aloja más de una unidad tiene sentido enseñar de cuál
+   * es cada fuerza; en un CAD de una sola unidad sería ruido en cada tarjeta.
+   */
+  readonly hayVariosSitios = computed(() => this.sitios().length > 1);
+
+  /** Nombre de la unidad de una fuerza, para la lista y el detalle. */
+  nombreSitio(sitioGraba: number): string {
+    if (!sitioGraba) return 'Sin clasificar';
+    const s = this.sitios().find(x => x.consecutivo === sitioGraba);
+    return s ? this.sitioService.etiqueta(s) : `Sitio ${sitioGraba}`;
+  }
+
   // ── Formulario de fuerza ───────────────────────────────────────────────────
   readonly modoFuerza = signal<'ninguno' | 'nueva' | 'editando'>('ninguno');
   readonly formFuerza = this.fb.nonNullable.group({
     id:          [0, [Validators.required, Validators.min(1)]],
     descripcion: ['', [Validators.required]],
     abreviatura: [''],
+    sitioGraba:  [0],
     vigente:     ['S']
   });
 
@@ -114,14 +140,24 @@ export class EntidadesPageComponent implements OnInit {
   readonly tabDetalle = signal<'canales' | 'usuarios'>('canales');
 
   ngOnInit(): void {
+    this.cargarSitios();
     this.cargarFuerzas();
+  }
+
+  private cargarSitios(): void {
+    this.sitioService.getSitios().subscribe({
+      next: (r) => this.sitios.set(r.data ?? []),
+      error: () => { /* silencioso: el catálogo es secundario, la pantalla sirve igual */ },
+    });
   }
 
   // ── Fuerzas ────────────────────────────────────────────────────────────────
 
   cargarFuerzas(): void {
     this.loading.set(true);
-    this.fuerzaService.getFuerzas().subscribe({
+    // sitio=0 → todas las del CAD, no solo las de la unidad del administrador:
+    // si el CAD aloja varias, se administran todas desde aquí.
+    this.fuerzaService.getFuerzas(0).subscribe({
       next: (r) => {
         const lista = r.data ?? [];
         this.fuerzas.set(lista);
@@ -152,7 +188,7 @@ export class EntidadesPageComponent implements OnInit {
   nuevaFuerza(): void {
     this.fuerzaSeleccionada.set(null);
     this.modoFuerza.set('nueva');
-    this.formFuerza.reset({ id: 0, descripcion: '', abreviatura: '', vigente: 'S' });
+    this.formFuerza.reset({ id: 0, descripcion: '', abreviatura: '', sitioGraba: 0, vigente: 'S' });
     this.modoCanal.set('ninguno');
   }
 
@@ -164,6 +200,7 @@ export class EntidadesPageComponent implements OnInit {
       id: fuerza.id,          // id fijo en edición (no editable)
       descripcion: fuerza.descripcion,
       abreviatura: fuerza.abreviatura ?? '',
+      sitioGraba: fuerza.sitioGraba ?? 0,
       vigente: fuerza.vigente
     });
     // Editar también selecciona la fuerza, así que sus canales y usuarios se
@@ -175,7 +212,7 @@ export class EntidadesPageComponent implements OnInit {
 
   cancelarFuerza(): void {
     this.modoFuerza.set('ninguno');
-    this.formFuerza.reset({ id: 0, descripcion: '', abreviatura: '', vigente: 'S' });
+    this.formFuerza.reset({ id: 0, descripcion: '', abreviatura: '', sitioGraba: 0, vigente: 'S' });
   }
 
   guardarFuerza(): void {
