@@ -193,33 +193,44 @@ ORDER BY UPPER(u.username)";
             // lo que provoca NpgsqlOperationInProgressException en el fallback.
             {
                 await using var cmd = conn.CreateCommand();
+                // Un renglón por ROL, no por concesión. AsignarRolAsync inserta una
+                // fila nueva cada vez (su ON CONFLICT no dispara: no hay índice único
+                // en (id_usuario, id_rol)), así que conceder → retirar → volver a
+                // conceder dejaba el mismo rol repetido en pantalla, cada copia con
+                // un estado distinto. Se agrega y se resuelve el estado EFECTIVO.
                 cmd.CommandText = @"
-SELECT DISTINCT rua.id_rol, r.descripcion, rua.justificacion, rua.fecha_fin, COALESCE(rua.vigente, 0)
+SELECT rua.id_rol,
+       MAX(r.descripcion)                                    AS descripcion,
+       (ARRAY_AGG(rua.justificacion
+                  ORDER BY COALESCE(rua.vigente, 0) DESC, rua.fecha_creacion DESC))[1] AS justificacion,
+       MAX(rua.fecha_fin) FILTER (WHERE COALESCE(rua.vigente, 0) = 1)                  AS fecha_fin,
+       BOOL_OR(COALESCE(rua.vigente, 0) = 1)                 AS alguna_vigente,
+       BOOL_OR(COALESCE(rua.vigente, 0) = 1
+               AND (rua.fecha_fin IS NULL OR rua.fecha_fin >= CURRENT_DATE)) AS activa
 FROM ctr_roles_user_admin rua
 LEFT JOIN ctr_roles r ON r.id_rol = rua.id_rol
 WHERE rua.id_usuario = @id
-ORDER BY r.descripcion, rua.id_rol";
+GROUP BY rua.id_rol
+ORDER BY 2, 1";
                 cmd.Parameters.AddWithValue("id", idUsuario.Value);
 
                 await using var reader = await cmd.ExecuteReaderAsync(ct);
                 while (await reader.ReadAsync(ct))
                 {
-                    var idRol = Convert.ToInt32(reader.GetValue(0));
-                    var desc = reader.IsDBNull(1) ? null : reader.GetString(1);
-                    var just = reader.IsDBNull(2) ? null : reader.GetString(2);
+                    var idRol    = Convert.ToInt32(reader.GetValue(0));
+                    var desc     = reader.IsDBNull(1) ? null : reader.GetString(1);
+                    var just     = reader.IsDBNull(2) ? null : reader.GetString(2);
                     var fechaFin = reader.IsDBNull(3) ? (DateTime?)null : reader.GetDateTime(3);
-                    var vigente = Convert.ToInt32(reader.GetValue(4));
-                    // Distinguir tres estados:
-                    //   "Retirado" → vigente = 0 (removido explícitamente por un admin)
-                    //   "Vencido"  → vigente = 1 pero la fecha ya pasó (expiración natural)
-                    //   "Vigente"  → vigente = 1 y sin fecha o fecha futura
-                    string estado;
-                    if (vigente == 0)
-                        estado = "Retirado";
-                    else if (fechaFin.HasValue && fechaFin.Value.Date < DateTime.Today)
-                        estado = "Vencido";
-                    else
-                        estado = "Vigente";
+                    var algunaVigente = !reader.IsDBNull(4) && reader.GetBoolean(4);
+                    var activa        = !reader.IsDBNull(5) && reader.GetBoolean(5);
+                    // Los tres estados, resueltos sobre TODAS las concesiones del rol:
+                    //   "Vigente"  → alguna concesión activa y sin vencer
+                    //   "Vencido"  → hay concesión sin retirar, pero la fecha ya pasó
+                    //   "Retirado" → ninguna concesión sigue en pie
+                    // Es el mismo criterio que usan el menú lateral y ahora el JWT:
+                    // si los tres no coinciden, la pantalla miente sobre lo que el
+                    // usuario puede hacer de verdad.
+                    var estado = activa ? "Vigente" : algunaVigente ? "Vencido" : "Retirado";
 
                     result.Add(new DtoRolAsignado
                     {
@@ -251,12 +262,40 @@ ORDER BY r.descripcion, rua.id_rol";
             return result;
         }
 
+        /// <summary>
+        /// Retira un rol. Toca las DOS tablas, y ahí estaba el fallo:
+        ///
+        ///   · ctr_roles_user_admin — el registro con vigencia e historia. Es
+        ///     lo que leen la pantalla de roles y el menú lateral.
+        ///   · ctr_roles_user       — la tabla plana que lee DbAuthRepository
+        ///     para firmar el JWT, y de la que sale es_super_admin.
+        ///
+        /// Antes solo se actualizaba la primera. El resultado era que la
+        /// pantalla decía «retirado» mientras el usuario conservaba el acceso
+        /// REAL: su siguiente token seguía trayendo el rol y seguía viendo los
+        /// módulos de Super Admin. No era un defecto cosmético.
+        ///
+        /// Y al revés: cuando un usuario solo tenía filas en la tabla plana
+        /// —datos heredados, o sembrados por una migración— la pantalla los
+        /// listaba por su ruta de respaldo pero el retiro no encontraba nada
+        /// que actualizar y respondía «No se encontró un rol vigente para
+        /// retirar», dejando al administrador sin forma de quitarlo. Por eso
+        /// ahora la operación se da por buena si CUALQUIERA de las dos tablas
+        /// cambió.
+        /// </summary>
         public async Task<DtoGuardarUsuarioResult> EliminarRolAsync(long idUsuario, int rolId, string? observacion, string usuarioAuditoria, string maquinaAuditoria, CancellationToken ct)
         {
             await using var conn = await _tenant.DataSource.OpenConnectionAsync(ct);
-            await using var cmd = conn.CreateCommand();
-            // COALESCE(vigente, 1) <> 0: cubre vigente=1 y registros legacy con vigente=NULL
-            cmd.CommandText = @"
+            await using var tx   = await conn.BeginTransactionAsync(ct);
+
+            try
+            {
+                int enHistorico;
+                // COALESCE(vigente, 1) <> 0: cubre vigente=1 y registros legacy con vigente=NULL
+                await using (var cmd = conn.CreateCommand())
+                {
+                    cmd.Transaction = tx;
+                    cmd.CommandText = @"
 UPDATE ctr_roles_user_admin
    SET vigente          = 0,
        fecha_fin        = COALESCE(fecha_fin, CURRENT_DATE),
@@ -265,23 +304,50 @@ UPDATE ctr_roles_user_admin
        maquina_modifica = @maquinaModif
  WHERE id_usuario = @idUsuario AND id_rol = @idRol
    AND COALESCE(vigente, 1) <> 0";
-            cmd.Parameters.AddWithValue("idUsuario",    idUsuario);
-            cmd.Parameters.AddWithValue("idRol",        rolId);
-            cmd.Parameters.AddWithValue("usuarioModif", AsLong(usuarioAuditoria));
-            cmd.Parameters.AddWithValue("maquinaModif", Truncate(maquinaAuditoria, 100));
+                    cmd.Parameters.AddWithValue("idUsuario",    idUsuario);
+                    cmd.Parameters.AddWithValue("idRol",        rolId);
+                    cmd.Parameters.AddWithValue("usuarioModif", AsLong(usuarioAuditoria));
+                    cmd.Parameters.AddWithValue("maquinaModif", Truncate(maquinaAuditoria, 100));
+                    enHistorico = await cmd.ExecuteNonQueryAsync(ct);
+                }
 
-            var affected = await cmd.ExecuteNonQueryAsync(ct);
+                int enPlana;
+                await using (var cmd = conn.CreateCommand())
+                {
+                    cmd.Transaction = tx;
+                    cmd.CommandText =
+                        "DELETE FROM ctr_roles_user WHERE id_usuario = @idUsuario AND id_rol = @idRol";
+                    cmd.Parameters.AddWithValue("idUsuario", idUsuario);
+                    cmd.Parameters.AddWithValue("idRol",     rolId);
+                    enPlana = await cmd.ExecuteNonQueryAsync(ct);
+                }
 
-            if (affected > 0)
-            {
-                await RegistrarAuditoriaAsync(conn, null, idUsuario, "RETIRO_ROL",
+                if (enHistorico == 0 && enPlana == 0)
+                {
+                    await tx.RollbackAsync(ct);
+                    return new DtoGuardarUsuarioResult
+                    {
+                        idUsuario = 0,
+                        message   = "El usuario no tiene ese rol asignado."
+                    };
+                }
+
+                await RegistrarAuditoriaAsync(conn, tx, idUsuario, "RETIRO_ROL",
                     $"Rol {rolId} retirado. Motivo: {MotivoOSinMotivo(observacion)}",
                     maquinaAuditoria, ct);
-            }
 
-            return affected > 0
-                ? new DtoGuardarUsuarioResult { idUsuario = idUsuario, message = "Rol retirado correctamente." }
-                : new DtoGuardarUsuarioResult { idUsuario = 0,         message = "No se encontró un rol vigente para retirar." };
+                await tx.CommitAsync(ct);
+                return new DtoGuardarUsuarioResult
+                {
+                    idUsuario = idUsuario,
+                    message   = "Rol retirado correctamente."
+                };
+            }
+            catch
+            {
+                await tx.RollbackAsync(ct);
+                throw;
+            }
         }
 
         /// <summary>
@@ -418,6 +484,17 @@ RETURNING id_usuario";
 UPDATE ctr_roles_user_admin
    SET vigente = 0, fecha_fin = COALESCE(fecha_fin, CURRENT_DATE)
  WHERE id_usuario = @id AND COALESCE(vigente, 0) = 1";
+                    cmd.Parameters.AddWithValue("id", idUsuario);
+                    await cmd.ExecuteNonQueryAsync(ct);
+                }
+
+                // La tabla plana también: es la que alimenta el JWT. Sin esto un
+                // usuario retirado conservaba sus roles y, si alguien lo volvía a
+                // desbloquear, reaparecía con todo lo que se le había quitado.
+                await using (var cmd = conn.CreateCommand())
+                {
+                    cmd.Transaction = tx;
+                    cmd.CommandText = "DELETE FROM ctr_roles_user WHERE id_usuario = @id";
                     cmd.Parameters.AddWithValue("id", idUsuario);
                     await cmd.ExecuteNonQueryAsync(ct);
                 }

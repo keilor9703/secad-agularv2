@@ -258,38 +258,20 @@ export class AuthService {
     return !!resp && (resp.success === true || resp.Success === true || !!resp.token);
   }
 
+  /**
+   * Alias de esSuperAdmin(), conservado porque lo usan el guard de menú y la
+   * pantalla de usuarios.
+   *
+   * Antes tenía implementación propia y decía otra cosa: leía el claim de
+   * roles y devolvía true si alguno valía '1'… que es ADMINISTRADOR, no
+   * SuperAdministrador (el 2). De ahí salían dos concesiones que nadie quiso:
+   * un administrador de unidad podía asignar el rol de SuperAdministrador, y
+   * se saltaba entero el control de acceso por menú. Ahora las dos preguntas
+   * se responden desde el mismo sitio: el claim es_super_admin que firma el
+   * backend.
+   */
   isCurrentUserSuperAdmin(): boolean {
-    const token = this.getToken();
-    if (!token) {
-      return false;
-    }
-
-    try {
-      const parsed = this.decodeJwtPayload(token);
-      if (!parsed) {
-        return false;
-      }
-
-      const roleClaimUri = [
-        'http',
-        '://schemas.microsoft.com/ws/2008/06/identity/claims/role',
-      ].join('');
-      const roleClaimShort = 'role';
-      const roleClaimLegacy = 'roles';
-
-      const rawRoles = [
-        parsed?.[roleClaimUri],
-        parsed?.[roleClaimShort],
-        parsed?.[roleClaimLegacy],
-      ];
-
-      const values = rawRoles
-        .flatMap((r) => (Array.isArray(r) ? r : [r]))
-        .map((v) => String(v ?? '').trim());
-      return values.some((v) => v === '1');
-    } catch {
-      return false;
-    }
+    return this.esSuperAdmin();
   }
 
   private extractUserIdFromToken(token: string): number | null {

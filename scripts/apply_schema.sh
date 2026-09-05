@@ -112,6 +112,7 @@ TENANT_FILES=(
   "V62__menu_tipos_coherentes.sql"
   "V63__codigos_caso_superadmin.sql"
   "V64__reubicar_menu_proveedor_sms.sql"
+  "V65__roles_coherentes.sql"
 )
 
 case "$SCOPE" in

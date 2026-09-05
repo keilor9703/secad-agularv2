@@ -14,7 +14,11 @@ export const menuAccessGuard: CanActivateChildFn = (_route, state) => {
   const navigation = inject(NavigationMenuService);
   const router = inject(Router);
 
-  if (auth.isCurrentUserSuperAdmin() || state.url.startsWith('/home')) {
+  // Solo el SuperAdministrador se salta la comprobación: sus pantallas viven
+  // por encima de un CAD y no siempre están en el menú del tenant. Un
+  // Administrador de unidad SÍ pasa por aquí — antes no lo hacía, porque la
+  // comprobación de «super admin» miraba en realidad el rol 1.
+  if (auth.esSuperAdmin() || state.url.startsWith('/home')) {
     return true;
   }
 

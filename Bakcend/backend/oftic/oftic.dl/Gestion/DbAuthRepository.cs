@@ -67,10 +67,31 @@ LIMIT 1";
 
             await using (var cmd = conn.CreateCommand())
             {
+                // Los roles que se firman en el JWT —y de los que salen es_admin y
+                // es_super_admin— deben ser los MISMOS que decide el menú lateral
+                // (DbMenuRepository) y los que muestra la pantalla de roles. Antes
+                // esto leía la tabla plana a secas: sin vigencia y sin fecha de
+                // vencimiento. Un rol retirado o vencido seguía viajando en el
+                // token, así que el usuario conservaba el acceso real aunque las
+                // dos pantallas dijeran lo contrario.
+                //
+                // Manda ctr_roles_user_admin, que es donde vive la vigencia. La
+                // tabla plana solo se usa como respaldo para usuarios que no
+                // tienen NINGUNA fila en el histórico (datos heredados o sembrados
+                // por migración) — el mismo criterio de respaldo que aplica la
+                // pantalla de roles, para que las tres vistas coincidan.
                 cmd.CommandText = @"
-SELECT DISTINCT id_rol
-FROM ctr_roles_user
-WHERE id_usuario = @pIdUsuario";
+SELECT DISTINCT rua.id_rol
+FROM   ctr_roles_user_admin rua
+WHERE  rua.id_usuario = @pIdUsuario
+  AND  COALESCE(rua.vigente, 0) = 1
+  AND  (rua.fecha_fin IS NULL OR rua.fecha_fin >= CURRENT_DATE)
+UNION
+SELECT DISTINCT ru.id_rol
+FROM   ctr_roles_user ru
+WHERE  ru.id_usuario = @pIdUsuario
+  AND  NOT EXISTS (SELECT 1 FROM ctr_roles_user_admin a
+                   WHERE a.id_usuario = ru.id_usuario)";
                 cmd.Parameters.AddWithValue("pIdUsuario", idUsuario.Value);
 
                 await using var reader = await cmd.ExecuteReaderAsync(ct);
