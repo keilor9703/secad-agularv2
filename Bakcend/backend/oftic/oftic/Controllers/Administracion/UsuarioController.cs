@@ -6,6 +6,8 @@ using Servicios.ApiInterfaz;
 using System.Security.Claims;
 using BCrypt.Net;
 
+using Comun.Security;
+
 namespace ofic.Controllers.Administracion
 {
     [ApiController]
@@ -296,13 +298,52 @@ namespace ofic.Controllers.Administracion
             }
         }
 
+        // ── Frontera del SuperAdministrador ───────────────────────────────
+        //
+        // El rol de SuperAdministrador está fuera del alcance de un
+        // administrador de unidad: no lo concede, no lo retira y ni siquiera
+        // lo ve. Ocultarlo en la pantalla no basta —el endpoint acepta un
+        // rolId cualquiera y un `curl` se salta la interfaz—, así que la
+        // regla vive aquí, que es donde se decide de verdad.
+
+        /// <summary>true si quien llama es SuperAdministrador.</summary>
+        private bool LlamanteEsSuperAdmin() =>
+            User.FindFirst("es_super_admin")?.Value == "true";
+
+        /// <summary>
+        /// 403 si un no-superadmin intenta tocar el rol de SuperAdministrador.
+        /// Devuelve null cuando la operación puede continuar.
+        /// </summary>
+        private IActionResult? VetarRolReservado(int rolId)
+        {
+            if (rolId != RolesSistema.SuperAdministrador || LlamanteEsSuperAdmin())
+            {
+                return null;
+            }
+
+            _logger.LogWarning(
+                "Intento de manipular el rol de SuperAdministrador sin serlo. usuario={Usuario}",
+                User.Identity?.Name);
+
+            // El mensaje no admite que el rol exista: para este usuario, no
+            // existe. Confirmarlo sería la mitad de la fuga.
+            return StatusCode(StatusCodes.Status403Forbidden,
+                new { success = false, message = "Rol no disponible." });
+        }
+
+        /// <summary>Quita de una lista el rol reservado, salvo para el superadmin.</summary>
+        private List<T> SinRolReservado<T>(List<T> roles, Func<T, int> idDe) =>
+            LlamanteEsSuperAdmin()
+                ? roles
+                : roles.Where(r => idDe(r) != RolesSistema.SuperAdministrador).ToList();
+
         [HttpGet("Roles")]
         public async Task<IActionResult> GetRoles()
         {
             try
             {
                 var roles = await _dbUsuarioRepository.GetRolesAsync(HttpContext.RequestAborted);
-                return Ok(roles);
+                return Ok(SinRolReservado(roles, r => r.id));
             }
             catch (Exception ex)
             {
@@ -322,7 +363,10 @@ namespace ofic.Controllers.Administracion
                 }
 
                 var roles = await _dbUsuarioRepository.GetRolesAsignadosAsync(usuario.Trim(), HttpContext.RequestAborted);
-                return Ok(roles);
+                // También al MIRAR: si un administrador viera «SuperAdministrador»
+                // en la ficha de un compañero ya sabría que el rol existe, que es
+                // justo lo que no debe saber.
+                return Ok(SinRolReservado(roles, r => r.id));
             }
             catch (Exception ex)
             {
@@ -654,6 +698,10 @@ namespace ofic.Controllers.Administracion
         {
             try
             {
+                // Nadie se concede a sí mismo —ni a otro— la llave de la casa.
+                if (request is not null && VetarRolReservado(request.rolId) is { } vetoAsignar)
+                    return vetoAsignar;
+
                 if (request is null || request.rolId <= 0)
                 {
                     return BadRequest(new { success = false, message = "Rol requerido" });
@@ -774,6 +822,8 @@ namespace ofic.Controllers.Administracion
         {
             try
             {
+                if (VetarRolReservado(rolId) is { } vetoRetirar) return vetoRetirar;
+
                 if (rolId <= 0)
                 {
                     return BadRequest(new { success = false, message = "Rol inválido." });
@@ -843,7 +893,7 @@ namespace ofic.Controllers.Administracion
             try
             {
                 var roles = await _dbUsuarioRepository.GetRolesAdminAsync(HttpContext.RequestAborted);
-                return Ok(roles);
+                return Ok(SinRolReservado(roles, r => r.id));
             }
             catch (Exception ex)
             {
@@ -857,6 +907,11 @@ namespace ofic.Controllers.Administracion
         {
             try
             {
+                // Un id nulo es un rol NUEVO, y crear roles corrientes sigue
+                // permitido; solo se veta tocar el reservado.
+                if (request?.id is int idEditar && VetarRolReservado(idEditar) is { } vetoEditar)
+                    return vetoEditar;
+
                 if (request is null)
                 {
                     return BadRequest(new { success = false, message = "Payload invÃ¡lido." });
@@ -914,6 +969,8 @@ namespace ofic.Controllers.Administracion
         {
             try
             {
+                if (VetarRolReservado(idRol) is { } vetoEstado) return vetoEstado;
+
                 if (idRol <= 0)
                 {
                     return BadRequest(new { success = false, message = "Id de rol invÃ¡lido." });

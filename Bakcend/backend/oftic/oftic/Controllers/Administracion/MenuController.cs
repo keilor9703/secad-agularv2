@@ -6,6 +6,8 @@ using Negocio.Interfaz;
 using System.Security.Claims;
 using System.Globalization;
 
+using Comun.Security;
+
 namespace Api.Controllers.Administracion
 {
     [ApiController]
@@ -113,6 +115,30 @@ namespace Api.Controllers.Administracion
             }
         }
 
+        // ── Frontera del SuperAdministrador ───────────────────────────────
+        // Misma regla que en UsuarioController: para quien no lo es, ese rol
+        // no existe. Aquí se protege la otra puerta —la pantalla de Roles y
+        // sus permisos de navegación—, porque dejarla abierta permitiría
+        // reconocer el rol y reconfigurarlo aunque no se pudiera conceder.
+
+        private bool LlamanteEsSuperAdmin() =>
+            User.FindFirst("es_super_admin")?.Value == "true";
+
+        private IActionResult? VetarRolReservado(int idRol)
+        {
+            if (idRol != RolesSistema.SuperAdministrador || LlamanteEsSuperAdmin())
+            {
+                return null;
+            }
+
+            _logger.LogWarning(
+                "Intento de tocar los permisos del rol de SuperAdministrador sin serlo. usuario={Usuario}",
+                User.Identity?.Name);
+
+            return StatusCode(StatusCodes.Status403Forbidden,
+                new { success = false, message = "Rol no disponible." });
+        }
+
         [HttpGet("admin/roles")]
         [Authorize]
         public async Task<IActionResult> GetRolesCatalog(CancellationToken ct)
@@ -120,7 +146,9 @@ namespace Api.Controllers.Administracion
             try
             {
                 var roles = await _service.GetRolesCatalogAsync(ct);
-                return Ok(roles);
+                return Ok(LlamanteEsSuperAdmin()
+                    ? roles
+                    : roles.Where(r => r.IdRol != RolesSistema.SuperAdministrador).ToList());
             }
             catch (Exception ex)
             {
@@ -219,6 +247,8 @@ namespace Api.Controllers.Administracion
         {
             try
             {
+                if (VetarRolReservado(idRol) is { } veto) return veto;
+
                 if (idRol <= 0)
                 {
                     return BadRequest(new { success = false, message = "Id de rol invÃ¡lido." });
@@ -240,6 +270,8 @@ namespace Api.Controllers.Administracion
         {
             try
             {
+                if (VetarRolReservado(idRol) is { } veto) return veto;
+
                 if (idRol <= 0)
                 {
                     return BadRequest(new { success = false, message = "Id de rol invÃ¡lido." });
@@ -284,6 +316,8 @@ namespace Api.Controllers.Administracion
         {
             try
             {
+                if (VetarRolReservado(idRol) is { } veto) return veto;
+
                 if (idRol <= 0)
                 {
                     return BadRequest(new { success = false, message = "Id de rol inválido." });
@@ -309,6 +343,8 @@ namespace Api.Controllers.Administracion
         {
             try
             {
+                if (VetarRolReservado(idRol) is { } veto) return veto;
+
                 if (idRol <= 0 || idMenu <= 0)
                 {
                     return BadRequest(new { success = false, message = "ParÃ¡metros invÃ¡lidos." });

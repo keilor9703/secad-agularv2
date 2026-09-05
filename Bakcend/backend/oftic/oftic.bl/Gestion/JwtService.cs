@@ -5,6 +5,8 @@ using System.Security.Claims;
 using System.Text;
 using Negocio.Interfaz;
 
+using Comun.Security;
+
 namespace Negocio.Gestion
 {
     public class JwtService : IJwtService
@@ -32,8 +34,8 @@ namespace Negocio.Gestion
                 .Select(s => long.TryParse(s.Trim(), out var v) ? v : -1L)
                 .ToHashSet();
 
-            bool esSuperAdmin = roles.Contains(2L) || superUserIds.Contains(idUsuario);
-            bool esAdmin      = esSuperAdmin || roles.Contains(1L);
+            bool esSuperAdmin = roles.Contains(RolesSistema.SuperAdministrador) || superUserIds.Contains(idUsuario);
+            bool esAdmin      = esSuperAdmin || roles.Contains(RolesSistema.Administrador);
 
             var claims = new List<Claim>
             {
