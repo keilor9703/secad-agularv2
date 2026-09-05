@@ -213,13 +213,28 @@ ON CONFLICT (username) DO UPDATE SET
 
             await using var conn = await _masterDb.OpenConnectionAsync(ct);
             await using var cmd  = conn.CreateCommand();
+            // Igual que en el repositorio de auth: la API se despliega antes de
+            // que corran las migraciones, así que esta consulta tiene que
+            // sobrevivir a una maestra donde V66 todavía no pasó. Sin tabla,
+            // nadie es superadministrador —que es lo correcto y lo seguro—,
+            // pero el login NO se cae.
             cmd.CommandText = @"
                 SELECT 1 FROM secad_super_admins
                 WHERE username = @username AND activo
                 LIMIT 1";
             cmd.Parameters.AddWithValue("username", normalizado);
 
-            return await cmd.ExecuteScalarAsync(ct) is not null;
+            try
+            {
+                return await cmd.ExecuteScalarAsync(ct) is not null;
+            }
+            catch (PostgresException ex) when (ex.SqlState == "42P01")   // undefined_table
+            {
+                _logger.LogWarning(
+                    "secad_super_admins no existe todavía: aplica V66 en la maestra. "
+                    + "Hasta entonces nadie tendrá permisos de superadministración.");
+                return false;
+            }
         }
 
         public async Task<List<DtoSuperAdmin>> GetSuperAdminsAsync(CancellationToken ct)

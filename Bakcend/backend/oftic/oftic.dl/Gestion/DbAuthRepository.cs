@@ -125,9 +125,24 @@ WHERE  ru.id_usuario = @pIdUsuario
 
             await using var conn = await _tenant.DataSource.OpenConnectionAsync(ct);
             await using var cmd  = conn.CreateCommand();
+            // La consulta funciona ANTES y DESPUÉS de V69, y eso no es un lujo:
+            // el despliegue construye y levanta la API primero y aplica el SQL
+            // después, así que hay una ventana en la que el código nuevo habla
+            // con el esquema viejo. Sin esta tolerancia, esa ventana tumbaba el
+            // login entero con «column es_admin does not exist» — pasó.
+            //
+            // jsonb_exists mira si la columna está sin nombrarla en el SELECT;
+            // si no está, se cae al criterio anterior (el rol 1), que es lo que
+            // esa base tenía. Se usa la función y no el operador ? para no
+            // depender de cómo escape Npgsql ese carácter.
             cmd.CommandText = @"
-SELECT 1 FROM ctr_roles
-WHERE  id_rol = ANY(@pRoles) AND COALESCE(es_admin, 0) = 1
+SELECT 1
+FROM   ctr_roles r
+WHERE  r.id_rol = ANY(@pRoles)
+  AND  CASE WHEN jsonb_exists(to_jsonb(r), 'es_admin')
+              THEN COALESCE((to_jsonb(r) ->> 'es_admin')::int, 0) = 1
+              ELSE r.id_rol = 1
+            END
 LIMIT  1";
             cmd.Parameters.AddWithValue("pRoles", roles.ToArray());
 
