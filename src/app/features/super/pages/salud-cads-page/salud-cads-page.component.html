@@ -131,8 +131,8 @@
         label="Buscar CAD"
         placeholder="Nombre, código DANE o departamento…"
         [showButton]="false"
-        [value]="filtroTexto()"
-        (valueChange)="filtroTexto.set($event)"
+        [ngModel]="filtroTexto()"
+        (ngModelChange)="filtroTexto.set($event)"
       />
 
       <app-ui-select
@@ -141,8 +141,8 @@
         [options]="opcionesNivel"
         [clearable]="false"
         [searchable]="false"
-        [value]="filtroNivel()"
-        (valueChange)="filtroNivel.set($event ?? 0)"
+        [ngModel]="filtroNivel()"
+        (ngModelChange)="filtroNivel.set($event ?? 0)"
       />
     </div>
 

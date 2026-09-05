@@ -4,6 +4,8 @@
 //         + lista horizontal inferior de incidentes
 // ══════════════════════════════════════════════════════════════════════════════
 
+@use "sass:color";
+
 $color-primario: #003087;      // Azul Policía Nacional
 $color-flash:    #cc0000;
 $color-inmediata:#e67300;
@@ -365,7 +367,7 @@ $radius:         6px;
     &.primario {
       background: $color-primario;
       color: #fff;
-      &:hover { background: darken($color-primario, 8%); }
+      &:hover { background: color.adjust($color-primario, $lightness: -8%); }
     }
   }
 }

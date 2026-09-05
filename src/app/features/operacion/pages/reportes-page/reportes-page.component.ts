@@ -48,7 +48,6 @@ Chart.register(...registerables);
     UiSectionHeaderComponent,
     UiSegmentedTabsComponent,
     UiButtonComponent,
-    UiInputComponent,
     UiSelectComponent,
     UiBadgeComponent,
     UiSpinnerComponent,

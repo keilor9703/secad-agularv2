@@ -40,7 +40,6 @@ const SEGUNDOS_REFRESCO = 30;
     UiButtonComponent,
     UiSearchInputComponent,
     UiSelectComponent,
-    UiBadgeComponent,
     UiSpinnerComponent,
     UiModalComponent,
     UiTableComponent,
@@ -248,9 +247,9 @@ export class SaludCadsPageComponent implements OnInit {
       next: (resp) => {
         this.switchingContext.set(null);
         if (resp?.success) {
-          this.toast.success('Contexto cambiado', `Operando ahora en: ${cad.nombre}`);
+          this.toast.success('Contexto cambiado', `Operando ahora en: ${resp.nombreCad || cad.nombre}`);
         } else {
-          this.toast.info('Cambio de contexto', resp?.message || `Contexto cambiado a ${cad.nombre}`);
+          this.toast.info('Cambio de contexto', `Contexto cambiado a ${cad.nombre}`);
         }
       },
       error: (err) => {

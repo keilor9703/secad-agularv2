@@ -43,7 +43,6 @@ interface CeldaCtx {
   imports: [
     FormsModule,
     UiPageHeaderComponent,
-    UiSectionHeaderComponent,
     UiButtonComponent,
     UiSearchInputComponent,
     UiBadgeComponent,

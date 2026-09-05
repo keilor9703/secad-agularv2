@@ -104,7 +104,7 @@
       [rows]="casosFiltrados()"
       [loading]="loading()"
       [actions]="acciones"
-      pageSize="15"
+      [pageSize]="15"
       [showPagination]="true"
       loadingMessage="Cargando catálogo maestro de códigos…"
       emptyMessage="No se encontraron códigos de caso que coincidan con los filtros aplicados."
@@ -135,7 +135,6 @@
         icon="fa-solid fa-location-dot"
         iconPosition="start"
         size="xs"
-        [tooltip]="'Excepción municipal asignada al código DANE ' + row.codDane"
       />
     }
   </ng-template>
@@ -253,6 +252,7 @@
     </p>
 
     <app-ui-file-upload
+      label="Archivo Excel (.xlsx)"
       accept=".xlsx"
       [loading]="importando()"
       (fileSelected)="procesarArchivo($event)"

@@ -59,7 +59,6 @@ interface CeldaCtx {
     FormsModule,
     ReactiveFormsModule,
     UiPageHeaderComponent,
-    UiSectionHeaderComponent,
     UiButtonComponent,
     UiSearchInputComponent,
     UiInputComponent,
@@ -260,7 +259,7 @@ export class CasosSuperPageComponent implements OnInit {
 
     // Cargar Categorías
     this.asistenteSvc.getCategorias().subscribe({
-      next: (cats) => this.categorias.set(cats),
+      next: (cats) => this.categorias.set(cats.data ?? []),
       error: () => {},
     });
 
@@ -501,6 +500,7 @@ export class CasosSuperPageComponent implements OnInit {
       });
     }
 
-    await descargarLibroExcel(wb, `SECAD_Codigos_Caso_${new Date().toISOString().slice(0, 10)}.xlsx`);
+    const buffer = await wb.xlsx.writeBuffer() as ArrayBuffer;
+    descargarLibroExcel(buffer, `SECAD_Codigos_Caso_${new Date().toISOString().slice(0, 10)}.xlsx`);
   }
 }

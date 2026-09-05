@@ -46,8 +46,8 @@
       class="cs-filtro-cat"
       label="Categoría"
       [options]="opcionesCategoria()"
-      [value]="filtroCat()"
-      (valueChange)="filtroCat.set($event ?? '')"
+      [ngModel]="filtroCat()"
+      (ngModelChange)="filtroCat.set($event ?? '')"
       [clearable]="false"
     />
   </div>
@@ -73,14 +73,14 @@
         variant="warning"
         size="sm"
         icon="fa-solid fa-location-dot"
-        [text]="row.nombreCad ? row.nombreCad : ('CAD ' + row.codDane)"
+        [label]="row.nombreCad ? row.nombreCad : ('CAD ' + row.codDane)"
       />
     } @else {
       <app-ui-badge
         variant="info"
         size="sm"
         icon="fa-solid fa-earth-americas"
-        text="Nacional"
+        label="Nacional"
       />
     }
   </ng-template>
