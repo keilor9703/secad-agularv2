@@ -15,7 +15,7 @@ namespace Datos.Gestion
             _logger = logger;
         }
 
-        public async Task<(long? idUsuario, string identificacion, List<long> roles, int sitioGraba, int acd, int fuerzaId, int canalCodigo)> GetUsuarioYRolesAsync(string usuario, CancellationToken ct)
+        public async Task<(long? idUsuario, string identificacion, List<long> roles, bool esAdmin, int sitioGraba, int acd, int fuerzaId, int canalCodigo)> GetUsuarioYRolesAsync(string usuario, CancellationToken ct)
         {
             await using var conn = await _tenant.DataSource.OpenConnectionAsync(ct);
 
@@ -57,7 +57,7 @@ LIMIT 1";
             if (idUsuario is null)
             {
                 _logger.LogWarning("Usuario no encontrado o bloqueado: {Usuario}", usuario);
-                return (null, "", new List<long>(), 0, 0, 0, 0);
+                return (null, "", new List<long>(), false, 0, 0, 0, 0);
             }
 
             _logger.LogInformation("Usuario encontrado con ID: {IdUsuario}, identificacion: {Ident}",
@@ -99,8 +99,39 @@ WHERE  ru.id_usuario = @pIdUsuario
                     roles.Add(reader.GetInt64(0));
             }
 
-            _logger.LogInformation("Roles encontrados: {Count}", roles.Count);
-            return (idUsuario.Value, identificacion, roles, sitioGraba, acd, fuerzaId, canalCodigo);
+            var esAdmin = await AlgunRolEsAdministrativoAsync(roles, ct);
+
+            _logger.LogInformation("Roles encontrados: {Count} (administrativo={EsAdmin})",
+                roles.Count, esAdmin);
+            return (idUsuario.Value, identificacion, roles, esAdmin, sitioGraba, acd, fuerzaId, canalCodigo);
+        }
+
+        /// <summary>
+        /// ¿Alguno de estos roles es administrativo en este CAD?
+        ///
+        /// Aquí estaba el fallo de la pestaña de Cámaras: el claim es_admin se
+        /// calculaba como `roles.Contains(1)`, con el 1 escrito a mano. id_rol
+        /// es un BIGSERIAL LOCAL a cada tenant, así que en un CAD cuyo rol
+        /// «Administrador» hubiera nacido después —con id 14, por ejemplo— el
+        /// token salía con es_admin=false y todo endpoint marcado
+        /// [Authorize(Policy = "Administrador")] respondía 403. Con un
+        /// superadministrador no se notaba: el otro término del OR ya era
+        /// verdadero. Ahora lo declara el CAD en ctr_roles.es_admin (V69).
+        /// </summary>
+        public async Task<bool> AlgunRolEsAdministrativoAsync(
+            IReadOnlyCollection<long> roles, CancellationToken ct)
+        {
+            if (roles is null || roles.Count == 0) return false;
+
+            await using var conn = await _tenant.DataSource.OpenConnectionAsync(ct);
+            await using var cmd  = conn.CreateCommand();
+            cmd.CommandText = @"
+SELECT 1 FROM ctr_roles
+WHERE  id_rol = ANY(@pRoles) AND COALESCE(es_admin, 0) = 1
+LIMIT  1";
+            cmd.Parameters.AddWithValue("pRoles", roles.ToArray());
+
+            return await cmd.ExecuteScalarAsync(ct) is not null;
         }
     }
 }

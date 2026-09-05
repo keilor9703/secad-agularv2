@@ -36,15 +36,19 @@ namespace Negocio.Gestion
         public string CreateToken(long idUsuario, string usuario, List<long> roles, string codDane, string? nombreCad,
                                   int sitioGraba = 0, int acd = 0, int fuerzaId = 0, int canalId = 0,
                                   string? homeCodDane = null, string? identificacion = null,
-                                  bool esSuperAdmin = false)
+                                  bool esSuperAdmin = false, bool esAdminCad = false)
         {
             var issuer   = _cfg["Jwt:Issuer"]   ?? "oftic.api";
             var audience = _cfg["Jwt:Audience"] ?? issuer;
             var key      = _cfg["Jwt:Key"]!;
             var minutes  = int.Parse(_cfg["Jwt:Minutes"] ?? "480");
 
-            // Administrador del CAD: eso sí es un rol del tenant, y ahí se queda.
-            bool esAdmin = esSuperAdmin || roles.Contains(RolesSistema.Administrador);
+            // Administrador del CAD: lo declara el propio CAD marcando el rol en
+            // ctr_roles.es_admin (V69). Aquí se comparaba con el id 1 escrito a
+            // mano, y ese id es LOCAL a cada tenant: en un CAD cuyo rol
+            // «Administrador» tuviera otro id —14, por ejemplo— el claim salía
+            // false y las pantallas de administración devolvían 403.
+            bool esAdmin = esSuperAdmin || esAdminCad;
 
             var claims = new List<Claim>
             {

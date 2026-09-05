@@ -116,6 +116,7 @@ TENANT_FILES=(
   "V65__roles_coherentes.sql"
   "V67__tenant_sin_rol_superadmin.sql"
   "V68__menu_super_admins.sql"
+  "V69__roles_administrativos.sql"
 )
 
 case "$SCOPE" in

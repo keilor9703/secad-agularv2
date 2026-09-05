@@ -144,12 +144,20 @@ namespace Api.Controllers
             var esSuperAdmin = await _masterRepository.EsSuperAdminAsync(
                 usuario, HttpContext.RequestAborted);
 
+            // Administrador del CAD: lo declara el propio CAD marcando el rol
+            // (ctr_roles.es_admin). Se resuelve aquí y no en cada camino de
+            // login —directo, con 2FA por verificar, con 2FA por inscribir—
+            // para que los tres firmen exactamente lo mismo.
+            var esAdminCad = await _dbAuthRepository.AlgunRolEsAdministrativoAsync(
+                roles, HttpContext.RequestAborted);
+
             return _jwtService.CreateToken(
                 idUsuario, usuario, roles, codDane, nombreCad,
                 sitioGraba, acd, fuerzaId, canalCodigo,
                 homeCodDane:    homeCodDane,
                 identificacion: identificacion,
-                esSuperAdmin:   esSuperAdmin);
+                esSuperAdmin:   esSuperAdmin,
+                esAdminCad:     esAdminCad);
         }
 
         [HttpPost("Token")]
@@ -305,7 +313,7 @@ namespace Api.Controllers
                 _ = isCivilUser; // usado para logging; JWT ya lleva tipo_usuario via roles
 
                 // ── Consultar usuario, identificación y roles en el tenant ─────────
-                var (idUsuario, identificacionDb, roles, sitioGraba, acd, fuerzaId, canalCodigo) = await _dbAuthRepository.GetUsuarioYRolesAsync(
+                var (idUsuario, identificacionDb, roles, _, sitioGraba, acd, fuerzaId, canalCodigo) = await _dbAuthRepository.GetUsuarioYRolesAsync(
                     request.Usuario, CancellationToken.None);
 
                 _logger.LogInformation("User {Usuario} — idUsuario: {Id}, roles: {Count}, tenant: {Tenant}, sitio: {Sitio}, acd: {Acd}, canal: {Canal}",
