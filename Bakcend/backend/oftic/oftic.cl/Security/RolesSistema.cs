@@ -12,18 +12,15 @@ namespace Comun.Security
     public static class RolesSistema
     {
         /// <summary>
-        /// SuperAdministrador. Opera por encima de un CAD concreto: da de alta
-        /// tenants, conmuta de contexto y ve la salud de la red nacional.
+        /// Administrador del CAD. Es un rol DEL TENANT: administra su CAD y
+        /// nada más.
         ///
-        /// Solo un SuperAdministrador puede concederlo o retirarlo, y para
-        /// quien no lo es este rol no existe: no aparece en los catálogos ni
-        /// en la lista de roles de un usuario. Un administrador de unidad que
-        /// pudiera asignarlo —aunque fuese a sí mismo— se saltaría de un salto
-        /// la frontera entre administrar SU CAD y administrar todos.
+        /// Aquí vivía también una constante SuperAdministrador = 2, y ya no
+        /// existe. Ser superadministrador del sistema dejó de ser un rol de
+        /// tenant en V66: se registra en secad_super_admins, en la base
+        /// MAESTRA. El id 2 volvió a ser un id corriente, y un CAD puede
+        /// usarlo para el rol que quiera.
         /// </summary>
-        public const int SuperAdministrador = 2;
-
-        /// <summary>Administrador del CAD.</summary>
         public const int Administrador = 1;
     }
 }

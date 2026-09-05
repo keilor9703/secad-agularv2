@@ -48,6 +48,7 @@ MASTER_FILES=(
   # así que es seguro correrlo contra ambas bases (ver el archivo).
   "V31__tenant_sitio_grabacion_codane.sql"
   "V60__master_unidades.sql"
+  "V66__master_super_admins.sql"
 )
 
 # Todos los demás, EN ORDEN — aplican a cada base de datos de tenant/CAD.
@@ -113,6 +114,8 @@ TENANT_FILES=(
   "V63__codigos_caso_superadmin.sql"
   "V64__reubicar_menu_proveedor_sms.sql"
   "V65__roles_coherentes.sql"
+  "V67__tenant_sin_rol_superadmin.sql"
+  "V68__menu_super_admins.sql"
 )
 
 case "$SCOPE" in

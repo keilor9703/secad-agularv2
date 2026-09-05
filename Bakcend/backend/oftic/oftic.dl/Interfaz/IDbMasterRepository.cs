@@ -18,6 +18,29 @@ namespace Datos.Interfaz
         /// <summary>Returns all tenants (active and inactive) for the SuperAdmin management UI.</summary>
         Task<List<DtoTenantPublico>> GetAllTenantsAsync(CancellationToken ct);
 
+        // ── Superadministradores del sistema ──────────────────────────────
+        //  Viven en la maestra, no en los tenants: la autoridad es sobre todos
+        //  los CAD y no puede depender de la base de uno solo.
+
+        /// <summary>
+        /// ¿Esta persona es superadministrador? Es la ÚNICA fuente de es_super_admin:
+        /// ni los roles del tenant ni la configuración lo otorgan.
+        /// </summary>
+        Task<bool> EsSuperAdminAsync(string username, CancellationToken ct);
+
+        Task<List<DtoSuperAdmin>> GetSuperAdminsAsync(CancellationToken ct);
+
+        Task<(bool success, string message)> GuardarSuperAdminAsync(
+            DtoSuperAdminRequest request, string usuarioAuditoria, CancellationToken ct);
+
+        /// <summary>
+        /// Retira a un superadministrador. Nunca deja la lista vacía: quedarse
+        /// sin ninguno cierra /super para todo el mundo y solo se podría
+        /// reabrir con SQL a mano contra la maestra.
+        /// </summary>
+        Task<(bool success, string message)> QuitarSuperAdminAsync(
+            string username, string usuarioAuditoria, CancellationToken ct);
+
         /// <summary>
         /// Nombres de los CAD indicados, indexados por código DANE.
         /// Los códigos que no correspondan a ningún tenant no aparecen en el

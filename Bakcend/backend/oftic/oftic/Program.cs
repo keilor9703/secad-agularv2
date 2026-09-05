@@ -108,12 +108,12 @@ builder.Services.AddAuthentication("Bearer")
 
 builder.Services.AddAuthorization(options =>
 {
-    // Any user with es_admin=true (role 1 or role 2 or SuperUserIds list)
+    // Administrador del CAD: rol 1 del tenant, o superadministrador del sistema.
     options.AddPolicy("Administrador", policy =>
         policy.RequireAssertion(ctx =>
             ctx.User.FindFirst("es_admin")?.Value == "true"));
 
-    // Only users with es_super_admin=true (role 2 or SuperUserIds list)
+    // Superadministrador del sistema: registrado en secad_super_admins (maestra).
     options.AddPolicy("SuperAdministrador", policy =>
         policy.RequireAssertion(ctx =>
             ctx.User.FindFirst("es_super_admin")?.Value == "true"));

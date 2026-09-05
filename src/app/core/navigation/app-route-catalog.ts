@@ -65,6 +65,7 @@ export const APP_ROUTE_CATALOG: readonly AppRouteCatalogItem[] = [
   { route: '/super/salud-cads', label: 'Salud de CADs', area: 'Super Admin' },
   { route: '/super/unidades', label: 'Unidades y Municipios', area: 'Super Admin' },
   { route: '/super/casos', label: 'Códigos de caso institucionales', area: 'Super Admin' },
+  { route: '/super/super-admins', label: 'Superadministradores', area: 'Super Admin' },
 
   // ── Operación ────────────────────────────────────────────────────────────
   // Solo lo ya portado. Al portar eventos o pedido, agregarlos aquí o no

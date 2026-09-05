@@ -18,24 +18,33 @@ namespace Negocio.Gestion
             _cfg = cfg;
         }
 
+        /// <param name="esSuperAdmin">
+        /// Lo decide quien llama consultando secad_super_admins en la base
+        /// MAESTRA, y solo eso. Antes se deducía aquí de dos sitios, los dos
+        /// equivocados:
+        ///
+        ///   · roles.Contains(2) — un rol de la base de UN tenant otorgando
+        ///     autoridad sobre TODOS.
+        ///   · Menu:SuperUserIds del appsettings, que daba el privilegio a los
+        ///     id_usuario 1 y 2 de CUALQUIER tenant. Como ctr_usuarios.id_usuario
+        ///     es BIGSERIAL y V2 siembra «admin» sin id explícito, ese admin
+        ///     recibe el 1 en cada CAD nuevo: el administrador sembrado de
+        ///     cualquier tenant era superadministrador de todo el sistema.
+        ///
+        /// Este método ya no decide quién manda; solo firma lo que le dicen.
+        /// </param>
         public string CreateToken(long idUsuario, string usuario, List<long> roles, string codDane, string? nombreCad,
                                   int sitioGraba = 0, int acd = 0, int fuerzaId = 0, int canalId = 0,
-                                  string? homeCodDane = null, string? identificacion = null)
+                                  string? homeCodDane = null, string? identificacion = null,
+                                  bool esSuperAdmin = false)
         {
             var issuer   = _cfg["Jwt:Issuer"]   ?? "oftic.api";
             var audience = _cfg["Jwt:Audience"] ?? issuer;
             var key      = _cfg["Jwt:Key"]!;
             var minutes  = int.Parse(_cfg["Jwt:Minutes"] ?? "480");
 
-            // Admin si tiene id_rol=1 (Administrador) o id_rol=2 (SuperAdministrador)
-            // o su ID está en Menu:SuperUserIds del appsettings.
-            var superUserIds = (_cfg["Menu:SuperUserIds"] ?? "")
-                .Split(',', StringSplitOptions.RemoveEmptyEntries)
-                .Select(s => long.TryParse(s.Trim(), out var v) ? v : -1L)
-                .ToHashSet();
-
-            bool esSuperAdmin = roles.Contains(RolesSistema.SuperAdministrador) || superUserIds.Contains(idUsuario);
-            bool esAdmin      = esSuperAdmin || roles.Contains(RolesSistema.Administrador);
+            // Administrador del CAD: eso sí es un rol del tenant, y ahí se queda.
+            bool esAdmin = esSuperAdmin || roles.Contains(RolesSistema.Administrador);
 
             var claims = new List<Claim>
             {

@@ -204,6 +204,160 @@ ON CONFLICT (username) DO UPDATE SET
             return resultado;
         }
 
+        // ══ Superadministradores del sistema ══════════════════════════════
+
+        public async Task<bool> EsSuperAdminAsync(string username, CancellationToken ct)
+        {
+            var normalizado = NormalizarUsername(username);
+            if (normalizado.Length == 0) return false;
+
+            await using var conn = await _masterDb.OpenConnectionAsync(ct);
+            await using var cmd  = conn.CreateCommand();
+            cmd.CommandText = @"
+                SELECT 1 FROM secad_super_admins
+                WHERE username = @username AND activo
+                LIMIT 1";
+            cmd.Parameters.AddWithValue("username", normalizado);
+
+            return await cmd.ExecuteScalarAsync(ct) is not null;
+        }
+
+        public async Task<List<DtoSuperAdmin>> GetSuperAdminsAsync(CancellationToken ct)
+        {
+            await using var conn = await _masterDb.OpenConnectionAsync(ct);
+            await using var cmd  = conn.CreateCommand();
+            // El nombre del CAD de origen es informativo, así que un cod_dane
+            // que ya no corresponda a ningún tenant no oculta la fila.
+            cmd.CommandText = @"
+                SELECT sa.username, sa.nombre, sa.cod_dane_origen, t.nombre AS nombre_cad,
+                       sa.activo, sa.observacion, sa.fecha_creacion, sa.fecha_modifica
+                FROM   secad_super_admins sa
+                LEFT   JOIN secad_tenants t ON t.cod_dane = sa.cod_dane_origen
+                ORDER  BY sa.activo DESC, sa.username";
+
+            var lista = new List<DtoSuperAdmin>();
+            await using var reader = await cmd.ExecuteReaderAsync(ct);
+            while (await reader.ReadAsync(ct))
+            {
+                lista.Add(new DtoSuperAdmin
+                {
+                    Username        = reader.GetString(0),
+                    Nombre          = reader.IsDBNull(1) ? null : reader.GetString(1),
+                    CodDaneOrigen   = reader.IsDBNull(2) ? null : reader.GetString(2),
+                    NombreCadOrigen = reader.IsDBNull(3) ? null : reader.GetString(3),
+                    Activo          = reader.GetBoolean(4),
+                    Observacion     = reader.IsDBNull(5) ? null : reader.GetString(5),
+                    FechaCreacion   = reader.IsDBNull(6) ? null : reader.GetDateTime(6),
+                    FechaModifica   = reader.IsDBNull(7) ? null : reader.GetDateTime(7),
+                });
+            }
+            return lista;
+        }
+
+        public async Task<(bool success, string message)> GuardarSuperAdminAsync(
+            DtoSuperAdminRequest request, string usuarioAuditoria, CancellationToken ct)
+        {
+            var username = NormalizarUsername(request.Username);
+            if (username.Length == 0)
+                return (false, "El usuario es obligatorio.");
+
+            // Desactivar al último activo equivale a borrarlo: misma salvaguarda.
+            if (!request.Activo && await EsElUltimoActivoAsync(username, ct))
+                return (false, "No puede desactivar al último superadministrador activo.");
+
+            try
+            {
+                await using var conn = await _masterDb.OpenConnectionAsync(ct);
+                await using var cmd  = conn.CreateCommand();
+                cmd.CommandText = @"
+                    INSERT INTO secad_super_admins
+                        (username, nombre, cod_dane_origen, activo, observacion, usuario_creacion)
+                    VALUES
+                        (@username, @nombre, @codDane, @activo, @observacion, @auditoria)
+                    ON CONFLICT (username) DO UPDATE SET
+                        nombre           = EXCLUDED.nombre,
+                        cod_dane_origen  = EXCLUDED.cod_dane_origen,
+                        activo           = EXCLUDED.activo,
+                        observacion      = EXCLUDED.observacion,
+                        usuario_modifica = @auditoria,
+                        fecha_modifica   = NOW()";
+                cmd.Parameters.AddWithValue("username",    username);
+                cmd.Parameters.AddWithValue("nombre",      (object?)request.Nombre?.Trim()        ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("codDane",     (object?)request.CodDaneOrigen?.Trim() ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("activo",      request.Activo);
+                cmd.Parameters.AddWithValue("observacion", (object?)request.Observacion?.Trim()   ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("auditoria",   usuarioAuditoria);
+
+                await cmd.ExecuteNonQueryAsync(ct);
+                _logger.LogInformation(
+                    "Superadministrador guardado: {Username} (activo={Activo}) por {Auditoria}",
+                    username, request.Activo, usuarioAuditoria);
+
+                return (true, request.Activo
+                    ? "Superadministrador registrado correctamente."
+                    : "Superadministrador desactivado.");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error guardando el superadministrador {Username}", username);
+                return (false, $"Error al guardar: {ex.Message}");
+            }
+        }
+
+        public async Task<(bool success, string message)> QuitarSuperAdminAsync(
+            string username, string usuarioAuditoria, CancellationToken ct)
+        {
+            var normalizado = NormalizarUsername(username);
+            if (normalizado.Length == 0)
+                return (false, "El usuario es obligatorio.");
+
+            if (await EsElUltimoActivoAsync(normalizado, ct))
+                return (false, "No puede retirar al último superadministrador activo.");
+
+            await using var conn = await _masterDb.OpenConnectionAsync(ct);
+            await using var cmd  = conn.CreateCommand();
+            cmd.CommandText = "DELETE FROM secad_super_admins WHERE username = @username";
+            cmd.Parameters.AddWithValue("username", normalizado);
+
+            var filas = await cmd.ExecuteNonQueryAsync(ct);
+            if (filas > 0)
+            {
+                _logger.LogInformation("Superadministrador retirado: {Username} por {Auditoria}",
+                    normalizado, usuarioAuditoria);
+            }
+
+            return filas > 0
+                ? (true, "Superadministrador retirado.")
+                : (false, "No estaba registrado como superadministrador.");
+        }
+
+        /// <summary>
+        /// ¿Es este el único que queda en pie? Quedarse sin ninguno cierra
+        /// /super para todos y solo se reabre con SQL a mano contra la maestra.
+        /// </summary>
+        private async Task<bool> EsElUltimoActivoAsync(string username, CancellationToken ct)
+        {
+            await using var conn = await _masterDb.OpenConnectionAsync(ct);
+            await using var cmd  = conn.CreateCommand();
+            cmd.CommandText = @"
+                SELECT COUNT(*) FROM secad_super_admins
+                WHERE activo AND username <> @username";
+            cmd.Parameters.AddWithValue("username", username);
+
+            var otros = Convert.ToInt32(await cmd.ExecuteScalarAsync(ct));
+            if (otros > 0) return false;
+
+            // Solo es «el último» si él mismo está activo ahora.
+            return await EsSuperAdminAsync(username, ct);
+        }
+
+        /// <summary>
+        /// El username se guarda y compara en minúsculas: quien entra puede
+        /// escribirlo como quiera y OUD no distingue mayúsculas.
+        /// </summary>
+        private static string NormalizarUsername(string? username) =>
+            (username ?? string.Empty).Trim().ToLowerInvariant();
+
         public async Task<(bool success, string message, string? codDane)> CreateTenantAsync(
             DtoTenantRequest req, CancellationToken ct)
         {

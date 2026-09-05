@@ -34,6 +34,15 @@ export const superRoutes: Routes = [
     data: { breadcrumb: 'Unidades y Municipios' },
   },
   {
+    path: 'super-admins',
+    canActivate: [superAdminGuard],
+    loadComponent: () =>
+      import('./pages/super-admins-page/super-admins-page.component').then(
+        (m) => m.SuperAdminsPageComponent,
+      ),
+    data: { breadcrumb: 'Superadministradores' },
+  },
+  {
     path: 'casos',
     canActivate: [superAdminGuard],
     loadComponent: () =>

@@ -17,7 +17,6 @@ namespace Api.Controllers.Administracion
         private readonly IDbMenuService _service;
         private readonly IDbUsuarioRepository _dbUsuarioRepository;
         private readonly ILogger<MenuController> _logger;
-        private readonly HashSet<long> _superUserIds;
 
         public MenuController(
             IDbMenuService service,
@@ -28,7 +27,6 @@ namespace Api.Controllers.Administracion
             _service = service;
             _dbUsuarioRepository = dbUsuarioRepository;
             _logger = logger;
-            _superUserIds = ResolveSuperUserIds(configuration);
         }
 
         [HttpGet("by-user/{idUsuario:long}")]
@@ -115,30 +113,6 @@ namespace Api.Controllers.Administracion
             }
         }
 
-        // ── Frontera del SuperAdministrador ───────────────────────────────
-        // Misma regla que en UsuarioController: para quien no lo es, ese rol
-        // no existe. Aquí se protege la otra puerta —la pantalla de Roles y
-        // sus permisos de navegación—, porque dejarla abierta permitiría
-        // reconocer el rol y reconfigurarlo aunque no se pudiera conceder.
-
-        private bool LlamanteEsSuperAdmin() =>
-            User.FindFirst("es_super_admin")?.Value == "true";
-
-        private IActionResult? VetarRolReservado(int idRol)
-        {
-            if (idRol != RolesSistema.SuperAdministrador || LlamanteEsSuperAdmin())
-            {
-                return null;
-            }
-
-            _logger.LogWarning(
-                "Intento de tocar los permisos del rol de SuperAdministrador sin serlo. usuario={Usuario}",
-                User.Identity?.Name);
-
-            return StatusCode(StatusCodes.Status403Forbidden,
-                new { success = false, message = "Rol no disponible." });
-        }
-
         [HttpGet("admin/roles")]
         [Authorize]
         public async Task<IActionResult> GetRolesCatalog(CancellationToken ct)
@@ -146,9 +120,7 @@ namespace Api.Controllers.Administracion
             try
             {
                 var roles = await _service.GetRolesCatalogAsync(ct);
-                return Ok(LlamanteEsSuperAdmin()
-                    ? roles
-                    : roles.Where(r => r.IdRol != RolesSistema.SuperAdministrador).ToList());
+                return Ok(roles);
             }
             catch (Exception ex)
             {
@@ -247,7 +219,6 @@ namespace Api.Controllers.Administracion
         {
             try
             {
-                if (VetarRolReservado(idRol) is { } veto) return veto;
 
                 if (idRol <= 0)
                 {
@@ -270,7 +241,6 @@ namespace Api.Controllers.Administracion
         {
             try
             {
-                if (VetarRolReservado(idRol) is { } veto) return veto;
 
                 if (idRol <= 0)
                 {
@@ -316,7 +286,6 @@ namespace Api.Controllers.Administracion
         {
             try
             {
-                if (VetarRolReservado(idRol) is { } veto) return veto;
 
                 if (idRol <= 0)
                 {
@@ -343,7 +312,6 @@ namespace Api.Controllers.Administracion
         {
             try
             {
-                if (VetarRolReservado(idRol) is { } veto) return veto;
 
                 if (idRol <= 0 || idMenu <= 0)
                 {
@@ -439,10 +407,16 @@ namespace Api.Controllers.Administracion
 
         private async Task<List<DtoMenuItem>> GetMenuForUserAsync(long idUsuario, CancellationToken ct)
         {
-            // Superusuarios configurados explícitamente en appsettings reciben todo el menú admin.
-            // Usuarios con id_rol=1 (Administrador) o id_rol=2 (SuperAdministrador) son
-            // identificados por el JWT claim es_admin=true emitido en JwtService.
-            if (IsSuperUser(idUsuario) || IsAdmin())
+            // El administrador del CAD recibe el menú completo. Se reconoce por el
+            // claim es_admin del JWT.
+            //
+            // Aquí había además una lista de «superusuarios» leída de
+            // Menu:SuperUserIds del appsettings, que comparaba contra
+            // ctr_usuarios.id_usuario. Ese id es LOCAL a cada tenant y es
+            // BIGSERIAL, así que el usuario «admin» que siembra V2 se lleva el 1
+            // en cada CAD nuevo: la lista «1,2» convertía en superusuario al
+            // admin sembrado de cualquier tenant. Se eliminó junto con V66.
+            if (IsAdmin())
             {
                 var adminMenu = await _service.GetAdminMenuAsync(ct);
                 var filtered  = adminMenu.Where(x => x.Vigente == 1).ToList();
@@ -457,37 +431,13 @@ namespace Api.Controllers.Administracion
 
         /// <summary>
         /// Verifica el claim es_admin del JWT.
-        /// JwtService lo emite como "true" cuando el usuario tiene id_rol=1 o id_rol=2.
+        /// JwtService lo emite como "true" para el Administrador del CAD (rol 1) y
+        /// para el superadministrador del sistema, que se resuelve en la maestra.
         /// </summary>
         private bool IsAdmin()
             => string.Equals(User.FindFirstValue("es_admin"), "true", StringComparison.OrdinalIgnoreCase);
 
-        private bool IsSuperUser(long idUsuario)
-            => _superUserIds.Contains(idUsuario);
 
-        private static HashSet<long> ResolveSuperUserIds(IConfiguration configuration)
-        {
-            var ids = new HashSet<long>();
-
-            var configured = configuration["Menu:SuperUserIds"];
-            if (string.IsNullOrWhiteSpace(configured))
-            {
-                return ids;
-            }
-
-            var values = configured
-                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-
-            foreach (var value in values)
-            {
-                if (long.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var id) && id > 0)
-                {
-                    ids.Add(id);
-                }
-            }
-
-            return ids;
-        }
     }
 }
 

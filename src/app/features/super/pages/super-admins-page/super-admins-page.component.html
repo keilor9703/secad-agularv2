@@ -1,0 +1,145 @@
+<div class="sa-page">
+  <app-ui-page-header
+    title="Superadministradores del sistema"
+    icon="fa-solid fa-user-shield"
+    description="Quién administra SECAD por encima de los CAD. Se guarda en la base maestra, no en ningún tenant."
+    [minimizable]="false"
+  >
+    <span page-header-actions class="sa-conteo">
+      {{ activos() }} activo(s)
+    </span>
+    <app-ui-button
+      page-header-actions
+      variant="primary"
+      icon="fa-solid fa-user-plus"
+      (buttonClick)="nuevo()"
+    >Registrar</app-ui-button>
+  </app-ui-page-header>
+
+  <div class="sa-aviso">
+    <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+    <div>
+      <strong>Esta lista es la única forma de ser superadministrador.</strong>
+      <p>
+        Ningún rol de ningún CAD lo concede. La persona se identifica por su
+        usuario de OUD, que es lo mismo en todos los CAD; el CAD de origen es
+        informativo — un superadministrador lo es en todos.
+      </p>
+    </div>
+  </div>
+
+  @if (cargando()) {
+    <div class="sa-estado">
+      <app-ui-spinner type="ring" size="sm" variant="info" label="Consultando…" />
+    </div>
+  } @else if (lista().length === 0) {
+    <div class="sa-estado is-vacio">
+      <i class="fa-solid fa-user-shield" aria-hidden="true"></i>
+      <div>
+        <strong>No hay superadministradores registrados</strong>
+        <p>Sin al menos uno activo, nadie puede entrar a los módulos de Super Admin.</p>
+      </div>
+    </div>
+  } @else {
+    <ul class="sa-lista">
+      @for (item of lista(); track item.username) {
+        <li class="sa-item" [class.is-inactivo]="!item.activo">
+          <span class="sa-item__icono" aria-hidden="true">
+            <i class="fa-solid fa-user-shield"></i>
+          </span>
+
+          <span class="sa-item__datos">
+            <strong>
+              {{ item.username }}
+              @if (item.username === usuarioActual) {
+                <span class="sa-item__yo">usted</span>
+              }
+              @if (!item.activo) {
+                <span class="sa-item__inactivo">inactivo</span>
+              }
+            </strong>
+            <small>
+              {{ item.nombre || 'Sin nombre registrado' }}
+              @if (item.nombreCadOrigen || item.codDaneOrigen) {
+                · {{ item.nombreCadOrigen || ('CAD ' + item.codDaneOrigen) }}
+              }
+            </small>
+            @if (item.observacion) {
+              <small class="sa-item__nota">{{ item.observacion }}</small>
+            }
+          </span>
+
+          <span class="sa-item__acciones">
+            <app-ui-button
+              size="sm" variant="secondary" appearance="ghost"
+              icon="fa-solid fa-pen" [iconOnly]="true"
+              [ariaLabel]="'Editar ' + item.username"
+              tooltip="Editar"
+              (buttonClick)="editar(item)"
+            />
+            <app-ui-button
+              size="sm" variant="danger" appearance="ghost"
+              icon="fa-solid fa-user-minus" [iconOnly]="true"
+              [loading]="quitando() === item.username"
+              [disabled]="quitando() !== null"
+              [ariaLabel]="'Retirar ' + item.username"
+              tooltip="Retirar"
+              (buttonClick)="quitar(item)"
+            />
+          </span>
+        </li>
+      }
+    </ul>
+  }
+</div>
+
+<app-ui-modal
+  [open]="modalAbierto()"
+  [title]="editando() ? 'Editar superadministrador' : 'Registrar superadministrador'"
+  [subtitle]="editando() ? editando()!.username : 'Se identifica por su usuario de OUD'"
+  icon="fa-solid fa-user-shield"
+  size="md"
+  (closeRequested)="cerrarModal()"
+>
+  <form modal-body [formGroup]="form" class="sa-form">
+    <app-ui-input
+      formControlName="username"
+      label="Usuario (OUD)"
+      placeholder="Ej: jperez"
+      hint="El mismo con el que inicia sesión. No distingue mayúsculas."
+      [required]="true"
+    />
+    <app-ui-input
+      formControlName="nombre"
+      label="Nombre"
+      placeholder="Ej: Juan Pérez"
+    />
+    <app-ui-input
+      formControlName="codDaneOrigen"
+      label="DANE del CAD de origen"
+      placeholder="Ej: 11001"
+      hint="Informativo. No limita su alcance: administra todos los CAD."
+    />
+    <app-ui-input
+      formControlName="observacion"
+      label="Observación"
+      placeholder="Por qué se le concede"
+    />
+    <div class="sa-form__toggle">
+      <app-ui-toggle formControlName="activo" label="Activo" />
+    </div>
+  </form>
+
+  <div modal-actions class="sa-form__acciones">
+    <app-ui-button
+      variant="secondary" appearance="ghost"
+      [disabled]="guardando()"
+      (buttonClick)="cerrarModal()"
+    >Cancelar</app-ui-button>
+    <app-ui-button
+      variant="primary" icon="fa-solid fa-floppy-disk"
+      [loading]="guardando()" [disabled]="guardando()"
+      (buttonClick)="guardar()"
+    >Guardar</app-ui-button>
+  </div>
+</app-ui-modal>

@@ -123,15 +123,29 @@ namespace Api.Controllers
                            ?? User.FindFirstValue("cod_dane")
                            ?? "";
 
+            // Se vuelve a comprobar contra la maestra en lugar de arrastrar el
+            // claim del token: si a esta persona le retiraron la condición de
+            // superadministrador mientras tenía sesión abierta, conmutar de CAD
+            // no puede ser la forma de renovarse el privilegio.
+            var sigueSiendoSuper = await _masterRepo.EsSuperAdminAsync(usuario, ct);
+            if (!sigueSiendoSuper)
+            {
+                _logger.LogWarning(
+                    "Conmutación de contexto rechazada: {Usuario} ya no es superadministrador.", usuario);
+                return StatusCode(StatusCodes.Status403Forbidden,
+                    new { success = false, message = "Su sesión ya no tiene permisos de superadministración." });
+            }
+
             var newToken = _jwtService.CreateToken(
                 idUsuario, usuario, roles,
-                codDane:     targetTenant.CodDane,
-                nombreCad:   targetTenant.Nombre,
-                sitioGraba:  0,   // reset — superadmin navigates above site level
-                acd:         acd,
-                fuerzaId:    0,
-                canalId:     0,
-                homeCodDane: homeCodDane);
+                codDane:      targetTenant.CodDane,
+                nombreCad:    targetTenant.Nombre,
+                sitioGraba:   0,   // reset — superadmin navigates above site level
+                acd:          acd,
+                fuerzaId:     0,
+                canalId:      0,
+                homeCodDane:  homeCodDane,
+                esSuperAdmin: true);
 
             _logger.LogInformation(
                 "SuperAdmin {User} switched context to tenant {Target} (home={Home})",
@@ -145,6 +159,51 @@ namespace Api.Controllers
                 nombreCad   = targetTenant.Nombre,
                 homeCodDane = homeCodDane
             });
+        }
+
+        // ── Superadministradores del sistema ──────────────────────────────────
+        //
+        // Toda esta clase está detrás de [Authorize(Policy = "SuperAdministrador")],
+        // así que solo un superadministrador administra la lista. Es deliberado
+        // que sea la única puerta: la condición ya no se puede conceder desde
+        // ningún CAD, y por eso no hay forma de que un administrador de unidad
+        // llegue hasta aquí.
+
+        /// <summary>Lista los superadministradores registrados en la maestra.</summary>
+        [HttpGet("super-admins")]
+        public async Task<IActionResult> GetSuperAdmins(CancellationToken ct)
+            => Ok(await _masterRepo.GetSuperAdminsAsync(ct));
+
+        /// <summary>Registra o actualiza un superadministrador.</summary>
+        [HttpPost("super-admins")]
+        public async Task<IActionResult> GuardarSuperAdmin(
+            [FromBody] DtoSuperAdminRequest request, CancellationToken ct)
+        {
+            if (request is null || string.IsNullOrWhiteSpace(request.Username))
+                return BadRequest(new { success = false, message = "El usuario es obligatorio." });
+
+            var (success, message) = await _masterRepo.GuardarSuperAdminAsync(
+                request, User.Identity?.Name ?? "desconocido", ct);
+
+            _logger.LogInformation(
+                "SuperAdmin {Quien} {Accion} a {Username} como superadministrador. Resultado: {Msg}",
+                User.Identity?.Name, request.Activo ? "registró" : "desactivó", request.Username, message);
+
+            return success
+                ? Ok(new { success = true, message })
+                : BadRequest(new { success = false, message });
+        }
+
+        /// <summary>Retira a un superadministrador de la lista.</summary>
+        [HttpDelete("super-admins/{username}")]
+        public async Task<IActionResult> QuitarSuperAdmin(string username, CancellationToken ct)
+        {
+            var (success, message) = await _masterRepo.QuitarSuperAdminAsync(
+                username, User.Identity?.Name ?? "desconocido", ct);
+
+            return success
+                ? Ok(new { success = true, message })
+                : BadRequest(new { success = false, message });
         }
 
         // ── Salud CADs ────────────────────────────────────────────────────────

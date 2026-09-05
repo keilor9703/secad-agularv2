@@ -84,8 +84,6 @@ export class UsuariosPageComponent implements OnInit, OnDestroy {
   private readonly rolesCatalogoState = signal<DtoRolCatalogo[]>([]);
   readonly basicInfoFocusRevision = signal(0);
 
-  public readonly superAdministradorRolId = 2;
-  private canAssignSuperAdministrador = false;
 
   minimized = false;
   visible = true;
@@ -237,7 +235,6 @@ export class UsuariosPageComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.canAssignSuperAdministrador = this.authService.isCurrentUserSuperAdmin();
     this.cargarRolesCatalogo();
     this.cargarListadoUsuarios();
   }
@@ -966,24 +963,18 @@ export class UsuariosPageComponent implements OnInit, OnDestroy {
     }).format(parsed);
   }
 
+  /**
+   * El catálogo llega tal cual del backend.
+   *
+   * Aquí se filtraba «SuperAdministrador» por id y por nombre, porque ese rol
+   * del tenant otorgaba autoridad sobre todo el sistema. Desde V66 ya no
+   * existe como rol: ser superadministrador se registra en la base maestra
+   * (Super Admin → Superadministradores) y ningún rol de ningún CAD lo
+   * concede. El id 2 volvió a ser un id corriente y esconderlo sería esconder
+   * un rol legítimo del CAD.
+   */
   private filtrarRolesCatalogo(roles: DtoRolCatalogo[]): DtoRolCatalogo[] {
-    if (!roles || roles.length === 0) {
-      return [];
-    }
-
-    if (!this.canAssignSuperAdministrador) {
-      return roles.filter((role) => {
-        const nombre = (role.nombre ?? '').trim().toLowerCase();
-        return (
-          role.id !== this.superAdministradorRolId &&
-          nombre !== 'superadministrador' &&
-          nombre !== 'super administrador' &&
-          nombre !== 'superadmin'
-        );
-      });
-    }
-
-    return roles;
+    return roles ?? [];
   }
 
   /** Reconstruye el índice únicamente con el listado completo persistido. */

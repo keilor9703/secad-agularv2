@@ -118,8 +118,17 @@ namespace Api.Controllers
             };
         }
 
-        /// <summary>Construye el JWT definitivo una vez pasado el 2FA (o si no aplica).</summary>
-        private string BuildFinalJwt(
+        /// <summary>
+        /// Construye el JWT definitivo una vez pasado el 2FA (o si no aplica).
+        ///
+        /// Aquí es donde se resuelve si la persona es superadministrador, y se
+        /// resuelve contra la base MAESTRA (secad_super_admins), no contra los
+        /// roles del CAD por el que entra. Es la diferencia entre «administra
+        /// este CAD» y «administra el sistema»: lo segundo no puede salir de la
+        /// base de un tenant, porque entonces quien controle esa base controla
+        /// todos los demás.
+        /// </summary>
+        private async Task<string> BuildFinalJwtAsync(
             long   idUsuario,
             string usuario,
             List<long> roles,
@@ -131,11 +140,17 @@ namespace Api.Controllers
             int    canalCodigo,
             string homeCodDane,
             string? identificacion = null)
-            => _jwtService.CreateToken(
+        {
+            var esSuperAdmin = await _masterRepository.EsSuperAdminAsync(
+                usuario, HttpContext.RequestAborted);
+
+            return _jwtService.CreateToken(
                 idUsuario, usuario, roles, codDane, nombreCad,
                 sitioGraba, acd, fuerzaId, canalCodigo,
                 homeCodDane:    homeCodDane,
-                identificacion: identificacion);
+                identificacion: identificacion,
+                esSuperAdmin:   esSuperAdmin);
+        }
 
         [HttpPost("Token")]
         public async Task<IActionResult> GetToken([FromBody] DtoTokenRequest request)
@@ -412,7 +427,7 @@ namespace Api.Controllers
                 }
 
                 // ── Emitir JWT final (credenciales OK + MFA no requerido/pasado) ─
-                var jwtToken = BuildFinalJwt(
+                var jwtToken = await BuildFinalJwtAsync(
                     idUsuario.Value, request.Usuario!, roles!,
                     codDane!, nombreCad!, sitioGraba, acd, fuerzaId, canalCodigo, homeCodDane,
                     identificacion: identificacionFinal);
@@ -480,7 +495,7 @@ namespace Api.Controllers
             }
 
             var roles = ParseRoles(d.RolesJson);
-            var jwt   = BuildFinalJwt(d.IdUsuario, d.Usuario, roles, d.CodDane, d.NombreCad,
+            var jwt   = await BuildFinalJwtAsync(d.IdUsuario, d.Usuario, roles, d.CodDane, d.NombreCad,
                                        d.SitioGraba, d.Acd, d.FuerzaId, d.CanalCodigo, d.HomeCodDane,
                                        identificacion: string.IsNullOrEmpty(d.IdentificacionStr) ? null : d.IdentificacionStr);
 
@@ -519,7 +534,7 @@ namespace Api.Controllers
                 return Ok(new DtoMfaStepResponse { Success = false, Message = result.Mensaje.Length > 0 ? result.Mensaje : "Código inválido. Intente de nuevo." });
 
             var roles = ParseRoles(d.RolesJson);
-            var jwt   = BuildFinalJwt(d.IdUsuario, d.Usuario, roles, d.CodDane, d.NombreCad,
+            var jwt   = await BuildFinalJwtAsync(d.IdUsuario, d.Usuario, roles, d.CodDane, d.NombreCad,
                                        d.SitioGraba, d.Acd, d.FuerzaId, d.CanalCodigo, d.HomeCodDane,
                                        identificacion: string.IsNullOrEmpty(d.IdentificacionStr) ? null : d.IdentificacionStr);
 
