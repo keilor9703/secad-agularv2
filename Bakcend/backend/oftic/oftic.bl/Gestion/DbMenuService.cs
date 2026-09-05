@@ -50,7 +50,7 @@ namespace Negocio.Gestion
         public Task<DtoMenuResult> RemoveMenuFromRolAsync(int idRol, long idMenu, long usuarioAuditoria, string maquinaAuditoria, CancellationToken ct)
         => _repo.RemoveMenuFromRolAsync(idRol, idMenu, usuarioAuditoria, maquinaAuditoria, ct);
 
-        public Task<DtoMenuResult> ReemplazarMenusDeRolAsync(int idRol, IReadOnlyCollection<long> idMenus, long usuarioAuditoria, string maquinaAuditoria, CancellationToken ct)
-        => _repo.ReemplazarMenusDeRolAsync(idRol, idMenus, usuarioAuditoria, maquinaAuditoria, ct);
+        public Task<DtoMenuResult> ReemplazarMenusDeRolAsync(int idRol, IReadOnlyCollection<long> idMenus, bool puedeGestionarSuper, long usuarioAuditoria, string maquinaAuditoria, CancellationToken ct)
+        => _repo.ReemplazarMenusDeRolAsync(idRol, idMenus, puedeGestionarSuper, usuarioAuditoria, maquinaAuditoria, ct);
     }
 }

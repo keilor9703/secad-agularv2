@@ -27,8 +27,14 @@ namespace Datos.Interfaz
         /// necesita una pantalla de casillas, donde el administrador revisa
         /// toda la lista y guarda una vez.
         /// </summary>
+        /// <param name="puedeGestionarSuper">
+        /// false para un administrador de CAD: las pantallas de Super Admin no
+        /// se le ofrecen, no puede concederlas y —esto es lo que se olvida— las
+        /// que ya estén concedidas NO se le retiran al guardar. Si no las ve,
+        /// su lista no puede decidir sobre ellas.
+        /// </param>
         Task<DtoMenuResult> ReemplazarMenusDeRolAsync(
-            int idRol, IReadOnlyCollection<long> idMenus,
+            int idRol, IReadOnlyCollection<long> idMenus, bool puedeGestionarSuper,
             long usuarioAuditoria, string maquinaAuditoria, CancellationToken ct);
     }
 }

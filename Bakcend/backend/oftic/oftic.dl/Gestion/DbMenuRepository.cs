@@ -310,7 +310,7 @@ RETURNING id_menurol";
         /// llama al endpoint a mano.
         /// </summary>
         public async Task<DtoMenuResult> ReemplazarMenusDeRolAsync(
-            int idRol, IReadOnlyCollection<long> idMenus,
+            int idRol, IReadOnlyCollection<long> idMenus, bool puedeGestionarSuper,
             long usuarioAuditoria, string maquinaAuditoria, CancellationToken ct)
         {
             var deseados = idMenus.Where(id => id > 0).Distinct().ToArray();
@@ -324,10 +324,19 @@ RETURNING id_menurol";
                 await using (var cmd = conn.CreateCommand())
                 {
                     cmd.Transaction = tx;
+                    // Las pantallas de Super Admin quedan fuera del alcance del
+                    // administrador de CAD en las DOS direcciones. Si solo se
+                    // filtrara el alta, su lista —que no las incluye porque no
+                    // las ve— las retiraría en cada guardado.
                     cmd.CommandText = @"
-DELETE FROM ctr_menu_roles
- WHERE id_rol = @pIdRol
-   AND NOT (id_menu = ANY(@pIdMenus))";
+DELETE FROM ctr_menu_roles mr
+ WHERE mr.id_rol = @pIdRol
+   AND NOT (mr.id_menu = ANY(@pIdMenus))
+   AND (@pPuedeSuper OR NOT EXISTS (
+         SELECT 1 FROM ctr_menu m
+         WHERE m.id_menu = mr.id_menu
+           AND LOWER(COALESCE(m.detalle, '')) LIKE '/super/%'))";
+                    cmd.Parameters.AddWithValue("pPuedeSuper", puedeGestionarSuper);
                     cmd.Parameters.AddWithValue("pIdRol",   idRol);
                     cmd.Parameters.AddWithValue("pIdMenus", deseados);
                     retirados = await cmd.ExecuteNonQueryAsync(ct);
@@ -348,8 +357,10 @@ WHERE  m.id_menu = ANY(@pIdMenus)
   AND  m.vigente = 1
   AND  UPPER(COALESCE(m.tipo, '')) <> 'GRUPO'
   AND  COALESCE(TRIM(m.detalle), '') <> ''
+  AND  (@pPuedeSuper OR LOWER(COALESCE(m.detalle, '')) NOT LIKE '/super/%')
   AND  NOT EXISTS (SELECT 1 FROM ctr_menu_roles mr
                    WHERE mr.id_rol = @pIdRol AND mr.id_menu = m.id_menu)";
+                    cmd.Parameters.AddWithValue("pPuedeSuper", puedeGestionarSuper);
                     cmd.Parameters.AddWithValue("pIdRol",   idRol);
                     cmd.Parameters.AddWithValue("pIdMenus", deseados);
                     cmd.Parameters.AddWithValue("pUsuario", usuarioAuditoria);

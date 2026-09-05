@@ -3,11 +3,13 @@ import {
   Component,
   computed,
   effect,
+  inject,
   input,
   output,
   signal,
 } from '@angular/core';
 
+import { AuthService } from '../../../../../core/auth/auth.service';
 import { DbMenuItem } from '../../../../../core/services/menu.service';
 import { RoleMenuItem } from '../../../../../core/services/menu.service';
 import { UiButtonComponent } from '../../../../../shared/components/ui-button/ui-button.component';
@@ -46,6 +48,11 @@ export interface GrupoPermisos {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RoleMenuPermissionsComponent {
+  private readonly auth = inject(AuthService);
+
+  /** Se lee una vez: el token no cambia mientras la pantalla está abierta. */
+  private readonly esSuperAdmin = this.auth.esSuperAdmin();
+
   readonly selectedRole   = input<RolAdminItem | null>(null);
   /** Catálogo completo del menú, tal como viene de la API. */
   readonly allMenus       = input<readonly DbMenuItem[]>([]);
@@ -79,8 +86,22 @@ export class RoleMenuPermissionsComponent {
     const menus = this.allMenus();
     const porId = new Map(menus.map((m) => [m.idMenu, m]));
 
-    const esPantalla = (m: DbMenuItem): boolean =>
-      (m.tipo ?? '').trim().toUpperCase() !== 'GRUPO' && !!(m.detalle ?? '').trim();
+    // Las pantallas de Super Admin no se ofrecen a quien no lo es. No es solo
+    // que conceder una no sirva de nada —la ruta la corta superAdminGuard—:
+    // es que verlas ya revela un área del sistema que no es de su competencia.
+    // El backend aplica la misma regla al guardar, y además conserva las
+    // concesiones que este administrador no puede ver, para que guardar desde
+    // aquí no se las lleve por delante.
+    const puedeVerSuper = this.esSuperAdmin;
+
+    const esPantalla = (m: DbMenuItem): boolean => {
+      if ((m.tipo ?? '').trim().toUpperCase() === 'GRUPO') return false;
+
+      const ruta = (m.detalle ?? '').trim();
+      if (!ruta) return false;
+
+      return puedeVerSuper || !ruta.toLowerCase().startsWith('/super/');
+    };
 
     const grupos = new Map<number, { nombre: string; icono: string; pantallas: PantallaPermiso[] }>();
 

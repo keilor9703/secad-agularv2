@@ -56,12 +56,61 @@ namespace Api.Controllers.Administracion
             return Ok(menu);
         }
 
+        // ══ Frontera del área de Super Admin ══════════════════════════════
+        //
+        // TODO lo que enseña un menú sale de aquí: el lateral del usuario, el
+        // módulo Administración → Menú y el panel de permisos de Roles. Por eso
+        // el filtro vive en este punto y no en cada pantalla: parchear una
+        // dejaba las otras dos abiertas, que es exactamente lo que pasó.
+        //
+        // Para quien no es superadministrador, el área /super no existe: ni sus
+        // pantallas ni el grupo que las contiene.
+
+        private bool LlamanteEsSuperAdmin() =>
+            User.FindFirst("es_super_admin")?.Value == "true";
+
+        /// <summary>
+        /// Quita las pantallas de /super y, detrás de ellas, el grupo que se
+        /// queda sin nada dentro. Un grupo vacío no solo sobra: delata el área
+        /// que se está ocultando.
+        /// </summary>
+        private List<DtoMenuItem> SinAreaSuper(List<DtoMenuItem> menu)
+        {
+            if (LlamanteEsSuperAdmin()) return menu;
+
+            var visibles = menu
+                .Where(m => !(m.Detalle ?? "").Trim().StartsWith("/super/", StringComparison.OrdinalIgnoreCase))
+                .ToList();
+
+            // Un contenedor es el que no lleva ruta propia: se queda solo si
+            // aún le cuelga algo. Se repite hasta que no cambie nada, por si
+            // hubiera grupos dentro de grupos.
+            bool huboCambios;
+            do
+            {
+                var padresConHijos = visibles
+                    .Where(m => m.IdPadre != m.IdMenu)   // una raíz no es hija de sí misma
+                    .Select(m => m.IdPadre)
+                    .ToHashSet();
+
+                var antes = visibles.Count;
+                visibles = visibles
+                    .Where(m => !string.IsNullOrWhiteSpace(m.Detalle)
+                             || padresConHijos.Contains(m.IdMenu))
+                    .ToList();
+
+                huboCambios = visibles.Count != antes;
+            } while (huboCambios);
+
+            return visibles;
+        }
+
         [HttpGet("admin")]
         [Authorize]
         public async Task<ActionResult<List<DtoMenuItem>>> GetAdminMenu(CancellationToken ct)
         {
             var menu = await _service.GetAdminMenuAsync(ct);
-            return Ok(menu);
+            return Ok(SinAreaSuper(menu));
         }
 
         [HttpPost("admin")]
@@ -294,8 +343,11 @@ namespace Api.Controllers.Administracion
 
                 var userId  = await ResolveUsuarioAuditoriaAsync(ct);
                 var machine = ResolveMachine();
-                var result  = await _service.ReemplazarMenusDeRolAsync(
-                    idRol, request?.IdMenus ?? new List<long>(), userId, machine, ct);
+                // Solo un superadministrador gestiona las pantallas de /super.
+                var puedeSuper = User.FindFirst("es_super_admin")?.Value == "true";
+
+                var result = await _service.ReemplazarMenusDeRolAsync(
+                    idRol, request?.IdMenus ?? new List<long>(), puedeSuper, userId, machine, ct);
 
                 return Ok(new { success = true, id = result.Id, message = result.Message });
             }
@@ -419,7 +471,7 @@ namespace Api.Controllers.Administracion
             if (IsAdmin())
             {
                 var adminMenu = await _service.GetAdminMenuAsync(ct);
-                var filtered  = adminMenu.Where(x => x.Vigente == 1).ToList();
+                var filtered  = SinAreaSuper(adminMenu.Where(x => x.Vigente == 1).ToList());
                 _logger.LogInformation("[Menu] Admin {Id}: {N} ítems.", idUsuario, filtered.Count);
                 return filtered;
             }

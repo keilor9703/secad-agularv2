@@ -1,5 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
+import { AuthService } from '../../../../../core/auth/auth.service';
+
 import { DbMenuItem, RoleMenuItem } from '../../../../../core/services/menu.service';
 import { RoleMenuPermissionsComponent } from './role-menu-permissions.component';
 
@@ -30,10 +32,18 @@ const asignado = (idMenu: number): RoleMenuItem =>
 describe('RoleMenuPermissionsComponent', () => {
   let fixture: ComponentFixture<RoleMenuPermissionsComponent>;
   let comp: RoleMenuPermissionsComponent;
+  /**
+   * Quién mira la pantalla. El grueso de las pruebas usa un superadministrador
+   * para cubrir el catálogo entero; que a un administrador de CAD se le oculten
+   * las pantallas de /super tiene su propio bloque al final.
+   */
+  let esSuper = true;
 
   beforeEach(async () => {
+    esSuper = true;
     await TestBed.configureTestingModule({
       imports: [RoleMenuPermissionsComponent],
+      providers: [{ provide: AuthService, useValue: { esSuperAdmin: () => esSuper } }],
     }).compileComponents();
     fixture = TestBed.createComponent(RoleMenuPermissionsComponent);
     comp = fixture.componentInstance;
@@ -112,5 +122,43 @@ describe('RoleMenuPermissionsComponent', () => {
 
     comp.filtro.set('/operacion/eventos');
     expect(comp.gruposVisibles().flatMap((g) => g.pantallas.map((p) => p.nombre))).toEqual(['Eventos']);
+  });
+
+  describe('las pantallas de Super Admin', () => {
+    /** Monta de nuevo con el catálogo, decidiendo quién mira. */
+    const montar = async (comoSuperAdmin: boolean) => {
+      TestBed.resetTestingModule();
+      await TestBed.configureTestingModule({
+        imports: [RoleMenuPermissionsComponent],
+        providers: [
+          { provide: AuthService, useValue: { esSuperAdmin: () => comoSuperAdmin } },
+        ],
+      }).compileComponents();
+
+      const f = TestBed.createComponent(RoleMenuPermissionsComponent);
+      f.componentRef.setInput('selectedRole', { id: 1, nombre: 'Administrador', vigente: 1 });
+      f.componentRef.setInput('allMenus', CATALOGO);
+      f.componentRef.setInput('assignedMenus', []);
+      f.detectChanges();
+      return f.componentInstance;
+    };
+
+    it('no se le ofrecen a un administrador de CAD, ni su grupo', async () => {
+      const c = await montar(false);
+
+      expect(c.grupos().map((g) => g.nombre)).not.toContain('Super Admin');
+      const rutas = c.grupos().flatMap((g) => g.pantallas.map((p) => p.ruta));
+      expect(rutas.some((r) => r.startsWith('/super/'))).toBe(false);
+      // Y las suyas siguen ahí.
+      expect(rutas).toContain('/operacion/eventos');
+    });
+
+    it('un superadministrador sí las ve', async () => {
+      const c = await montar(true);
+
+      expect(c.grupos().map((g) => g.nombre)).toContain('Super Admin');
+      expect(c.grupos().flatMap((g) => g.pantallas.map((p) => p.ruta)))
+        .toContain('/super/salud-cads');
+    });
   });
 });

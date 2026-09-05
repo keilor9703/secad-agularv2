@@ -69,15 +69,22 @@
   p { margin: 2px 0 0; font-size: calc(11px * var(--font-size-scale, 1)); }
 }
 
-// El listado se desplaza por dentro: el pie con Guardar tiene que quedarse
-// visible aunque el catálogo crezca a treinta pantallas.
+// El listado se desplaza por dentro para que el pie con Guardar siga visible
+// aunque el catálogo crezca. El tope era `min(52vh, 520px)` y cortaba el
+// último grupo a media fila, con aspecto de pantalla rota; ahora el corte cae
+// SIEMPRE entre dos grupos porque el desplazamiento se ancla a cada uno, y el
+// desvanecido de abajo avisa de que hay más.
 .permissions-card__grupos {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  max-height: min(52vh, 520px);
+  max-height: min(62vh, 640px);
   overflow-y: auto;
+  overscroll-behavior: contain;
+  scroll-snap-type: y proximity;
   padding: 10px 14px 14px;
+
+  > * { scroll-snap-align: start; }
 }
 
 .permiso-grupo {
@@ -108,13 +115,17 @@
     &.is-lleno   { color: #15803d; }
   }
 
+  // 270px en vez de 230: con tres columnas estrechas los nombres largos no
+  // cabían en una línea. Con esta medida caben dos o tres columnas según el
+  // ancho real, y el nombre entra completo en casi todos los casos.
   &__pantallas {
     list-style: none;
     margin: 0;
     padding: 4px;
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
     gap: 2px;
+    align-items: stretch;
   }
 }
 
@@ -122,7 +133,7 @@
 // vez y el usuario necesita ver el conjunto de un vistazo.
 .permiso-casilla {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 9px;
   padding: 7px 9px;
   border-radius: 7px;
@@ -140,6 +151,7 @@
 
   &__marca {
     flex: 0 0 auto;
+    margin-top: 1px;
     width: 16px; height: 16px;
     border: 1.5px solid rgba(15, 23, 42, .3);
     border-radius: 4px;
@@ -181,8 +193,13 @@
     outline-offset: 2px;
   }
 
-  &__icono { flex: 0 0 auto; width: 14px; text-align: center; color: #94a3b8; }
+  &__icono { flex: 0 0 auto; margin-top: 1px; width: 14px; text-align: center; color: #94a3b8; }
 
+  // El nombre se lee ENTERO. Antes iba con ellipsis y «Pedido (Jefe de
+  // Turno)» o «Reportes y Estadísticas» se cortaban justo donde importa:
+  // en una pantalla de permisos, media palabra es media decisión. Ahora
+  // envuelve en dos líneas y la ruta, que sí es larga y prescindible, es la
+  // única que se recorta.
   &__texto {
     display: flex;
     flex-direction: column;
@@ -193,9 +210,7 @@
       font-size: calc(11.5px * var(--font-size-scale, 1));
       font-weight: 600;
       color: #334155;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+      overflow-wrap: anywhere;
     }
 
     small {
@@ -215,6 +230,7 @@
   &--grupo {
     padding: 0;
     gap: 9px;
+    align-items: center;
     &:hover { background: transparent; }
     strong {
       font-size: calc(11.5px * var(--font-size-scale, 1));
