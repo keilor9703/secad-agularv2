@@ -210,13 +210,12 @@
         <app-ui-toggle
           formControlName="vigente"
           label="Código vigente"
-          [checked]="form.controls.vigente.value"
         />
       </div>
     </div>
   </form>
 
-  <div modal-footer class="sc-modal-footer">
+  <div modal-actions class="sc-modal-footer">
     <app-ui-button
       variant="secondary"
       appearance="ghost"
@@ -273,7 +272,7 @@
     }
   </div>
 
-  <div modal-footer>
+  <div modal-actions>
     <app-ui-button
       variant="secondary"
       [disabled]="importando()"

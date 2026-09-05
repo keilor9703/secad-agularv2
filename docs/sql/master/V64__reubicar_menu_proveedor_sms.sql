@@ -1,5 +1,11 @@
 -- ══════════════════════════════════════════════════════════════════════════
--- V62: Reubicar Proveedor SMS dentro de Hub de Integraciones
+-- V64: Reubicar Proveedor SMS dentro de Hub de Integraciones
+--
+-- (Nació como V62 y se renumeró: ya existía otra V62, la de los tipos de
+--  menú, y dos archivos con el mismo número rompen el único orden que
+--  tenemos —no hay tabla de migraciones aplicadas, solo el nombre—. El
+--  contenido no cambió; si ya se aplicó como V62 en algún servidor, volver a
+--  pasarla no hace nada.)
 --
 -- El módulo Proveedor SMS deja de ser una opción de menú independiente en el
 -- grupo Administración y pasa a integrarse como una pestaña dentro de Hub de

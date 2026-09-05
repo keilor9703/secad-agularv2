@@ -110,6 +110,8 @@ TENANT_FILES=(
   "V59__menu_grupos_a_raiz.sql"
   "V61__menu_super_unidades.sql"
   "V62__menu_tipos_coherentes.sql"
+  "V63__codigos_caso_superadmin.sql"
+  "V64__reubicar_menu_proveedor_sms.sql"
 )
 
 case "$SCOPE" in
