@@ -167,6 +167,43 @@ ON CONFLICT (username) DO UPDATE SET
             return list;
         }
 
+        /// <summary>
+        /// Resuelve el nombre de cada CAD a partir de su código DANE.
+        ///
+        /// El catálogo de códigos de caso vive en la base del TENANT y guarda
+        /// solo el cod_dane del ámbito; el nombre del CAD está en la maestra,
+        /// que es otra base y a menudo otro servidor, así que no hay JOIN
+        /// posible. Se resuelve aquí, con una sola consulta para toda la lista
+        /// en vez de una por fila.
+        /// </summary>
+        public async Task<Dictionary<string, string>> GetNombresCadAsync(
+            IReadOnlyCollection<string> codDanes, CancellationToken ct)
+        {
+            var resultado = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+            var codigos = codDanes
+                .Where(c => !string.IsNullOrWhiteSpace(c))
+                .Select(c => c.Trim())
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToArray();
+
+            if (codigos.Length == 0) return resultado;
+
+            await using var conn = await _masterDb.OpenConnectionAsync(ct);
+            await using var cmd  = conn.CreateCommand();
+            cmd.CommandText = @"
+                SELECT cod_dane, nombre
+                FROM   secad_tenants
+                WHERE  cod_dane = ANY(@codigos)";
+            cmd.Parameters.AddWithValue("codigos", codigos);
+
+            await using var reader = await cmd.ExecuteReaderAsync(ct);
+            while (await reader.ReadAsync(ct))
+                resultado[reader.GetString(0)] = reader.GetString(1);
+
+            return resultado;
+        }
+
         public async Task<(bool success, string message, string? codDane)> CreateTenantAsync(
             DtoTenantRequest req, CancellationToken ct)
         {

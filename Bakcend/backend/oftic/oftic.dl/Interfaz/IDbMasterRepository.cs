@@ -18,6 +18,14 @@ namespace Datos.Interfaz
         /// <summary>Returns all tenants (active and inactive) for the SuperAdmin management UI.</summary>
         Task<List<DtoTenantPublico>> GetAllTenantsAsync(CancellationToken ct);
 
+        /// <summary>
+        /// Nombres de los CAD indicados, indexados por código DANE.
+        /// Los códigos que no correspondan a ningún tenant no aparecen en el
+        /// resultado: quien llama decide qué mostrar en su lugar.
+        /// </summary>
+        Task<Dictionary<string, string>> GetNombresCadAsync(
+            IReadOnlyCollection<string> codDanes, CancellationToken ct);
+
         /// <summary>Creates a new tenant record. Returns the new tenant's cod_dane on success.</summary>
         Task<(bool success, string message, string? codDane)> CreateTenantAsync(DtoTenantRequest request, CancellationToken ct);
 

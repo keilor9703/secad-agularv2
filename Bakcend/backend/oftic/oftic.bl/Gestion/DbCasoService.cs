@@ -9,12 +9,49 @@ namespace Negocio.Gestion
         private const int MaxCodigoLen      = 50;
         private const int MaxDescripcionLen = 300;
 
-        private readonly IDbCasoRepository _repo;
+        private readonly IDbCasoRepository   _repo;
+        private readonly IDbMasterRepository _master;
 
-        public DbCasoService(IDbCasoRepository repo) => _repo = repo;
+        public DbCasoService(IDbCasoRepository repo, IDbMasterRepository master)
+        {
+            _repo   = repo;
+            _master = master;
+        }
 
-        public Task<List<DtoCaso>> GetAllAsync(string? busqueda, CancellationToken ct)
-            => _repo.GetAllAsync(busqueda?.Trim(), ct);
+        /// <summary>
+        /// El catálogo sale de la base del tenant, donde cada fila guarda como
+        /// mucho el cod_dane de su ámbito. El NOMBRE del CAD vive en la base
+        /// maestra, así que se completa aquí: son dos bases distintas y no hay
+        /// JOIN que valga. Una sola consulta para toda la lista, y solo si hay
+        /// alguna fila con ámbito de CAD — el catálogo suele ser nacional
+        /// entero, y en ese caso no se toca la maestra.
+        /// </summary>
+        public async Task<List<DtoCaso>> GetAllAsync(string? busqueda, CancellationToken ct)
+        {
+            var casos = await _repo.GetAllAsync(busqueda?.Trim(), ct);
+
+            var codigos = casos
+                .Where(c => !string.IsNullOrWhiteSpace(c.CodDane))
+                .Select(c => c.CodDane!)
+                .ToArray();
+
+            if (codigos.Length == 0) return casos;
+
+            var nombres = await _master.GetNombresCadAsync(codigos, ct);
+
+            foreach (var caso in casos)
+            {
+                // Un cod_dane sin tenant registrado deja NombreCad en null y la
+                // pantalla cae a «CAD <código>», que sigue siendo informativo.
+                if (!string.IsNullOrWhiteSpace(caso.CodDane)
+                    && nombres.TryGetValue(caso.CodDane!.Trim(), out var nombre))
+                {
+                    caso.NombreCad = nombre;
+                }
+            }
+
+            return casos;
+        }
 
         public async Task<DtoCasoResult> CrearAsync(DtoCasoRequest request, CancellationToken ct)
         {
