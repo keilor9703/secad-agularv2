@@ -3,7 +3,7 @@
   <app-ui-page-header
     title="Entidades / Fuerzas"
     icon="fa-solid fa-shield-halved"
-    description="Fuerzas que despachan en este CAD y los canales de cada una. Es de aquí de donde salen las opciones de la asignación operativa de cada usuario."
+    description="Fuerzas y organismos que despachan en este CAD y los canales de radiocomunicación de cada una. Base para la asignación operativa de despachadores."
     [minimizable]="false"
   >
     <app-ui-button
@@ -16,242 +16,480 @@
 
   <div class="ent-layout">
 
-    <!-- ═══ Fuerzas ══════════════════════════════════════════════════════ -->
+    <!-- ═══ Lista Maestro: Fuerzas ═══════════════════════════════════════ -->
     <aside class="ent-fuerzas">
       <app-ui-panel-header
-        title="Fuerzas"
+        title="Fuerzas registradas"
         icon="fa-solid fa-sitemap"
         appearance="soft"
       >
         <app-ui-chip
           panel-header-actions
-          [value]="fuerzas().length"
-          label="registradas"
+          [value]="fuerzasFiltradas().length"
+          label="visibles"
           variant="info"
           appearance="soft"
           size="xs"
         />
       </app-ui-panel-header>
 
+      <!-- Barra de búsqueda y filtros rápidos -->
+      <div class="ent-fuerzas__tools">
+        <app-ui-search-input
+          class="ent-fuerzas__search"
+          placeholder="Buscar por nombre, código o sigla…"
+          [showButton]="false"
+          [ngModel]="busqueda()"
+          (ngModelChange)="busqueda.set($event)"
+        />
+
+        <div class="ent-filtros-chips">
+          <button
+            type="button"
+            class="ent-chip-btn"
+            [class.ent-chip-btn--active]="filtroVigencia() === 'todas'"
+            (click)="setFiltroVigencia('todas')"
+          >
+            Todas ({{ conteoTotal() }})
+          </button>
+          <button
+            type="button"
+            class="ent-chip-btn ent-chip-btn--ok"
+            [class.ent-chip-btn--active]="filtroVigencia() === 'vigentes'"
+            (click)="setFiltroVigencia('vigentes')"
+          >
+            Activas ({{ conteoVigentes() }})
+          </button>
+          <button
+            type="button"
+            class="ent-chip-btn ent-chip-btn--warn"
+            [class.ent-chip-btn--active]="filtroVigencia() === 'inactivas'"
+            (click)="setFiltroVigencia('inactivas')"
+          >
+            Inactivas ({{ conteoInactivas() }})
+          </button>
+        </div>
+      </div>
+
       @if (loading()) {
         <app-ui-spinner label="Cargando fuerzas…" contained />
       } @else if (fuerzas().length === 0) {
-        <p class="ent-vacio">Aún no hay fuerzas registradas.</p>
+        <div class="ent-vacio-panel">
+          <i class="fa-solid fa-shield-halved"></i>
+          <p>Aún no hay fuerzas registradas en este CAD.</p>
+          <app-ui-button variant="primary" size="sm" icon="fa-solid fa-plus" (buttonClick)="nuevaFuerza()">
+            Crear primera fuerza
+          </app-ui-button>
+        </div>
+      } @else if (fuerzasFiltradas().length === 0) {
+        <div class="ent-vacio-panel">
+          <i class="fa-solid fa-filter-circle-xmark"></i>
+          <p>No se encontraron fuerzas con el criterio de búsqueda ingresado.</p>
+          <app-ui-button variant="secondary" appearance="ghost" size="sm" (buttonClick)="busqueda.set(''); setFiltroVigencia('todas')">
+            Restablecer filtros
+          </app-ui-button>
+        </div>
       } @else {
         <ul class="ent-lista">
-          @for (f of fuerzas(); track f.id) {
+          @for (f of fuerzasFiltradas(); track f.id) {
             <li>
-              <button
-                type="button"
-                class="ent-item"
-                [class.ent-item--activa]="estaSeleccionada(f)"
-                [class.ent-item--inactiva]="f.vigente !== 'S'"
+              <div
+                role="button"
+                tabindex="0"
+                class="ent-card"
+                [class.ent-card--activa]="estaSeleccionada(f)"
+                [class.ent-card--inactiva]="f.vigente !== 'S'"
                 (click)="seleccionarFuerza(f)"
+                (keydown.enter)="seleccionarFuerza(f)"
+                (keydown.space)="seleccionarFuerza(f); $event.preventDefault()"
               >
-                <span class="ent-item__cod">{{ f.id }}</span>
-                <span class="ent-item__texto">{{ f.descripcion }}</span>
-                <span class="ent-item__nums">
-                  @if (f.abreviatura) { <span class="ent-item__abrev">{{ f.abreviatura }}</span> }
-                  <span title="Canales"><i class="fa-solid fa-tower-broadcast"></i> {{ f.totalCanales }}</span>
-                  <span title="Usuarios"><i class="fa-solid fa-user"></i> {{ f.totalUsuarios }}</span>
-                </span>
-                <span class="ent-item__acciones">
+                <!-- Avatar identificador de la fuerza -->
+                <div class="ent-card__avatar" [class]="getFuerzaThemeClass(f)">
+                  <i [class]="getFuerzaIcon(f)" aria-hidden="true"></i>
+                </div>
+
+                <!-- Contenido descriptivo -->
+                <div class="ent-card__body">
+                  <div class="ent-card__meta">
+                    <span class="ent-cod-pill" title="Código institucional">#{{ f.id }}</span>
+                    @if (f.abreviatura) {
+                      <span class="ent-abrev-pill" title="Sigla operativa">{{ f.abreviatura }}</span>
+                    }
+                    <app-ui-badge
+                      [label]="f.vigente === 'S' ? 'Activa' : 'Inactiva'"
+                      [variant]="f.vigente === 'S' ? 'success' : 'danger'"
+                      size="xs"
+                    />
+                  </div>
+
+                  <h4 class="ent-card__titulo">{{ f.descripcion }}</h4>
+
+                  <div class="ent-card__stats">
+                    <span class="ent-stat-pill" title="Canales de radio configurados">
+                      <i class="fa-solid fa-tower-broadcast"></i>
+                      <strong>{{ f.totalCanales }}</strong> {{ f.totalCanales === 1 ? 'canal' : 'canales' }}
+                    </span>
+                    <span class="ent-stat-pill" title="Usuarios/despachadores asignados">
+                      <i class="fa-solid fa-user-group"></i>
+                      <strong>{{ f.totalUsuarios }}</strong> {{ f.totalUsuarios === 1 ? 'usuario' : 'usuarios' }}
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Acciones rápidas -->
+                <div class="ent-card__acciones">
                   <app-ui-button
-                    variant="secondary" appearance="ghost" size="sm"
-                    icon="fa-solid fa-pen" iconOnly
-                    ariaLabel="Editar fuerza" tooltip="Editar"
+                    variant="secondary"
+                    appearance="ghost"
+                    size="sm"
+                    icon="fa-solid fa-pen"
+                    iconOnly
+                    ariaLabel="Editar fuerza"
+                    tooltip="Editar fuerza"
                     (buttonClick)="editarFuerza(f, $event)"
                   />
                   <app-ui-button
                     [variant]="f.vigente === 'S' ? 'secondary' : 'primary'"
-                    appearance="ghost" size="sm"
+                    appearance="ghost"
+                    size="sm"
                     [icon]="f.vigente === 'S' ? 'fa-solid fa-ban' : 'fa-solid fa-circle-check'"
                     iconOnly
                     [ariaLabel]="f.vigente === 'S' ? 'Desactivar fuerza' : 'Activar fuerza'"
-                    [tooltip]="f.vigente === 'S' ? 'Desactivar' : 'Activar'"
+                    [tooltip]="f.vigente === 'S' ? 'Desactivar fuerza' : 'Activar fuerza'"
                     (buttonClick)="toggleFuerza(f, $event)"
                   />
-                </span>
-              </button>
+                </div>
+              </div>
             </li>
           }
         </ul>
       }
     </aside>
 
-    <!-- ═══ Detalle ══════════════════════════════════════════════════════ -->
+    <!-- ═══ Panel Detalle / Estado Maestro ═══════════════════════════════ -->
     <section class="ent-detalle">
 
       <!-- Alta / edición de fuerza -->
       @if (modoFuerza() !== 'ninguno') {
         <div class="ent-form-card">
           <app-ui-section-header
-            [title]="modoFuerza() === 'nueva' ? 'Nueva fuerza' : 'Editar fuerza'"
+            [title]="modoFuerza() === 'nueva' ? 'Registrar nueva fuerza de despacho' : 'Modificar fuerza de despacho'"
+            [description]="modoFuerza() === 'nueva' ? 'Defina el código único y denominación institucional de la fuerza.' : 'Actualice los datos generales y vigencia operativa.'"
             icon="fa-solid fa-shield-halved"
           />
           <form [formGroup]="formFuerza" class="ent-form">
-            <!-- El código lo define quien administra y no cambia después: es la
-                 clave con la que el resto del sistema referencia a la fuerza. -->
             <app-ui-input
-              class="ent-form__corto"
+              class="ent-form__campo-corto"
               formControlName="id"
-              label="Código"
+              label="Código de la fuerza"
               type="number"
+              hint="Identificador numérico único"
               [readonly]="modoFuerza() === 'editando'"
               required
             />
-            <app-ui-input formControlName="descripcion" label="Descripción" required />
-            <app-ui-input class="ent-form__corto" formControlName="abreviatura" label="Abreviatura" />
+            <app-ui-input
+              class="ent-form__campo-largo"
+              formControlName="descripcion"
+              label="Nombre o denominación institucional"
+              placeholder="Ej: Policía Nacional, Bomberos Oficiales, etc."
+              required
+            />
+            <app-ui-input
+              class="ent-form__campo-corto"
+              formControlName="abreviatura"
+              label="Abreviatura / Sigla"
+              placeholder="Ej: PONAL, BOM, CR"
+            />
             <app-ui-select
-              class="ent-form__corto"
+              class="ent-form__campo-corto"
               formControlName="vigente"
-              label="Estado"
+              label="Estado operativo"
               [options]="opcionesVigencia"
               [clearable]="false"
               [searchable]="false"
             />
           </form>
           <div class="ent-form__acciones">
-            <app-ui-button variant="secondary" appearance="ghost" icon="fa-solid fa-xmark"
-                           [disabled]="saving()" (buttonClick)="cancelarFuerza()">Cancelar</app-ui-button>
-            <app-ui-button variant="primary" icon="fa-solid fa-floppy-disk"
-                           [loading]="saving()" [disabled]="saving()"
-                           (buttonClick)="guardarFuerza()">Guardar fuerza</app-ui-button>
+            <app-ui-button
+              variant="secondary"
+              appearance="ghost"
+              icon="fa-solid fa-xmark"
+              [disabled]="saving()"
+              (buttonClick)="cancelarFuerza()"
+            >Cancelar</app-ui-button>
+            <app-ui-button
+              variant="primary"
+              icon="fa-solid fa-floppy-disk"
+              [loading]="saving()"
+              [disabled]="saving()"
+              (buttonClick)="guardarFuerza()"
+            >{{ modoFuerza() === 'nueva' ? 'Crear fuerza' : 'Guardar cambios' }}</app-ui-button>
           </div>
         </div>
       }
 
-      <!-- Mientras se edita o crea una fuerza no se muestra su detalle: los
-           canales y usuarios se cargan al seleccionarla, no al editarla, y
-           dejarlos a la vista mostraría "0 canales" en fuerzas que sí tienen. -->
+      <!-- Detalle de la fuerza seleccionada -->
       @if (fuerzaSeleccionada(); as f) {
         @if (modoFuerza() === 'ninguno') {
-        <div class="ent-detalle-card">
-          <app-ui-panel-header
-            [title]="f.descripcion"
-            [description]="'Código ' + f.id + (f.abreviatura ? ' · ' + f.abreviatura : '')"
-            icon="fa-solid fa-shield-halved"
-            appearance="soft"
-          />
+          <div class="ent-detalle-card">
+            <div class="ent-detalle-hero">
+              <div class="ent-detalle-hero__avatar" [class]="getFuerzaThemeClass(f)">
+                <i [class]="getFuerzaIcon(f)"></i>
+              </div>
+              <div class="ent-detalle-hero__info">
+                <div class="ent-detalle-hero__top">
+                  <span class="ent-cod-pill">Código #{{ f.id }}</span>
+                  @if (f.abreviatura) {
+                    <span class="ent-abrev-pill">{{ f.abreviatura }}</span>
+                  }
+                  <app-ui-badge
+                    [label]="f.vigente === 'S' ? 'Activa y Operativa' : 'Inactiva'"
+                    [variant]="f.vigente === 'S' ? 'success' : 'danger'"
+                  />
+                </div>
+                <h2 class="ent-detalle-hero__nombre">{{ f.descripcion }}</h2>
+                <p class="ent-detalle-hero__sub">
+                  Configuración de canales de comunicación directa y asignación de despachadores para este organismo.
+                </p>
+              </div>
+              <div class="ent-detalle-hero__actions">
+                <app-ui-button
+                  variant="secondary"
+                  size="sm"
+                  icon="fa-solid fa-pen"
+                  (buttonClick)="editarFuerza(f, $event)"
+                >Editar</app-ui-button>
+                <app-ui-button
+                  [variant]="f.vigente === 'S' ? 'secondary' : 'primary'"
+                  size="sm"
+                  [icon]="f.vigente === 'S' ? 'fa-solid fa-ban' : 'fa-solid fa-circle-check'"
+                  (buttonClick)="toggleFuerza(f, $event)"
+                >{{ f.vigente === 'S' ? 'Desactivar' : 'Activar' }}</app-ui-button>
+              </div>
+            </div>
 
-          <app-ui-tabs
-            variant="navigation"
-            size="md"
-            ariaLabel="Detalle de la fuerza"
-            [activeTabId]="tabDetalle()"
-            (selectionChange)="setTab($any($event.id))"
-          >
-            <!-- ── Canales ─────────────────────────────────────────────── -->
-            <app-ui-tab id="canales" label="Canales" icon="fa-solid fa-tower-broadcast">
-              <div class="ent-tab">
-                <app-ui-section-header
-                  title="Canales"
-                  icon="fa-solid fa-tower-broadcast"
-                  [description]="canales().length + ' canal(es) configurado(s) en esta fuerza'"
-                  appearance="divider"
-                >
-                  <app-ui-button header-actions variant="primary" size="sm" icon="fa-solid fa-plus"
-                                 (buttonClick)="nuevoCanal()">Nuevo canal</app-ui-button>
-                </app-ui-section-header>
+            <app-ui-tabs
+              variant="navigation"
+              size="md"
+              ariaLabel="Detalle de la fuerza"
+              [activeTabId]="tabDetalle()"
+              (selectionChange)="setTab($any($event.id))"
+            >
+              <!-- ── Canales ───────────────────────────────────────────── -->
+              <app-ui-tab id="canales" label="Canales de radio" icon="fa-solid fa-tower-broadcast">
+                <div class="ent-tab">
+                  <app-ui-section-header
+                    title="Canales de despacho"
+                    icon="fa-solid fa-tower-broadcast"
+                    [description]="canales().length + ' canal(es) de radiocomunicación configurado(s)'"
+                    appearance="divider"
+                  >
+                    <app-ui-button
+                      header-actions
+                      variant="primary"
+                      size="sm"
+                      icon="fa-solid fa-plus"
+                      (buttonClick)="nuevoCanal()"
+                    >Nuevo canal</app-ui-button>
+                  </app-ui-section-header>
 
-                @if (modoCanal() !== 'ninguno') {
-                  <form [formGroup]="formCanal" class="ent-form ent-form--canal">
-                    <app-ui-input formControlName="descripcion" label="Descripción del canal" required />
-                    <app-ui-select
-                      class="ent-form__corto"
-                      formControlName="vigente"
-                      label="Estado"
-                      [options]="opcionesVigencia"
-                      [clearable]="false"
-                      [searchable]="false"
-                    />
-                    <div class="ent-form__acciones ent-form__acciones--inline">
-                      <app-ui-button variant="secondary" appearance="ghost" size="sm"
-                                     [disabled]="saving()" (buttonClick)="cancelarCanal()">Cancelar</app-ui-button>
-                      <app-ui-button variant="primary" size="sm" icon="fa-solid fa-floppy-disk"
-                                     [loading]="saving()" [disabled]="saving()"
-                                     (buttonClick)="guardarCanal()">Guardar</app-ui-button>
-                    </div>
-                  </form>
-                }
-
-                @if (loadingCanales()) {
-                  <app-ui-spinner label="Cargando canales…" contained />
-                } @else if (canales().length === 0) {
-                  <p class="ent-vacio">Esta fuerza no tiene canales. Cree el primero para poder asignarle despachadores.</p>
-                } @else {
-                  <ul class="ent-canales">
-                    @for (c of canales(); track c.codigo) {
-                      <li class="ent-canal" [class.ent-canal--inactivo]="c.vigente !== 'S'">
-                        <span class="ent-canal__cod">{{ c.codigo }}</span>
-                        <span class="ent-canal__desc">{{ c.descripcion }}</span>
-                        <app-ui-badge
-                          [label]="c.vigente === 'S' ? 'Vigente' : 'Inactivo'"
-                          [variant]="c.vigente === 'S' ? 'success' : 'danger'"
-                          size="xs"
+                  @if (modoCanal() !== 'ninguno') {
+                    <div class="ent-form-inline-card">
+                      <h4 class="ent-form-inline-card__title">
+                        <i class="fa-solid fa-tower-broadcast"></i>
+                        {{ modoCanal() === 'nuevo' ? 'Nuevo canal de despacho' : 'Editar canal #' + editingCanalCodigo() }}
+                      </h4>
+                      <form [formGroup]="formCanal" class="ent-form ent-form--canal">
+                        <app-ui-input
+                          class="ent-form__canal-desc"
+                          formControlName="descripcion"
+                          label="Descripción o nombre del canal"
+                          placeholder="Ej: Canal 1 - Patrullaje Central"
+                          required
                         />
-                        <span class="ent-canal__acciones">
-                          <app-ui-button variant="secondary" appearance="ghost" size="sm"
-                                         icon="fa-solid fa-pen" iconOnly
-                                         ariaLabel="Editar canal" tooltip="Editar"
-                                         (buttonClick)="editarCanal(c)" />
+                        <app-ui-select
+                          class="ent-form__campo-corto"
+                          formControlName="vigente"
+                          label="Estado"
+                          [options]="opcionesVigencia"
+                          [clearable]="false"
+                          [searchable]="false"
+                        />
+                        <div class="ent-form__acciones ent-form__acciones--inline">
                           <app-ui-button
-                            [variant]="c.vigente === 'S' ? 'secondary' : 'primary'"
-                            appearance="ghost" size="sm"
-                            [icon]="c.vigente === 'S' ? 'fa-solid fa-ban' : 'fa-solid fa-circle-check'"
-                            iconOnly
-                            [ariaLabel]="c.vigente === 'S' ? 'Desactivar canal' : 'Activar canal'"
-                            [tooltip]="c.vigente === 'S' ? 'Desactivar' : 'Activar'"
-                            (buttonClick)="toggleCanal(c)" />
-                        </span>
-                      </li>
-                    }
-                  </ul>
-                }
-              </div>
-            </app-ui-tab>
+                            variant="secondary"
+                            appearance="ghost"
+                            size="sm"
+                            [disabled]="saving()"
+                            (buttonClick)="cancelarCanal()"
+                          >Cancelar</app-ui-button>
+                          <app-ui-button
+                            variant="primary"
+                            size="sm"
+                            icon="fa-solid fa-floppy-disk"
+                            [loading]="saving()"
+                            [disabled]="saving()"
+                            (buttonClick)="guardarCanal()"
+                          >Guardar</app-ui-button>
+                        </div>
+                      </form>
+                    </div>
+                  }
 
-            <!-- ── Usuarios ────────────────────────────────────────────── -->
-            <app-ui-tab id="usuarios" label="Usuarios" icon="fa-solid fa-user-group">
-              <div class="ent-tab">
-                <app-ui-section-header
-                  title="Usuarios asignados"
-                  icon="fa-solid fa-user-group"
-                  [description]="usuariosEnFuerza().length + ' despachador(es) con esta fuerza asignada'"
-                  appearance="divider"
-                />
+                  @if (loadingCanales()) {
+                    <app-ui-spinner label="Cargando canales…" contained />
+                  } @else if (canales().length === 0) {
+                    <div class="ent-tab-vacio">
+                      <i class="fa-solid fa-tower-broadcast"></i>
+                      <p>Esta fuerza aún no tiene canales configurados.</p>
+                      <span>Cree el primer canal para poder asignarle personal de despacho.</span>
+                      <app-ui-button variant="primary" size="sm" icon="fa-solid fa-plus" (buttonClick)="nuevoCanal()">
+                        Crear primer canal
+                      </app-ui-button>
+                    </div>
+                  } @else {
+                    <div class="ent-canales-grid">
+                      @for (c of canales(); track c.codigo) {
+                        <div class="ent-canal-card" [class.ent-canal-card--inactivo]="c.vigente !== 'S'">
+                          <div class="ent-canal-card__badge">
+                            <i class="fa-solid fa-walkie-talkie"></i>
+                            <span>Canal {{ c.codigo }}</span>
+                          </div>
+                          <div class="ent-canal-card__body">
+                            <span class="ent-canal-card__desc">{{ c.descripcion }}</span>
+                            <app-ui-badge
+                              [label]="c.vigente === 'S' ? 'Operativo' : 'Inactivo'"
+                              [variant]="c.vigente === 'S' ? 'success' : 'danger'"
+                              size="xs"
+                            />
+                          </div>
+                          <div class="ent-canal-card__actions">
+                            <app-ui-button
+                              variant="secondary"
+                              appearance="ghost"
+                              size="sm"
+                              icon="fa-solid fa-pen"
+                              iconOnly
+                              ariaLabel="Editar canal"
+                              tooltip="Editar canal"
+                              (buttonClick)="editarCanal(c)"
+                            />
+                            <app-ui-button
+                              [variant]="c.vigente === 'S' ? 'secondary' : 'primary'"
+                              appearance="ghost"
+                              size="sm"
+                              [icon]="c.vigente === 'S' ? 'fa-solid fa-ban' : 'fa-solid fa-circle-check'"
+                              iconOnly
+                              [ariaLabel]="c.vigente === 'S' ? 'Desactivar canal' : 'Activar canal'"
+                              [tooltip]="c.vigente === 'S' ? 'Desactivar canal' : 'Activar canal'"
+                              (buttonClick)="toggleCanal(c)"
+                            />
+                          </div>
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
+              </app-ui-tab>
 
-                @if (loadingUsuarios()) {
-                  <app-ui-spinner label="Cargando usuarios…" contained />
-                } @else if (usuariosEnFuerza().length === 0) {
-                  <p class="ent-vacio">Ningún usuario está asignado a esta fuerza todavía.</p>
-                } @else {
-                  <ul class="ent-usuarios">
-                    @for (u of usuariosEnFuerza(); track u.idUsuario) {
-                      <li class="ent-usuario">
-                        <i class="fa-solid fa-user"></i>
-                        <span class="ent-usuario__nombre">
-                          <strong>{{ u.nombreCompleto }}</strong>
-                          <small>{{ u.username }}</small>
-                        </span>
-                        <span class="ent-usuario__canal">
-                          <i class="fa-solid fa-tower-broadcast"></i>
-                          {{ u.canalDescripcion || ('Canal ' + u.canalCodigo) }}
-                        </span>
-                        <span class="ent-usuario__acd"><i class="fa-solid fa-phone"></i> {{ u.acd || '—' }}</span>
-                      </li>
-                    }
-                  </ul>
-                }
-              </div>
-            </app-ui-tab>
-          </app-ui-tabs>
-        </div>
+              <!-- ── Usuarios ──────────────────────────────────────────── -->
+              <app-ui-tab id="usuarios" label="Personal asignado" icon="fa-solid fa-user-group">
+                <div class="ent-tab">
+                  <app-ui-section-header
+                    title="Despachadores y Operadores"
+                    icon="fa-solid fa-user-group"
+                    [description]="usuariosEnFuerza().length + ' usuario(s) tienen esta fuerza asignada en su perfil operativo'"
+                    appearance="divider"
+                  />
+
+                  @if (loadingUsuarios()) {
+                    <app-ui-spinner label="Cargando personal asignado…" contained />
+                  } @else if (usuariosEnFuerza().length === 0) {
+                    <div class="ent-tab-vacio">
+                      <i class="fa-solid fa-user-xmark"></i>
+                      <p>No hay despachadores asignados a esta fuerza actualmente.</p>
+                      <span>Los usuarios pueden vincularse a esta fuerza desde el módulo de Gestión de Usuarios.</span>
+                    </div>
+                  } @else {
+                    <div class="ent-usuarios-list">
+                      @for (u of usuariosEnFuerza(); track u.idUsuario) {
+                        <div class="ent-usuario-row">
+                          <div class="ent-usuario-row__avatar">
+                            <i class="fa-solid fa-user-shield"></i>
+                          </div>
+                          <div class="ent-usuario-row__info">
+                            <span class="ent-usuario-row__nombre">{{ u.nombreCompleto }}</span>
+                            <span class="ent-usuario-row__sub">
+                              Usuario: <code>{{ u.username }}</code>
+                            </span>
+                          </div>
+                          <div class="ent-usuario-row__canal">
+                            <span class="ent-stat-pill">
+                              <i class="fa-solid fa-tower-broadcast"></i>
+                              {{ u.canalDescripcion || ('Canal #' + u.canalCodigo) }}
+                            </span>
+                          </div>
+                          <div class="ent-usuario-row__acd">
+                            <span class="ent-acd-tag" title="Posición telefónica ACD">
+                              <i class="fa-solid fa-phone"></i> ACD: {{ u.acd || '—' }}
+                            </span>
+                          </div>
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
+              </app-ui-tab>
+            </app-ui-tabs>
+          </div>
         }
       } @else if (modoFuerza() === 'ninguno') {
-        <div class="ent-vacio ent-vacio--grande">
-          <i class="fa-solid fa-shield-halved"></i>
-          <p>Seleccione una fuerza para ver sus canales y sus usuarios.</p>
+        <!-- Vista inicial cuando no hay fuerza seleccionada: Resumen general -->
+        <div class="ent-overview-card">
+          <div class="ent-overview-card__header">
+            <div class="ent-overview-card__icon">
+              <i class="fa-solid fa-shield-halved"></i>
+            </div>
+            <div class="ent-overview-card__text">
+              <h3>Directorio Institucional de Entidades y Fuerzas</h3>
+              <p>
+                Consulte y administre los organismos de seguridad y emergencias autorizados para el despacho de unidades en este Centro de Atención de Despacho (CAD).
+              </p>
+            </div>
+          </div>
+
+          <!-- Métricas globales del CAD -->
+          <div class="ent-kpis">
+            <div class="ent-kpi-box">
+              <span class="ent-kpi-box__val">{{ conteoTotal() }}</span>
+              <span class="ent-kpi-box__lbl"><i class="fa-solid fa-shield-halved"></i> Fuerzas registradas</span>
+              <span class="ent-kpi-box__sub">{{ conteoVigentes() }} activas · {{ conteoInactivas() }} inactivas</span>
+            </div>
+
+            <div class="ent-kpi-box">
+              <span class="ent-kpi-box__val">{{ totalCanalesGlobal() }}</span>
+              <span class="ent-kpi-box__lbl"><i class="fa-solid fa-tower-broadcast"></i> Canales operativos</span>
+              <span class="ent-kpi-box__sub">Frecuencias de radiodespacho</span>
+            </div>
+
+            <div class="ent-kpi-box">
+              <span class="ent-kpi-box__val">{{ totalUsuariosGlobal() }}</span>
+              <span class="ent-kpi-box__lbl"><i class="fa-solid fa-headset"></i> Operadores vinculados</span>
+              <span class="ent-kpi-box__sub">Personal con asignación activa</span>
+            </div>
+          </div>
+
+          <div class="ent-overview-card__footer">
+            <div class="ent-overview-card__hint">
+              <i class="fa-solid fa-arrow-left"></i>
+              <span>Seleccione cualquier entidad de la columna izquierda para inspeccionar sus canales y personal, o agregue una nueva institución.</span>
+            </div>
+            <app-ui-button
+              variant="primary"
+              icon="fa-solid fa-plus"
+              (buttonClick)="nuevaFuerza()"
+            >Registrar nueva fuerza</app-ui-button>
+          </div>
         </div>
       }
     </section>

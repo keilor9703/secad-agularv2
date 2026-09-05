@@ -9,6 +9,14 @@ namespace Comun.Dtos.Administracion
         public bool    Vigente              { get; set; } = true;
         public string? IdCategoriaAsistente  { get; set; }
         public string? CategoriaDescripcion  { get; set; }
+
+        /// <summary>
+        /// Código DANE del CAD/municipio al que aplica el código de caso.
+        /// Si es NULL o vacío, es de ámbito nacional (aplica a todos los tenants).
+        /// </summary>
+        public string? CodDane              { get; set; }
+        public string? NombreCad            { get; set; }
+        public bool    EsNacional           => string.IsNullOrWhiteSpace(CodDane);
     }
 
     public class DtoCasoRequest
@@ -17,6 +25,11 @@ namespace Comun.Dtos.Administracion
         public string  Descripcion         { get; set; } = "";
         public bool    Vigente             { get; set; } = true;
         public string? IdCategoriaAsistente { get; set; }
+
+        /// <summary>
+        /// Código DANE del CAD específico, o null/vacío si es de ámbito nacional.
+        /// </summary>
+        public string? CodDane              { get; set; }
     }
 
     public class DtoCasoResult
@@ -29,8 +42,9 @@ namespace Comun.Dtos.Administracion
 
     public class DtoCasoImportItem
     {
-        public string Codigo      { get; set; } = "";
-        public string Descripcion { get; set; } = "";
+        public string  Codigo      { get; set; } = "";
+        public string  Descripcion { get; set; } = "";
+        public string? CodDane     { get; set; }
     }
 
     public class DtoImportarCasosResult

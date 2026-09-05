@@ -1,12 +1,12 @@
 import { Component, ChangeDetectionStrategy, OnInit, computed, inject, signal } from '@angular/core';
-
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { UiPageHeaderComponent } from '../../../../shared/components/ui-page-header/ui-page-header.component';
 import { UiPanelHeaderComponent } from '../../../../shared/components/ui-panel-header/ui-panel-header.component';
 import { UiSectionHeaderComponent } from '../../../../shared/components/ui-section-header/ui-section-header.component';
 import { UiButtonComponent } from '../../../../shared/components/ui-button/ui-button.component';
 import { UiInputComponent } from '../../../../shared/components/ui-input/ui-input.component';
+import { UiSearchInputComponent } from '../../../../shared/components/ui-search-input/ui-search-input.component';
 import { UiSelectComponent } from '../../../../shared/components/ui-select/ui-select.component';
 import { UiBadgeComponent } from '../../../../shared/components/ui-badge/ui-badge.component';
 import { UiChipComponent } from '../../../../shared/components/ui-chip/ui-chip.component';
@@ -26,9 +26,10 @@ import {
   selector: 'app-entidades-page',
   standalone: true,
   imports: [
+    FormsModule,
     ReactiveFormsModule, RouterModule,
     UiPageHeaderComponent, UiPanelHeaderComponent, UiSectionHeaderComponent,
-    UiButtonComponent, UiInputComponent, UiSelectComponent, UiBadgeComponent,
+    UiButtonComponent, UiInputComponent, UiSearchInputComponent, UiSelectComponent, UiBadgeComponent,
     UiChipComponent, UiSpinnerComponent, UiTabsComponent, UiTabComponent
   ],
   templateUrl: './entidades-page.component.html',
@@ -50,9 +51,41 @@ export class EntidadesPageComponent implements OnInit {
   readonly loading = signal(false);
   readonly saving  = signal(false);
 
+  // ── Filtros y búsqueda ─────────────────────────────────────────────────────
+  readonly busqueda = signal('');
+  readonly filtroVigencia = signal<'todas' | 'vigentes' | 'inactivas'>('todas');
+
   // ── Lista de fuerzas ───────────────────────────────────────────────────────
   readonly fuerzas             = signal<DtoFuerza[]>([]);
   readonly fuerzaSeleccionada  = signal<DtoFuerza | null>(null);
+
+  readonly fuerzasFiltradas = computed(() => {
+    const q = this.busqueda().trim().toLowerCase();
+    const filtro = this.filtroVigencia();
+
+    return this.fuerzas().filter((f) => {
+      const coincideFiltro =
+        filtro === 'todas' ||
+        (filtro === 'vigentes' && f.vigente === 'S') ||
+        (filtro === 'inactivas' && f.vigente !== 'S');
+
+      if (!coincideFiltro) return false;
+      if (!q) return true;
+
+      const idStr = String(f.id);
+      const desc = (f.descripcion || '').toLowerCase();
+      const abrev = (f.abreviatura || '').toLowerCase();
+      return idStr.includes(q) || desc.includes(q) || abrev.includes(q);
+    });
+  });
+
+  // ── Métricas globales ──────────────────────────────────────────────────────
+  readonly totalCanalesGlobal = computed(() =>
+    this.fuerzas().reduce((sum, f) => sum + (f.totalCanales || 0), 0)
+  );
+  readonly totalUsuariosGlobal = computed(() =>
+    this.fuerzas().reduce((sum, f) => sum + (f.totalUsuarios || 0), 0)
+  );
 
   // ── Formulario de fuerza ───────────────────────────────────────────────────
   readonly modoFuerza = signal<'ninguno' | 'nueva' | 'editando'>('ninguno');
@@ -300,6 +333,33 @@ export class EntidadesPageComponent implements OnInit {
     return this.fuerzaSeleccionada()?.id === fuerza.id;
   }
 
+  setFiltroVigencia(filtro: 'todas' | 'vigentes' | 'inactivas'): void {
+    this.filtroVigencia.set(filtro);
+  }
+
+  getFuerzaIcon(fuerza: DtoFuerza): string {
+    const d = (fuerza.descripcion || '').toLowerCase();
+    const a = (fuerza.abreviatura || '').toLowerCase();
+    if (d.includes('polic') || a.includes('ponal') || a.includes('pol')) return 'fa-solid fa-shield-halved';
+    if (d.includes('salud') || d.includes('medic') || d.includes('ambul') || a.includes('salud')) return 'fa-solid fa-heart-pulse';
+    if (d.includes('bomber') || a.includes('bomb')) return 'fa-solid fa-fire-extinguisher';
+    if (d.includes('transit') || d.includes('movilidad') || a.includes('stm')) return 'fa-solid fa-car-side';
+    if (d.includes('defensa civil') || d.includes('gestion del riesgo') || d.includes('cruz roja')) return 'fa-solid fa-life-ring';
+    if (d.includes('militar') || d.includes('ejercito') || d.includes('armada')) return 'fa-solid fa-person-military-rifle';
+    return 'fa-solid fa-building-shield';
+  }
+
+  getFuerzaThemeClass(fuerza: DtoFuerza): string {
+    const d = (fuerza.descripcion || '').toLowerCase();
+    const a = (fuerza.abreviatura || '').toLowerCase();
+    if (d.includes('polic') || a.includes('ponal') || a.includes('pol')) return 'ent-theme--policia';
+    if (d.includes('salud') || d.includes('medic') || d.includes('ambul')) return 'ent-theme--salud';
+    if (d.includes('bomber')) return 'ent-theme--bomberos';
+    if (d.includes('transit') || d.includes('movilidad')) return 'ent-theme--transito';
+    return 'ent-theme--default';
+  }
+
   readonly conteoVigentes = computed(() => this.fuerzas().filter(f => f.vigente === 'S').length);
+  readonly conteoInactivas = computed(() => this.fuerzas().filter(f => f.vigente !== 'S').length);
   readonly conteoTotal    = computed(() => this.fuerzas().length);
 }

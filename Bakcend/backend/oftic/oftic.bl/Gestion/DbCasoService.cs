@@ -34,7 +34,7 @@ namespace Negocio.Gestion
                 return new DtoCasoResult { Success = false, Message = $"Ya existe un caso con el código \"{codigo}\"." };
 
             await _repo.CrearAsync(
-                new DtoCasoRequest { Codigo = codigo, Descripcion = descripcion, Vigente = request.Vigente, IdCategoriaAsistente = request.IdCategoriaAsistente },
+                new DtoCasoRequest { Codigo = codigo, Descripcion = descripcion, Vigente = request.Vigente, IdCategoriaAsistente = request.IdCategoriaAsistente, CodDane = request.CodDane },
                 ct);
 
             return new DtoCasoResult { Success = true, Message = "Código de caso creado correctamente." };
@@ -51,7 +51,7 @@ namespace Negocio.Gestion
                 return new DtoCasoResult { Success = false, Message = $"La descripción no puede superar {MaxDescripcionLen} caracteres." };
 
             var actualizado = await _repo.ActualizarAsync(
-                new DtoCasoRequest { Codigo = codigo, Descripcion = descripcion, Vigente = request.Vigente, IdCategoriaAsistente = request.IdCategoriaAsistente },
+                new DtoCasoRequest { Codigo = codigo, Descripcion = descripcion, Vigente = request.Vigente, IdCategoriaAsistente = request.IdCategoriaAsistente, CodDane = request.CodDane },
                 ct);
 
             return actualizado
@@ -107,7 +107,7 @@ namespace Negocio.Gestion
                 }
 
                 if (porCodigo.ContainsKey(codigo)) duplicados++;
-                porCodigo[codigo] = new DtoCasoImportItem { Codigo = codigo, Descripcion = descripcion };
+                porCodigo[codigo] = new DtoCasoImportItem { Codigo = codigo, Descripcion = descripcion, CodDane = items[i].CodDane };
             }
 
             if (duplicados > 0)

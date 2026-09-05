@@ -1,10 +1,5 @@
 // ══════════════════════════════════════════════════════════════════════════
-//  Entidades / Fuerzas
-//
-//  Encabezados, pestañas, campos, botones, insignias y spinner los resuelven
-//  los componentes de shared/components/ui-*. Aquí queda la rejilla maestro–
-//  detalle y las tres listas propias (fuerzas, canales, usuarios), que son
-//  listas y no tablas: forzarlas a ui-table costaría más de lo que da.
+//  Entidades / Fuerzas — Estilos Modernos
 // ══════════════════════════════════════════════════════════════════════════
 
 .ent-page {
@@ -14,23 +9,27 @@
   padding:        16px;
 }
 
-// Maestro a la izquierda, detalle a la derecha.
+// Maestro a la izquierda, detalle / resumen a la derecha.
 .ent-layout {
   display:               grid;
-  grid-template-columns: 420px minmax(0, 1fr);
-  gap:                   16px;
+  grid-template-columns: 460px minmax(0, 1fr);
+  gap:                   18px;
   align-items:           start;
 
-  @media (max-width: 1000px) { grid-template-columns: minmax(0, 1fr); }
+  @media (max-width: 1100px) {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 .ent-fuerzas,
 .ent-detalle-card,
-.ent-form-card {
-  border:        1px solid rgba(21, 27, 59, .12);
-  border-radius: 10px;
+.ent-form-card,
+.ent-overview-card {
+  border:        1px solid rgba(21, 27, 59, .10);
+  border-radius: 12px;
   overflow:      hidden;
   background:    var(--ui-surface, #fff);
+  box-shadow:    0 1px 3px rgba(0, 0, 0, .04);
 }
 
 .ent-detalle {
@@ -40,212 +39,653 @@
   min-width:      0;
 }
 
-// ── Lista de fuerzas ──────────────────────────────────────────────────────
-.ent-lista {
-  list-style: none;
-  margin:     0;
-  padding:    0;
-  max-height: 620px;
-  overflow-y: auto;
-}
-
-// Dos filas: el nombre se lleva una línea entera —hay fuerzas con nombres
-// largos— y debajo van abreviatura y contadores. Las acciones ocupan las dos.
-.ent-item {
-  display:     grid;
-  grid-template-columns: 30px minmax(0, 1fr) auto;
-  grid-template-areas:
-    "cod texto acciones"
-    "cod nums  acciones";
-  align-items: center;
-  column-gap:  10px;
-  row-gap:     2px;
-  width:       100%;
-  padding:     9px 12px;
-  border:      0;
-  border-left: 3px solid transparent;
-  border-bottom: 1px solid rgba(21, 27, 59, .07);
-  background:  transparent;
-  cursor:      pointer;
-  text-align:  left;
-  font:        inherit;
-
-  &:hover { background: rgba(8, 166, 203, .06); }
-
-  &--activa {
-    border-left-color: #0e7490;
-    background:        rgba(8, 166, 203, .10);
-  }
-
-  // Una fuerza dada de baja sigue listada —hay que poder reactivarla— pero se
-  // atenúa para que no se confunda con las que sí despachan.
-  &--inactiva { opacity: .55; }
-
-  &__cod {
-    grid-area:   cod;
-    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-    font-size:   calc(11px * var(--font-size-scale, 1));
-    color:       var(--ui-text-muted, #6b7280);
-  }
-
-  &__texto {
-    grid-area: texto;
-    min-width: 0;
-    font-size: calc(12.5px * var(--font-size-scale, 1));
-    font-weight: 600;
-    line-height: 1.25;
-  }
-
-  &__nums {
-    grid-area: nums;
-    display:   flex;
-    flex-wrap: wrap;
-    gap:       4px 10px;
-    font-size: calc(10.5px * var(--font-size-scale, 1));
-    color:     var(--ui-text-muted, #6b7280);
-
-    span { display: inline-flex; align-items: center; gap: 3px; }
-  }
-
-  &__abrev {
-    padding:       0 6px;
-    border-radius: 999px;
-    background:    rgba(21, 27, 59, .07);
-    font-family:   ui-monospace, SFMono-Regular, Menlo, monospace;
-    letter-spacing:.02em;
-  }
-
-  &__acciones { grid-area: acciones; display: flex; gap: 2px; }
-}
-
-// ── Formularios ───────────────────────────────────────────────────────────
-.ent-form {
-  display:   flex;
-  flex-wrap: wrap;
-  gap:       12px;
-  padding:   14px;
-
-  > *          { flex: 1 1 220px; min-width: 0; }
-  &__corto     { flex: 0 0 150px; }
-
-  &--canal {
-    align-items:   flex-end;
-    border-bottom: 1px dashed rgba(21, 27, 59, .12);
-  }
-
-  &__acciones {
-    display:         flex;
-    gap:             8px;
-    justify-content: flex-end;
-    padding:         0 14px 14px;
-
-    &--inline { flex: 0 0 auto; padding: 0; }
-  }
-}
-
-// ── Canales y usuarios ────────────────────────────────────────────────────
-// El panel de ui-tabs ya trae su propio relleno; aquí solo separamos el
-// encabezado de sección de la lista que le sigue.
-.ent-tab {
+// ── Columna Maestro: Herramientas y Filtros ───────────────────────────────
+.ent-fuerzas__tools {
   display:        flex;
   flex-direction: column;
   gap:            10px;
+  padding:        12px 14px;
+  background:     rgba(21, 27, 59, .02);
+  border-bottom:  1px solid rgba(21, 27, 59, .08);
 }
 
-.ent-canales,
-.ent-usuarios {
+.ent-filtros-chips {
+  display:   flex;
+  flex-wrap: wrap;
+  gap:       6px;
+}
+
+.ent-chip-btn {
+  display:       inline-flex;
+  align-items:   center;
+  gap:           4px;
+  padding:       4px 10px;
+  border-radius: 999px;
+  border:        1px solid rgba(21, 27, 59, .14);
+  background:    var(--ui-surface, #fff);
+  color:         var(--ui-text-muted, #64748b);
+  font-size:     calc(11.5px * var(--font-size-scale, 1));
+  font-weight:   600;
+  cursor:        pointer;
+  transition:    all .15s ease;
+
+  &:hover {
+    background:   rgba(8, 166, 203, .08);
+    border-color: rgba(8, 166, 203, .3);
+    color:        #0e7490;
+  }
+
+  &--active {
+    background:   #0e7490 !important;
+    border-color: #0e7490 !important;
+    color:        #fff !important;
+  }
+
+  &--ok.ent-chip-btn--active {
+    background:   #16a34a !important;
+    border-color: #16a34a !important;
+  }
+
+  &--warn.ent-chip-btn--active {
+    background:   #dc2626 !important;
+    border-color: #dc2626 !important;
+  }
+}
+
+// ── Lista de Fuerzas ──────────────────────────────────────────────────────
+.ent-lista {
   list-style: none;
   margin:     0;
-  padding:    0;
+  padding:    8px;
+  max-height: calc(100vh - 280px);
+  min-height: 380px;
+  overflow-y: auto;
+  display:    flex;
+  flex-direction: column;
+  gap:        8px;
+}
+
+.ent-card {
+  display:       flex;
+  align-items:   flex-start;
+  gap:           12px;
+  padding:       12px;
+  border-radius: 10px;
+  border:        1px solid rgba(21, 27, 59, .08);
+  border-left:   4px solid transparent;
+  background:    var(--ui-surface, #fff);
+  cursor:        pointer;
+  text-align:    left;
+  transition:    all .18s ease;
+
+  &:hover {
+    background:   rgba(8, 166, 203, .04);
+    border-color: rgba(8, 166, 203, .25);
+    transform:    translateY(-1px);
+    box-shadow:   0 2px 6px rgba(0, 0, 0, .05);
+  }
+
+  &--activa {
+    border-left-color: #0e7490 !important;
+    border-color:      rgba(14, 116, 144, .3);
+    background:        rgba(8, 166, 203, .07) !important;
+    box-shadow:        0 2px 8px rgba(14, 116, 144, .10);
+  }
+
+  &--inactiva {
+    opacity:    .65;
+    background: rgba(21, 27, 59, .02);
+  }
+
+  // Avatar temático
+  &__avatar {
+    flex-shrink:     0;
+    width:           42px;
+    height:          42px;
+    border-radius:   10px;
+    display:         flex;
+    align-items:     center;
+    justify-content: center;
+    font-size:       calc(17px * var(--font-size-scale, 1));
+    color:           #fff;
+    margin-top:      2px;
+  }
+
+  &__body {
+    flex:      1 1 auto;
+    min-width: 0;
+    display:   flex;
+    flex-direction: column;
+    gap:       5px;
+  }
+
+  &__meta {
+    display:     flex;
+    align-items: center;
+    flex-wrap:   wrap;
+    gap:         6px;
+  }
+
+  &__titulo {
+    margin:      0;
+    font-size:   calc(13.5px * var(--font-size-scale, 1));
+    font-weight: 700;
+    line-height: 1.3;
+    color:       var(--ui-text, #0f172a);
+    word-break:  break-word;
+  }
+
+  &__stats {
+    display:     flex;
+    flex-wrap:   wrap;
+    gap:         6px 10px;
+    margin-top:  2px;
+  }
+
+  &__acciones {
+    flex-shrink: 0;
+    display:     flex;
+    flex-direction: column;
+    gap:         4px;
+    opacity:     .85;
+
+    &:hover { opacity: 1; }
+  }
+}
+
+// ── Badges y Píldoras ─────────────────────────────────────────────────────
+.ent-cod-pill {
+  display:         inline-flex;
+  align-items:     center;
+  padding:         1px 7px;
+  border-radius:   6px;
+  background:      rgba(21, 27, 59, .08);
+  font-family:     ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size:       calc(11px * var(--font-size-scale, 1));
+  font-weight:     700;
+  color:           #334155;
+  letter-spacing:  .02em;
+}
+
+.ent-abrev-pill {
+  display:         inline-flex;
+  align-items:     center;
+  padding:         1px 6px;
+  border-radius:   999px;
+  background:      rgba(14, 116, 144, .12);
+  color:           #0e7490;
+  font-family:     ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size:       calc(10.5px * var(--font-size-scale, 1));
+  font-weight:     700;
+  letter-spacing:  .03em;
+}
+
+.ent-stat-pill {
+  display:       inline-flex;
+  align-items:   center;
+  gap:           4px;
+  font-size:     calc(11px * var(--font-size-scale, 1));
+  color:         var(--ui-text-muted, #64748b);
+
+  i { font-size: calc(10px * var(--font-size-scale, 1)); color: #08a6cb; }
+  strong { font-weight: 700; color: var(--ui-text, #1e293b); }
+}
+
+// ── Temas cromáticos para avatares ─────────────────────────────────────────
+.ent-theme {
+  &--policia   { background: linear-gradient(135deg, #1e3a8a, #0284c7); }
+  &--salud     { background: linear-gradient(135deg, #059669, #10b981); }
+  &--bomberos  { background: linear-gradient(135deg, #b91c1c, #f97316); }
+  &--transito  { background: linear-gradient(135deg, #d97706, #f59e0b); }
+  &--default   { background: linear-gradient(135deg, #475569, #64748b); }
+}
+
+// ── Paneles Vacíos ────────────────────────────────────────────────────────
+.ent-vacio-panel,
+.ent-tab-vacio {
   display:        flex;
   flex-direction: column;
-  gap:            6px;
-}
+  align-items:    center;
+  justify-content: center;
+  gap:            10px;
+  padding:        36px 20px;
+  text-align:     center;
+  color:          var(--ui-text-muted, #64748b);
 
-.ent-canal,
-.ent-usuario {
-  display:       grid;
-  align-items:   center;
-  gap:           10px;
-  padding:       8px 12px;
-  border:        1px solid rgba(21, 27, 59, .10);
-  border-radius: 8px;
-}
-
-.ent-canal {
-  grid-template-columns: 34px minmax(0, 1fr) auto auto;
-
-  &--inactivo { opacity: .6; }
-
-  &__cod {
-    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-    font-size:   calc(11px * var(--font-size-scale, 1));
-    color:       var(--ui-text-muted, #6b7280);
+  i {
+    font-size: calc(34px * var(--font-size-scale, 1));
+    opacity:   .4;
+    color:     #08a6cb;
   }
 
-  &__desc     { font-size: calc(12.5px * var(--font-size-scale, 1)); }
-  &__acciones { display: flex; gap: 2px; }
+  p {
+    margin:      0;
+    font-size:   calc(13.5px * var(--font-size-scale, 1));
+    font-weight: 600;
+    color:       var(--ui-text, #334155);
+  }
+
+  span {
+    font-size: calc(12px * var(--font-size-scale, 1));
+    max-width: 380px;
+  }
 }
 
-.ent-usuario {
-  grid-template-columns: 18px minmax(0, 1fr) auto auto;
-  font-size: calc(12px * var(--font-size-scale, 1));
+// ── Formulario de Fuerza ──────────────────────────────────────────────────
+.ent-form {
+  display:   flex;
+  flex-wrap: wrap;
+  gap:       14px;
+  padding:   16px;
 
-  > i { color: var(--ui-text-muted, #6b7280); }
+  &__campo-corto { flex: 0 0 160px; }
+  &__campo-largo { flex: 1 1 280px; }
+  &__canal-desc  { flex: 1 1 300px; }
+
+  &__acciones {
+    display:         flex;
+    gap:             10px;
+    justify-content: flex-end;
+    padding:         0 16px 16px;
+
+    &--inline {
+      flex:        0 0 auto;
+      align-self:  flex-end;
+      padding:     0 0 4px;
+    }
+  }
+
+  &--canal {
+    align-items: flex-end;
+    padding:     12px;
+  }
+}
+
+.ent-form-inline-card {
+  background:    rgba(8, 166, 203, .04);
+  border:        1px solid rgba(8, 166, 203, .2);
+  border-radius: 10px;
+  margin-bottom: 16px;
+  overflow:      hidden;
+
+  &__title {
+    margin:        0;
+    padding:       10px 14px;
+    background:    rgba(8, 166, 203, .08);
+    font-size:     calc(12.5px * var(--font-size-scale, 1));
+    font-weight:   700;
+    color:         #0e7490;
+    display:       flex;
+    align-items:   center;
+    gap:           8px;
+  }
+}
+
+// ── Hero de Detalle de Fuerza Seleccionada ─────────────────────────────────
+.ent-detalle-hero {
+  display:         flex;
+  align-items:     flex-start;
+  gap:             16px;
+  padding:         18px 20px;
+  background:      linear-gradient(to right, rgba(8, 166, 203, .06), rgba(21, 27, 59, .02));
+  border-bottom:   1px solid rgba(21, 27, 59, .08);
+
+  @media (max-width: 700px) {
+    flex-direction: column;
+  }
+
+  &__avatar {
+    width:           52px;
+    height:          52px;
+    border-radius:   12px;
+    display:         flex;
+    align-items:     center;
+    justify-content: center;
+    font-size:       calc(22px * var(--font-size-scale, 1));
+    color:           #fff;
+    flex-shrink:     0;
+    box-shadow:      0 3px 8px rgba(0, 0, 0, .12);
+  }
+
+  &__info {
+    flex:      1 1 auto;
+    min-width: 0;
+  }
+
+  &__top {
+    display:     flex;
+    align-items: center;
+    flex-wrap:   wrap;
+    gap:         8px;
+    margin-bottom: 4px;
+  }
 
   &__nombre {
-    display:        flex;
-    flex-direction: column;
-    min-width:      0;
-    small { font-size: calc(10.5px * var(--font-size-scale, 1)); color: var(--ui-text-muted, #6b7280); }
+    margin:      0 0 4px;
+    font-size:   calc(17px * var(--font-size-scale, 1));
+    font-weight: 800;
+    color:       var(--ui-text, #0f172a);
+    line-height: 1.25;
   }
 
-  &__canal,
+  &__sub {
+    margin:      0;
+    font-size:   calc(12px * var(--font-size-scale, 1));
+    color:       var(--ui-text-muted, #64748b);
+  }
+
+  &__actions {
+    display:     flex;
+    gap:         8px;
+    flex-shrink: 0;
+  }
+}
+
+.ent-tab {
+  padding: 16px;
+}
+
+// ── Rejilla de Canales ────────────────────────────────────────────────────
+.ent-canales-grid {
+  display:               grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap:                   12px;
+}
+
+.ent-canal-card {
+  display:         flex;
+  align-items:     center;
+  gap:             12px;
+  padding:         12px 14px;
+  border-radius:   10px;
+  border:          1px solid rgba(21, 27, 59, .10);
+  background:      var(--ui-surface, #fff);
+  box-shadow:      0 1px 2px rgba(0, 0, 0, .03);
+  transition:      all .15s ease;
+
+  &:hover {
+    border-color: rgba(8, 166, 203, .3);
+    box-shadow:   0 2px 6px rgba(0, 0, 0, .06);
+  }
+
+  &--inactivo {
+    opacity:    .6;
+    background: rgba(21, 27, 59, .02);
+  }
+
+  &__badge {
+    display:         flex;
+    flex-direction:  column;
+    align-items:     center;
+    justify-content: center;
+    gap:             2px;
+    padding:         6px 8px;
+    border-radius:   8px;
+    background:      rgba(8, 166, 203, .10);
+    color:           #0e7490;
+    font-size:       calc(11px * var(--font-size-scale, 1));
+    font-weight:     700;
+    font-family:     ui-monospace, SFMono-Regular, Menlo, monospace;
+    flex-shrink:     0;
+
+    i { font-size: calc(14px * var(--font-size-scale, 1)); }
+  }
+
+  &__body {
+    flex:      1 1 auto;
+    min-width: 0;
+    display:   flex;
+    flex-direction: column;
+    gap:       4px;
+  }
+
+  &__desc {
+    font-size:   calc(13px * var(--font-size-scale, 1));
+    font-weight: 700;
+    color:       var(--ui-text, #1e293b);
+    line-height: 1.3;
+  }
+
+  &__actions {
+    display:     flex;
+    gap:         4px;
+    flex-shrink: 0;
+  }
+}
+
+// ── Lista de Usuarios Asignados ───────────────────────────────────────────
+.ent-usuarios-list {
+  display:        flex;
+  flex-direction: column;
+  gap:            8px;
+}
+
+.ent-usuario-row {
+  display:       flex;
+  align-items:   center;
+  gap:           14px;
+  padding:       10px 14px;
+  border-radius: 10px;
+  border:        1px solid rgba(21, 27, 59, .08);
+  background:    var(--ui-surface, #fff);
+
+  &__avatar {
+    width:           36px;
+    height:          36px;
+    border-radius:   8px;
+    background:      rgba(21, 27, 59, .07);
+    color:           #334155;
+    display:         flex;
+    align-items:     center;
+    justify-content: center;
+    font-size:       calc(15px * var(--font-size-scale, 1));
+    flex-shrink:     0;
+  }
+
+  &__info {
+    flex:      1 1 200px;
+    min-width: 0;
+    display:   flex;
+    flex-direction: column;
+  }
+
+  &__nombre {
+    font-size:   calc(13px * var(--font-size-scale, 1));
+    font-weight: 700;
+    color:       var(--ui-text, #1e293b);
+  }
+
+  &__sub {
+    font-size: calc(11px * var(--font-size-scale, 1));
+    color:     var(--ui-text-muted, #64748b);
+
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      color:       #0e7490;
+    }
+  }
+
+  &__canal {
+    flex: 0 0 auto;
+  }
+
   &__acd {
+    flex: 0 0 auto;
+  }
+}
+
+.ent-acd-tag {
+  display:       inline-flex;
+  align-items:   center;
+  gap:           5px;
+  padding:       3px 8px;
+  border-radius: 6px;
+  background:    rgba(21, 27, 59, .06);
+  font-size:     calc(11px * var(--font-size-scale, 1));
+  font-family:   ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-weight:   600;
+  color:         var(--ui-text, #334155);
+}
+
+// ── Tarjeta de Resumen Inicial (Overview) ─────────────────────────────────
+.ent-overview-card {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+
+  &__header {
+    display:     flex;
+    align-items: center;
+    gap:         16px;
+  }
+
+  &__icon {
+    width:           54px;
+    height:          54px;
+    border-radius:   12px;
+    background:      linear-gradient(135deg, #0e7490, #08a6cb);
+    color:           #fff;
+    display:         flex;
+    align-items:     center;
+    justify-content: center;
+    font-size:       calc(24px * var(--font-size-scale, 1));
+    box-shadow:      0 4px 12px rgba(8, 166, 203, .25);
+    flex-shrink:     0;
+  }
+
+  &__text {
+    h3 {
+      margin:      0 0 4px;
+      font-size:   calc(17px * var(--font-size-scale, 1));
+      font-weight: 800;
+      color:       var(--ui-text, #0f172a);
+    }
+    p {
+      margin:      0;
+      font-size:   calc(12.5px * var(--font-size-scale, 1));
+      color:       var(--ui-text-muted, #64748b);
+      line-height: 1.4;
+    }
+  }
+
+  &__footer {
+    display:         flex;
+    align-items:     center;
+    justify-content: space-between;
+    flex-wrap:       wrap;
+    gap:             16px;
+    padding-top:     16px;
+    border-top:      1px solid rgba(21, 27, 59, .08);
+  }
+
+  &__hint {
+    display:     flex;
+    align-items: center;
+    gap:         10px;
+    color:       var(--ui-text-muted, #64748b);
+    font-size:   calc(12px * var(--font-size-scale, 1));
+
+    i {
+      font-size: calc(14px * var(--font-size-scale, 1));
+      color:     #08a6cb;
+    }
+  }
+}
+
+// ── Cajas de KPIs ─────────────────────────────────────────────────────────
+.ent-kpis {
+  display:               grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap:                   14px;
+}
+
+.ent-kpi-box {
+  display:        flex;
+  flex-direction: column;
+  gap:            3px;
+  padding:        16px;
+  border-radius:  12px;
+  background:     linear-gradient(135deg, rgba(8, 166, 203, .05), rgba(21, 27, 59, .02));
+  border:         1px solid rgba(8, 166, 203, .18);
+
+  &__val {
+    font-size:            calc(28px * var(--font-size-scale, 1));
+    font-weight:          900;
+    line-height:          1;
+    color:                var(--ui-text, #0f172a);
+    font-variant-numeric: tabular-nums;
+  }
+
+  &__lbl {
     display:     inline-flex;
     align-items: center;
-    gap:         5px;
-    font-size:   calc(11px * var(--font-size-scale, 1));
-    color:       var(--ui-text-muted, #6b7280);
+    gap:         6px;
+    font-size:   calc(12px * var(--font-size-scale, 1));
+    font-weight: 700;
+    color:       #0e7490;
+    margin-top:  4px;
+
+    i { font-size: calc(11px * var(--font-size-scale, 1)); }
+  }
+
+  &__sub {
+    font-size: calc(11px * var(--font-size-scale, 1));
+    color:     var(--ui-text-muted, #64748b);
   }
 }
 
-// ── Vacíos ────────────────────────────────────────────────────────────────
-.ent-vacio {
-  margin:     0;
-  padding:    18px 14px;
-  font-size:  calc(12px * var(--font-size-scale, 1));
-  font-style: italic;
-  color:      var(--ui-text-muted, #6b7280);
-
-  &--grande {
-    display:        flex;
-    flex-direction: column;
-    align-items:    center;
-    gap:            10px;
-    padding:        60px 20px;
-    border:         1px dashed rgba(21, 27, 59, .16);
-    border-radius:  10px;
-    font-style:     normal;
-    text-align:     center;
-
-    i { font-size: 2.2rem; opacity: .3; }
-  }
-}
-
-// ── Modo oscuro ───────────────────────────────────────────────────────────
+// ── Modo Oscuro ───────────────────────────────────────────────────────────
 :host-context(html.dark-mode) {
   .ent-fuerzas,
   .ent-detalle-card,
-  .ent-form-card {
+  .ent-form-card,
+  .ent-overview-card {
     background:   rgba(255, 255, 255, .03);
-    border-color: rgba(255, 255, 255, .12);
+    border-color: rgba(255, 255, 255, .10);
   }
-  .ent-item        { border-bottom-color: rgba(255, 255, 255, .08); }
-  .ent-item:hover  { background: rgba(8, 166, 203, .12); }
-  .ent-item--activa { background: rgba(8, 166, 203, .18); }
-  .ent-canal,
-  .ent-usuario     { border-color: rgba(255, 255, 255, .12); }
-  .ent-item__abrev { background: rgba(255, 255, 255, .10); }
-  .ent-vacio--grande { border-color: rgba(255, 255, 255, .18); }
+
+  .ent-fuerzas__tools {
+    background:   rgba(255, 255, 255, .02);
+    border-color: rgba(255, 255, 255, .08);
+  }
+
+  .ent-card,
+  .ent-canal-card,
+  .ent-usuario-row {
+    background:   rgba(255, 255, 255, .03);
+    border-color: rgba(255, 255, 255, .08);
+
+    &:hover {
+      background:   rgba(8, 166, 203, .10);
+      border-color: rgba(8, 166, 203, .35);
+    }
+  }
+
+  .ent-card--activa {
+    background:   rgba(8, 166, 203, .15) !important;
+    border-color: rgba(8, 166, 203, .45);
+  }
+
+  .ent-cod-pill,
+  .ent-acd-tag {
+    background: rgba(255, 255, 255, .10);
+    color:      #cbd5e1;
+  }
+
+  .ent-chip-btn {
+    background:   rgba(255, 255, 255, .05);
+    border-color: rgba(255, 255, 255, .14);
+    color:        #94a3b8;
+  }
+
+  .ent-detalle-hero {
+    background:   linear-gradient(to right, rgba(8, 166, 203, .12), rgba(255, 255, 255, .02));
+    border-color: rgba(255, 255, 255, .08);
+  }
+
+  .ent-kpi-box {
+    background:   rgba(8, 166, 203, .07);
+    border-color: rgba(8, 166, 203, .22);
+  }
 }

@@ -50,13 +50,12 @@ export const APP_ROUTE_CATALOG: readonly AppRouteCatalogItem[] = [
     label: 'Asistente inteligente',
     area: 'Administración',
   },
-  { route: '/administracion/casos', label: 'Códigos de caso', area: 'Administración' },
+  { route: '/administracion/casos', label: 'Códigos de caso (consulta)', area: 'Administración' },
   {
     route: '/administracion/integraciones',
     label: 'Hub de integraciones',
     area: 'Administración',
   },
-  { route: '/administracion/sms', label: 'Proveedor SMS', area: 'Administración' },
   { route: '/administracion/dominio', label: 'Dominios', area: 'Administración' },
   { route: '/administracion/cuentas-email', label: 'Cuentas de correo', area: 'Administración' },
   // ── Super Admin ──────────────────────────────────────────────────────────
@@ -65,6 +64,7 @@ export const APP_ROUTE_CATALOG: readonly AppRouteCatalogItem[] = [
   { route: '/super/tenants', label: 'Gestión de Tenants', area: 'Super Admin' },
   { route: '/super/salud-cads', label: 'Salud de CADs', area: 'Super Admin' },
   { route: '/super/unidades', label: 'Unidades y Municipios', area: 'Super Admin' },
+  { route: '/super/casos', label: 'Códigos de caso institucionales', area: 'Super Admin' },
 
   // ── Operación ────────────────────────────────────────────────────────────
   // Solo lo ya portado. Al portar eventos o pedido, agregarlos aquí o no
@@ -133,6 +133,8 @@ const ROUTE_ALIASES: Readonly<Record<string, string>> = {
   '/gestion-correos-electronicos': '/gestion-documental/gestion-correos-electronicos',
   '/salud-cads': '/super/salud-cads',
   '/tenants': '/super/tenants',
+  '/sms': '/administracion/integraciones',
+  '/administracion/sms': '/administracion/integraciones',
   // La base trae '/operacion/anotaciones' (sembrado por V47), pero la pantalla
   // se llama anotaciones-turno como en secad_angular. Se resuelve con un alias
   // para no tener que migrar el dato en cada instalación.

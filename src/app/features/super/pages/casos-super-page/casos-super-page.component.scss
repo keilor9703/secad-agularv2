@@ -1,0 +1,224 @@
+// ══════════════════════════════════════════════════════════════════════════
+//  Códigos de Caso — Super Admin (Estilos)
+// ══════════════════════════════════════════════════════════════════════════
+
+.sc-page {
+  display:        flex;
+  flex-direction: column;
+  gap:            16px;
+  padding:        16px;
+}
+
+.sc-page-actions {
+  display:     flex;
+  align-items: center;
+  gap:         8px;
+  flex-wrap:   wrap;
+}
+
+// ── KPIs de Catálogo ──────────────────────────────────────────────────────
+.sc-kpis {
+  display:               grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap:                   14px;
+}
+
+.sc-kpi-card {
+  display:        flex;
+  flex-direction: column;
+  gap:            3px;
+  padding:        16px;
+  border-radius:  12px;
+  background:     var(--ui-surface, #fff);
+  border:         1px solid rgba(21, 27, 59, .10);
+  box-shadow:     0 1px 3px rgba(0, 0, 0, .04);
+
+  &__val {
+    font-size:            calc(26px * var(--font-size-scale, 1));
+    font-weight:          900;
+    line-height:          1;
+    color:                var(--ui-text, #0f172a);
+    font-variant-numeric: tabular-nums;
+  }
+
+  &__lbl {
+    display:     inline-flex;
+    align-items: center;
+    gap:         6px;
+    font-size:   calc(12px * var(--font-size-scale, 1));
+    font-weight: 700;
+    color:       #0e7490;
+    margin-top:  4px;
+
+    i { font-size: calc(11px * var(--font-size-scale, 1)); }
+  }
+
+  &__sub {
+    font-size: calc(11px * var(--font-size-scale, 1));
+    color:     var(--ui-text-muted, #64748b);
+  }
+
+  &--nacional {
+    background: linear-gradient(135deg, rgba(8, 166, 203, .06), rgba(21, 27, 59, .02));
+    border-color: rgba(8, 166, 203, .2);
+  }
+
+  &--local {
+    background: linear-gradient(135deg, rgba(245, 158, 11, .06), rgba(21, 27, 59, .02));
+    border-color: rgba(245, 158, 11, .25);
+    .sc-kpi-card__lbl { color: #d97706; }
+  }
+}
+
+// ── Barra de Filtros ──────────────────────────────────────────────────────
+.sc-filtros-bar {
+  display:     flex;
+  align-items: flex-end;
+  flex-wrap:   wrap;
+  gap:         12px;
+  padding:     14px 16px;
+  border-radius: 12px;
+  background:  var(--ui-surface, #fff);
+  border:      1px solid rgba(21, 27, 59, .10);
+
+  &__buscar {
+    flex:      1 1 280px;
+    min-width: 0;
+  }
+
+  &__select {
+    flex:      1 1 220px;
+    min-width: 0;
+
+    &--corto {
+      flex: 0 0 160px;
+    }
+  }
+}
+
+// ── Tarjeta de Tabla ──────────────────────────────────────────────────────
+.sc-tabla-card {
+  border-radius: 12px;
+  overflow:      hidden;
+  border:        1px solid rgba(21, 27, 59, .10);
+  background:    var(--ui-surface, #fff);
+  box-shadow:    0 1px 3px rgba(0, 0, 0, .04);
+}
+
+.sc-codigo-badge {
+  display:         inline-flex;
+  align-items:     center;
+  padding:         2px 8px;
+  border-radius:   6px;
+  background:      rgba(14, 116, 144, .10);
+  color:           #0e7490;
+  font-family:     ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-weight:     800;
+  font-size:       calc(12px * var(--font-size-scale, 1));
+  letter-spacing:  .02em;
+}
+
+// ── Formulario Modal ──────────────────────────────────────────────────────
+.sc-modal-form {
+  display:        flex;
+  flex-direction: column;
+  gap:            14px;
+}
+
+.sc-modal-row {
+  display:   flex;
+  flex-wrap: wrap;
+  gap:       12px;
+  align-items: flex-end;
+
+  &__corto { flex: 0 0 160px; }
+  &__largo { flex: 1 1 240px; min-width: 0; }
+}
+
+.sc-tenant-select-box {
+  padding:       12px;
+  border-radius: 10px;
+  background:    rgba(245, 158, 11, .08);
+  border:        1px solid rgba(245, 158, 11, .25);
+}
+
+.sc-toggle-box {
+  display:        flex;
+  align-items:    center;
+  padding-bottom: 8px;
+}
+
+.sc-modal-footer {
+  display:         flex;
+  justify-content: flex-end;
+  gap:             8px;
+}
+
+// ── Importación ───────────────────────────────────────────────────────────
+.sc-import-body {
+  display:        flex;
+  flex-direction: column;
+  gap:            14px;
+}
+
+.sc-import-instructions {
+  margin:        0;
+  padding:       10px 14px;
+  border-radius: 8px;
+  background:    rgba(21, 27, 59, .04);
+  font-size:     calc(12px * var(--font-size-scale, 1));
+  color:         var(--ui-text-muted, #64748b);
+  line-height:   1.4;
+
+  code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-weight: 700;
+    color:       #0e7490;
+  }
+}
+
+.sc-import-result {
+  padding:       12px 14px;
+  border-radius: 8px;
+  background:    rgba(220, 38, 38, .08);
+  border:        1px solid rgba(220, 38, 38, .2);
+
+  &--ok {
+    background:   rgba(22, 163, 74, .08);
+    border-color: rgba(22, 163, 74, .25);
+  }
+
+  h4 { margin: 0 0 4px; font-size: calc(13px * var(--font-size-scale, 1)); }
+  p  { margin: 0; font-size: calc(12px * var(--font-size-scale, 1)); }
+}
+
+.sc-import-errors {
+  margin:     8px 0 0;
+  padding:    0 0 0 16px;
+  font-size:  calc(11.5px * var(--font-size-scale, 1));
+  color:      #dc2626;
+}
+
+// ── Modo oscuro ───────────────────────────────────────────────────────────
+:host-context(html.dark-mode) {
+  .sc-kpi-card,
+  .sc-filtros-bar,
+  .sc-tabla-card {
+    background:   rgba(255, 255, 255, .03);
+    border-color: rgba(255, 255, 255, .10);
+  }
+
+  .sc-codigo-badge {
+    background: rgba(14, 116, 144, .25);
+    color:      #38bdf8;
+  }
+
+  .sc-tenant-select-box {
+    background:   rgba(245, 158, 11, .12);
+    border-color: rgba(245, 158, 11, .3);
+  }
+
+  .sc-import-instructions {
+    background: rgba(255, 255, 255, .05);
+  }
+}

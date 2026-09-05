@@ -33,4 +33,13 @@ export const superRoutes: Routes = [
       ),
     data: { breadcrumb: 'Unidades y Municipios' },
   },
+  {
+    path: 'casos',
+    canActivate: [superAdminGuard],
+    loadComponent: () =>
+      import('./pages/casos-super-page/casos-super-page.component').then(
+        (m) => m.CasosSuperPageComponent,
+      ),
+    data: { breadcrumb: 'Códigos de Caso' },
+  },
 ];

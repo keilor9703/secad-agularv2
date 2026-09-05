@@ -1,232 +1,583 @@
 // ══════════════════════════════════════════════════════════════════════════
-//  Salud de CADs
-//
-//  Encabezado, campos, botones, insignias, spinner, tabla y modal los resuelven
-//  los componentes de shared/components/ui-*. Aquí queda el resumen numérico y
-//  la rejilla de tarjetas, que no tienen equivalente en el kit.
+//  Centro de Operaciones (NOC) y Salud de CADs
 // ══════════════════════════════════════════════════════════════════════════
 
 .sc-page {
-  display:        flex;
+  display: flex;
   flex-direction: column;
-  gap:            16px;
-  padding:        16px;
+  gap: 20px;
+  padding: 20px;
+  max-width: 1600px;
+  margin: 0 auto;
+  width: 100%;
 }
 
-// Contador de refresco, dentro de las acciones del encabezado.
-.sc-contador {
-  display:       inline-flex;
-  align-items:   center;
-  gap:           6px;
-  padding:       0 10px;
-  height:        32px;
-  border:        1px solid rgba(255, 255, 255, .28);
+// ── Radar Live Indicator ──────────────────────────────────────────────────
+.sc-radar-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 14px;
+  background: rgba(37, 99, 235, 0.08);
+  border: 1px solid rgba(37, 99, 235, 0.2);
   border-radius: 999px;
-  color:         #fff;
-  font-size:     calc(11.5px * var(--font-size-scale, 1));
-  font-variant-numeric: tabular-nums;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--ui-primary, #2563eb);
+
+  &--paused {
+    background: rgba(245, 158, 11, 0.1);
+    border-color: rgba(245, 158, 11, 0.28);
+    color: #b45309;
+
+    .sc-radar-dot {
+      background: #f59e0b;
+      box-shadow: none;
+      animation: none;
+    }
+  }
 }
 
-.sc-aviso {
-  display:       flex;
-  align-items:   center;
-  gap:           10px;
-  margin:        0;
-  padding:       10px 14px;
-  border:        1px solid rgba(217, 119, 6, .35);
+.sc-radar-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.6);
+  animation: scPulse 2s infinite;
+}
+
+@keyframes scPulse {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 8px rgba(16, 185, 129, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
+}
+
+.sc-aviso-pausa {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 18px;
   border-radius: 10px;
-  background:    rgba(245, 158, 11, .10);
-  font-size:     calc(12.5px * var(--font-size-scale, 1));
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  color: #92400e;
+  font-size: 0.88rem;
 
-  i { color: #b45309; }
+  i {
+    font-size: 1.25rem;
+    color: #d97706;
+  }
 }
 
-// ── Resumen ───────────────────────────────────────────────────────────────
-// Anchos fijos: con 1fr las cuatro tarjetas se estiran hasta ser ilegibles en
-// pantallas anchas.
-.sc-resumen {
-  display:               grid;
-  grid-template-columns: repeat(auto-fill, minmax(170px, 220px));
-  gap:                   12px;
-  margin:                0;
-  padding:               0;
-  list-style:            none;
+// ── NOC Telemetry Deck ─────────────────────────────────────────────────────
+.sc-kpi-deck {
+  display: grid;
+  grid-template-columns: 2fr repeat(5, 1fr);
+  gap: 14px;
+
+  @media (max-width: 1200px) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
 }
 
-.sc-tarjeta {
-  display:        flex;
-  flex-direction: column;
-  gap:            2px;
-  padding:        12px 14px;
-  border:         1px solid rgba(21, 27, 59, .12);
-  border-left:    4px solid var(--sc-acento, #94a3b8);
-  border-radius:  10px;
-  background:     var(--ui-surface, #fff);
+.sc-kpi-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  background: var(--ui-surface, #ffffff);
+  border: 1px solid rgba(21, 27, 59, 0.1);
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 
-  &__num {
-    font-size:   calc(24px * var(--font-size-scale, 1));
+  &:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  }
+
+  &__icon-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    font-size: 1.25rem;
+    flex-shrink: 0;
+  }
+
+  &__info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  &__val {
+    font-size: 1.45rem;
     font-weight: 800;
     line-height: 1.1;
-    font-variant-numeric: tabular-nums;
+    font-family: var(--ui-font-mono, 'JetBrains Mono', monospace);
+    color: var(--ui-text-primary, #0f172a);
+
+    small {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--ui-text-muted, #64748b);
+    }
   }
 
   &__lbl {
-    display:     inline-flex;
-    align-items: center;
-    gap:         6px;
-    color:       var(--ui-text-muted, #6b7280);
-    font-size:   calc(11.5px * var(--font-size-scale, 1));
+    font-size: 0.76rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--ui-text-muted, #64748b);
   }
 
-  &--ok   { --sc-acento: #16a34a; .sc-tarjeta__lbl i { color: #16a34a; } }
-  &--warn { --sc-acento: #d97706; .sc-tarjeta__lbl i { color: #d97706; } }
-  &--bad  { --sc-acento: #dc2626; .sc-tarjeta__lbl i { color: #dc2626; } }
-  &--info { --sc-acento: #0e7490; .sc-tarjeta__lbl i { color: #0e7490; } }
-}
-
-// ── Filtros ───────────────────────────────────────────────────────────────
-.sc-filtros {
-  display:   flex;
-  flex-wrap: wrap;
-  gap:       12px;
-
-  &__buscar { flex: 1 1 320px; min-width: 0; max-width: 460px; }
-  &__nivel  { flex: 0 0 220px; }
-
-  @media (max-width: 640px) {
-    &__buscar,
-    &__nivel { flex: 1 1 100%; max-width: none; }
-  }
-}
-
-.sc-meta {
-  margin:    0;
-  color:     var(--ui-text-muted, #6b7280);
-  font-size: calc(11.5px * var(--font-size-scale, 1));
-}
-
-// ── Rejilla de CADs ───────────────────────────────────────────────────────
-.sc-grid {
-  display:               grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 340px));
-  gap:                   12px;
-}
-
-.sc-cad {
-  display:        flex;
-  flex-direction: column;
-  gap:            8px;
-  padding:        14px;
-  border:         1px solid rgba(21, 27, 59, .12);
-  border-top:     3px solid #16a34a;
-  border-radius:  10px;
-  background:     var(--ui-surface, #fff);
-
-  &--warn { border-top-color: #d97706; }
-  &--bad  { border-top-color: #dc2626; }
-
-  &__head {
-    display:         flex;
-    align-items:     center;
+  // Hero Card (Availability Bar)
+  &--hero {
+    flex-direction: column;
+    align-items: stretch;
     justify-content: space-between;
-    gap:             10px;
+    gap: 10px;
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.05) 0%, rgba(30, 64, 175, 0.02) 100%);
+    border-color: rgba(37, 99, 235, 0.2);
+
+    @media (max-width: 1200px) {
+      grid-column: 1 / -1;
+    }
+  }
+
+  &__badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: var(--ui-primary, #2563eb);
+  }
+
+  &__hero-val {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+
+  &__big-num {
+    font-size: 2rem;
+    font-weight: 900;
+    font-family: var(--ui-font-mono, 'JetBrains Mono', monospace);
+    color: #10b981;
+    line-height: 1;
+  }
+
+  &__subtext {
+    font-size: 0.82rem;
+    color: var(--ui-text-muted, #64748b);
+  }
+
+  // Variants
+  &--ok {
+    .sc-kpi-card__icon-wrap {
+      background: rgba(16, 185, 129, 0.12);
+      color: #10b981;
+    }
+  }
+
+  &--warn {
+    .sc-kpi-card__icon-wrap {
+      background: rgba(245, 158, 11, 0.12);
+      color: #f59e0b;
+    }
+  }
+
+  &--bad {
+    .sc-kpi-card__icon-wrap {
+      background: rgba(239, 68, 68, 0.12);
+      color: #ef4444;
+    }
+  }
+
+  &--telemetry {
+    .sc-kpi-card__icon-wrap {
+      background: rgba(99, 102, 241, 0.12);
+      color: #6366f1;
+    }
+  }
+
+  &--incidents {
+    .sc-kpi-card__icon-wrap {
+      background: rgba(14, 165, 233, 0.12);
+      color: #0ea5e9;
+    }
+  }
+}
+
+.sc-health-bar {
+  display: flex;
+  height: 6px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.06);
+
+  &__seg {
+    height: 100%;
+    transition: width 0.3s ease;
+
+    &--ok   { background: #10b981; }
+    &--warn { background: #f59e0b; }
+    &--bad  { background: #ef4444; }
+  }
+}
+
+// ── Toolbar ───────────────────────────────────────────────────────────────
+.sc-toolbar {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+
+  &__filters {
+    display: flex;
+    align-items: flex-end;
+    gap: 14px;
+    flex: 1 1 500px;
+  }
+
+  &__search {
+    flex: 1 1 300px;
+    max-width: 440px;
+  }
+
+  &__select {
+    flex: 0 0 220px;
+  }
+
+  &__controls {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  &__meta {
+    font-size: 0.8rem;
+    color: var(--ui-text-muted, #64748b);
+    white-space: nowrap;
+  }
+}
+
+.sc-view-toggle {
+  display: inline-flex;
+  padding: 3px;
+  border-radius: 8px;
+  background: rgba(21, 27, 59, 0.06);
+
+  &__btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--ui-text-muted, #64748b);
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+
+    i { font-size: 0.85rem; }
+
+    &--active {
+      background: #ffffff;
+      color: var(--ui-text-primary, #0f172a);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+  }
+}
+
+// ── Rejilla Responsiva de Tarjetas NOC ────────────────────────────────────
+.sc-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 16px;
+}
+
+.sc-cad-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--ui-surface, #ffffff);
+  border: 1px solid rgba(21, 27, 59, 0.1);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  position: relative;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: #10b981;
+  }
+
+  &--warn::before { background: #f59e0b; }
+  &--bad::before  { background: #ef4444; }
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+  }
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px 8px;
+  }
+
+  &__state-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 999px;
+
+    &--success {
+      background: rgba(16, 185, 129, 0.1);
+      color: #059669;
+    }
+    &--warning {
+      background: rgba(245, 158, 11, 0.12);
+      color: #d97706;
+    }
+    &--danger {
+      background: rgba(239, 68, 68, 0.12);
+      color: #dc2626;
+    }
   }
 
   &__dane {
-    color:       var(--ui-text-muted, #6b7280);
-    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-    font-size:   calc(11px * var(--font-size-scale, 1));
+    font-family: var(--ui-font-mono, 'JetBrains Mono', monospace);
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--ui-text-muted, #64748b);
   }
 
-  &__nombre {
-    margin:      0;
-    font-size:   calc(13.5px * var(--font-size-scale, 1));
+  &__body {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 0 16px 14px;
+    flex: 1;
+  }
+
+  &__title {
+    margin: 4px 0 0;
+    font-size: 1.05rem;
     font-weight: 700;
+    color: var(--ui-text-primary, #0f172a);
     line-height: 1.3;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
-  &__lugar {
-    display:     flex;
+  &__location {
+    display: flex;
     align-items: center;
-    gap:         6px;
-    margin:      0;
-    color:       var(--ui-text-muted, #6b7280);
-    font-size:   calc(11.5px * var(--font-size-scale, 1));
-  }
+    gap: 6px;
+    margin: 0;
+    font-size: 0.82rem;
+    color: var(--ui-text-muted, #64748b);
 
-  &__metricas {
-    display:               grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap:                   8px;
-    margin:                4px 0 0;
-    padding:               10px 0 0;
-    border-top:            1px solid rgba(21, 27, 59, .08);
-
-    div { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-
-    dt {
-      color:          var(--ui-text-muted, #6b7280);
-      font-size:      calc(10px * var(--font-size-scale, 1));
-      letter-spacing: .02em;
-      text-transform: uppercase;
-    }
-
-    dd {
-      margin:      0;
-      font-size:   calc(12px * var(--font-size-scale, 1));
-      font-weight: 700;
-      font-variant-numeric: tabular-nums;
+    i {
+      color: var(--ui-primary, #2563eb);
+      font-size: 0.78rem;
     }
   }
 
   &__obs {
-    display:       flex;
-    gap:           6px;
-    margin:        0;
-    padding:       8px 10px;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-top: 10px;
+    padding: 8px 12px;
     border-radius: 8px;
-    background:    rgba(8, 166, 203, .07);
-    font-size:     calc(11.5px * var(--font-size-scale, 1));
+    background: rgba(245, 158, 11, 0.08);
+    border: 1px solid rgba(245, 158, 11, 0.2);
+    font-size: 0.8rem;
+    color: #92400e;
 
-    i { margin-top: 2px; color: #0e7490; }
+    i {
+      font-size: 0.85rem;
+      margin-top: 2px;
+      color: #d97706;
+    }
   }
 
-  &__pie {
-    display:         flex;
+  &__footer {
+    display: flex;
+    align-items: center;
     justify-content: flex-end;
-    margin-top:      auto;
-    padding-top:     4px;
+    gap: 8px;
+    padding: 10px 16px;
+    border-top: 1px solid rgba(21, 27, 59, 0.07);
+    background: rgba(248, 250, 252, 0.6);
   }
 }
 
-.sc-metrica--ok   { color: #16a34a; }
-.sc-metrica--warn { color: #d97706; }
-.sc-metrica--bad  { color: #dc2626; }
-
-.sc-vacio {
-  grid-column: 1 / -1;
-  margin:      0;
-  padding:     28px 16px;
-  border:      1px dashed rgba(21, 27, 59, .16);
+// Telemetry Cluster inside card
+.sc-telemetry-cluster {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-top: 12px;
+  padding: 10px;
   border-radius: 10px;
-  color:       var(--ui-text-muted, #6b7280);
-  font-size:   calc(12.5px * var(--font-size-scale, 1));
-  font-style:  italic;
-  text-align:  center;
+  background: rgba(241, 245, 249, 0.6);
+  border: 1px solid rgba(21, 27, 59, 0.05);
 }
 
-// ── Modo oscuro ───────────────────────────────────────────────────────────
-:host-context(html.dark-mode) {
-  .sc-tarjeta,
-  .sc-cad {
-    background:   rgba(255, 255, 255, .03);
-    border-color: rgba(255, 255, 255, .12);
+.sc-telemetry-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  &__lbl {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--ui-text-muted, #64748b);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+
+    i { font-size: 0.68rem; }
   }
-  .sc-cad__metricas { border-top-color: rgba(255, 255, 255, .10); }
-  .sc-aviso  { background: rgba(245, 158, 11, .14); border-color: rgba(217, 119, 6, .45); }
-  .sc-aviso i { color: #fbbf24; }
-  .sc-vacio  { border-color: rgba(255, 255, 255, .18); }
-  .sc-metrica--ok   { color: #4ade80; }
-  .sc-metrica--warn { color: #fbbf24; }
-  .sc-metrica--bad  { color: #f87171; }
+
+  &__val {
+    font-size: 0.88rem;
+    font-weight: 700;
+    font-family: var(--ui-font-mono, 'JetBrains Mono', monospace);
+    color: var(--ui-text-primary, #0f172a);
+
+    &--alert {
+      color: #dc2626;
+      font-weight: 800;
+    }
+  }
+}
+
+.sc-metrica--ok   { color: #059669 !important; }
+.sc-metrica--warn { color: #d97706 !important; }
+.sc-metrica--bad  { color: #dc2626 !important; }
+
+// ── Empty State ───────────────────────────────────────────────────────────
+.sc-empty-state {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  border: 2px dashed rgba(21, 27, 59, 0.12);
+  border-radius: 16px;
+  text-align: center;
+  background: var(--ui-surface, #ffffff);
+
+  &__icon {
+    font-size: 2.5rem;
+    color: var(--ui-text-muted, #94a3b8);
+    margin-bottom: 12px;
+  }
+
+  &__title {
+    margin: 0 0 6px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--ui-text-primary, #0f172a);
+  }
+
+  &__text {
+    margin: 0;
+    font-size: 0.88rem;
+    color: var(--ui-text-muted, #64748b);
+    max-width: 420px;
+  }
+}
+
+.sc-table-container {
+  background: var(--ui-surface, #ffffff);
+  border: 1px solid rgba(21, 27, 59, 0.1);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+// ── Dark Mode Support ─────────────────────────────────────────────────────
+:host-context(html.dark-mode) {
+  .sc-kpi-card,
+  .sc-cad-card,
+  .sc-table-container,
+  .sc-empty-state {
+    background: rgba(30, 41, 59, 0.7);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .sc-kpi-card--hero {
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.15) 0%, rgba(30, 64, 175, 0.05) 100%);
+    border-color: rgba(37, 99, 235, 0.35);
+  }
+
+  .sc-radar-indicator {
+    background: rgba(37, 99, 235, 0.16);
+    border-color: rgba(37, 99, 235, 0.35);
+  }
+
+  .sc-view-toggle {
+    background: rgba(255, 255, 255, 0.06);
+
+    &__btn--active {
+      background: rgba(255, 255, 255, 0.15);
+      color: #ffffff;
+    }
+  }
+
+  .sc-telemetry-cluster {
+    background: rgba(15, 23, 42, 0.6);
+    border-color: rgba(255, 255, 255, 0.06);
+  }
+
+  .sc-cad-card__footer {
+    background: rgba(15, 23, 42, 0.4);
+    border-top-color: rgba(255, 255, 255, 0.06);
+  }
+
+  .sc-kpi-card__val,
+  .sc-cad-card__title,
+  .sc-telemetry-item__val,
+  .sc-empty-state__title {
+    color: #f1f5f9;
+  }
 }

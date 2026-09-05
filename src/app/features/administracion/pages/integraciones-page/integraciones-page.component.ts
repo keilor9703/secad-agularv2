@@ -49,8 +49,14 @@ import {
   DtoCamaraIntegracionRequest,
   DtoVmsDriverDescriptor
 } from '../../services/camara-integracion.service';
+import { ActivatedRoute } from '@angular/router';
 import { ToastService } from '../../../../core/services/toast.service';
 import { AuthService }   from '../../../../core/auth/auth.service';
+import {
+  ConfigSmsService,
+  DtoConfigSms,
+  ProveedorSms
+} from '../../services/config-sms.service';
 
 /** Contexto que ui-table pasa a cada cellTemplate. */
 interface Celda<T> {
@@ -59,7 +65,24 @@ interface Celda<T> {
   column: UiTableColumn<T>;
 }
 
-type Tab     = 'salientes' | 'entrantes' | 'camaras' | 'auditoria';
+interface ProveedorSmsInfo {
+  readonly value: ProveedorSms;
+  readonly label: string;
+  readonly baseUrlPorDefecto: string;
+  readonly usaSender: boolean;
+}
+
+const PROVEEDORES_SMS: readonly ProveedorSmsInfo[] = [
+  { value: 'INFOBIP', label: 'Infobip', baseUrlPorDefecto: '', usaSender: true },
+  {
+    value: 'INALAMBRIA_EXPRESS',
+    label: 'Inalambria Express',
+    baseUrlPorDefecto: 'https://api.inalambria.express/v1',
+    usaSender: false,
+  },
+];
+
+type Tab     = 'salientes' | 'entrantes' | 'sms' | 'camaras' | 'auditoria';
 type ModalT  = 'saliente-create' | 'saliente-edit'
              | 'entrante-create' | 'entrante-edit'
              | 'camara-create'   | 'camara-edit'
@@ -92,6 +115,8 @@ export class IntegracionesPageComponent implements OnInit {
   private readonly svc    = inject(IntegracionesService);
   private readonly agSvc  = inject(AgenciaExternaService);
   private readonly camSvc = inject(CamaraIntegracionService);
+  private readonly smsSvc = inject(ConfigSmsService);
+  private readonly route  = inject(ActivatedRoute);
   private readonly toast  = inject(ToastService);
   private readonly auth   = inject(AuthService);
   private readonly fb     = inject(FormBuilder);
@@ -105,6 +130,49 @@ export class IntegracionesPageComponent implements OnInit {
   readonly loadingEnt = signal(false);
   readonly loadingAud = signal(false);
   readonly saving     = signal(false);
+
+  // ── Tab Proveedor SMS ───────────────────────────────────────────────────────
+  readonly loadingSms        = signal(false);
+  readonly savingSms         = signal(false);
+  readonly probandoSms       = signal(false);
+  readonly configSms         = signal<DtoConfigSms | null>(null);
+  readonly telefonoPruebaSms = signal('');
+  readonly proveedorActualSms = signal<ProveedorSms>('INFOBIP');
+
+  readonly formSms = this.fb.nonNullable.group({
+    proveedor: ['INFOBIP' as ProveedorSms, [Validators.required]],
+    baseUrl:   [''],
+    apiKey:    [''],
+    sender:    [''],
+  });
+
+  readonly opcionesProveedorSms: UiSelectOption<ProveedorSms>[] = PROVEEDORES_SMS.map((p) => ({
+    label: p.label,
+    value: p.value,
+  }));
+
+  readonly proveedorSmsSeleccionado = computed(
+    () => PROVEEDORES_SMS.find((p) => p.value === this.proveedorActualSms()) ?? PROVEEDORES_SMS[0],
+  );
+
+  readonly placeholderUrlSms = computed(
+    () => this.proveedorSmsSeleccionado().baseUrlPorDefecto || 'Host asignado por el proveedor',
+  );
+
+  readonly pistaApiKeySms = computed(() => {
+    const c = this.configSms();
+    return c?.tieneApiKey
+      ? `Actual: ${c.apiKeyMascara ?? '••••'} — deje el campo vacío para conservarla.`
+      : 'Todavía no hay ninguna API Key guardada.';
+  });
+
+  readonly ultimaModificacionSms = computed(() => {
+    const c = this.configSms();
+    if (!c?.fechaModifica) return '';
+    const fecha = new Date(c.fechaModifica);
+    const cuando = Number.isNaN(fecha.getTime()) ? c.fechaModifica : fecha.toLocaleString('es-CO');
+    return c.usuarioModifica ? `${cuando} · por ${c.usuarioModifica}` : cuando;
+  });
 
   // ── Tab Salientes ───────────────────────────────────────────────────────────
   readonly salientes = signal<DtoAgenciaExterna[]>([]);
@@ -275,6 +343,7 @@ export class IntegracionesPageComponent implements OnInit {
       badge: this.salientes().length,
     },
     { id: 'entrantes', label: 'Entrantes', icon: 'fa-solid fa-inbox', badge: this.entrantes().length },
+    { id: 'sms', label: 'Proveedor SMS', icon: 'fa-solid fa-comment-sms' },
     { id: 'camaras', label: 'Cámaras (VMS)', icon: 'fa-solid fa-video', badge: this.camaras().length },
     { id: 'auditoria', label: 'Auditoría', icon: 'fa-solid fa-clock-rotate-left' },
   ]);
@@ -488,6 +557,7 @@ export class IntegracionesPageComponent implements OnInit {
 
   constructor() {
     this.codDane = this.auth.getJwtClaims().codDane ?? '';
+    this.formSms.controls.proveedor.valueChanges.subscribe((v) => this.proveedorActualSms.set(v));
   }
 
   ngOnInit(): void {
@@ -495,12 +565,21 @@ export class IntegracionesPageComponent implements OnInit {
     this.formSal.controls.tipoAuth.valueChanges.subscribe((v) => this.authSeleccionado.set(v));
     this.loadSalientes();
     this.loadEntrantes();
+
+    // Permite abrir directamente una pestaña vía URL (ej: /administracion/integraciones?tab=sms)
+    const tabParam = this.route.snapshot.queryParamMap.get('tab') as Tab | null;
+    if (tabParam && ['salientes', 'entrantes', 'sms', 'camaras', 'auditoria'].includes(tabParam)) {
+      this.setTab(tabParam);
+    }
   }
 
   // ── Navegación de tabs ──────────────────────────────────────────────────────
 
   setTab(t: Tab): void {
     this.tab.set(t);
+    if (t === 'sms' && !this.configSms()) {
+      this.loadSms();
+    }
     if (t === 'auditoria' && !this.audSalientes().length && !this.audEntrantes().length)
       this.loadAuditoria();
     if (t === 'camaras') {
@@ -713,6 +792,92 @@ export class IntegracionesPageComponent implements OnInit {
       : '{}');
     this.modal.set('payload-viewer');
     document.body.classList.add('ui-modal-open');
+  }
+
+  // ════════════════════════════════════════════════════════════════════════════
+  //  TAB PROVEEDOR SMS
+  // ════════════════════════════════════════════════════════════════════════════
+
+  loadSms(): void {
+    this.loadingSms.set(true);
+    this.smsSvc.get().subscribe({
+      next: (r) => {
+        this.loadingSms.set(false);
+        const data = r?.data;
+        if (!data) {
+          this.toast.error('Proveedor SMS', 'La respuesta del servidor no trae la configuración.');
+          return;
+        }
+        this.configSms.set(data);
+        this.formSms.reset({
+          proveedor: data.proveedor,
+          baseUrl:   data.baseUrl ?? '',
+          apiKey:    '',
+          sender:    data.sender ?? '',
+        });
+        this.proveedorActualSms.set(data.proveedor);
+      },
+      error: () => {
+        this.loadingSms.set(false);
+        this.toast.error('Proveedor SMS', 'No se pudo cargar la configuración.');
+      },
+    });
+  }
+
+  guardarSms(): void {
+    if (this.formSms.invalid) {
+      this.formSms.markAllAsTouched();
+      return;
+    }
+
+    const v = this.formSms.getRawValue();
+    this.savingSms.set(true);
+    this.smsSvc
+      .actualizar({
+        proveedor: v.proveedor,
+        baseUrl:   v.baseUrl.trim() || null,
+        apiKey:    v.apiKey.trim() || null,
+        sender:    v.sender.trim() || null,
+      })
+      .subscribe({
+        next: (resp) => {
+          this.savingSms.set(false);
+          if (!resp.success) {
+            this.toast.warning('Proveedor SMS', resp.message);
+            return;
+          }
+          this.toast.success('Proveedor SMS', resp.message);
+          this.loadSms();
+        },
+        error: (err) => {
+          this.savingSms.set(false);
+          this.toast.error('Proveedor SMS', err?.error?.message ?? 'Error al guardar.');
+        },
+      });
+  }
+
+  probarEnvioSms(): void {
+    const numero = this.telefonoPruebaSms().trim();
+    if (!numero) {
+      this.toast.warning('Proveedor SMS', 'Escriba un número de teléfono para la prueba.');
+      return;
+    }
+
+    this.probandoSms.set(true);
+    this.smsSvc.probar(numero).subscribe({
+      next: (resp) => {
+        this.probandoSms.set(false);
+        if (resp.success) {
+          this.toast.success('Proveedor SMS', resp.message);
+        } else {
+          this.toast.warning('Proveedor SMS', resp.message);
+        }
+      },
+      error: (err) => {
+        this.probandoSms.set(false);
+        this.toast.error('Proveedor SMS', err?.error?.message ?? 'Error al enviar el SMS de prueba.');
+      },
+    });
   }
 
   // ════════════════════════════════════════════════════════════════════════════

@@ -1,0 +1,283 @@
+<div class="sc-page">
+
+  <app-ui-page-header
+    title="Catálogo Nacional de Códigos de Caso"
+    icon="fa-solid fa-clipboard-list"
+    description="Catálogo maestro centralizado de tipificación de incidentes. Define la nomenclatura unificada obligatoria para todo el país y las excepciones municipales específicas autorizadas."
+    [minimizable]="false"
+  >
+    <div page-header-actions class="sc-page-actions">
+      <app-ui-button
+        variant="secondary"
+        appearance="ghost"
+        icon="fa-solid fa-file-excel"
+        [disabled]="loading() || casos().length === 0"
+        (buttonClick)="exportarExcel()"
+      >Exportar Excel</app-ui-button>
+
+      <app-ui-button
+        variant="secondary"
+        icon="fa-solid fa-file-import"
+        (buttonClick)="abrirImportar()"
+      >Importar Excel</app-ui-button>
+
+      <app-ui-button
+        variant="primary"
+        icon="fa-solid fa-plus"
+        (buttonClick)="nuevoCaso()"
+      >Nuevo código</app-ui-button>
+    </div>
+  </app-ui-page-header>
+
+  <!-- ═══ Resumen de Métricas de Catálogo ═══════════════════════════════ -->
+  <div class="sc-kpis">
+    <div class="sc-kpi-card">
+      <span class="sc-kpi-card__val">{{ totalCasos() }}</span>
+      <span class="sc-kpi-card__lbl">
+        <i class="fa-solid fa-list-check"></i> Total tipificaciones
+      </span>
+      <span class="sc-kpi-card__sub">{{ totalVigentes() }} vigentes activas</span>
+    </div>
+
+    <div class="sc-kpi-card sc-kpi-card--nacional">
+      <span class="sc-kpi-card__val">{{ totalNacionales() }}</span>
+      <span class="sc-kpi-card__lbl">
+        <i class="fa-solid fa-earth-americas"></i> Códigos Nacionales
+      </span>
+      <span class="sc-kpi-card__sub">Aplican a todos los CADs del país</span>
+    </div>
+
+    <div class="sc-kpi-card sc-kpi-card--local">
+      <span class="sc-kpi-card__val">{{ totalLocales() }}</span>
+      <span class="sc-kpi-card__lbl">
+        <i class="fa-solid fa-location-dot"></i> Excepciones por CAD
+      </span>
+      <span class="sc-kpi-card__sub">Problemáticas municipales puntuales</span>
+    </div>
+  </div>
+
+  <!-- ═══ Barra de Filtros ═══════════════════════════════════════════════ -->
+  <div class="sc-filtros-bar">
+    <app-ui-search-input
+      class="sc-filtros-bar__buscar"
+      placeholder="Buscar por código numérico o descripción…"
+      [showButton]="false"
+      [ngModel]="busqueda()"
+      (ngModelChange)="busqueda.set($event)"
+    />
+
+    <app-ui-select
+      class="sc-filtros-bar__select"
+      label="Ámbito territorial"
+      [options]="opcionesFiltroAmbito()"
+      [clearable]="false"
+      [searchable]="true"
+      [ngModel]="filtroAmbito()"
+      (ngModelChange)="filtroAmbito.set($event)"
+    />
+
+    <app-ui-select
+      class="sc-filtros-bar__select sc-filtros-bar__select--corto"
+      label="Estado"
+      [options]="opcionesFiltroEstado"
+      [clearable]="false"
+      [searchable]="false"
+      [ngModel]="filtroEstado()"
+      (ngModelChange)="filtroEstado.set($event)"
+    />
+
+    <app-ui-select
+      class="sc-filtros-bar__select"
+      label="Categoría asistente"
+      [options]="opcionesCategoria()"
+      [clearable]="true"
+      [searchable]="true"
+      [ngModel]="filtroCategoria()"
+      (ngModelChange)="filtroCategoria.set($event ?? '')"
+    />
+  </div>
+
+  <!-- ═══ Tabla de Códigos de Caso ═══════════════════════════════════════ -->
+  <div class="sc-tabla-card">
+    <app-ui-table
+      [columns]="columns"
+      [rows]="casosFiltrados()"
+      [loading]="loading()"
+      [actions]="acciones"
+      pageSize="15"
+      [showPagination]="true"
+      loadingMessage="Cargando catálogo maestro de códigos…"
+      emptyMessage="No se encontraron códigos de caso que coincidan con los filtros aplicados."
+      (actionClick)="onAccion($event)"
+    />
+  </div>
+
+  <!-- Templates para celdas personalizadas -->
+  <ng-template #celdaCodigo let-row>
+    <div class="sc-codigo-cell">
+      <span class="sc-codigo-badge">#{{ row.codigo }}</span>
+    </div>
+  </ng-template>
+
+  <ng-template #celdaAmbito let-row>
+    @if (!row.codDane || row.codDane === 'NACIONAL' || row.esNacional) {
+      <app-ui-badge
+        label="Nacional (Todo el país)"
+        variant="info"
+        icon="fa-solid fa-earth-americas"
+        iconPosition="start"
+        size="xs"
+      />
+    } @else {
+      <app-ui-badge
+        [label]="'CAD ' + (row.nombreCad || row.codDane)"
+        variant="warning"
+        icon="fa-solid fa-location-dot"
+        iconPosition="start"
+        size="xs"
+        [tooltip]="'Excepción municipal asignada al código DANE ' + row.codDane"
+      />
+    }
+  </ng-template>
+
+</div>
+
+<!-- ═══ Modal Crear / Editar Código ══════════════════════════════════════ -->
+<app-ui-modal
+  [open]="showModal()"
+  [title]="modalMode() === 'create' ? 'Registrar nuevo código de caso' : 'Modificar código de caso #' + editCodigo()"
+  [subtitle]="modalMode() === 'create' ? 'Catálogo nacional administrado centralmente por Superadmin' : 'Edición de nomenclatura y ámbito territorial'"
+  icon="fa-solid fa-clipboard-list"
+  size="md"
+  (closeRequested)="cerrarModal()"
+>
+  <form modal-body [formGroup]="form" class="sc-modal-form">
+    <div class="sc-modal-row">
+      <app-ui-input
+        class="sc-modal-row__corto"
+        formControlName="codigo"
+        label="Código del caso"
+        placeholder="Ej: 101, 312"
+        [readonly]="modalMode() === 'edit'"
+        hint="Nomenclatura institucional de referencia"
+        required
+      />
+
+      <app-ui-select
+        class="sc-modal-row__largo"
+        formControlName="tipoAmbito"
+        label="Ámbito de aplicación"
+        [options]="opcionesTipoAmbito"
+        [clearable]="false"
+        [searchable]="false"
+        required
+      />
+    </div>
+
+    <!-- Si se elige ámbito específico para un CAD, seleccionar cuál -->
+    @if (form.controls.tipoAmbito.value === 'TENANT') {
+      <div class="sc-tenant-select-box">
+        <app-ui-select
+          formControlName="codDane"
+          label="Centro de Atención de Despacho (CAD) destinatario"
+          placeholder="Seleccione el CAD o municipio específico…"
+          [options]="opcionesTenants()"
+          [clearable]="false"
+          [searchable]="true"
+          hint="Este código solo será visible y operable por el CAD seleccionado"
+          required
+        />
+      </div>
+    }
+
+    <app-ui-input
+      formControlName="descripcion"
+      label="Descripción del caso o tipo de incidente"
+      placeholder="Ej: Homicidio en vía pública, Accidente de tránsito con lesionados…"
+      required
+    />
+
+    <div class="sc-modal-row">
+      <app-ui-select
+        class="sc-modal-row__largo"
+        formControlName="idCategoriaAsistente"
+        label="Categoría para el asistente inteligente"
+        [options]="opcionesCategoria()"
+        [clearable]="true"
+        [searchable]="true"
+      />
+
+      <div class="sc-toggle-box">
+        <app-ui-toggle
+          formControlName="vigente"
+          label="Código vigente"
+          [checked]="form.controls.vigente.value"
+        />
+      </div>
+    </div>
+  </form>
+
+  <div modal-footer class="sc-modal-footer">
+    <app-ui-button
+      variant="secondary"
+      appearance="ghost"
+      [disabled]="saving()"
+      (buttonClick)="cerrarModal()"
+    >Cancelar</app-ui-button>
+    <app-ui-button
+      variant="primary"
+      icon="fa-solid fa-floppy-disk"
+      [loading]="saving()"
+      [disabled]="saving()"
+      (buttonClick)="guardar()"
+    >{{ modalMode() === 'create' ? 'Crear código' : 'Guardar cambios' }}</app-ui-button>
+  </div>
+</app-ui-modal>
+
+<!-- ═══ Modal Importación Masiva Excel ════════════════════════════════════ -->
+<app-ui-modal
+  [open]="showImportar()"
+  title="Importación masiva de códigos de caso"
+  subtitle="Carga masiva centralizada desde archivo Excel (.xlsx)"
+  icon="fa-solid fa-file-import"
+  size="md"
+  (closeRequested)="cerrarImportar()"
+>
+  <div modal-body class="sc-import-body">
+    <p class="sc-import-instructions">
+      Cargue un archivo Excel con la siguiente estructura de columnas en la primera fila:
+      <br />
+      <code>Columna 1: Código</code> ·
+      <code>Columna 2: Descripción</code> ·
+      <code>Columna 3: Código DANE (opcional, vacío = Nacional)</code>
+    </p>
+
+    <app-ui-file-upload
+      accept=".xlsx"
+      [loading]="importando()"
+      (fileSelected)="procesarArchivo($event)"
+    />
+
+    @if (resultadoImport(); as r) {
+      <div class="sc-import-result" [class.sc-import-result--ok]="r.success">
+        <h4>{{ r.message }}</h4>
+        <p>Códigos creados: <strong>{{ r.creados }}</strong> · Códigos actualizados: <strong>{{ r.actualizados }}</strong></p>
+        @if (r.errores && r.errores.length) {
+          <ul class="sc-import-errors">
+            @for (err of r.errores; track $index) {
+              <li>{{ err }}</li>
+            }
+          </ul>
+        }
+      </div>
+    }
+  </div>
+
+  <div modal-footer>
+    <app-ui-button
+      variant="secondary"
+      [disabled]="importando()"
+      (buttonClick)="cerrarImportar()"
+    >Cerrar</app-ui-button>
+  </div>
+</app-ui-modal>

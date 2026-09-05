@@ -1,172 +1,303 @@
 <div class="sc-page">
 
+  <!-- ═══ Page Header ═════════════════════════════════════════════════════ -->
   <app-ui-page-header
-    title="Salud de CADs"
+    title="Centro de Operaciones y Salud de CADs"
     icon="fa-solid fa-heart-pulse"
-    description="Estado operativo de cada nodo CAD conectado al sistema. Se actualiza solo cada 30 segundos."
+    description="Monitoreo de telemetría de red, latencia de enlace y disponibilidad de nodos CAD a nivel nacional."
     [minimizable]="false"
   >
     <ng-container page-header-actions>
-      @if (!pausado()) {
-        <span class="sc-contador" [attr.aria-label]="'Próxima actualización en ' + segundosRestantes() + ' segundos'">
-          <i class="fa-regular fa-clock" aria-hidden="true"></i>
-          {{ segundosRestantes() }}s
+      <!-- Contador de refresco en vivo -->
+      <div class="sc-radar-indicator" [class.sc-radar-indicator--paused]="pausado()">
+        <span class="sc-radar-dot"></span>
+        <span class="sc-radar-timer">
+          @if (!pausado()) {
+            Refresco en {{ segundosRestantes() }}s
+          } @else {
+            Monitoreo en Pausa
+          }
         </span>
-      }
+      </div>
+
       <app-ui-button
         variant="secondary"
         appearance="ghost"
         [icon]="pausado() ? 'fa-solid fa-play' : 'fa-solid fa-pause'"
-        [tooltip]="pausado() ? 'Reanudar la actualización automática' : 'Pausar la actualización automática'"
+        [tooltip]="pausado() ? 'Reanudar telemetría continua' : 'Pausar telemetría'"
         (buttonClick)="alternarPausa()"
       >{{ pausado() ? 'Reanudar' : 'Pausar' }}</app-ui-button>
+
       <app-ui-button
         variant="primary"
         icon="fa-solid fa-arrows-rotate"
         [loading]="loading()"
         [disabled]="loading()"
         (buttonClick)="cargar()"
-      >Actualizar</app-ui-button>
+      >Sondear Nodos</app-ui-button>
     </ng-container>
   </app-ui-page-header>
 
   @if (pausado()) {
-    <p class="sc-aviso">
+    <div class="sc-aviso-pausa">
       <i class="fa-solid fa-circle-pause" aria-hidden="true"></i>
-      <span>
-        <strong>Actualización automática pausada.</strong>
-        Lo que se ve es la última lectura; no cambiará hasta reanudar.
-      </span>
-    </p>
-  }
-
-  <!-- ═══ Resumen ════════════════════════════════════════════════════════ -->
-  <ul class="sc-resumen">
-    <li class="sc-tarjeta sc-tarjeta--ok">
-      <span class="sc-tarjeta__num">{{ totalNormal() }}</span>
-      <span class="sc-tarjeta__lbl"><i class="fa-solid fa-circle-check" aria-hidden="true"></i> Normal</span>
-    </li>
-    <li class="sc-tarjeta sc-tarjeta--warn">
-      <span class="sc-tarjeta__num">{{ totalDegradado() }}</span>
-      <span class="sc-tarjeta__lbl"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i> Degradado</span>
-    </li>
-    <li class="sc-tarjeta sc-tarjeta--bad">
-      <span class="sc-tarjeta__num">{{ totalOffline() }}</span>
-      <span class="sc-tarjeta__lbl"><i class="fa-solid fa-circle-xmark" aria-hidden="true"></i> Offline</span>
-    </li>
-    <li class="sc-tarjeta sc-tarjeta--info">
-      <span class="sc-tarjeta__num">{{ cads().length }}</span>
-      <span class="sc-tarjeta__lbl"><i class="fa-solid fa-server" aria-hidden="true"></i> Total CADs</span>
-    </li>
-  </ul>
-
-  <!-- ═══ Filtros ════════════════════════════════════════════════════════ -->
-  <div class="sc-filtros">
-    <app-ui-search-input
-      class="sc-filtros__buscar"
-      label="Buscar CAD"
-      placeholder="Nombre o código DANE…"
-      [showButton]="false"
-      [ngModel]="filtroTexto()"
-      (ngModelChange)="filtroTexto.set($event)"
-    />
-    <app-ui-select
-      class="sc-filtros__nivel"
-      label="Nivel de operación"
-      [options]="opcionesNivel"
-      [clearable]="false"
-      [searchable]="false"
-      [ngModel]="filtroNivel()"
-      (ngModelChange)="filtroNivel.set($event)"
-    />
-  </div>
-
-  <p class="sc-meta">
-    Mostrando {{ cadsFiltrados().length }} de {{ cads().length }} CADs
-    @if (ultimaLectura(); as fecha) {
-      · última lectura {{ fecha | date: 'HH:mm:ss' }}
-    }
-  </p>
-
-  <!-- ═══ Rejilla de CADs ════════════════════════════════════════════════ -->
-  @if (loading() && cads().length === 0) {
-    <app-ui-spinner label="Cargando datos de salud…" contained />
-  } @else {
-    <div class="sc-grid">
-      @for (c of cadsFiltrados(); track c.id) {
-        <article
-          class="sc-cad"
-          [class.sc-cad--warn]="c.nivelOperacion === 2"
-          [class.sc-cad--bad]="c.nivelOperacion === 3"
-        >
-          <header class="sc-cad__head">
-            <app-ui-badge
-              [label]="nivelLabel(c.nivelOperacion)"
-              [variant]="nivelVariant(c.nivelOperacion)"
-              [icon]="nivelIcon(c.nivelOperacion)"
-              iconPosition="start"
-              size="xs"
-            />
-            <code class="sc-cad__dane">{{ c.codDane }}</code>
-          </header>
-
-          <h3 class="sc-cad__nombre">{{ c.nombre }}</h3>
-          <p class="sc-cad__lugar">
-            <i class="fa-solid fa-location-dot" aria-hidden="true"></i>
-            {{ c.departamento }}{{ c.municipio ? ' · ' + c.municipio : '' }}
-          </p>
-
-          <dl class="sc-cad__metricas">
-            <div>
-              <dt>Latencia</dt>
-              <dd [class]="latenciaClase(c.latenciaMs)">
-                {{ c.latenciaMs != null ? c.latenciaMs + ' ms' : '—' }}
-              </dd>
-            </div>
-            <div>
-              <dt>Últ. sincronía</dt>
-              <dd>{{ formatoSincro(c.ultimaSincro) }}</dd>
-            </div>
-            <div>
-              <dt>Incidentes</dt>
-              <dd [class.sc-metrica--bad]="c.incidentesActivos > 0">{{ c.incidentesActivos }}</dd>
-            </div>
-          </dl>
-
-          @if (c.observaciones) {
-            <p class="sc-cad__obs">
-              <i class="fa-solid fa-circle-info" aria-hidden="true"></i> {{ c.observaciones }}
-            </p>
-          }
-
-          <footer class="sc-cad__pie">
-            <app-ui-button
-              variant="secondary"
-              appearance="ghost"
-              size="sm"
-              icon="fa-solid fa-chart-line"
-              (buttonClick)="abrirHistorial(c)"
-            >Historial</app-ui-button>
-          </footer>
-        </article>
-      } @empty {
-        <p class="sc-vacio">
-          @if (cads().length) {
-            Ningún CAD coincide con el filtro aplicado.
-          } @else {
-            No hay CADs registrados todavía.
-          }
-        </p>
-      }
+      <div>
+        <strong>Monitoreo en pausa.</strong>
+        Visualizando snapshot estático. Los datos de latencia e incidentes no se actualizarán hasta reanudar.
+      </div>
     </div>
   }
+
+  <!-- ═══ NOC Telemetry Cards & Bar ═══════════════════════════════════════ -->
+  <section class="sc-kpi-deck">
+    <!-- Card Disponibilidad Global -->
+    <div class="sc-kpi-card sc-kpi-card--hero">
+      <div class="sc-kpi-card__badge">
+        <i class="fa-solid fa-tower-broadcast"></i> DISPONIBILIDAD NACIONAL
+      </div>
+      <div class="sc-kpi-card__hero-val">
+        <span class="sc-kpi-card__big-num">{{ porcentajeDisponibilidad() }}%</span>
+        <span class="sc-kpi-card__subtext">{{ totalNormal() }} de {{ cads().length }} nodos 100% operativos</span>
+      </div>
+      <!-- Barra visual de distribución de salud -->
+      <div class="sc-health-bar">
+        <div class="sc-health-bar__seg sc-health-bar__seg--ok" [style.width.%]="(totalNormal() / (cads().length || 1)) * 100"></div>
+        <div class="sc-health-bar__seg sc-health-bar__seg--warn" [style.width.%]="(totalDegradado() / (cads().length || 1)) * 100"></div>
+        <div class="sc-health-bar__seg sc-health-bar__seg--bad" [style.width.%]="(totalOffline() / (cads().length || 1)) * 100"></div>
+      </div>
+    </div>
+
+    <!-- Nodos Normales -->
+    <div class="sc-kpi-card sc-kpi-card--ok">
+      <div class="sc-kpi-card__icon-wrap">
+        <i class="fa-solid fa-circle-check"></i>
+      </div>
+      <div class="sc-kpi-card__info">
+        <span class="sc-kpi-card__val">{{ totalNormal() }}</span>
+        <span class="sc-kpi-card__lbl">Operación Normal</span>
+      </div>
+    </div>
+
+    <!-- Nodos Degradados -->
+    <div class="sc-kpi-card sc-kpi-card--warn">
+      <div class="sc-kpi-card__icon-wrap">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+      </div>
+      <div class="sc-kpi-card__info">
+        <span class="sc-kpi-card__val">{{ totalDegradado() }}</span>
+        <span class="sc-kpi-card__lbl">En Alerta / Lento</span>
+      </div>
+    </div>
+
+    <!-- Nodos Offline -->
+    <div class="sc-kpi-card sc-kpi-card--bad">
+      <div class="sc-kpi-card__icon-wrap">
+        <i class="fa-solid fa-circle-xmark"></i>
+      </div>
+      <div class="sc-kpi-card__info">
+        <span class="sc-kpi-card__val">{{ totalOffline() }}</span>
+        <span class="sc-kpi-card__lbl">Fuera de Línea</span>
+      </div>
+    </div>
+
+    <!-- Latencia Promedio -->
+    <div class="sc-kpi-card sc-kpi-card--telemetry">
+      <div class="sc-kpi-card__icon-wrap">
+        <i class="fa-solid fa-gauge-high"></i>
+      </div>
+      <div class="sc-kpi-card__info">
+        <span class="sc-kpi-card__val">{{ promedioLatencia() }} <small>ms</small></span>
+        <span class="sc-kpi-card__lbl">Latencia Promedio</span>
+      </div>
+    </div>
+
+    <!-- Incidentes Totales -->
+    <div class="sc-kpi-card sc-kpi-card--incidents">
+      <div class="sc-kpi-card__icon-wrap">
+        <i class="fa-solid fa-bell"></i>
+      </div>
+      <div class="sc-kpi-card__info">
+        <span class="sc-kpi-card__val">{{ totalIncidentes() }}</span>
+        <span class="sc-kpi-card__lbl">Incidentes Activos</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ Toolbar: Filtros & Alternador de Vista ═══════════════════════════ -->
+  <section class="sc-toolbar">
+    <div class="sc-toolbar__filters">
+      <app-ui-search-input
+        class="sc-toolbar__search"
+        label="Buscar CAD"
+        placeholder="Nombre, código DANE o departamento…"
+        [showButton]="false"
+        [value]="filtroTexto()"
+        (valueChange)="filtroTexto.set($event)"
+      />
+
+      <app-ui-select
+        class="sc-toolbar__select"
+        label="Nivel de operación"
+        [options]="opcionesNivel"
+        [clearable]="false"
+        [searchable]="false"
+        [value]="filtroNivel()"
+        (valueChange)="filtroNivel.set($event ?? 0)"
+      />
+    </div>
+
+    <div class="sc-toolbar__controls">
+      <!-- Selector de vista Cuadrícula / Tabla -->
+      <div class="sc-view-toggle">
+        <button
+          type="button"
+          class="sc-view-toggle__btn"
+          [class.sc-view-toggle__btn--active]="modoVista() === 'cards'"
+          (click)="modoVista.set('cards')"
+          title="Vista Cuadrícula NOC"
+        >
+          <i class="fa-solid fa-border-all"></i>
+          <span>Tarjetas</span>
+        </button>
+        <button
+          type="button"
+          class="sc-view-toggle__btn"
+          [class.sc-view-toggle__btn--active]="modoVista() === 'table'"
+          (click)="modoVista.set('table')"
+          title="Vista Tabla de Telemetría"
+        >
+          <i class="fa-solid fa-table-list"></i>
+          <span>Tabla</span>
+        </button>
+      </div>
+
+      <span class="sc-toolbar__meta">
+        {{ cadsFiltrados().length }} de {{ cads().length }} CADs
+        @if (ultimaLectura(); as fecha) {
+          · Último sondeo: {{ fecha | date: 'HH:mm:ss' }}
+        }
+      </span>
+    </div>
+  </section>
+
+  <!-- ═══ Contenido Principal: Tarjetas vs Tabla ═══════════════════════════ -->
+  @if (loading() && cads().length === 0) {
+    <app-ui-spinner label="Sondeando telemetría de nodos CAD…" contained />
+  } @else {
+
+    @if (modoVista() === 'cards') {
+      <!-- Rejilla Moderna Responsiva de CADs -->
+      <div class="sc-grid">
+        @for (c of cadsFiltrados(); track c.id) {
+          <article
+            class="sc-cad-card"
+            [class.sc-cad-card--warn]="c.nivelOperacion === 2"
+            [class.sc-cad-card--bad]="c.nivelOperacion === 3"
+          >
+            <!-- Card Header -->
+            <div class="sc-cad-card__header">
+              <div class="sc-cad-card__state-pill" [class]="'sc-cad-card__state-pill--' + nivelVariant(c.nivelOperacion)">
+                <i [class]="nivelIcon(c.nivelOperacion)"></i>
+                <span>{{ nivelLabel(c.nivelOperacion) }}</span>
+              </div>
+              <div class="sc-cad-card__dane">
+                <i class="fa-solid fa-hashtag"></i> {{ c.codDane }}
+              </div>
+            </div>
+
+            <!-- Card Title & Location -->
+            <div class="sc-cad-card__body">
+              <h3 class="sc-cad-card__title" [title]="c.nombre">{{ c.nombre }}</h3>
+              <p class="sc-cad-card__location">
+                <i class="fa-solid fa-location-dot"></i>
+                <span>{{ c.departamento }}{{ c.municipio ? ' · ' + c.municipio : '' }}</span>
+              </p>
+
+              <!-- Telemetry Teleprompter -->
+              <div class="sc-telemetry-cluster">
+                <div class="sc-telemetry-item">
+                  <span class="sc-telemetry-item__lbl"><i class="fa-solid fa-network-wired"></i> Latencia</span>
+                  <span class="sc-telemetry-item__val" [class]="latenciaClase(c.latenciaMs)">
+                    {{ c.latenciaMs != null ? c.latenciaMs + ' ms' : '—' }}
+                  </span>
+                </div>
+                <div class="sc-telemetry-item">
+                  <span class="sc-telemetry-item__lbl"><i class="fa-regular fa-clock"></i> Sincronía</span>
+                  <span class="sc-telemetry-item__val">{{ formatoSincro(c.ultimaSincro) }}</span>
+                </div>
+                <div class="sc-telemetry-item">
+                  <span class="sc-telemetry-item__lbl"><i class="fa-solid fa-shield-halved"></i> Casos</span>
+                  <span class="sc-telemetry-item__val" [class.sc-telemetry-item__val--alert]="c.incidentesActivos > 0">
+                    {{ c.incidentesActivos }}
+                  </span>
+                </div>
+              </div>
+
+              @if (c.observaciones) {
+                <div class="sc-cad-card__obs">
+                  <i class="fa-solid fa-triangle-exclamation"></i>
+                  <span>{{ c.observaciones }}</span>
+                </div>
+              }
+            </div>
+
+            <!-- Card Actions -->
+            <div class="sc-cad-card__footer">
+              <app-ui-button
+                variant="secondary"
+                appearance="ghost"
+                size="sm"
+                icon="fa-solid fa-right-to-bracket"
+                [loading]="switchingContext() === c.codDane"
+                [disabled]="switchingContext() !== null"
+                (buttonClick)="conmutarContexto(c)"
+              >Conectar</app-ui-button>
+
+              <app-ui-button
+                variant="secondary"
+                appearance="ghost"
+                size="sm"
+                icon="fa-solid fa-chart-line"
+                (buttonClick)="abrirHistorial(c)"
+              >Historial</app-ui-button>
+            </div>
+          </article>
+        } @empty {
+          <div class="sc-empty-state">
+            <i class="fa-solid fa-network-wired sc-empty-state__icon"></i>
+            <h4 class="sc-empty-state__title">No se encontraron nodos CAD</h4>
+            <p class="sc-empty-state__text">
+              @if (cads().length) {
+                Ningún CAD coincide con los filtros aplicados (texto o nivel de operación).
+              } @else {
+                No hay CADs registrados en el catálogo maestro del sistema.
+              }
+            </p>
+          </div>
+        }
+      </div>
+    } @else {
+      <!-- Vista de Tabla Consolidada NOC -->
+      <div class="sc-table-container">
+        <app-ui-table
+          [columns]="columnasTablaNoc"
+          [rows]="cadsFiltrados()"
+          [loading]="loading()"
+          loadingMessage="Actualizando tabla de telemetría…"
+          emptyMessage="No hay nodos que coincidan con la búsqueda."
+        />
+      </div>
+    }
+
+  }
+
 </div>
 
-<!-- ═══ Historial ════════════════════════════════════════════════════════ -->
+<!-- ═══ Historial Modal ══════════════════════════════════════════════════ -->
 <app-ui-modal
   [open]="historialAbierto()"
-  [title]="'Historial — ' + (cadSeleccionado()?.nombre ?? '')"
-  subtitle="Últimas 48 horas"
+  [title]="'Historial de Telemetría — ' + (cadSeleccionado()?.nombre ?? '')"
+  subtitle="Registros de latencia y estado operativo en las últimas 48 horas"
   icon="fa-solid fa-chart-line"
   size="lg"
   (closeRequested)="cerrarHistorial()"
@@ -176,8 +307,8 @@
       [columns]="columnasHistorial"
       [rows]="historial()"
       [loading]="cargandoHistorial()"
-      loadingMessage="Cargando historial…"
-      emptyMessage="Sin registros en las últimas 48 horas."
+      loadingMessage="Cargando registros históricos del nodo…"
+      emptyMessage="Sin eventos o anomalías registradas en las últimas 48 horas."
     />
   </div>
 </app-ui-modal>

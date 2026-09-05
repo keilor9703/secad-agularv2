@@ -9,6 +9,10 @@ export interface DtoCaso {
   vigente: boolean;
   idCategoriaAsistente?: string | null;
   categoriaDescripcion?: string | null;
+  /** Código DANE del CAD específico o 'NACIONAL' / null para ámbito nacional */
+  codDane?: string | null;
+  nombreCad?: string | null;
+  esNacional?: boolean;
 }
 
 export interface DtoCasoRequest {
@@ -16,6 +20,7 @@ export interface DtoCasoRequest {
   descripcion: string;
   vigente: boolean;
   idCategoriaAsistente?: string | null;
+  codDane?: string | null;
 }
 
 export interface DtoCasoResult {
@@ -26,6 +31,7 @@ export interface DtoCasoResult {
 export interface DtoCasoImportItem {
   codigo: string;
   descripcion: string;
+  codDane?: string | null;
 }
 
 export interface DtoImportarCasosResult {
@@ -41,9 +47,14 @@ export class CasoService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = `${environment.apiBaseUrl}/Caso`;
 
-  getAll(busqueda?: string): Observable<{ success: boolean; data: DtoCaso[] }> {
+  getAll(filtro?: { busqueda?: string; codDane?: string } | string): Observable<{ success: boolean; data: DtoCaso[] }> {
     let params = new HttpParams();
-    if (busqueda) params = params.set('busqueda', busqueda);
+    if (typeof filtro === 'string') {
+      if (filtro) params = params.set('busqueda', filtro);
+    } else if (filtro) {
+      if (filtro.busqueda) params = params.set('busqueda', filtro.busqueda);
+      if (filtro.codDane)   params = params.set('codDane', filtro.codDane);
+    }
     return this.http.get<{ success: boolean; data: DtoCaso[] }>(this.baseUrl, { params });
   }
 

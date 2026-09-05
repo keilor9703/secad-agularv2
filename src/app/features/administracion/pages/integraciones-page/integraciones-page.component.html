@@ -254,6 +254,110 @@
     </section>
   }
 
+  <!-- ═══ Proveedor SMS ══════════════════════════════════════════════════ -->
+  @if (tab() === 'sms') {
+    <section class="ig-panel">
+      <app-ui-section-header
+        title="Proveedor de mensajería SMS"
+        icon="fa-solid fa-comment-sms"
+        description="Configuración de la pasarela para el envío de SMS salientes (enlaces de videollamada al ciudadano, notificaciones operativas). Cambiar de proveedor no requiere reiniciar el servicio."
+        appearance="divider"
+      />
+
+      @if (loadingSms()) {
+        <app-ui-spinner label="Cargando configuración del proveedor SMS…" contained />
+      } @else {
+        <div class="ig-sms-layout">
+          <!-- Formulario de configuración -->
+          <div class="ig-sms-card">
+            <h4 class="ig-sms-card__title">
+              <i class="fa-solid fa-plug-circle-check"></i> Parámetros de conexión
+            </h4>
+            <form [formGroup]="formSms" class="ig-sms-form">
+              <app-ui-select
+                class="ig-sms-form__half"
+                formControlName="proveedor"
+                label="Proveedor de mensajería"
+                [options]="opcionesProveedorSms"
+                [clearable]="false"
+                [searchable]="false"
+                required
+              />
+
+              <app-ui-input
+                formControlName="baseUrl"
+                label="URL base de la API"
+                [placeholder]="placeholderUrlSms()"
+                [hint]="proveedorSmsSeleccionado().baseUrlPorDefecto
+                          ? 'Déjelo vacío para usar ' + proveedorSmsSeleccionado().baseUrlPorDefecto
+                          : 'Host o endpoint asignado por su proveedor'"
+              />
+
+              <app-ui-input
+                formControlName="apiKey"
+                label="API Key / Token de autenticación"
+                type="password"
+                autocomplete="new-password"
+                placeholder="Pegue aquí la nueva API Key…"
+                [hint]="pistaApiKeySms()"
+              />
+
+              @if (proveedorSmsSeleccionado().usaSender) {
+                <app-ui-input
+                  formControlName="sender"
+                  label="Remitente alfanumérico (Sender ID)"
+                  placeholder="Ej: POLICIA, SECAD (vacío = remitente por defecto de la cuenta)"
+                  hint="Opcional. Permitido por proveedores que admiten fijar remitente."
+                />
+              }
+            </form>
+
+            <footer class="ig-sms-pie">
+              @if (ultimaModificacionSms(); as cuando) {
+                <p class="ig-meta-note">
+                  <i class="fa-solid fa-clock-rotate-left"></i> Última modificación: {{ cuando }}
+                </p>
+              }
+              <app-ui-button
+                variant="primary"
+                icon="fa-solid fa-floppy-disk"
+                [loading]="savingSms()"
+                [disabled]="savingSms()"
+                (buttonClick)="guardarSms()"
+              >Guardar configuración SMS</app-ui-button>
+            </footer>
+          </div>
+
+          <!-- Tarjeta de prueba en vivo -->
+          <div class="ig-sms-card ig-sms-card--test">
+            <h4 class="ig-sms-card__title">
+              <i class="fa-solid fa-vial"></i> Probar despacho en vivo
+            </h4>
+            <p class="ig-sms-card__desc">
+              Realice un envío de prueba al número de teléfono indicado para verificar que la pasarela y las credenciales se encuentren operativas.
+            </p>
+            <div class="ig-sms-test-box">
+              <app-ui-input
+                class="ig-sms-test-box__input"
+                label="Número de celular de prueba"
+                placeholder="Ej: 3001234567"
+                [ngModel]="telefonoPruebaSms()"
+                (ngModelChange)="telefonoPruebaSms.set($event)"
+              />
+              <app-ui-button
+                variant="secondary"
+                icon="fa-solid fa-paper-plane"
+                [loading]="probandoSms()"
+                [disabled]="probandoSms()"
+                (buttonClick)="probarEnvioSms()"
+              >Enviar prueba</app-ui-button>
+            </div>
+          </div>
+        </div>
+      }
+    </section>
+  }
+
   <!-- ═══ Cámaras ══════════════════════════════════════════════════════════ -->
   @if (tab() === 'camaras') {
     <section class="ig-panel">

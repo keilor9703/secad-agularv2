@@ -36,11 +36,8 @@ export const administracionRoutes: Routes = [
   },
   {
     path: 'sms',
-    loadComponent: () =>
-      import('./pages/config-sms-page/config-sms-page.component').then(
-        (m) => m.ConfigSmsPageComponent,
-      ),
-    data: { breadcrumb: 'Proveedor SMS' },
+    redirectTo: 'integraciones',
+    pathMatch: 'full',
   },
   {
     path: 'asistente',

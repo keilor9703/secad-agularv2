@@ -55,10 +55,12 @@ export class SaludCadsPageComponent implements OnInit {
 
   readonly cads = signal<TenantPublico[]>([]);
   readonly loading = signal(false);
+  readonly switchingContext = signal<string | null>(null);
   readonly ultimaLectura = signal<Date | null>(null);
 
   readonly filtroTexto = signal('');
   readonly filtroNivel = signal(0); // 0 = todos
+  readonly modoVista = signal<'cards' | 'table'>('cards');
 
   readonly segundosRestantes = signal(SEGUNDOS_REFRESCO);
   readonly pausado = signal(false);
@@ -70,18 +72,13 @@ export class SaludCadsPageComponent implements OnInit {
   readonly historialAbierto = signal(false);
 
   private temporizador: ReturnType<typeof setInterval> | null = null;
-
-  /**
-   * CADs que ya provocaron aviso. Sin esto el refresco de 30 s dispararía el
-   * mismo toast dos veces por minuto hasta que alguien arregle el CAD caído.
-   */
   private avisados = new Set<string>();
 
   readonly opcionesNivel: UiSelectOption<number>[] = [
     { label: 'Todos los niveles', value: 0 },
-    { label: 'Normal', value: 1 },
-    { label: 'Degradado', value: 2 },
-    { label: 'Offline', value: 3 },
+    { label: 'Normal (Operativo)', value: 1 },
+    { label: 'Degradado (Alerta)', value: 2 },
+    { label: 'Offline (Crítico)', value: 3 },
   ];
 
   readonly columnasHistorial: UiTableColumn<SaludHistorial>[] = [
@@ -102,6 +99,47 @@ export class SaludCadsPageComponent implements OnInit {
       value: (h) => (h.latenciaMs != null ? `${h.latenciaMs} ms` : '—'),
     },
     { key: 'observacion', label: 'Observación', value: (h) => h.observacion || '—' },
+  ];
+
+  readonly columnasTablaNoc: UiTableColumn<TenantPublico>[] = [
+    { key: 'codDane', label: 'DANE', align: 'center', sortable: true },
+    { key: 'nombre', label: 'Nombre CAD / Municipio', sortable: true },
+    {
+      key: 'departamento',
+      label: 'Ubicación',
+      value: (c) => `${c.departamento}${c.municipio ? ' · ' + c.municipio : ''}`,
+    },
+    {
+      key: 'nivelOperacion',
+      label: 'Salud',
+      align: 'center',
+      badge: (c) => ({
+        text: this.service.nivelLabel(c.nivelOperacion),
+        variant: this.nivelVariant(c.nivelOperacion),
+      }),
+    },
+    {
+      key: 'latenciaMs',
+      label: 'Latencia',
+      align: 'center',
+      value: (c) => (c.latenciaMs != null ? `${c.latenciaMs} ms` : '—'),
+    },
+    {
+      key: 'incidentesActivos',
+      label: 'Incidentes Activos',
+      align: 'center',
+      sortable: true,
+      badge: (c) =>
+        c.incidentesActivos > 0
+          ? { text: `${c.incidentesActivos}`, variant: 'danger' }
+          : { text: '0', variant: 'neutral' },
+    },
+    {
+      key: 'ultimaSincro',
+      label: 'Última sincro',
+      align: 'center',
+      value: (c) => this.formatoSincro(c.ultimaSincro),
+    },
   ];
 
   constructor() {
@@ -126,7 +164,7 @@ export class SaludCadsPageComponent implements OnInit {
       },
       error: () => {
         this.loading.set(false);
-        this.toast.error('Error', 'No se pudieron cargar los datos de salud.');
+        this.toast.error('Error', 'No se pudieron cargar los datos de salud de CADs.');
       },
     });
   }
@@ -137,21 +175,33 @@ export class SaludCadsPageComponent implements OnInit {
     return this.cads().filter((c) => {
       const coincideNivel = nivel === 0 || c.nivelOperacion === nivel;
       const coincideTexto =
-        !texto || c.nombre.toLowerCase().includes(texto) || c.codDane.includes(texto);
+        !texto || c.nombre.toLowerCase().includes(texto) || c.codDane.includes(texto) || (c.departamento && c.departamento.toLowerCase().includes(texto));
       return coincideNivel && coincideTexto;
     });
   });
 
   readonly totalNormal = computed(() => this.cads().filter((c) => c.nivelOperacion === 1).length);
-  readonly totalDegradado = computed(
-    () => this.cads().filter((c) => c.nivelOperacion === 2).length,
-  );
+  readonly totalDegradado = computed(() => this.cads().filter((c) => c.nivelOperacion === 2).length);
   readonly totalOffline = computed(() => this.cads().filter((c) => c.nivelOperacion === 3).length);
 
-  /**
-   * Avisa sólo por los CADs que acaban de degradarse, y olvida los que se
-   * recuperaron para que un segundo bajón sí vuelva a avisar.
-   */
+  readonly porcentajeDisponibilidad = computed(() => {
+    const total = this.cads().length;
+    if (total === 0) return 100;
+    const normales = this.totalNormal();
+    return Math.round((normales / total) * 100);
+  });
+
+  readonly promedioLatencia = computed(() => {
+    const conLatencia = this.cads().filter((c) => c.latenciaMs != null && c.latenciaMs > 0);
+    if (conLatencia.length === 0) return 0;
+    const suma = conLatencia.reduce((acc, curr) => acc + (curr.latenciaMs || 0), 0);
+    return Math.round(suma / conLatencia.length);
+  });
+
+  readonly totalIncidentes = computed(() =>
+    this.cads().reduce((acc, curr) => acc + (curr.incidentesActivos || 0), 0)
+  );
+
   private revisarAlertas(datos: readonly TenantPublico[]): void {
     const enAlerta = datos.filter((c) => c.nivelOperacion >= 2);
     const codigos = new Set(enAlerta.map((c) => c.codDane));
@@ -159,15 +209,15 @@ export class SaludCadsPageComponent implements OnInit {
     const nuevos = enAlerta.filter((c) => !this.avisados.has(c.codDane));
     if (nuevos.length) {
       this.toast.warning(
-        nuevos.length === 1 ? 'CAD con alerta' : `${nuevos.length} CADs con alerta`,
-        nuevos.map((c) => c.nombre).join(', '),
+        nuevos.length === 1 ? 'CAD en estado de alerta' : `${nuevos.length} CADs en alerta de red`,
+        nuevos.map((c) => `${c.nombre} (${this.nivelLabel(c.nivelOperacion)})`).join(', ')
       );
     }
 
     this.avisados = codigos;
   }
 
-  // ── Historial ────────────────────────────────────────────────────────────
+  // ── Historial y Acciones ─────────────────────────────────────────────────
 
   abrirHistorial(cad: TenantPublico): void {
     this.cadSeleccionado.set(cad);
@@ -182,7 +232,7 @@ export class SaludCadsPageComponent implements OnInit {
       },
       error: () => {
         this.cargandoHistorial.set(false);
-        this.toast.error('Error', 'No se pudo cargar el historial.');
+        this.toast.error('Error', 'No se pudo cargar el historial del CAD.');
       },
     });
   }
@@ -190,6 +240,24 @@ export class SaludCadsPageComponent implements OnInit {
   cerrarHistorial(): void {
     this.historialAbierto.set(false);
     this.cadSeleccionado.set(null);
+  }
+
+  conmutarContexto(cad: TenantPublico): void {
+    this.switchingContext.set(cad.codDane);
+    this.service.switchContext(cad.codDane).subscribe({
+      next: (resp) => {
+        this.switchingContext.set(null);
+        if (resp?.success) {
+          this.toast.success('Contexto cambiado', `Operando ahora en: ${cad.nombre}`);
+        } else {
+          this.toast.info('Cambio de contexto', resp?.message || `Contexto cambiado a ${cad.nombre}`);
+        }
+      },
+      error: (err) => {
+        this.switchingContext.set(null);
+        this.toast.error('Error', err?.error?.message || 'No se pudo conmutar al tenant.');
+      },
+    });
   }
 
   // ── Refresco automático ──────────────────────────────────────────────────
@@ -225,12 +293,10 @@ export class SaludCadsPageComponent implements OnInit {
     }
   }
 
-  // ── Presentación ─────────────────────────────────────────────────────────
+  // ── Helpers Presentación ─────────────────────────────────────────────────
 
   nivelLabel = (n: number): string => this.service.nivelLabel(n);
   nivelIcon = (n: number): string => `fa-solid ${this.service.nivelIcon(n)}`;
-
-  /** nivelClass() devuelve success|warning|danger, que ya son variantes del kit. */
   nivelVariant = (n: number): UiStatusVariant => this.service.nivelClass(n) as UiStatusVariant;
 
   latenciaClase(ms: number | undefined): string {
@@ -240,14 +306,13 @@ export class SaludCadsPageComponent implements OnInit {
     return 'sc-metrica--bad';
   }
 
-  /** «Hace 5 min» se lee de un vistazo mejor que una marca de tiempo cruda. */
   formatoSincro(fecha: string | undefined): string {
     if (!fecha) return 'Sin registro';
     const minutos = (Date.now() - new Date(fecha).getTime()) / 60000;
-    if (minutos < 2) return 'Hace menos de 2 min';
+    if (minutos < 2) return 'Hace un momento';
     if (minutos < 60) return `Hace ${Math.round(minutos)} min`;
     if (minutos < 1440) return `Hace ${Math.round(minutos / 60)} h`;
-    return `Hace ${Math.round(minutos / 1440)} días`;
+    return `Hace ${Math.round(minutos / 1440)} d`;
   }
 
   private fechaHora(iso: string): string {

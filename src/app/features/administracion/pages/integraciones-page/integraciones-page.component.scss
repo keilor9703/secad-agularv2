@@ -298,11 +298,107 @@
   }
 }
 
+// ── Tab Proveedor SMS ─────────────────────────────────────────────────────
+.ig-sms-layout {
+  display:               grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(300px, 1fr);
+  gap:                   18px;
+  align-items:           start;
+
+  @media (max-width: 950px) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.ig-sms-card {
+  display:        flex;
+  flex-direction: column;
+  border:         1px solid rgba(21, 27, 59, .10);
+  border-radius:  12px;
+  background:     var(--ui-surface, #fff);
+  box-shadow:     0 1px 3px rgba(0, 0, 0, .04);
+  overflow:       hidden;
+
+  &__title {
+    margin:        0;
+    padding:       12px 18px;
+    background:    rgba(21, 27, 59, .02);
+    border-bottom: 1px solid rgba(21, 27, 59, .08);
+    font-size:     calc(13.5px * var(--font-size-scale, 1));
+    font-weight:   700;
+    color:         #0e7490;
+    display:       flex;
+    align-items:   center;
+    gap:           8px;
+
+    i { color: #08a6cb; }
+  }
+
+  &__desc {
+    margin:    0;
+    padding:   14px 18px 0;
+    font-size: calc(12px * var(--font-size-scale, 1));
+    color:     var(--ui-text-muted, #64748b);
+    line-height: 1.4;
+  }
+
+  &--test {
+    background: linear-gradient(135deg, rgba(8, 166, 203, .04), rgba(21, 27, 59, .02));
+    border-color: rgba(8, 166, 203, .2);
+  }
+}
+
+.ig-sms-form {
+  display:        flex;
+  flex-direction: column;
+  gap:            14px;
+  padding:        18px;
+
+  &__half { max-width: 320px; }
+}
+
+.ig-sms-pie {
+  display:         flex;
+  align-items:     center;
+  justify-content: space-between;
+  gap:             12px;
+  flex-wrap:       wrap;
+  padding:         0 18px 18px;
+  margin-top:      4px;
+}
+
+.ig-meta-note {
+  margin:      0;
+  font-size:   calc(11.5px * var(--font-size-scale, 1));
+  color:       var(--ui-text-muted, #64748b);
+  display:     inline-flex;
+  align-items: center;
+  gap:         6px;
+}
+
+.ig-sms-test-box {
+  display:     flex;
+  align-items: flex-end;
+  flex-wrap:   wrap;
+  gap:         12px;
+  padding:     18px;
+
+  &__input {
+    flex:      1 1 240px;
+    min-width: 0;
+  }
+}
+
 // ── Modo oscuro ───────────────────────────────────────────────────────────
 :host-context(html.dark-mode) {
-  .ig-tarjeta {
+  .ig-tarjeta,
+  .ig-sms-card {
     background:   rgba(255, 255, 255, .03);
     border-color: rgba(255, 255, 255, .12);
+  }
+  .ig-sms-card__title {
+    background:   rgba(255, 255, 255, .04);
+    border-color: rgba(255, 255, 255, .08);
   }
   .ig-pre,
   .ig-visor          { background: rgba(255, 255, 255, .05); }
