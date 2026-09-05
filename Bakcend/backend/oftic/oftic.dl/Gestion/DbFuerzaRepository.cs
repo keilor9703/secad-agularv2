@@ -73,27 +73,108 @@ GROUP BY f.id, f.sitio_graba, f.descripcion, f.abreviatura, f.vigente";
             try
             {
                 await using var conn = await _tenant.DataSource.OpenConnectionAsync(ct);
+
+                // Una fuerza pertenece SIEMPRE a un sitio de grabación: es la
+                // unidad policial que la despacha, y de ella cuelga la marca
+                // que separa los registros cuando dos unidades comparten CAD.
+                // Al crear es obligatorio; al actualizar solo se valida si la
+                // petición trae uno (0 = «no lo toques»).
+                var sitioPedido = request.sitioGraba > 0
+                    ? request.sitioGraba
+                    : (id.HasValue && id.Value > 0 ? 0 : sitioGraba);
+
+                if (sitioPedido > 0)
+                {
+                    await using var chkSitio = conn.CreateCommand();
+                    chkSitio.CommandText = "SELECT 1 FROM cad_sitios_grabacion WHERE consecutivo = @s LIMIT 1";
+                    chkSitio.Parameters.AddWithValue("s", sitioPedido);
+                    if (await chkSitio.ExecuteScalarAsync(ct) is null)
+                        return new DtoFuerzaResult
+                        {
+                            success = false,
+                            message = $"El sitio de grabación {sitioPedido} no existe en este CAD."
+                        };
+                }
+                else if (!id.HasValue || id.Value <= 0)
+                {
+                    // Sin esto la fuerza nacería en el sitio 0 y arrastraría ahí
+                    // a todos los usuarios que se le asignaran después.
+                    return new DtoFuerzaResult
+                    {
+                        success = false,
+                        message = "Indique el sitio de grabación (unidad policial) de la fuerza. " +
+                                  "Si el CAD todavía no tiene ninguno, regístrelo primero."
+                    };
+                }
+
                 if (id.HasValue && id.Value > 0)
                 {
-                    // Actualizar
                     // sitio_graba solo se toca si la petición lo trae: un
                     // cliente viejo, que no manda el campo, no debe mover de
                     // unidad a una fuerza que ya está bien clasificada.
-                    await using var cmd = conn.CreateCommand();
-                    cmd.CommandText = @"
+                    int sitioAnterior = 0;
+                    await using (var cmdAnt = conn.CreateCommand())
+                    {
+                        cmdAnt.CommandText = "SELECT COALESCE(sitio_graba, 0) FROM cad_fuerzas WHERE id = @id";
+                        cmdAnt.Parameters.AddWithValue("id", id.Value);
+                        var v = await cmdAnt.ExecuteScalarAsync(ct);
+                        if (v is not null and not DBNull) sitioAnterior = Convert.ToInt32(v);
+                    }
+
+                    var cambiaDeSitio = sitioPedido > 0 && sitioPedido != sitioAnterior;
+
+                    await using var tx = await conn.BeginTransactionAsync(ct);
+
+                    await using (var cmd = conn.CreateCommand())
+                    {
+                        cmd.Transaction = tx;
+                        cmd.CommandText = @"
 UPDATE cad_fuerzas
    SET descripcion = @desc,
        abreviatura = @abr,
        vigente     = @vigente,
        sitio_graba = CASE WHEN @sitio > 0 THEN @sitio ELSE sitio_graba END
  WHERE id = @id";
-                    cmd.Parameters.AddWithValue("id",      id.Value);
-                    cmd.Parameters.AddWithValue("desc",    request.descripcion.Trim());
-                    cmd.Parameters.AddWithValue("abr",     (object?)(request.abreviatura?.Trim()) ?? DBNull.Value);
-                    cmd.Parameters.AddWithValue("vigente", request.vigente ?? "S");
-                    cmd.Parameters.AddWithValue("sitio",   request.sitioGraba);
-                    await cmd.ExecuteNonQueryAsync(ct);
-                    return new DtoFuerzaResult { success = true, id = id.Value, message = "Fuerza actualizada." };
+                        cmd.Parameters.AddWithValue("id",      id.Value);
+                        cmd.Parameters.AddWithValue("desc",    request.descripcion.Trim());
+                        cmd.Parameters.AddWithValue("abr",     (object?)(request.abreviatura?.Trim()) ?? DBNull.Value);
+                        cmd.Parameters.AddWithValue("vigente", request.vigente ?? "S");
+                        cmd.Parameters.AddWithValue("sitio",   sitioPedido);
+                        await cmd.ExecuteNonQueryAsync(ct);
+                    }
+
+                    // La gente se muda con su fuerza. Dejarla atrás la deja sin
+                    // ver ningún canal: Recepción filtra con
+                    // `f.sitio_graba = <sitio del usuario>` y sin escape a 0.
+                    // Solo se mueve a quien seguía en el sitio del que la
+                    // fuerza sale; a quien ya estaba en otra unidad no se le
+                    // toca, porque esa asignación la puso alguien a propósito.
+                    var mudados = 0;
+                    if (cambiaDeSitio)
+                    {
+                        await using var cmdU = conn.CreateCommand();
+                        cmdU.Transaction = tx;
+                        cmdU.CommandText = @"
+UPDATE ctr_usuarios
+   SET sitio_grabacion = @nuevo
+ WHERE cadcana_fuerza_id = @fuerza
+   AND COALESCE(sitio_grabacion, 0) = @anterior";
+                        cmdU.Parameters.AddWithValue("nuevo",    sitioPedido);
+                        cmdU.Parameters.AddWithValue("fuerza",   id.Value);
+                        cmdU.Parameters.AddWithValue("anterior", sitioAnterior);
+                        mudados = await cmdU.ExecuteNonQueryAsync(ct);
+                    }
+
+                    await tx.CommitAsync(ct);
+
+                    return new DtoFuerzaResult
+                    {
+                        success = true,
+                        id      = id.Value,
+                        message = mudados > 0
+                            ? $"Fuerza actualizada. {mudados} usuario(s) pasaron con ella al nuevo sitio."
+                            : "Fuerza actualizada."
+                    };
                 }
                 else
                 {
@@ -116,10 +197,7 @@ UPDATE cad_fuerzas
 INSERT INTO cad_fuerzas (id, sitio_graba, descripcion, abreviatura, vigente)
 VALUES (@id, @sitio, @desc, @abr, @vigente)";
                     cmd.Parameters.AddWithValue("id",      request.id);
-                    // La unidad la elige quien crea la fuerza; si no eligió, se
-                    // queda con la del administrador (que es 0 cuando no tiene
-                    // una asignada, o sea «sin clasificar»).
-                    cmd.Parameters.AddWithValue("sitio",   request.sitioGraba > 0 ? request.sitioGraba : sitioGraba);
+                    cmd.Parameters.AddWithValue("sitio",   sitioPedido);
                     cmd.Parameters.AddWithValue("desc",    request.descripcion.Trim());
                     cmd.Parameters.AddWithValue("abr",     (object?)(request.abreviatura?.Trim()) ?? DBNull.Value);
                     cmd.Parameters.AddWithValue("vigente", request.vigente ?? "S");
@@ -396,6 +474,76 @@ UPDATE ctr_usuarios
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error guardando operación de usuario id={Id}", idUsuario);
+                return new DtoFuerzaResult { success = false, message = $"Error: {ex.Message}" };
+            }
+        }
+
+        public async Task<DtoFuerzaResult> ReasignarSitioAsync(int sitioOrigen, int sitioDestino, CancellationToken ct)
+        {
+            try
+            {
+                if (sitioDestino <= 0)
+                    return new DtoFuerzaResult { success = false, message = "Indique el sitio de destino." };
+                if (sitioOrigen == sitioDestino)
+                    return new DtoFuerzaResult { success = false, message = "El origen y el destino son el mismo sitio." };
+
+                await using var conn = await _tenant.DataSource.OpenConnectionAsync(ct);
+
+                await using (var chk = conn.CreateCommand())
+                {
+                    chk.CommandText = "SELECT 1 FROM cad_sitios_grabacion WHERE consecutivo = @s LIMIT 1";
+                    chk.Parameters.AddWithValue("s", sitioDestino);
+                    if (await chk.ExecuteScalarAsync(ct) is null)
+                        return new DtoFuerzaResult { success = false, message = "El sitio de destino no existe." };
+                }
+
+                // Las dos actualizaciones van juntas o no van. Mover las fuerzas
+                // y dejar atrás a sus usuarios es peor que no mover nada:
+                // Recepción filtra los canales con `f.sitio_graba = @sitio del
+                // usuario`, sin escape, así que un despachador que se quede en
+                // el sitio viejo deja de ver canal alguno.
+                await using var tx = await conn.BeginTransactionAsync(ct);
+
+                int usuarios;
+                await using (var cmdU = conn.CreateCommand())
+                {
+                    cmdU.Transaction = tx;
+                    cmdU.CommandText = @"
+UPDATE ctr_usuarios u
+   SET sitio_grabacion = @destino
+ WHERE COALESCE(u.sitio_grabacion, 0) = @origen
+   AND EXISTS (SELECT 1 FROM cad_fuerzas f
+                WHERE f.id = u.cadcana_fuerza_id
+                  AND COALESCE(f.sitio_graba, 0) = @origen)";
+                    cmdU.Parameters.AddWithValue("origen",  sitioOrigen);
+                    cmdU.Parameters.AddWithValue("destino", sitioDestino);
+                    usuarios = await cmdU.ExecuteNonQueryAsync(ct);
+                }
+
+                int fuerzas;
+                await using (var cmdF = conn.CreateCommand())
+                {
+                    cmdF.Transaction = tx;
+                    cmdF.CommandText = "UPDATE cad_fuerzas SET sitio_graba = @destino WHERE COALESCE(sitio_graba, 0) = @origen";
+                    cmdF.Parameters.AddWithValue("origen",  sitioOrigen);
+                    cmdF.Parameters.AddWithValue("destino", sitioDestino);
+                    fuerzas = await cmdF.ExecuteNonQueryAsync(ct);
+                }
+
+                await tx.CommitAsync(ct);
+
+                return new DtoFuerzaResult
+                {
+                    success = true,
+                    id      = sitioDestino,
+                    message = fuerzas == 0
+                        ? "No había fuerzas que mover."
+                        : $"{fuerzas} fuerza(s) y {usuarios} usuario(s) quedaron en el nuevo sitio."
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error reasignando fuerzas de sitio {Origen} a {Destino}", sitioOrigen, sitioDestino);
                 return new DtoFuerzaResult { success = false, message = $"Error: {ex.Message}" };
             }
         }

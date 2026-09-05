@@ -1,51 +1,55 @@
 import {
-  Component, ChangeDetectionStrategy, OnInit, TemplateRef, ViewChild,
-  computed, inject, signal,
+  Component, ChangeDetectionStrategy, EventEmitter, OnInit, Output,
+  TemplateRef, ViewChild, computed, inject, signal,
 } from '@angular/core';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 
-import { UiPageHeaderComponent } from '../../../../shared/components/ui-page-header/ui-page-header.component';
-import { UiButtonComponent } from '../../../../shared/components/ui-button/ui-button.component';
-import { UiTableComponent } from '../../../../shared/components/ui-table/ui-table.component';
-import { UiModalComponent } from '../../../../shared/components/ui-modal/ui-modal.component';
-import { UiInputComponent } from '../../../../shared/components/ui-input/ui-input.component';
-import { UiSelectComponent } from '../../../../shared/components/ui-select/ui-select.component';
-import { UiChipComponent } from '../../../../shared/components/ui-chip/ui-chip.component';
-import { UiTableAction, UiTableActionEvent, UiTableColumn } from '../../../../shared/interfaces/ui-table.interface';
-import { UiSelectOption } from '../../../../shared/interfaces/ui-select-option.interface';
-import { ToastService } from '../../../../core/services/toast.service';
-import { AlertService } from '../../../../shared/services/alert.service';
+import { UiSectionHeaderComponent } from '../../../../../shared/components/ui-section-header/ui-section-header.component';
+import { UiButtonComponent } from '../../../../../shared/components/ui-button/ui-button.component';
+import { UiTableComponent } from '../../../../../shared/components/ui-table/ui-table.component';
+import { UiModalComponent } from '../../../../../shared/components/ui-modal/ui-modal.component';
+import { UiInputComponent } from '../../../../../shared/components/ui-input/ui-input.component';
+import { UiSelectComponent } from '../../../../../shared/components/ui-select/ui-select.component';
+import { UiTableAction, UiTableActionEvent, UiTableColumn } from '../../../../../shared/interfaces/ui-table.interface';
+import { UiSelectOption } from '../../../../../shared/interfaces/ui-select-option.interface';
+import { ToastService } from '../../../../../core/services/toast.service';
+import { AlertService } from '../../../../../shared/services/alert.service';
 import {
   SitioGrabacionService, DtoSitioGrabacion, DtoSitioGrabacionRequest,
-} from '../../services/sitio-grabacion.service';
+} from '../../../services/sitio-grabacion.service';
 
 type ModoModal = 'crear' | 'editar';
 
 /**
- * Sitios de grabación del CAD.
+ * Catálogo de sitios de grabación: las unidades policiales del CAD.
  *
- * Hasta ahora esta tabla solo se poblaba con INSERT a mano (estaba documentado
- * así en docs/nuevo-tenant.md). Es la unidad policial que opera dentro del CAD,
- * y como un mismo CAD puede alojar varias —Barranquilla aloja MEBAR y DEATA—,
- * es la marca que mantiene separados los registros de cada una.
+ * Nació como pantalla propia (V70) y duró poco así: una fuerza nunca está
+ * fuera de una unidad, de modo que el sitio no es un catálogo hermano de
+ * Entidades sino el nivel de arriba. Vive dentro de ese módulo, como la vista
+ * que se abre al pulsar «Administrar sitios».
  */
 @Component({
-  selector: 'app-sitios-grabacion-page',
+  selector: 'app-sitios-panel',
   standalone: true,
   imports: [
     FormsModule, ReactiveFormsModule,
-    UiPageHeaderComponent, UiButtonComponent, UiTableComponent, UiModalComponent,
-    UiInputComponent, UiSelectComponent, UiChipComponent,
+    UiSectionHeaderComponent, UiButtonComponent, UiTableComponent, UiModalComponent,
+    UiInputComponent, UiSelectComponent,
   ],
-  templateUrl: './sitios-grabacion-page.component.html',
-  styleUrls: ['./sitios-grabacion-page.component.scss'],
+  templateUrl: './sitios-panel.component.html',
+  styleUrls: ['./sitios-panel.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class SitiosGrabacionPageComponent implements OnInit {
+export class SitiosPanelComponent implements OnInit {
   private readonly svc   = inject(SitioGrabacionService);
   private readonly toast = inject(ToastService);
   private readonly alert = inject(AlertService);
   private readonly fb    = inject(FormBuilder);
+
+  /** El módulo que lo contiene recarga sus fuerzas cuando el catálogo cambia. */
+  @Output() cambiado = new EventEmitter<void>();
+  /** Vuelve a la administración de fuerzas. */
+  @Output() cerrado = new EventEmitter<void>();
 
   readonly sitios  = signal<DtoSitioGrabacion[]>([]);
   readonly loading = signal(false);
@@ -54,9 +58,6 @@ export class SitiosGrabacionPageComponent implements OnInit {
   readonly showModal = signal(false);
   readonly modo      = signal<ModoModal>('crear');
   readonly editId    = signal(0);
-
-  readonly totalVigentes = computed(() => this.sitios().filter(s => s.vigente === 'S').length);
-  readonly totalUsuarios = computed(() => this.sitios().reduce((n, s) => n + (s.totalUsuarios || 0), 0));
 
   @ViewChild('celdaUnidad', { static: true }) celdaUnidad!: TemplateRef<CeldaCtx>;
 
@@ -101,10 +102,7 @@ export class SitiosGrabacionPageComponent implements OnInit {
     this.columns = [
       { key: 'consecutivo', label: 'Código', align: 'center', width: '90px' },
       { key: 'descripcion', label: 'Unidad policial', cellTemplate: this.celdaUnidad },
-      {
-        key: 'codDane', label: 'DANE', align: 'center',
-        value: s => s.codDane || '—',
-      },
+      { key: 'codDane', label: 'DANE', align: 'center', value: s => s.codDane || '—' },
       {
         key: 'totalFuerzas', label: 'Fuerzas', align: 'center',
         badge: s => ({ text: String(s.totalFuerzas), variant: s.totalFuerzas ? 'info' : 'neutral' }),
@@ -202,6 +200,7 @@ export class SitiosGrabacionPageComponent implements OnInit {
           this.toast.success('Sitios de grabación', r.message);
           this.cerrarModal();
           this.cargar();
+          this.cambiado.emit();
         } else {
           this.toast.warning('Sitios de grabación', r.message);
         }
@@ -218,7 +217,7 @@ export class SitiosGrabacionPageComponent implements OnInit {
   cambiarVigencia(s: DtoSitioGrabacion): void {
     this.svc.toggle(s.consecutivo).subscribe({
       next: r => {
-        if (r.success) { this.toast.success('Sitios de grabación', r.message); this.cargar(); }
+        if (r.success) { this.toast.success('Sitios de grabación', r.message); this.cargar(); this.cambiado.emit(); }
         else             this.toast.warning('Sitios de grabación', r.message);
       },
       error: err => this.toast.error('Sitios de grabación',
@@ -236,7 +235,7 @@ export class SitiosGrabacionPageComponent implements OnInit {
 
     this.svc.eliminar(s.consecutivo).subscribe({
       next: r => {
-        if (r.success) { this.toast.success('Sitios de grabación', r.message); this.cargar(); }
+        if (r.success) { this.toast.success('Sitios de grabación', r.message); this.cargar(); this.cambiado.emit(); }
         else             this.toast.warning('Sitios de grabación', r.message);
       },
       error: err => this.toast.error('Sitios de grabación',

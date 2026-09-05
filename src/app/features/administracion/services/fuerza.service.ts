@@ -114,6 +114,15 @@ export class FuerzaService {
     return this.http.put<DtoFuerzaResult>(`${this.base}/${id}/estado`, {});
   }
 
+  /**
+   * Mueve en bloque las fuerzas de un sitio a otro, y con ellas los usuarios
+   * que colgaban de esas fuerzas. Es el camino de entrada de un CAD que ya
+   * venía trabajando y tiene todas sus fuerzas sin clasificar (sitio 0).
+   */
+  reasignarSitio(sitioOrigen: number, sitioDestino: number): Observable<DtoFuerzaResult> {
+    return this.http.put<DtoFuerzaResult>(`${this.base}/reasignar-sitio`, { sitioOrigen, sitioDestino });
+  }
+
   // ── Canales ────────────────────────────────────────────────────────────────
 
   getCanales(fuerzaId: number): Observable<{ success: boolean; data: DtoCanalFuerza[] }> {

@@ -95,6 +95,21 @@ namespace ofic.Controllers.Administracion
             return result.success ? Ok(result) : BadRequest(result);
         }
 
+        // ── PUT /api/Fuerza/reasignar-sitio ───────────────────────────────────
+        /// <summary>
+        /// Mueve todas las fuerzas de un sitio a otro, con sus usuarios.
+        /// Pensado para el arranque: un CAD que ya venía trabajando tiene todas
+        /// sus fuerzas «sin clasificar» (sitio 0) y reclasificarlas de a una
+        /// serían veinte formularios.
+        /// </summary>
+        [HttpPut("reasignar-sitio")]
+        [Authorize(Policy = "Administrador")]
+        public async Task<IActionResult> ReasignarSitio([FromBody] DtoReasignarSitioRequest request, CancellationToken ct)
+        {
+            var result = await _repo.ReasignarSitioAsync(request.sitioOrigen, request.sitioDestino, ct);
+            return result.success ? Ok(result) : BadRequest(result);
+        }
+
         // ── GET /api/Fuerza/{id}/canales ──────────────────────────────────────
         [HttpGet("{id:int}/canales")]
         public async Task<IActionResult> GetCanales(int id, CancellationToken ct)

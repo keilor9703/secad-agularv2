@@ -41,11 +41,6 @@ export const APP_ROUTE_CATALOG: readonly AppRouteCatalogItem[] = [
     area: 'Administración',
   },
   {
-    route: '/administracion/sitios-grabacion',
-    label: 'Sitios de grabación',
-    area: 'Administración',
-  },
-  {
     route: '/administracion/agencias-externas',
     label: 'Agencias externas',
     area: 'Administración',
@@ -141,6 +136,9 @@ const ROUTE_ALIASES: Readonly<Record<string, string>> = {
   '/tenants': '/super/tenants',
   '/sms': '/administracion/integraciones',
   '/administracion/sms': '/administracion/integraciones',
+  // Los sitios de grabación se administran dentro de Entidades desde V71.
+  '/sitios-grabacion': '/administracion/entidades',
+  '/administracion/sitios-grabacion': '/administracion/entidades',
   // La base trae '/operacion/anotaciones' (sembrado por V47), pero la pantalla
   // se llama anotaciones-turno como en secad_angular. Se resuelve con un alias
   // para no tener que migrar el dato en cada instalación.

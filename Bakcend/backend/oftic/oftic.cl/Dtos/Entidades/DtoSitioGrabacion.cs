@@ -25,6 +25,22 @@ namespace Comun.Dtos.Entidades
         public int     totalUsuarios { get; set; }
     }
 
+    /// <summary>
+    /// Request para mover en bloque las fuerzas de un sitio a otro.
+    ///
+    /// Existe por el arranque: en un CAD que ya venía trabajando, las fuerzas
+    /// están todas en el sitio 0 («sin clasificar») porque hasta ahora el valor
+    /// salía del claim del administrador. Reclasificarlas de a una sería
+    /// abrir y guardar veinte formularios.
+    /// </summary>
+    public class DtoReasignarSitioRequest
+    {
+        /// <summary>Sitio del que salen. 0 = las que están sin clasificar.</summary>
+        public int sitioOrigen  { get; set; }
+        /// <summary>Sitio al que van. Debe existir.</summary>
+        public int sitioDestino { get; set; }
+    }
+
     /// <summary>Request para crear o actualizar un sitio de grabación.</summary>
     public class DtoSitioGrabacionRequest
     {

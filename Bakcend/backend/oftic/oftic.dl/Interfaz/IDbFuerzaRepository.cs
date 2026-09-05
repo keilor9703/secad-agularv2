@@ -17,6 +17,13 @@ namespace Datos.Interfaz
         /// <summary>Invierte el estado vigente de la fuerza (S→N, N→S).</summary>
         Task<DtoFuerzaResult> ToggleFuerzaAsync(int id, CancellationToken ct);
 
+        /// <summary>
+        /// Mueve en bloque todas las fuerzas de un sitio a otro, y con ellas los
+        /// usuarios que colgaban de esas fuerzas. Va en una transacción: mover
+        /// las fuerzas sin mover a su gente deja a los despachadores sin canales.
+        /// </summary>
+        Task<DtoFuerzaResult> ReasignarSitioAsync(int sitioOrigen, int sitioDestino, CancellationToken ct);
+
         // ── Canales ──────────────────────────────────────────────────────────
         /// <summary>Lista los canales de una fuerza.</summary>
         Task<List<DtoCanalFuerza>> GetCanalesAsync(int fuerzaId, CancellationToken ct);

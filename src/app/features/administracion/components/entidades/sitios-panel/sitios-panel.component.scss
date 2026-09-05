@@ -1,22 +1,14 @@
 // ══════════════════════════════════════════════════════════════════════════
-//  Sitios de grabación
+//  Catálogo de sitios de grabación, dentro del módulo de Entidades.
 //
 //  Tabla, insignias, modal y campos los resuelven los componentes ui-*. Aquí
-//  queda solo lo propio de la pantalla: la rejilla del formulario y la sigla
-//  bajo el nombre de la unidad.
+//  queda solo la rejilla del formulario y la sigla bajo el nombre.
 // ══════════════════════════════════════════════════════════════════════════
 
-.sg-page {
+.sg-panel {
   display:        flex;
   flex-direction: column;
-  gap:            16px;
-  padding:        16px;
-}
-
-.sg-resumen {
-  display:   flex;
-  gap:       8px;
-  flex-wrap: wrap;
+  gap:            14px;
 }
 
 .sg-sigla {

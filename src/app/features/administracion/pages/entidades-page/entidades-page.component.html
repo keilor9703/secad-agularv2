@@ -1,18 +1,112 @@
 <div class="ent-page">
 
   <app-ui-page-header
-    title="Entidades / Fuerzas"
-    icon="fa-solid fa-shield-halved"
-    description="Fuerzas y organismos que despachan en este CAD y los canales de radiocomunicación de cada una. Base para la asignación operativa de despachadores."
+    title="Sitios de grabación y fuerzas"
+    icon="fa-solid fa-sitemap"
+    description="Cada fuerza despacha para una unidad policial —el sitio de grabación—, y un mismo
+                 CAD puede alojar varias. Elija la unidad y administre sus fuerzas y canales."
     [minimizable]="false"
   >
-    <app-ui-button
-      page-header-actions
-      variant="primary"
-      icon="fa-solid fa-plus"
-      (buttonClick)="nuevaFuerza()"
-    >Nueva fuerza</app-ui-button>
+    <!-- Los botones van dentro de UN elemento con el atributo del hueco, no
+         sueltos dentro de un @if: ng-content casa por selector contra los
+         hijos directos de la plantilla, y un bloque de control los mete en
+         una vista embebida donde el selector ya no los ve. Así se proyectan
+         siempre y la condición vive por dentro. -->
+    <div page-header-actions class="ent-acciones-cab">
+      @if (vista() === 'fuerzas') {
+        <app-ui-button
+          variant="secondary"
+          appearance="ghost"
+          icon="fa-solid fa-tower-cell"
+          (buttonClick)="abrirCatalogoSitios()"
+        >Administrar sitios</app-ui-button>
+        <app-ui-button
+          variant="primary"
+          icon="fa-solid fa-plus"
+          (buttonClick)="nuevaFuerza()"
+        >Nueva fuerza</app-ui-button>
+      }
+    </div>
   </app-ui-page-header>
+
+  @if (vista() === 'sitios') {
+    <app-sitios-panel
+      (cambiado)="onSitiosCambiados()"
+      (cerrado)="cerrarCatalogoSitios()"
+    />
+  } @else {
+
+  <!-- ═══ Unidad policial activa ═══════════════════════════════════════════
+       Todo lo de abajo cuelga de esta elección: una fuerza pertenece siempre
+       a un sitio de grabación. Con una sola unidad no hay nada que elegir y
+       se muestra como etiqueta.
+       ═══════════════════════════════════════════════════════════════════ -->
+  @if (sitiosVigentes().length === 0) {
+    <div class="ent-sin-sitios">
+      <i class="fa-solid fa-tower-cell" aria-hidden="true"></i>
+      <div>
+        <strong>Este CAD todavía no tiene sitios de grabación.</strong>
+        <span>
+          Un sitio de grabación es la unidad policial que opera en el CAD. Registre al menos uno
+          antes de crear fuerzas: es la marca que separa los registros de cada unidad.
+          @if (fuerzasSinClasificar().length) {
+            Las {{ fuerzasSinClasificar().length }} fuerza(s) que ya existen quedarán a la espera
+            de que las asigne.
+          }
+        </span>
+      </div>
+      <app-ui-button variant="primary" icon="fa-solid fa-plus" (buttonClick)="abrirCatalogoSitios()">
+        Registrar el primero
+      </app-ui-button>
+    </div>
+  } @else if (hayQueElegirSitio()) {
+    <app-ui-segmented-tabs
+      class="ent-banda"
+      [items]="pestanasSitio()"
+      [activeId]="sitioActivo()"
+      ariaLabel="Sitio de grabación"
+      (activeIdChange)="seleccionarSitio($event)"
+    />
+  } @else {
+    <p class="ent-unidad-unica">
+      <i class="fa-solid fa-tower-cell" aria-hidden="true"></i>
+      Unidad: <strong>{{ sitioActivoNombre() }}</strong>
+    </p>
+  }
+
+  <!-- Las huérfanas: fuerzas de antes de que el sitio fuera obligatorio. -->
+  @if (enSinClasificar()) {
+    <div class="ent-huerfanas">
+      <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
+      <div class="ent-huerfanas__txt">
+        <strong>{{ fuerzasSinClasificar().length }} fuerza(s) sin unidad asignada.</strong>
+        <span>
+          Muévalas a su unidad para que aparezcan en el despacho. Sus usuarios se mueven con
+          ellas: dejarlos atrás los deja sin ver ningún canal en Recepción.
+        </span>
+      </div>
+      @if (sitiosVigentes().length > 0) {
+        <div class="ent-huerfanas__accion">
+          <app-ui-select
+            class="ent-huerfanas__destino"
+            label="Mover todas a"
+            [options]="opcionesSitio()"
+            [ngModel]="destinoReasignacion()"
+            (ngModelChange)="destinoReasignacion.set($event)"
+            [ngModelOptions]="{ standalone: true }"
+            [clearable]="false"
+          />
+          <app-ui-button
+            variant="primary"
+            icon="fa-solid fa-right-to-bracket"
+            [loading]="reasignando()"
+            [disabled]="reasignando()"
+            (buttonClick)="reasignarSinClasificar()"
+          >Mover</app-ui-button>
+        </div>
+      }
+    </div>
+  }
 
   <div class="ent-layout">
 
@@ -114,12 +208,6 @@
                     <span class="ent-cod-pill" title="Código institucional">#{{ f.id }}</span>
                     @if (f.abreviatura) {
                       <span class="ent-abrev-pill" title="Sigla operativa">{{ f.abreviatura }}</span>
-                    }
-                    @if (hayVariosSitios()) {
-                      <span class="ent-sitio-pill" title="Sitio de grabación (unidad policial)">
-                        <i class="fa-solid fa-tower-cell" aria-hidden="true"></i>
-                        {{ nombreSitio(f.sitioGraba) }}
-                      </span>
                     }
                     <app-ui-badge
                       [label]="f.vigente === 'S' ? 'Activa' : 'Inactiva'"
@@ -508,4 +596,6 @@
       }
     </section>
   </div>
+
+  }
 </div>

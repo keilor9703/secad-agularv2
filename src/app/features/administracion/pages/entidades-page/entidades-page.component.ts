@@ -13,6 +13,9 @@ import { UiChipComponent } from '../../../../shared/components/ui-chip/ui-chip.c
 import { UiSpinnerComponent } from '../../../../shared/components/ui-spinner/ui-spinner.component';
 import { UiTabsComponent } from '../../../../shared/components/ui-tabs/ui-tabs.component';
 import { UiTabComponent } from '../../../../shared/components/ui-tabs/ui-tab.component';
+import { UiSegmentedTabsComponent } from '../../../../shared/components/ui-segmented-tabs/ui-segmented-tabs.component';
+import { UiSegmentedTabItem } from '../../../../shared/components/ui-segmented-tabs/ui-segmented-tabs.types';
+import { SitiosPanelComponent } from '../../components/entidades/sitios-panel/sitios-panel.component';
 import { UiSelectOption } from '../../../../shared/interfaces/ui-select-option.interface';
 import { ToastService } from '../../../../core/services/toast.service';
 import {
@@ -31,7 +34,8 @@ import { SitioGrabacionService, DtoSitioGrabacion } from '../../services/sitio-g
     ReactiveFormsModule, RouterModule,
     UiPageHeaderComponent, UiPanelHeaderComponent, UiSectionHeaderComponent,
     UiButtonComponent, UiInputComponent, UiSearchInputComponent, UiSelectComponent, UiBadgeComponent,
-    UiChipComponent, UiSpinnerComponent, UiTabsComponent, UiTabComponent
+    UiChipComponent, UiSpinnerComponent, UiTabsComponent, UiTabComponent,
+    UiSegmentedTabsComponent, SitiosPanelComponent
   ],
   templateUrl: './entidades-page.component.html',
   styleUrls: ['./entidades-page.component.scss'],
@@ -65,7 +69,7 @@ export class EntidadesPageComponent implements OnInit {
     const q = this.busqueda().trim().toLowerCase();
     const filtro = this.filtroVigencia();
 
-    return this.fuerzas().filter((f) => {
+    return this.fuerzasDelSitio().filter((f) => {
       const coincideFiltro =
         filtro === 'todas' ||
         (filtro === 'vigentes' && f.vigente === 'S') ||
@@ -81,12 +85,14 @@ export class EntidadesPageComponent implements OnInit {
     });
   });
 
-  // ── Métricas globales ──────────────────────────────────────────────────────
+  // ── Métricas de la unidad activa ───────────────────────────────────────────
+  // Van sobre la unidad, no sobre el CAD: sumar los canales de las dos
+  // unidades daría un número que no le sirve a quien administra una sola.
   readonly totalCanalesGlobal = computed(() =>
-    this.fuerzas().reduce((sum, f) => sum + (f.totalCanales || 0), 0)
+    this.fuerzasDelSitio().reduce((sum, f) => sum + (f.totalCanales || 0), 0)
   );
   readonly totalUsuariosGlobal = computed(() =>
-    this.fuerzas().reduce((sum, f) => sum + (f.totalUsuarios || 0), 0)
+    this.fuerzasDelSitio().reduce((sum, f) => sum + (f.totalUsuarios || 0), 0)
   );
 
   // ── Sitios de grabación (unidades del CAD) ─────────────────────────────────
@@ -94,23 +100,83 @@ export class EntidadesPageComponent implements OnInit {
   // municipios que comparten sala—, es lo que mantiene separado su despacho.
   readonly sitios = signal<DtoSitioGrabacion[]>([]);
 
-  readonly opcionesSitio = computed<UiSelectOption<number>[]>(() => [
-    { label: 'Sin clasificar', value: 0 },
-    ...this.sitios().map(s => ({ label: this.sitioService.etiqueta(s), value: s.consecutivo })),
-  ]);
+  /** Vista activa: la administración de fuerzas o el catálogo de sitios. */
+  readonly vista = signal<'fuerzas' | 'sitios'>('fuerzas');
 
   /**
-   * Solo cuando el CAD aloja más de una unidad tiene sentido enseñar de cuál
-   * es cada fuerza; en un CAD de una sola unidad sería ruido en cada tarjeta.
+   * Sitio activo, como id de pestaña. '' mientras no se ha resuelto ninguno;
+   * 'sin' es el cajón de las fuerzas que todavía no tienen unidad.
    */
-  readonly hayVariosSitios = computed(() => this.sitios().length > 1);
+  readonly sitioActivo = signal('');
 
-  /** Nombre de la unidad de una fuerza, para la lista y el detalle. */
-  nombreSitio(sitioGraba: number): string {
-    if (!sitioGraba) return 'Sin clasificar';
-    const s = this.sitios().find(x => x.consecutivo === sitioGraba);
-    return s ? this.sitioService.etiqueta(s) : `Sitio ${sitioGraba}`;
-  }
+  /** Solo los vigentes se pueden elegir: a una unidad retirada no se asigna. */
+  readonly sitiosVigentes = computed(() => this.sitios().filter(s => s.vigente === 'S'));
+
+  readonly opcionesSitio = computed<UiSelectOption<number>[]>(() =>
+    this.sitiosVigentes().map(s => ({ label: this.sitioService.etiqueta(s), value: s.consecutivo }))
+  );
+
+  /** Fuerzas que todavía no pertenecen a ninguna unidad. */
+  readonly fuerzasSinClasificar = computed(() =>
+    this.fuerzas().filter(f => !f.sitioGraba)
+  );
+
+  /**
+   * La banda de arriba. Una pestaña por unidad y, mientras queden fuerzas
+   * huérfanas, una más para recogerlas: sin ella un CAD que viene de antes
+   * abriría el módulo y no vería ninguna de sus fuerzas.
+   */
+  readonly pestanasSitio = computed<UiSegmentedTabItem[]>(() => {
+    const items: UiSegmentedTabItem[] = this.sitiosVigentes().map(s => ({
+      id:          String(s.consecutivo),
+      label:       s.abreviatura || s.descripcion,
+      description: s.abreviatura ? s.descripcion : undefined,
+      icon:        'fa-solid fa-tower-cell',
+      badge:       this.fuerzas().filter(f => f.sitioGraba === s.consecutivo).length,
+      tone:        'info',
+    }));
+
+    const huerfanas = this.fuerzasSinClasificar().length;
+    if (huerfanas > 0) {
+      items.push({
+        id:          'sin',
+        label:       'Sin clasificar',
+        description: 'Fuerzas que aún no pertenecen a ninguna unidad',
+        icon:        'fa-solid fa-triangle-exclamation',
+        badge:       huerfanas,
+        tone:        'warning',
+      });
+    }
+
+    return items;
+  });
+
+  /** Con una sola unidad la banda no aporta: se muestra como etiqueta. */
+  readonly hayQueElegirSitio = computed(() => this.pestanasSitio().length > 1);
+
+  /** Consecutivo del sitio activo. 0 = la pestaña «Sin clasificar». */
+  readonly sitioActivoId = computed(() => {
+    const id = this.sitioActivo();
+    return id === 'sin' || id === '' ? 0 : Number(id);
+  });
+
+  readonly enSinClasificar = computed(() => this.sitioActivo() === 'sin');
+
+  /** Las fuerzas de la unidad activa — el universo de todo lo de abajo. */
+  readonly fuerzasDelSitio = computed(() => {
+    const sitio = this.sitioActivoId();
+    return this.fuerzas().filter(f => (f.sitioGraba || 0) === sitio);
+  });
+
+  readonly sitioActivoNombre = computed(() => {
+    if (this.enSinClasificar()) return 'Sin clasificar';
+    const s = this.sitios().find(x => x.consecutivo === this.sitioActivoId());
+    return s ? this.sitioService.etiqueta(s) : '';
+  });
+
+  /** Destino elegido en el botón de mover en bloque. */
+  readonly destinoReasignacion = signal(0);
+  readonly reasignando         = signal(false);
 
   // ── Formulario de fuerza ───────────────────────────────────────────────────
   readonly modoFuerza = signal<'ninguno' | 'nueva' | 'editando'>('ninguno');
@@ -144,10 +210,100 @@ export class EntidadesPageComponent implements OnInit {
     this.cargarFuerzas();
   }
 
-  private cargarSitios(): void {
+  cargarSitios(): void {
     this.sitioService.getSitios().subscribe({
-      next: (r) => this.sitios.set(r.data ?? []),
+      next: (r) => { this.sitios.set(r.data ?? []); this.resolverSitioActivo(); },
       error: () => { /* silencioso: el catálogo es secundario, la pantalla sirve igual */ },
+    });
+  }
+
+  /**
+   * Deja seleccionada una unidad válida.
+   *
+   * Se llama cada vez que cambia el catálogo o la lista de fuerzas, porque
+   * las dos cosas mueven las pestañas: retirar un sitio le quita la suya, y
+   * clasificar la última fuerza huérfana hace desaparecer «Sin clasificar».
+   * Si la que estaba activa sigue existiendo se respeta —cambiar de unidad
+   * bajo los pies de quien está trabajando sería peor que no elegir nada.
+   */
+  private resolverSitioActivo(): void {
+    const pestanas = this.pestanasSitio();
+    if (pestanas.length === 0) { this.sitioActivo.set(''); return; }
+    if (pestanas.some(p => p.id === this.sitioActivo())) return;
+
+    // Se prefiere una unidad real; «Sin clasificar» solo si no hay otra cosa.
+    const primera = pestanas.find(p => p.id !== 'sin') ?? pestanas[0];
+    this.sitioActivo.set(primera.id);
+    this.limpiarSeleccion();
+  }
+
+  /** Cambio de unidad desde la banda. */
+  seleccionarSitio(id: string): void {
+    if (id === this.sitioActivo()) return;
+    this.sitioActivo.set(id);
+    this.limpiarSeleccion();
+  }
+
+  /** Lo que se estuviera editando pertenece a la unidad anterior. */
+  private limpiarSeleccion(): void {
+    this.fuerzaSeleccionada.set(null);
+    this.modoFuerza.set('ninguno');
+    this.modoCanal.set('ninguno');
+    this.canales.set([]);
+    this.usuariosEnFuerza.set([]);
+    this.busqueda.set('');
+  }
+
+  // ── Catálogo de sitios ─────────────────────────────────────────────────────
+
+  abrirCatalogoSitios(): void {
+    this.vista.set('sitios');
+  }
+
+  cerrarCatalogoSitios(): void {
+    this.vista.set('fuerzas');
+  }
+
+  /** El catálogo cambió: puede haber aparecido o desaparecido una pestaña. */
+  onSitiosCambiados(): void {
+    this.cargarSitios();
+    this.cargarFuerzas();
+  }
+
+  // ── Clasificación en bloque ────────────────────────────────────────────────
+
+  /**
+   * Mueve de una vez todas las fuerzas huérfanas a una unidad, con los
+   * usuarios que colgaban de ellas. Es el camino de entrada de un CAD que ya
+   * venía trabajando: hasta ahora sus fuerzas nacían en el sitio 0 porque el
+   * valor salía del claim del administrador.
+   */
+  reasignarSinClasificar(): void {
+    const destino = this.destinoReasignacion();
+    if (!destino) {
+      this.toast.warning('Sitios', 'Elija la unidad a la que van estas fuerzas.');
+      return;
+    }
+
+    this.reasignando.set(true);
+    this.fuerzaService.reasignarSitio(0, destino).subscribe({
+      next: (r) => {
+        this.reasignando.set(false);
+        if (r.success) {
+          this.toast.success('Sitios', r.message);
+          // Al vaciarse, «Sin clasificar» desaparece: hay que reposicionarse
+          // en la unidad de destino y no en una pestaña que ya no existe.
+          this.sitioActivo.set(String(destino));
+          this.destinoReasignacion.set(0);
+          this.onSitiosCambiados();
+        } else {
+          this.toast.warning('Sitios', r.message);
+        }
+      },
+      error: (err) => {
+        this.reasignando.set(false);
+        this.toast.error('Sitios', err?.error?.message ?? 'No se pudieron mover las fuerzas.');
+      },
     });
   }
 
@@ -162,6 +318,8 @@ export class EntidadesPageComponent implements OnInit {
         const lista = r.data ?? [];
         this.fuerzas.set(lista);
         this.loading.set(false);
+        // La pestaña «Sin clasificar» aparece y desaparece según esta lista.
+        this.resolverSitioActivo();
         // Si había una fuerza seleccionada, refrescarla
         const actual = this.fuerzaSeleccionada();
         if (actual) {
@@ -186,9 +344,27 @@ export class EntidadesPageComponent implements OnInit {
   }
 
   nuevaFuerza(): void {
+    // Sin unidades no hay dónde poner la fuerza, y el backend la rechazaría:
+    // se manda a crear la primera en vez de dejar llenar un formulario que
+    // no se va a poder guardar.
+    if (this.sitiosVigentes().length === 0) {
+      this.toast.warning(
+        'Fuerzas',
+        'Primero registre el sitio de grabación (la unidad policial) al que pertenecerá la fuerza.',
+      );
+      this.abrirCatalogoSitios();
+      return;
+    }
+
     this.fuerzaSeleccionada.set(null);
     this.modoFuerza.set('nueva');
-    this.formFuerza.reset({ id: 0, descripcion: '', abreviatura: '', sitioGraba: 0, vigente: 'S' });
+    // Hereda la unidad en la que se está trabajando; si se está en «Sin
+    // clasificar» no hay ninguna que heredar y hay que elegirla en el campo.
+    this.formFuerza.reset({
+      id: 0, descripcion: '', abreviatura: '',
+      sitioGraba: this.enSinClasificar() ? 0 : this.sitioActivoId(),
+      vigente: 'S',
+    });
     this.modoCanal.set('ninguno');
   }
 
@@ -396,7 +572,9 @@ export class EntidadesPageComponent implements OnInit {
     return 'ent-theme--default';
   }
 
-  readonly conteoVigentes = computed(() => this.fuerzas().filter(f => f.vigente === 'S').length);
-  readonly conteoInactivas = computed(() => this.fuerzas().filter(f => f.vigente !== 'S').length);
-  readonly conteoTotal    = computed(() => this.fuerzas().length);
+  // Los conteos son de la unidad activa: en un CAD con dos, un total global
+  // no le dice nada a quien está administrando una de ellas.
+  readonly conteoVigentes = computed(() => this.fuerzasDelSitio().filter(f => f.vigente === 'S').length);
+  readonly conteoInactivas = computed(() => this.fuerzasDelSitio().filter(f => f.vigente !== 'S').length);
+  readonly conteoTotal    = computed(() => this.fuerzasDelSitio().length);
 }

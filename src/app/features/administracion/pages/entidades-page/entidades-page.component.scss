@@ -220,26 +220,6 @@
   letter-spacing:  .03em;
 }
 
-// Unidad policial de la fuerza. Solo aparece cuando el CAD aloja más de una:
-// es lo que impide confundir el despacho de una con el de la otra.
-.ent-sitio-pill {
-  display:        inline-flex;
-  align-items:    center;
-  gap:            4px;
-  padding:        1px 7px;
-  border-radius:  999px;
-  background:     rgba(100, 116, 139, .12);
-  color:          #475569;
-  font-size:      calc(10.5px * var(--font-size-scale, 1));
-  font-weight:    600;
-  max-width:      100%;
-  overflow:       hidden;
-  text-overflow:  ellipsis;
-  white-space:    nowrap;
-
-  i { font-size: calc(9.5px * var(--font-size-scale, 1)); }
-}
-
 .ent-stat-pill {
   display:       inline-flex;
   align-items:   center;
@@ -708,4 +688,117 @@
     background:   rgba(8, 166, 203, .07);
     border-color: rgba(8, 166, 203, .22);
   }
+}
+
+
+// ══════════════════════════════════════════════════════════════════════════
+//  Unidad policial activa
+//
+//  La banda de arriba es la que decide qué se ve debajo. Con una sola unidad
+//  no hay nada que elegir y se degrada a una etiqueta: obligar a pulsar una
+//  pestaña única es ruido.
+// ══════════════════════════════════════════════════════════════════════════
+
+.ent-banda { display: block; }
+
+.ent-unidad-unica {
+  display:       flex;
+  align-items:   center;
+  gap:           7px;
+  margin:        0;
+  padding:       7px 12px;
+  border-radius: 8px;
+  background:    rgba(8, 166, 203, .08);
+  font-size:     calc(12.5px * var(--font-size-scale, 1));
+  color:         var(--ui-text, #1f2937);
+
+  i { color: #0e7490; }
+}
+
+// El CAD todavía no tiene unidades: sin una, la fuerza no se puede crear.
+.ent-sin-sitios {
+  display:       flex;
+  align-items:   center;
+  gap:           14px;
+  padding:       16px 18px;
+  border:        1px dashed rgba(14, 116, 144, .45);
+  border-radius: 10px;
+  background:    rgba(8, 166, 203, .06);
+
+  > i {
+    font-size: calc(24px * var(--font-size-scale, 1));
+    color:     #0e7490;
+  }
+
+  div {
+    display:        flex;
+    flex-direction: column;
+    gap:            3px;
+    flex:           1 1 auto;
+    min-width:      0;
+  }
+
+  strong { font-size: calc(13.5px * var(--font-size-scale, 1)); }
+  span   { font-size: calc(12px * var(--font-size-scale, 1)); color: var(--ui-text-muted, #64748b); }
+
+  @media (max-width: 720px) {
+    flex-direction: column;
+    align-items:    flex-start;
+  }
+}
+
+// Fuerzas que vienen de antes de que el sitio fuera obligatorio.
+.ent-huerfanas {
+  display:       flex;
+  align-items:   center;
+  gap:           14px;
+  padding:       12px 16px;
+  border:        1px solid rgba(217, 119, 6, .35);
+  border-radius: 10px;
+  background:    rgba(245, 158, 11, .09);
+
+  > i {
+    font-size: calc(19px * var(--font-size-scale, 1));
+    color:     #b45309;
+  }
+
+  &__txt {
+    display:        flex;
+    flex-direction: column;
+    gap:            2px;
+    flex:           1 1 auto;
+    min-width:      0;
+
+    strong { font-size: calc(13px * var(--font-size-scale, 1)); }
+    span   { font-size: calc(11.5px * var(--font-size-scale, 1)); color: var(--ui-text-muted, #64748b); }
+  }
+
+  &__accion {
+    display:     flex;
+    align-items: flex-end;
+    gap:         8px;
+    flex:        0 0 auto;
+  }
+
+  &__destino { min-width: 230px; }
+
+  @media (max-width: 860px) {
+    flex-direction: column;
+    align-items:    stretch;
+
+    &__accion { align-items: stretch; }
+  }
+}
+
+:host-context(html.dark-mode) {
+  .ent-unidad-unica { background: rgba(8, 166, 203, .14); }
+  .ent-sin-sitios   { background: rgba(8, 166, 203, .10); }
+  .ent-huerfanas    { background: rgba(245, 158, 11, .13); }
+}
+
+.ent-acciones-cab {
+  display:     flex;
+  align-items: center;
+  gap:         8px;
+  flex-wrap:   wrap;
 }

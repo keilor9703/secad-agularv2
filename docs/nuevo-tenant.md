@@ -93,16 +93,21 @@ lo demás llega **vacío** y sin ello la operación no arranca:
 
 | Catálogo | Se carga desde | Sin esto… |
 |---|---|---|
-| `cad_sitios_grabacion` | Administración → Sitios de grabación | el tenant no puede apuntar a un sitio válido |
+| `cad_sitios_grabacion` | Administración → Sitios de grabación y fuerzas → «Administrar sitios» | el tenant no puede apuntar a un sitio válido, y **no se puede crear ninguna fuerza** |
 | `cad_lugares_geograficos`, `cad_barrios` | **SQL** — la app solo los lee | Recepción no resuelve ciudad ni barrio |
-| `cad_fuerzas` y `cad_canales` | Administración → Entidades | no hay canal de despacho que elegir |
+| `cad_fuerzas` y `cad_canales` | Administración → Sitios de grabación y fuerzas | no hay canal de despacho que elegir |
 | `cad_casos` | Administración → Códigos de Caso (importa Excel) | no se puede tipificar un pedido |
 | `cad_medios_disponibles` | Turnos (alta manual o importación SIVICC) | no hay recursos que despachar |
 | `secad_unidades` (maestra, común) | Super Admin → Unidades | — |
 
 ### El sitio de grabación va primero
 
-El paso 4 lo necesita. **Administración → Sitios de grabación → Nuevo sitio.**
+No es una recomendación de orden: desde V71 hay una clave foránea de
+`cad_fuerzas.sitio_graba` hacia el catálogo, y el API rechaza crear una fuerza
+sin unidad. Sin sitio no hay fuerzas, sin fuerzas no hay canales y sin canales
+no hay despacho.
+
+**Administración → Sitios de grabación y fuerzas → «Administrar sitios» → Nuevo sitio.**
 
 Un sitio de grabación es la **unidad policial** que opera en el CAD, y no es lo
 mismo que el tenant: el tenant es el CAD *físico*. Un mismo CAD puede alojar
@@ -118,6 +123,15 @@ Usuarios → Asignación de Sitio, Fuerza, Canal y ACD).
 
 Campos: **código** (el consecutivo; debe coincidir con el que usa la planta
 telefónica), **unidad policial**, **sigla**, **DANE** del municipio y estado.
+
+Para ver en qué estado está un CAD —cuántos sitios tiene, qué fuerzas y
+usuarios quedaron sin clasificar, y si la clave foránea ya se pudo crear— hay
+un censo de solo lectura:
+
+```bash
+docker exec -i secad-postgres psql -U secad_app -d Secad_Bogota \
+  < docs/sql/censo-sitios-grabacion.sql
+```
 
 Si prefiere hacerlo por SQL —o el CAD todavía no tiene la migración V70— el
 equivalente es:

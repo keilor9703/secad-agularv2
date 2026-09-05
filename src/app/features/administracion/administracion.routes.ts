@@ -24,15 +24,15 @@ export const administracionRoutes: Routes = [
       import('./pages/entidades-page/entidades-page.component').then(
         (m) => m.EntidadesPageComponent,
       ),
-    data: { breadcrumb: 'Entidades / Fuerzas' },
+    data: { breadcrumb: 'Sitios de grabación y fuerzas' },
   },
+  // El catálogo de sitios se administra DENTRO de Entidades: una fuerza nunca
+  // está fuera de una unidad, así que el sitio es el nivel de arriba y no un
+  // módulo hermano. La ruta se conserva para no romper enlaces guardados.
   {
     path: 'sitios-grabacion',
-    loadComponent: () =>
-      import('./pages/sitios-grabacion-page/sitios-grabacion-page.component').then(
-        (m) => m.SitiosGrabacionPageComponent,
-      ),
-    data: { breadcrumb: 'Sitios de grabación' },
+    redirectTo: 'entidades',
+    pathMatch: 'full',
   },
   {
     path: 'agencias-externas',
