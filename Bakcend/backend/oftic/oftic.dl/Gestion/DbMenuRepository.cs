@@ -296,6 +296,88 @@ RETURNING id_menurol";
             }
         }
 
+        /// <summary>
+        /// Deja el rol con exactamente los menús recibidos. Se hace en una
+        /// transacción y con dos sentencias de conjunto —no un bucle de
+        /// llamadas— porque el administrador está guardando UNA decisión: si
+        /// algo falla a medias, el rol no puede quedar con media lista.
+        ///
+        /// Solo se guardan PANTALLAS. Los grupos no se conceden: la consulta
+        /// del lateral (GetMenuByUsuarioAsync) sube sola a los grupos padre de
+        /// lo concedido, y un grupo sin pantallas dentro ni siquiera se pinta.
+        /// Concederlo por separado no añadiría nada y solo ensuciaría la
+        /// tabla; el filtro va en la pantalla y también aquí, por si alguien
+        /// llama al endpoint a mano.
+        /// </summary>
+        public async Task<DtoMenuResult> ReemplazarMenusDeRolAsync(
+            int idRol, IReadOnlyCollection<long> idMenus,
+            long usuarioAuditoria, string maquinaAuditoria, CancellationToken ct)
+        {
+            var deseados = idMenus.Where(id => id > 0).Distinct().ToArray();
+
+            await using var conn = await _tenant.DataSource.OpenConnectionAsync(ct);
+            await using var tx   = await conn.BeginTransactionAsync(ct);
+
+            try
+            {
+                int retirados;
+                await using (var cmd = conn.CreateCommand())
+                {
+                    cmd.Transaction = tx;
+                    cmd.CommandText = @"
+DELETE FROM ctr_menu_roles
+ WHERE id_rol = @pIdRol
+   AND NOT (id_menu = ANY(@pIdMenus))";
+                    cmd.Parameters.AddWithValue("pIdRol",   idRol);
+                    cmd.Parameters.AddWithValue("pIdMenus", deseados);
+                    retirados = await cmd.ExecuteNonQueryAsync(ct);
+                }
+
+                int concedidos = 0;
+                if (deseados.Length > 0)
+                {
+                    await using var cmd = conn.CreateCommand();
+                    cmd.Transaction = tx;
+                    // Solo pantallas vigentes: un id inventado, uno de un menú
+                    // dado de baja o un GRUPO no entra.
+                    cmd.CommandText = @"
+INSERT INTO ctr_menu_roles (id_rol, id_menu, usuario_creacion, fecha_creacion, maquina_creacion)
+SELECT @pIdRol, m.id_menu, @pUsuario, NOW(), @pMaquina
+FROM   ctr_menu m
+WHERE  m.id_menu = ANY(@pIdMenus)
+  AND  m.vigente = 1
+  AND  UPPER(COALESCE(m.tipo, '')) <> 'GRUPO'
+  AND  COALESCE(TRIM(m.detalle), '') <> ''
+  AND  NOT EXISTS (SELECT 1 FROM ctr_menu_roles mr
+                   WHERE mr.id_rol = @pIdRol AND mr.id_menu = m.id_menu)";
+                    cmd.Parameters.AddWithValue("pIdRol",   idRol);
+                    cmd.Parameters.AddWithValue("pIdMenus", deseados);
+                    cmd.Parameters.AddWithValue("pUsuario", usuarioAuditoria);
+                    cmd.Parameters.AddWithValue("pMaquina", maquinaAuditoria ?? "");
+                    concedidos = await cmd.ExecuteNonQueryAsync(ct);
+                }
+
+                await tx.CommitAsync(ct);
+
+                var partes = new List<string>();
+                if (concedidos > 0) partes.Add($"{concedidos} concedida(s)");
+                if (retirados  > 0) partes.Add($"{retirados} retirada(s)");
+
+                return new DtoMenuResult
+                {
+                    Id      = idRol,
+                    Message = partes.Count == 0
+                        ? "No había cambios que guardar."
+                        : $"Permisos actualizados: {string.Join(", ", partes)}."
+                };
+            }
+            catch
+            {
+                await tx.RollbackAsync(ct);
+                throw;
+            }
+        }
+
         public async Task<DtoMenuResult> RemoveRolFromMenuAsync(long idMenu, int idRol, long usuarioAuditoria, string maquinaAuditoria, CancellationToken ct)
         {
             await using var conn = await _tenant.DataSource.OpenConnectionAsync(ct);

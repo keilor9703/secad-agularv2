@@ -2,67 +2,121 @@
   <app-ui-section-header
     eyebrow="PERMISOS DE NAVEGACIÓN"
     [title]="selectedRoleName()"
-    description="Estructura de menús disponible para los usuarios asociados."
+    description="Marque las pantallas que este rol podrá abrir."
     icon="fa-solid fa-key"
     headingId="role-permissions-title"
   >
     @if (selectedRole()) {
       <span header-actions class="permissions-card__count">
-        {{ assignedMenus().length }}
+        {{ seleccionadas() }} / {{ totalPantallas() }}
       </span>
     }
   </app-ui-section-header>
 
-  @if (selectedRole()) {
-    <form class="permission-assignment" [formGroup]="form" (ngSubmit)="submitAssignment()">
-      <app-ui-select
-        formControlName="selectedMenuId"
-        label="Menú disponible"
-        placeholder="Seleccione un menú para asignar"
-        [options]="availableMenuOptions()"
-        [required]="true"
-        [clearable]="true"
-        [searchable]="true"
-        labelMode="floating"
-        [showRequiredMarker]="false"
-        [disabled]="!canAssign()"
-        [controlSize]="compactControlSize"
-      />
-
-      <app-ui-button
-        type="submit"
-        size="sm"
-        variant="primary"
-        icon="fa-solid fa-plus"
-        [loading]="saving()"
-        [disabled]="form.invalid || !canAssign()"
-      >
-        Asignar
-      </app-ui-button>
-    </form>
-
-    @if (!loadingCatalog() && availableMenuOptions().length === 0 && assignedMenus().length > 0) {
-      <div class="permissions-card__complete">
-        <i class="fa-solid fa-circle-check" aria-hidden="true"></i>
-        El rol ya tiene asignados todos los menús disponibles.
-      </div>
-    }
-
-    <div class="permissions-card__tree">
-      <app-role-menu-tree
-        [menus]="assignedMenus()"
-        [loading]="loading()"
-        [removingMenuId]="removingMenuId()"
-        (removeRequested)="removeRequested.emit($event)"
-      />
-    </div>
-  } @else {
+  @if (!selectedRole()) {
     <div class="permissions-card__empty">
       <span aria-hidden="true"><i class="fa-solid fa-arrow-pointer"></i></span>
       <div>
         <strong>Seleccione un rol</strong>
-        <p>Use la acción de permisos del catálogo para visualizar su árbol de navegación.</p>
+        <p>Use la acción de permisos del catálogo para ver y editar sus pantallas.</p>
       </div>
     </div>
+  } @else if (loading() || loadingCatalog()) {
+    <div class="permissions-card__cargando">
+      <app-ui-spinner type="ring" size="sm" variant="info" label="Consultando permisos…" />
+    </div>
+  } @else {
+    <p class="permissions-card__nota">
+      <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+      Solo se conceden pantallas. El grupo aparece solo en el menú del usuario
+      cuando tiene al menos una pantalla concedida dentro.
+    </p>
+
+    <app-ui-search-input
+      class="permissions-card__buscar"
+      placeholder="Buscar pantalla, grupo o ruta…"
+      [showButton]="false"
+      icon="fa-solid fa-magnifying-glass"
+      (search)="filtro.set($event)"
+      (cleared)="filtro.set('')"
+    />
+
+    @if (gruposVisibles().length === 0) {
+      <p class="permissions-card__sin-resultados">
+        Ninguna pantalla coincide con la búsqueda.
+      </p>
+    }
+
+    <div class="permissions-card__grupos">
+      @for (grupo of gruposVisibles(); track grupo.idMenu) {
+        <section class="permiso-grupo">
+          <header class="permiso-grupo__cabecera">
+            <label class="permiso-casilla permiso-casilla--grupo">
+              <input
+                type="checkbox"
+                [checked]="grupoCompleto(grupo)"
+                [indeterminate]="grupoParcial(grupo)"
+                (change)="alternarGrupo(grupo)"
+                [attr.aria-label]="'Conceder todas las pantallas de ' + grupo.nombre"
+              />
+              <span class="permiso-casilla__marca" aria-hidden="true"></span>
+              <i class="permiso-grupo__icono {{ grupo.icono }}" aria-hidden="true"></i>
+              <strong>{{ grupo.nombre }}</strong>
+            </label>
+
+            <span class="permiso-grupo__conteo"
+                  [class.is-lleno]="grupoCompleto(grupo)"
+                  [class.is-parcial]="grupoParcial(grupo)">
+              {{ marcadasEnGrupo(grupo) }} de {{ grupo.pantallas.length }}
+            </span>
+          </header>
+
+          <ul class="permiso-grupo__pantallas">
+            @for (pantalla of grupo.pantallas; track pantalla.idMenu) {
+              <li>
+                <label class="permiso-casilla"
+                       [class.is-marcada]="estaMarcada(pantalla.idMenu)">
+                  <input
+                    type="checkbox"
+                    [checked]="estaMarcada(pantalla.idMenu)"
+                    (change)="alternar(pantalla.idMenu)"
+                  />
+                  <span class="permiso-casilla__marca" aria-hidden="true"></span>
+                  <i class="permiso-casilla__icono {{ pantalla.icono }}" aria-hidden="true"></i>
+                  <span class="permiso-casilla__texto">
+                    <strong>{{ pantalla.nombre }}</strong>
+                    <small>{{ pantalla.ruta }}</small>
+                  </span>
+                </label>
+              </li>
+            }
+          </ul>
+        </section>
+      }
+    </div>
+
+    <footer class="permissions-card__pie" [class.is-sucio]="hayCambios()">
+      <span class="permissions-card__estado">
+        @if (hayCambios()) {
+          <i class="fa-solid fa-pen-to-square" aria-hidden="true"></i> Hay cambios sin guardar
+        } @else {
+          <i class="fa-solid fa-circle-check" aria-hidden="true"></i> Todo guardado
+        }
+      </span>
+
+      <span class="permissions-card__acciones">
+        <app-ui-button
+          size="sm" variant="secondary" appearance="ghost"
+          [disabled]="!hayCambios() || saving()"
+          (buttonClick)="descartar()"
+        >Descartar</app-ui-button>
+        <app-ui-button
+          size="sm" variant="primary" icon="fa-solid fa-floppy-disk"
+          [loading]="saving()"
+          [disabled]="!hayCambios() || saving()"
+          (buttonClick)="guardar()"
+        >Guardar permisos</app-ui-button>
+      </span>
+    </footer>
   }
 </article>

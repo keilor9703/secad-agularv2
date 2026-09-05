@@ -22,6 +22,12 @@ export class RoleMenuTreeComponent {
   readonly menus = input<readonly RoleMenuItem[]>([]);
   readonly loading = input(false);
   readonly removingMenuId = input<number | null>(null);
+  /**
+   * Sin el botón de retirar. Dentro del editor de un rol este árbol es un
+   * resumen de lo concedido; quitar permisos se hace en el panel de permisos,
+   * marcando casillas, para no tener dos formas distintas de hacer lo mismo.
+   */
+  readonly readonly = input(false);
 
   readonly removeRequested = output<RoleMenuItem>();
 

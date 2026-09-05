@@ -20,5 +20,6 @@ namespace Negocio.Interfaz
         Task<List<DtoRoleMenuItem>> GetMenusByRolAsync(int idRol, CancellationToken ct);
         Task<DtoMenuResult> AssignMenuToRolAsync(int idRol, long idMenu, long usuarioAuditoria, string maquinaAuditoria, CancellationToken ct);
         Task<DtoMenuResult> RemoveMenuFromRolAsync(int idRol, long idMenu, long usuarioAuditoria, string maquinaAuditoria, CancellationToken ct);
+        Task<DtoMenuResult> ReemplazarMenusDeRolAsync(int idRol, IReadOnlyCollection<long> idMenus, long usuarioAuditoria, string maquinaAuditoria, CancellationToken ct);
     }
 }

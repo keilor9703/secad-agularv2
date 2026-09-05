@@ -75,4 +75,14 @@ namespace Comun.Dtos.Menu
     {
         public long IdMenu { get; set; }
     }
+
+    /// <summary>
+    /// El conjunto COMPLETO de pantallas que el rol podrá ver. Lo que no venga
+    /// en la lista se retira. Es lo que envía la pantalla de casillas al
+    /// guardar: una decisión entera, no una concesión suelta.
+    /// </summary>
+    public class DtoReemplazarMenusRolRequest
+    {
+        public List<long> IdMenus { get; set; } = new();
+    }
 }

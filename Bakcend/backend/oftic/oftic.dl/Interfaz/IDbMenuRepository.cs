@@ -20,5 +20,15 @@ namespace Datos.Interfaz
         Task<List<DtoRoleMenuItem>> GetMenusByRolAsync(int idRol, CancellationToken ct);
         Task<DtoMenuResult> AssignMenuToRolAsync(int idRol, long idMenu, long usuarioAuditoria, string maquinaAuditoria, CancellationToken ct);
         Task<DtoMenuResult> RemoveMenuFromRolAsync(int idRol, long idMenu, long usuarioAuditoria, string maquinaAuditoria, CancellationToken ct);
+
+        /// <summary>
+        /// Deja el rol con EXACTAMENTE los menús indicados: concede los que
+        /// falten y retira los que sobren, en una sola transacción. Es lo que
+        /// necesita una pantalla de casillas, donde el administrador revisa
+        /// toda la lista y guarda una vez.
+        /// </summary>
+        Task<DtoMenuResult> ReemplazarMenusDeRolAsync(
+            int idRol, IReadOnlyCollection<long> idMenus,
+            long usuarioAuditoria, string maquinaAuditoria, CancellationToken ct);
     }
 }

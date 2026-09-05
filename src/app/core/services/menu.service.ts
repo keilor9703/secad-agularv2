@@ -65,6 +65,11 @@ export interface RoleMenuAssignRequest {
   idMenu: number;
 }
 
+/** El conjunto completo de pantallas de un rol; lo que no venga aquí se retira. */
+export interface RoleMenuReplaceRequest {
+  idMenus: number[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class MenuService {
   constructor(private http: HttpClient) {}
@@ -110,6 +115,18 @@ export class MenuService {
   removeRolFromMenu(idMenu: number, idRol: number): Observable<MenuApiResponse> {
     return this.http.delete<MenuApiResponse>(
       `${environment.apiBaseUrl}/menu/admin/${idMenu}/roles/${idRol}`,
+    );
+  }
+
+  /**
+   * Guarda de una vez todas las pantallas del rol. Reemplaza al par
+   * asignar/retirar de una en una: el administrador revisa la lista entera y
+   * guarda una decisión, y el backend la aplica en una transacción.
+   */
+  replaceMenusDeRol(idRol: number, payload: RoleMenuReplaceRequest): Observable<MenuApiResponse> {
+    return this.http.put<MenuApiResponse>(
+      `${environment.apiBaseUrl}/menu/admin/roles/${idRol}/menus`,
+      payload,
     );
   }
 

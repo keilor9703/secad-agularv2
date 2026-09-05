@@ -268,6 +268,41 @@ namespace Api.Controllers.Administracion
             }
         }
 
+        /// <summary>
+        /// Guarda de una vez TODAS las pantallas que el rol podrá ver. Lo que
+        /// no venga en la lista se retira.
+        ///
+        /// Existe porque conceder de una en una obligaba a una llamada por
+        /// pantalla, y a media tanda un fallo dejaba al rol con permisos a
+        /// medias sin que nadie supiera cuáles. Aquí es una transacción: o se
+        /// guarda la decisión completa, o no se guarda nada.
+        /// </summary>
+        [HttpPut("admin/roles/{idRol:int}/menus")]
+        [Authorize]
+        public async Task<IActionResult> ReemplazarMenusDeRol(
+            int idRol, [FromBody] DtoReemplazarMenusRolRequest? request, CancellationToken ct)
+        {
+            try
+            {
+                if (idRol <= 0)
+                {
+                    return BadRequest(new { success = false, message = "Id de rol inválido." });
+                }
+
+                var userId  = await ResolveUsuarioAuditoriaAsync(ct);
+                var machine = ResolveMachine();
+                var result  = await _service.ReemplazarMenusDeRolAsync(
+                    idRol, request?.IdMenus ?? new List<long>(), userId, machine, ct);
+
+                return Ok(new { success = true, id = result.Id, message = result.Message });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error guardando los permisos del rol {IdRol}", idRol);
+                return StatusCode(500, new { success = false, message = "Error guardando los permisos del rol." });
+            }
+        }
+
         [HttpDelete("admin/roles/{idRol:int}/menus/{idMenu:long}")]
         [Authorize]
         public async Task<IActionResult> RemoveMenuFromRol(int idRol, long idMenu, CancellationToken ct)

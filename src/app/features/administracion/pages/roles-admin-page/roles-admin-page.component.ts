@@ -17,7 +17,6 @@ import { UiChipComponent } from '../../../../shared/components/ui-chip/ui-chip.c
 import { UiPageHeaderComponent } from '../../../../shared/components/ui-page-header/ui-page-header.component';
 import { UiPanelHeaderComponent } from '../../../../shared/components/ui-panel-header/ui-panel-header.component';
 import { UiSectionHeaderComponent } from '../../../../shared/components/ui-section-header/ui-section-header.component';
-import { UiSelectOption } from '../../../../shared/interfaces/ui-select-option.interface';
 import { AlertService } from '../../../../shared/services/alert.service';
 import { getApiErrorMessage } from '../../../../shared/utils/api-error-message.util';
 import { RoleAccessSummaryComponent } from '../../components/roles/role-access-summary/role-access-summary.component';
@@ -64,7 +63,6 @@ export class RolesAdminPageComponent implements OnInit {
   readonly savingRole = signal(false);
   readonly savingRoleMenu = signal(false);
   readonly processingRoleId = signal<number | null>(null);
-  readonly removingMenuId = signal<number | null>(null);
 
   readonly roles = signal<readonly RolAdminItem[]>([]);
   readonly allMenus = signal<readonly DbMenuItem[]>([]);
@@ -83,17 +81,6 @@ export class RolesAdminPageComponent implements OnInit {
   readonly activeRoleCount = computed(
     () => this.roles().filter((role) => role.vigente === 1).length,
   );
-  readonly availableMenus = computed(() => {
-    const assignedIds = new Set(this.roleMenus().map((item) => item.idMenu));
-    return this.allMenus().filter((menu) => !assignedIds.has(menu.idMenu));
-  });
-  readonly availableMenuOptions = computed<UiSelectOption<number>[]>(() =>
-    this.availableMenus().map((menu) => ({
-      label: this.formatMenuLabel(menu),
-      value: menu.idMenu,
-    })),
-  );
-
   ngOnInit(): void {
     this.loadMenus();
     this.loadRoles();
@@ -342,8 +329,15 @@ export class RolesAdminPageComponent implements OnInit {
       });
   }
 
-  /** Asigna el menú elegido y actualiza únicamente el panel de permisos. */
-  assignMenu(menuId: number): void {
+  /**
+   * Guarda de una vez TODAS las pantallas del rol.
+   *
+   * Sustituye al par asignar/retirar de una en una. El administrador revisa la
+   * lista entera, marca lo que corresponde y guarda: una llamada, una
+   * transacción. Antes, conceder doce pantallas eran doce peticiones, y si una
+   * fallaba a mitad el rol quedaba con permisos a medias sin avisar.
+   */
+  guardarPermisos(idMenus: number[]): void {
     const roleId = this.selectedRoleId();
     if (!roleId || this.savingRoleMenu()) {
       return;
@@ -351,7 +345,7 @@ export class RolesAdminPageComponent implements OnInit {
 
     this.savingRoleMenu.set(true);
     this.menuService
-      .assignMenuToRol(roleId, { idMenu: menuId })
+      .replaceMenusDeRol(roleId, { idMenus })
       .pipe(
         takeUntilDestroyed(this.destroyRef),
         finalize(() => this.savingRoleMenu.set(false)),
@@ -360,80 +354,29 @@ export class RolesAdminPageComponent implements OnInit {
         next: (response) => {
           if (!response?.success) {
             this.toast.warning(
-              'Asignar permiso',
-              response?.message || 'No fue posible asignar el menú.',
+              'Permisos del rol',
+              response?.message || 'No fue posible guardar los permisos.',
             );
             return;
           }
 
-          this.toast.success('Asignar permiso', response.message || 'Menú asignado correctamente.');
+          this.toast.success(
+            'Permisos del rol',
+            response.message || 'Permisos actualizados correctamente.',
+          );
           this.loadRoleMenus(roleId);
         },
         error: (error: unknown) => {
           this.toast.error(
-            'Asignar permiso',
-            getApiErrorMessage(error, 'Se presentó un error asignando el menú.'),
+            'Permisos del rol',
+            getApiErrorMessage(error, 'Se presentó un error guardando los permisos.'),
           );
         },
       });
   }
 
-  /** Solicita confirmación antes de retirar un menú del rol. */
-  async removeMenu(item: RoleMenuItem): Promise<void> {
-    const roleId = this.selectedRoleId();
-    if (!roleId || this.removingMenuId() !== null) {
-      return;
-    }
-
-    const confirmed = await this.alert.confirm({
-      title: 'Retirar permiso',
-      message: `¿Desea retirar “${item.descripcionMenu}” del rol “${this.selectedRole()?.nombre ?? roleId}”?`,
-      confirmText: 'Sí, retirar',
-      cancelText: 'No, cancelar',
-      icon: 'warning',
-      intent: 'danger',
-      focusCancel: true,
-    });
-
-    if (!confirmed) {
-      return;
-    }
-
-    this.removingMenuId.set(item.idMenu);
-    this.menuService
-      .removeMenuFromRol(roleId, item.idMenu)
-      .pipe(
-        takeUntilDestroyed(this.destroyRef),
-        finalize(() => this.removingMenuId.set(null)),
-      )
-      .subscribe({
-        next: (response) => {
-          if (!response?.success) {
-            this.toast.warning(
-              'Retirar permiso',
-              response?.message || 'No fue posible retirar el menú.',
-            );
-            return;
-          }
-
-          this.toast.success('Retirar permiso', response.message || 'Menú retirado correctamente.');
-          this.loadRoleMenus(roleId);
-        },
-        error: (error: unknown) => {
-          this.toast.error(
-            'Retirar permiso',
-            getApiErrorMessage(error, 'Se presentó un error retirando el menú.'),
-          );
-        },
-      });
-  }
 
   /** Construye una etiqueta jerárquica legible para el selector de permisos. */
-  private formatMenuLabel(menu: DbMenuItem): string {
-    const isTop = menu.idPadre === 0 || menu.idPadre === menu.idMenu;
-    const prefix = isTop ? '' : '↳ ';
-    return `${prefix}${menu.descripcion} · ID ${menu.idMenu}`;
-  }
 
   /** Excluye la raíz técnica ficticia si existiese, pero no ítems reales. */
   private isRootMenu(item: DbMenuItem): boolean {

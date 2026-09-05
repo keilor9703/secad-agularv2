@@ -100,8 +100,7 @@
                 <app-role-menu-tree
                   [menus]="roleMenus()"
                   [loading]="loadingRoleMenus()"
-                  [removingMenuId]="removingMenuId()"
-                  (removeRequested)="removeMenu($event)"
+                  [readonly]="true"
                 />
               } @else {
                 <app-role-access-summary [roles]="roles()" [menus]="allMenus()" />
@@ -123,14 +122,12 @@
 
             <app-role-menu-permissions
               [selectedRole]="selectedRole()"
+              [allMenus]="allMenus()"
               [assignedMenus]="roleMenus()"
-              [availableMenuOptions]="availableMenuOptions()"
               [loading]="loadingRoleMenus()"
               [loadingCatalog]="loadingMenus()"
               [saving]="savingRoleMenu()"
-              [removingMenuId]="removingMenuId()"
-              (assignRequested)="assignMenu($event)"
-              (removeRequested)="removeMenu($event)"
+              (saveRequested)="guardarPermisos($event)"
             />
           </div>
         }

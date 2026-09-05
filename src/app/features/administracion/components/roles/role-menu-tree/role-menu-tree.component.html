@@ -47,6 +47,7 @@
             </small>
           </div>
 
+          @if (!readonly()) {
           <app-ui-button
             size="sm"
             variant="ghost"
@@ -58,6 +59,7 @@
             title="Retirar permiso"
             (buttonClick)="removeRequested.emit(node.item)"
           />
+          }
         </li>
       }
     </ul>
