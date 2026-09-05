@@ -133,6 +133,25 @@ namespace Comun.Dtos
         public string message { get; set; } = string.Empty;
     }
 
+    /// <summary>
+    /// Retiro de un rol concedido a un usuario. El motivo es obligatorio: es
+    /// lo que queda escrito en la auditoría, y sin él el retiro no se explica
+    /// solo. Va por POST y no por DELETE porque DELETE con cuerpo lo descartan
+    /// algunos proxies corporativos.
+    /// </summary>
+    public class DtoRetirarRolRequest
+    {
+        public string? usuario        { get; set; }
+        public string? identificacion { get; set; }
+        public string? observacion    { get; set; }
+    }
+
+    /// <summary>Retiro (bloqueo) de un usuario, con su motivo.</summary>
+    public class DtoRetirarUsuarioRequest
+    {
+        public string? observacion { get; set; }
+    }
+
     public class DtoAsignarRolRequest
     {
         public int usuarioId { get; set; }

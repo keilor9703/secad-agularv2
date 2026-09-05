@@ -404,8 +404,24 @@ namespace ofic.Controllers.Administracion
             }
         }
 
+        /// <summary>
+        /// Retiro de un usuario CON motivo. Es la que usa el panel de
+        /// administración: el formulario exige una observación y la manda en
+        /// el cuerpo, cosa que DELETE no garantiza (hay proxies que descartan
+        /// el cuerpo de un DELETE). El DELETE de abajo se conserva para
+        /// clientes que ya lo usaran, y hace lo mismo sin motivo.
+        /// </summary>
+        [HttpPost("{idUsuario:long}/Retiro")]
+        public Task<IActionResult> RetirarUsuario(
+            long idUsuario, [FromBody] DtoRetirarUsuarioRequest? request)
+            => EliminarUsuarioInternoAsync(idUsuario, request?.observacion);
+
         [HttpDelete("{idUsuario:long}")]
-        public async Task<IActionResult> EliminarUsuario(long idUsuario)
+        public Task<IActionResult> EliminarUsuario(long idUsuario)
+            => EliminarUsuarioInternoAsync(idUsuario, null);
+
+        private async Task<IActionResult> EliminarUsuarioInternoAsync(
+            long idUsuario, string? observacion)
         {
             try
             {
@@ -426,6 +442,7 @@ namespace ofic.Controllers.Administracion
 
                 var result = await _dbUsuarioRepository.EliminarUsuarioAsync(
                     idUsuario,
+                    observacion,
                     usuarioAuditoria,
                     maquinaAuditoria,
                     HttpContext.RequestAborted);
@@ -735,11 +752,25 @@ namespace ofic.Controllers.Administracion
             }
         }
 
+        /// <summary>
+        /// Retiro de un rol CON motivo, que es lo que envía el panel de
+        /// administración. Ver la nota de RetirarUsuario sobre por qué POST.
+        /// </summary>
+        [HttpPost("Roles/{rolId:int}/Retiro")]
+        public Task<IActionResult> RetirarRol(
+            int rolId, [FromBody] DtoRetirarRolRequest? request)
+            => EliminarRolInternoAsync(
+                rolId, request?.usuario, request?.identificacion, request?.observacion);
+
         [HttpDelete("Roles/{rolId}")]
-        public async Task<IActionResult> EliminarRol(
+        public Task<IActionResult> EliminarRol(
             int rolId,
             [FromQuery] string? usuario,
             [FromQuery] string? identificacion)
+            => EliminarRolInternoAsync(rolId, usuario, identificacion, null);
+
+        private async Task<IActionResult> EliminarRolInternoAsync(
+            int rolId, string? usuario, string? identificacion, string? observacion)
         {
             try
             {
@@ -790,6 +821,7 @@ namespace ofic.Controllers.Administracion
                 var result = await _dbUsuarioRepository.EliminarRolAsync(
                     idUsuario,
                     rolId,
+                    observacion,
                     usuarioAuditoria,
                     maquinaAuditoria,
                     HttpContext.RequestAborted);

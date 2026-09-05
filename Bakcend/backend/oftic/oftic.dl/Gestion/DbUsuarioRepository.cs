@@ -251,7 +251,7 @@ ORDER BY r.descripcion, rua.id_rol";
             return result;
         }
 
-        public async Task<DtoGuardarUsuarioResult> EliminarRolAsync(long idUsuario, int rolId, string usuarioAuditoria, string maquinaAuditoria, CancellationToken ct)
+        public async Task<DtoGuardarUsuarioResult> EliminarRolAsync(long idUsuario, int rolId, string? observacion, string usuarioAuditoria, string maquinaAuditoria, CancellationToken ct)
         {
             await using var conn = await _tenant.DataSource.OpenConnectionAsync(ct);
             await using var cmd = conn.CreateCommand();
@@ -271,10 +271,58 @@ UPDATE ctr_roles_user_admin
             cmd.Parameters.AddWithValue("maquinaModif", Truncate(maquinaAuditoria, 100));
 
             var affected = await cmd.ExecuteNonQueryAsync(ct);
+
+            if (affected > 0)
+            {
+                await RegistrarAuditoriaAsync(conn, null, idUsuario, "RETIRO_ROL",
+                    $"Rol {rolId} retirado. Motivo: {MotivoOSinMotivo(observacion)}",
+                    maquinaAuditoria, ct);
+            }
+
             return affected > 0
                 ? new DtoGuardarUsuarioResult { idUsuario = idUsuario, message = "Rol retirado correctamente." }
                 : new DtoGuardarUsuarioResult { idUsuario = 0,         message = "No se encontró un rol vigente para retirar." };
         }
+
+        /// <summary>
+        /// Deja constancia del retiro en ctr_auditoria. La tabla existe desde
+        /// V2 y hasta ahora solo se leía (el contador del home): un retiro de
+        /// rol o de usuario es exactamente lo que estaba pensada para guardar,
+        /// y es el único sitio donde el MOTIVO que pide la pantalla sobrevive
+        /// —ctr_roles_user_admin.justificacion explica por qué se CONCEDIÓ el
+        /// rol, y machacarla borraría esa otra historia.
+        ///
+        /// Nunca hace fracasar la operación: si la traza falla, el retiro ya
+        /// está hecho y negarlo sería peor que perder una línea de auditoría.
+        /// </summary>
+        private async Task RegistrarAuditoriaAsync(
+            NpgsqlConnection conn, NpgsqlTransaction? tx, long idUsuario,
+            string accion, string detalle, string maquinaAuditoria, CancellationToken ct)
+        {
+            try
+            {
+                await using var cmd = conn.CreateCommand();
+                if (tx is not null) cmd.Transaction = tx;
+                cmd.CommandText = @"
+INSERT INTO ctr_auditoria (id_usuario, username, accion, detalle, ip_origen)
+SELECT @idUsuario, u.username, @accion, @detalle, @ip
+FROM   ctr_usuarios u WHERE u.id_usuario = @idUsuario";
+                cmd.Parameters.AddWithValue("idUsuario", idUsuario);
+                cmd.Parameters.AddWithValue("accion",    Truncate(accion, 200));
+                cmd.Parameters.AddWithValue("detalle",   detalle);
+                cmd.Parameters.AddWithValue("ip",        Truncate(maquinaAuditoria, 50));
+                await cmd.ExecuteNonQueryAsync(ct);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex,
+                    "No se pudo registrar la auditoría de {Accion} para el usuario {IdUsuario}",
+                    accion, idUsuario);
+            }
+        }
+
+        private static string MotivoOSinMotivo(string? observacion) =>
+            string.IsNullOrWhiteSpace(observacion) ? "(sin motivo indicado)" : observacion.Trim();
 
         public async Task<List<DtoRol>> GetRolesAsync(CancellationToken ct)
         {
@@ -343,7 +391,7 @@ RETURNING id_usuario";
             return new DtoGuardarUsuarioResult { idUsuario = idUsuario, message = "Usuario guardado correctamente." };
         }
 
-        public async Task<DtoGuardarUsuarioResult> EliminarUsuarioAsync(long idUsuario, string usuarioAuditoria, string maquinaAuditoria, CancellationToken ct)
+        public async Task<DtoGuardarUsuarioResult> EliminarUsuarioAsync(long idUsuario, string? observacion, string usuarioAuditoria, string maquinaAuditoria, CancellationToken ct)
         {
             await using var conn = await _tenant.DataSource.OpenConnectionAsync(ct);
             await using var tx = await conn.BeginTransactionAsync(ct);
@@ -373,6 +421,10 @@ UPDATE ctr_roles_user_admin
                     cmd.Parameters.AddWithValue("id", idUsuario);
                     await cmd.ExecuteNonQueryAsync(ct);
                 }
+
+                await RegistrarAuditoriaAsync(conn, tx, idUsuario, "RETIRO_USUARIO",
+                    $"Usuario bloqueado y roles vigentes retirados. Motivo: {MotivoOSinMotivo(observacion)}",
+                    maquinaAuditoria, ct);
 
                 await tx.CommitAsync(ct);
                 return new DtoGuardarUsuarioResult { idUsuario = idUsuario, message = "Usuario eliminado correctamente." };

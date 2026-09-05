@@ -17,8 +17,13 @@ namespace Datos.Interfaz
             string usuarioAuditoria,
             string maquinaAuditoria,
             CancellationToken ct);
+        /// <param name="observacion">
+        /// Motivo del retiro. Se registra en ctr_auditoria; si viene vacío el
+        /// retiro se hace igual, pero queda sin explicación en la traza.
+        /// </param>
         Task<DtoGuardarUsuarioResult> EliminarUsuarioAsync(
             long idUsuario,
+            string? observacion,
             string usuarioAuditoria,
             string maquinaAuditoria,
             CancellationToken ct);
@@ -28,9 +33,11 @@ namespace Datos.Interfaz
             string usuarioAuditoria,
             string maquinaAuditoria,
             CancellationToken ct);
+        /// <param name="observacion">Motivo del retiro, registrado en ctr_auditoria.</param>
         Task<DtoGuardarUsuarioResult> EliminarRolAsync(
             long idUsuario,
             int rolId,
+            string? observacion,
             string usuarioAuditoria,
             string maquinaAuditoria,
             CancellationToken ct);
