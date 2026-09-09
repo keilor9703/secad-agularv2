@@ -1,0 +1,206 @@
+<div class="ak">
+
+  <app-ui-section-header
+    [title]="titulo()"
+    icon="fa-solid fa-key"
+    [description]="descripcion()"
+  >
+    <app-ui-button
+      header-actions
+      variant="primary" icon="fa-solid fa-plus" size="sm"
+      (buttonClick)="abrirCreacion()"
+    >Nueva llave</app-ui-button>
+  </app-ui-section-header>
+
+  @if (cargando()) {
+    <app-ui-spinner label="Cargando llaves…" contained />
+  } @else if (listaFiltrada().length === 0) {
+    <div class="ak-vacio">
+      <i class="fa-solid fa-key" aria-hidden="true"></i>
+      <div>
+        <strong>Todavía no hay ninguna llave para este canal.</strong>
+        <span>
+          Genere una y entréguesela a quien integra. Mientras no exista, la única forma de entrar
+          es la clave global del servidor, que es la misma para todos los CAD y no distingue a cuál
+          escribir.
+        </span>
+      </div>
+      <app-ui-button variant="primary" icon="fa-solid fa-plus" (buttonClick)="abrirCreacion()">
+        Generar la primera
+      </app-ui-button>
+    </div>
+  } @else {
+    <ul class="ak-lista">
+      @for (l of listaFiltrada(); track l.id) {
+        <li class="ak-item" [class.ak-item--revocada]="!l.activa" (click)="seleccionar(l)">
+
+          <div class="ak-item__cab">
+            <strong class="ak-item__nombre">{{ l.nombre }}</strong>
+            <app-ui-badge [label]="etiquetaAlcance(l.alcance)" variant="info" size="xs" />
+            @if (l.activa) {
+              <app-ui-badge label="Activa" variant="success" size="xs" />
+            } @else {
+              <app-ui-badge label="Revocada" variant="danger" size="xs" />
+            }
+            @if (enGracia(l)) {
+              <app-ui-badge label="La anterior sigue viva" variant="warning" size="xs" />
+            }
+          </div>
+
+          <!-- El secreto: oculto por defecto, y cada revelado queda auditado. -->
+          <div class="ak-clave">
+            <code>{{ mostrada(l) }}</code>
+            <app-ui-button
+              variant="secondary" appearance="ghost" size="sm" iconOnly
+              [icon]="visibles()[l.id] ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye'"
+              [ariaLabel]="visibles()[l.id] ? 'Ocultar la llave' : 'Mostrar la llave'"
+              [tooltip]="visibles()[l.id] ? 'Ocultar' : 'Mostrar (queda registrado quién la vio)'"
+              (buttonClick)="alternarVisible(l)"
+            />
+            <app-ui-button
+              variant="secondary" appearance="ghost" size="sm" iconOnly
+              [icon]="copiada() === l.id ? 'fa-solid fa-check' : 'fa-solid fa-copy'"
+              ariaLabel="Copiar la llave"
+              tooltip="Copiar"
+              (buttonClick)="copiar(l)"
+            />
+          </div>
+
+          <div class="ak-item__meta">
+            <span><i class="fa-solid fa-tower-cell"></i> {{ nombreUnidad(l.sitioGrabaDefecto) }}</span>
+            @if (l.ultimoUso) {
+              <span><i class="fa-solid fa-clock-rotate-left"></i> último uso {{ l.ultimoUso | date:'dd/MM/yyyy HH:mm' }}</span>
+              <span><i class="fa-solid fa-arrow-right-to-bracket"></i> {{ l.totalUsos }} petición(es)</span>
+            } @else {
+              <span class="ak-item__sinuso"><i class="fa-solid fa-circle-exclamation"></i> nunca se ha usado</span>
+            }
+          </div>
+
+          @if (l.notas) { <p class="ak-item__notas">{{ l.notas }}</p> }
+
+          @if (resultadoPrueba()?.id === l.id) {
+            <div class="ak-prueba" [class.ak-prueba--mal]="!resultadoPrueba()!.datos.ok">
+              <i [class]="resultadoPrueba()!.datos.ok ? 'fa-solid fa-circle-check' : 'fa-solid fa-circle-xmark'"></i>
+              <span>
+                <strong>HTTP {{ resultadoPrueba()!.datos.estado }}</strong>
+                <code>{{ resultadoPrueba()!.datos.cuerpo }}</code>
+              </span>
+            </div>
+          }
+
+          <div class="ak-item__acciones">
+            <app-ui-button
+              variant="secondary" appearance="ghost" size="sm" icon="fa-solid fa-vial"
+              [loading]="probando() === l.id" [disabled]="probando() === l.id || !l.activa"
+              tooltip="Comprueba la llave contra el endpoint real. No registra nada."
+              (buttonClick)="probar(l)"
+            >Probar</app-ui-button>
+            <app-ui-button
+              variant="secondary" appearance="ghost" size="sm" icon="fa-solid fa-pen"
+              (buttonClick)="abrirEdicion(l)"
+            >Editar</app-ui-button>
+            <app-ui-button
+              variant="secondary" appearance="ghost" size="sm" icon="fa-solid fa-rotate"
+              [disabled]="!l.activa"
+              tooltip="Emite una llave nueva y deja la actual viva 24 horas"
+              (buttonClick)="regenerar(l)"
+            >Regenerar</app-ui-button>
+            <app-ui-button
+              [variant]="l.activa ? 'secondary' : 'primary'" appearance="ghost" size="sm"
+              [icon]="l.activa ? 'fa-solid fa-ban' : 'fa-solid fa-circle-check'"
+              (buttonClick)="cambiarEstado(l)"
+            >{{ l.activa ? 'Revocar' : 'Reactivar' }}</app-ui-button>
+          </div>
+        </li>
+      }
+    </ul>
+  }
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     Crear / editar
+     ══════════════════════════════════════════════════════════════════════ -->
+<app-ui-modal
+  [open]="modalAbierto()"
+  [title]="editandoId() ? 'Editar llave' : 'Nueva llave de API'"
+  [icon]="editandoId() ? 'fa-solid fa-pen-to-square' : 'fa-solid fa-key'"
+  size="md"
+  (closeRequested)="cerrarModal()"
+>
+  <div modal-body>
+    @if (recienEmitida(); as emitida) {
+      <!-- Se muestra aquí y no en un toast porque hay que darle tiempo a
+           copiarla; luego siempre se puede volver a ver desde la lista. -->
+      <div class="ak-emitida">
+        <i class="fa-solid fa-circle-check" aria-hidden="true"></i>
+        <strong>Llave generada.</strong>
+        <p>Cópiela y entréguesela a quien integra. Puede volver a verla cuando quiera desde la lista.</p>
+        <div class="ak-emitida__clave">
+          <code>{{ emitida.clave }}</code>
+          <app-ui-button
+            variant="primary" size="sm"
+            [icon]="copiada() === 'nueva' ? 'fa-solid fa-check' : 'fa-solid fa-copy'"
+            (buttonClick)="copiarTexto(emitida.clave, 'nueva')"
+          >{{ copiada() === 'nueva' ? 'Copiada' : 'Copiar' }}</app-ui-button>
+        </div>
+      </div>
+    } @else {
+      <form [formGroup]="form" class="ak-form">
+        <app-ui-input
+          formControlName="nombre"
+          label="¿De quién es esta llave?"
+          placeholder="Ej: Planta Avaya — proveedor XYZ"
+          [maxlength]="120"
+          required
+          [error]="errorNombre()"
+          hint="Un nombre que permita saber a quién revocar si hace falta."
+        />
+
+        <app-ui-select
+          formControlName="alcance"
+          label="Para qué sirve"
+          [options]="opcionesAlcance"
+          [clearable]="false"
+          [disabled]="!!alcanceFijo() || !!editandoId()"
+          [hint]="editandoId()
+                    ? 'El alcance no se cambia: ampliarlo en caliente le daría más permisos a un secreto que ya está en manos de un tercero.'
+                    : 'Acota lo que puede hacer. La llave de la planta no debería poder crear casos por chat.'"
+        />
+
+        <app-ui-select
+          formControlName="sitioGrabaDefecto"
+          label="Unidad por defecto"
+          [options]="opcionesUnidad()"
+          [clearable]="false"
+          hint="La que se usa cuando el sistema externo no manda ninguna. Así la planta no tiene que conocer ese número."
+        />
+
+        <app-ui-input
+          formControlName="notas"
+          label="Notas"
+          placeholder="Contacto del proveedor, fecha de entrega…"
+          multiline
+          [rows]="2"
+        />
+      </form>
+    }
+  </div>
+
+  <div modal-actions class="ak-acciones-modal">
+    @if (recienEmitida()) {
+      <app-ui-button variant="primary" icon="fa-solid fa-check" (buttonClick)="cerrarModal()">
+        Listo
+      </app-ui-button>
+    } @else {
+      <app-ui-button variant="secondary" appearance="ghost" icon="fa-solid fa-xmark"
+                     (buttonClick)="cerrarModal()">Cancelar</app-ui-button>
+      <app-ui-button
+        variant="primary"
+        icon="fa-solid fa-floppy-disk"
+        [loading]="guardando()"
+        [disabled]="guardando()"
+        (buttonClick)="guardar()"
+      >{{ editandoId() ? 'Guardar' : 'Generar llave' }}</app-ui-button>
+    }
+  </div>
+</app-ui-modal>

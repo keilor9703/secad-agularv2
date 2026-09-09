@@ -411,3 +411,49 @@
   .ig-campo__area    { border-color: rgba(255, 255, 255, .2); }
   .ig-vacio          { border-color: rgba(255, 255, 255, .18); }
 }
+
+// ══════════════════════════════════════════════════════════════════════════
+//  Planta telefónica (PBX)
+// ══════════════════════════════════════════════════════════════════════════
+
+.ig-pbx {
+  display:        flex;
+  flex-direction: column;
+  gap:            18px;
+
+  &__intro {
+    display:       flex;
+    gap:           14px;
+    padding:       14px 16px;
+    border-radius: 10px;
+    background:    rgba(8, 166, 203, .07);
+    border:        1px solid rgba(14, 116, 144, .28);
+
+    > i { font-size: calc(22px * var(--font-size-scale, 1)); color: #0e7490; }
+
+    div    { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+    strong { font-size: calc(13px * var(--font-size-scale, 1)); }
+    span   { font-size: calc(12px * var(--font-size-scale, 1)); color: var(--ui-text-muted, #64748b); }
+  }
+
+  &__aviso {
+    display:     flex;
+    align-items: center;
+    gap:         8px;
+    margin:      0;
+    font-size:   calc(12px * var(--font-size-scale, 1));
+    color:       #b45309;
+  }
+}
+
+// La ficha técnica dentro del modal de entrantes: se separa del formulario
+// para que se lea como lo que es, documentación y no campos editables.
+.ig-contrato {
+  margin-top:    4px;
+  padding-top:   14px;
+  border-top:    1px solid var(--ui-border, #e2e8f0);
+}
+
+:host-context(html.dark-mode) {
+  .ig-pbx__intro { background: rgba(8, 166, 203, .12); }
+}

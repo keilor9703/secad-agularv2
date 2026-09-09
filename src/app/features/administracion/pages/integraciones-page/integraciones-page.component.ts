@@ -51,6 +51,9 @@ import {
 } from '../../services/camara-integracion.service';
 import { ActivatedRoute } from '@angular/router';
 import { ToastService } from '../../../../core/services/toast.service';
+import { ApiKeysService, DtoApiKey, DtoContratoIntegracion } from '../../services/api-keys.service';
+import { ApiKeysPanelComponent } from '../../components/integraciones/api-keys-panel/api-keys-panel.component';
+import { ContratoIntegracionComponent } from '../../components/integraciones/contrato-integracion/contrato-integracion.component';
 import { AuthService }   from '../../../../core/auth/auth.service';
 import {
   ConfigSmsService,
@@ -82,7 +85,7 @@ const PROVEEDORES_SMS: readonly ProveedorSmsInfo[] = [
   },
 ];
 
-type Tab     = 'salientes' | 'entrantes' | 'sms' | 'camaras' | 'auditoria';
+type Tab     = 'salientes' | 'entrantes' | 'pbx' | 'sms' | 'camaras' | 'auditoria';
 type ModalT  = 'saliente-create' | 'saliente-edit'
              | 'entrante-create' | 'entrante-edit'
              | 'camara-create'   | 'camara-edit'
@@ -106,6 +109,8 @@ type ModalT  = 'saliente-create' | 'saliente-edit'
     UiSpinnerComponent,
     UiTableComponent,
     UiModalComponent,
+    ApiKeysPanelComponent,
+    ContratoIntegracionComponent,
   ],
   templateUrl: './integraciones-page.component.html',
   styleUrls: ['./integraciones-page.component.scss'],
@@ -116,6 +121,7 @@ export class IntegracionesPageComponent implements OnInit {
   private readonly agSvc  = inject(AgenciaExternaService);
   private readonly camSvc = inject(CamaraIntegracionService);
   private readonly smsSvc = inject(ConfigSmsService);
+  private readonly apiKeys = inject(ApiKeysService);
   private readonly route  = inject(ActivatedRoute);
   private readonly toast  = inject(ToastService);
   private readonly auth   = inject(AuthService);
@@ -301,6 +307,18 @@ export class IntegracionesPageComponent implements OnInit {
   readonly formEntPayload = signal('');
   readonly editEntId      = signal('');
 
+  // ── Contratos ──────────────────────────────────────────────────────────────
+  // Lo que hay que entregarle a quien integra, generado desde los propios
+  // endpoints del backend. Antes esto eran dos campos de texto libre en el
+  // formulario: en cuanto el código cambiaba, la documentación mentía.
+  readonly contratoPbx      = signal<DtoContratoIntegracion | null>(null);
+  readonly contratoEntrante = signal<DtoContratoIntegracion | null>(null);
+  readonly llavePbx         = signal<DtoApiKey | null>(null);
+  readonly cargandoContrato = signal(false);
+
+  /** Los canales que tienen contrato; el resto del catálogo es documental. */
+  private readonly canalDeTipo: Record<string, string> = { CHAT: 'CHAT', SMS: 'SMS' };
+
   // ── Tab Cámaras (integraciones VMS) ─────────────────────────────────────────
   readonly camaras   = signal<DtoCamaraIntegracion[]>([]);
   readonly loadingCam = signal(false);
@@ -343,6 +361,12 @@ export class IntegracionesPageComponent implements OnInit {
       badge: this.salientes().length,
     },
     { id: 'entrantes', label: 'Entrantes', icon: 'fa-solid fa-inbox', badge: this.entrantes().length },
+    {
+      // La planta telefónica es una integración entrante más, pero se le da
+      // pestaña propia porque lo que hay que entregarle al proveedor —webhook,
+      // llave, cuerpo y la explicación del ACD— no cabe en una fila de tabla.
+      id: 'pbx', label: 'Planta telefónica (PBX)', icon: 'fa-solid fa-phone-volume',
+    },
     { id: 'sms', label: 'Proveedor SMS', icon: 'fa-solid fa-comment-sms' },
     { id: 'camaras', label: 'Cámaras (VMS)', icon: 'fa-solid fa-video', badge: this.camaras().length },
     { id: 'auditoria', label: 'Auditoría', icon: 'fa-solid fa-clock-rotate-left' },
@@ -568,7 +592,7 @@ export class IntegracionesPageComponent implements OnInit {
 
     // Permite abrir directamente una pestaña vía URL (ej: /administracion/integraciones?tab=sms)
     const tabParam = this.route.snapshot.queryParamMap.get('tab') as Tab | null;
-    if (tabParam && ['salientes', 'entrantes', 'sms', 'camaras', 'auditoria'].includes(tabParam)) {
+    if (tabParam && ['salientes', 'entrantes', 'pbx', 'sms', 'camaras', 'auditoria'].includes(tabParam)) {
       this.setTab(tabParam);
     }
   }
@@ -580,6 +604,9 @@ export class IntegracionesPageComponent implements OnInit {
     if (t === 'sms' && !this.configSms()) {
       this.loadSms();
     }
+    // El contrato de la PBX se pide al abrir; el panel de llaves lo vuelve a
+    // pedir en cuanto sabe cuál es la llave activa, para que salga con ella.
+    if (t === 'pbx' && !this.contratoPbx()) this.cargarContrato('PBX', undefined, 'pbx');
     if (t === 'auditoria' && !this.audSalientes().length && !this.audEntrantes().length)
       this.loadAuditoria();
     if (t === 'camaras') {
@@ -709,11 +736,60 @@ export class IntegracionesPageComponent implements OnInit {
     });
   }
 
+  // ── Contratos ───────────────────────────────────────────────────────────────
+
+  /**
+   * Trae el contrato del canal. Con una llave, viene con esa llave ya puesta en
+   * las cabeceras y en el curl, listo para copiar y mandar; ese revelado queda
+   * en la bitácora como cualquier otro.
+   */
+  cargarContrato(canal: string, llaveId: string | undefined, destino: 'pbx' | 'entrante'): void {
+    this.cargandoContrato.set(true);
+    this.apiKeys.contrato(canal, llaveId).subscribe({
+      next: r => {
+        this.cargandoContrato.set(false);
+        if (destino === 'pbx') this.contratoPbx.set(r.data);
+        else                   this.contratoEntrante.set(r.data);
+      },
+      error: () => {
+        this.cargandoContrato.set(false);
+        if (destino === 'pbx') this.contratoPbx.set(null);
+        else                   this.contratoEntrante.set(null);
+      },
+    });
+  }
+
+  /** La pestaña PBX recarga el contrato cuando cambia la llave elegida. */
+  onLlavePbx(l: DtoApiKey | null): void {
+    this.llavePbx.set(l);
+    this.cargarContrato('PBX', l?.id, 'pbx');
+  }
+
+  /**
+   * El canal del formulario de entrantes decide la ruta: no es un texto libre.
+   * Las rutas están fijas en los controladores, así que escribirlas a mano no
+   * enrutaba nada — solo servía para documentar mal.
+   */
+  onTipoCanalChange(): void {
+    const canal = this.canalDeTipo[this.formEnt.controls.tipoCanal.value];
+    if (!canal) { this.contratoEntrante.set(null); return; }
+
+    this.apiKeys.contrato(canal).subscribe({
+      next: r => {
+        this.contratoEntrante.set(r.data);
+        this.formEnt.controls.endpointRelativo.setValue(r.data.ruta);
+      },
+      error: () => this.contratoEntrante.set(null),
+    });
+  }
+
   openCreateEnt(): void {
     this.formEnt.reset(this.emptyEnt());
     this.formEntHeaders.set('');
     this.formEntPayload.set('');
     this.editEntId.set('');
+    this.contratoEntrante.set(null);
+    this.onTipoCanalChange();
     this.modal.set('entrante-create');
     document.body.classList.add('ui-modal-open');
   }
@@ -731,6 +807,7 @@ export class IntegracionesPageComponent implements OnInit {
     });
     this.formEntHeaders.set(e.headersRequeridos ?? '');
     this.formEntPayload.set(e.ejemploPayload ?? '');
+    this.onTipoCanalChange();
     this.modal.set('entrante-edit');
     document.body.classList.add('ui-modal-open');
   }
@@ -739,8 +816,6 @@ export class IntegracionesPageComponent implements OnInit {
     const v = this.formEnt.getRawValue();
     if (!v.nombre.trim())
       return void this.toast.warning('Validar', 'El nombre es obligatorio.');
-    if (!v.endpointRelativo.trim())
-      return void this.toast.warning('Validar', 'El endpoint es obligatorio.');
 
     const headers = this.formEntHeaders();
     const payload = this.formEntPayload();

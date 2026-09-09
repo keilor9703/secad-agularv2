@@ -1,4 +1,7 @@
 using Comun.Dtos.Agencias;
+using Comun.Dtos.Integraciones;
+using Datos.Interfaz;
+using Datos.Tenant;
 using Comun.Snowflake;
 using Negocio.Interfaz;
 using Microsoft.AspNetCore.Mvc;
@@ -26,31 +29,70 @@ namespace Api.Controllers.Operacion
         private readonly IDbActuacionService                     _svc;
         private readonly ISnowflakeGenerator                     _snowflake;
         private readonly ILogger<ActualizacionExternaController> _logger;
-        private readonly string                                  _apiKey;
+        private readonly ApiKeyContext                           _llave;
+        private readonly TenantContext                           _tenant;
+        private readonly IDbApiKeyRepository                     _apiKeyRepo;
+        private readonly string                                  _apiKeyGlobal;
 
         public ActualizacionExternaController(
             IDbActuacionService                     svc,
             ISnowflakeGenerator                     snowflake,
+            ApiKeyContext                           llave,
+            TenantContext                           tenant,
+            IDbApiKeyRepository                     apiKeyRepo,
             ILogger<ActualizacionExternaController> logger,
             IConfiguration                          configuration)
         {
-            _svc      = svc;
-            _snowflake= snowflake;
-            _logger   = logger;
-            // Reutiliza la misma API Key que RecepcionExterna — un solo secreto para PIP
-            _apiKey   = configuration["RecepcionExterna:ApiKey"] ?? "";
+            _svc         = svc;
+            _snowflake   = snowflake;
+            _llave       = llave;
+            _tenant      = tenant;
+            _apiKeyRepo  = apiKeyRepo;
+            _logger      = logger;
+            // Respaldo mientras queden integraciones con la clave global.
+            _apiKeyGlobal = configuration["RecepcionExterna:ApiKey"] ?? "";
         }
 
-        private IActionResult? ValidarApiKey()
+        /// <summary>
+        /// La llave de la petición debe existir y alcanzar para actualizar casos.
+        /// Con una llave propia del CAD, el tenant ya lo resolvió el middleware a
+        /// partir de ella y no del ?codDane= de la URL.
+        /// </summary>
+        private IActionResult? ValidarLlave()
         {
-            if (string.IsNullOrWhiteSpace(_apiKey))
-                return StatusCode(503, new { success = false,
-                    message = "Integración no configurada." });
+            if (_llave.Resuelta)
+            {
+                if (!_llave.Cubre(AlcanceApiKey.Actualizacion))
+                    return StatusCode(403, new
+                    {
+                        success = false,
+                        message = $"Esta llave tiene alcance {_llave.Llave!.Alcance} y este endpoint exige {AlcanceApiKey.Actualizacion}."
+                    });
 
-            var h = Request.Headers["X-Api-Key"].FirstOrDefault() ?? "";
-            if (!string.Equals(h, _apiKey, StringComparison.Ordinal))
+                _ = _apiKeyRepo.RegistrarUsoAsync(
+                    _llave.Llave!.Id,
+                    HttpContext.Connection.RemoteIpAddress?.ToString(),
+                    CancellationToken.None);
+                return null;
+            }
+
+            if (string.IsNullOrWhiteSpace(_apiKeyGlobal))
                 return Unauthorized(new { success = false, message = "API key inválida." });
 
+            var presentada = Request.Headers["X-Api-Key"].FirstOrDefault() ?? "";
+            if (!string.Equals(presentada, _apiKeyGlobal, StringComparison.Ordinal))
+                return Unauthorized(new { success = false, message = "API key inválida." });
+
+            if (!_tenant.IsInitialized)
+                return StatusCode(403, new
+                {
+                    success = false,
+                    message = "No se pudo determinar el CAD destino. Use una llave emitida en Hub de Integraciones."
+                });
+
+            _logger.LogWarning(
+                "Actualización externa autenticada con la clave GLOBAL de appsettings (cod_dane={Dane}). " +
+                "Emita una llave propia del CAD con alcance ACTUALIZACION.", _tenant.CodDane);
             return null;
         }
 
@@ -86,7 +128,7 @@ namespace Api.Controllers.Operacion
             CancellationToken ct)
         {
             // ── 1. Autenticación (igual que RecepcionExternaController) ──────────
-            var keyError = ValidarApiKey();
+            var keyError = ValidarLlave();
             if (keyError is not null) return keyError;
 
             // ── 2. Validaciones básicas ──────────────────────────────────────────

@@ -184,6 +184,14 @@ builder.Services.AddSignalR();
 
 // Data repositories
 builder.Services.AddScoped<IDbMasterRepository, DbMasterRepository>();
+
+// Llaves de API de las integraciones entrantes. Viven en la MAESTRA porque la
+// llave es la que dice a qué tenant pertenece la petición: consultarlas en la
+// base del tenant exigiría saber el tenant de antemano.
+builder.Services.AddScoped<IDbApiKeyRepository, DbApiKeyRepository>();
+builder.Services.AddScoped<IApiKeyService,      ApiKeyService>();
+// Una por petición: la llave con la que entró, resuelta por TenantMiddleware.
+builder.Services.AddScoped<ApiKeyContext>();
 builder.Services.AddScoped<IDbAuthRepository, DbAuthRepository>();
 builder.Services.AddScoped<IDbMenuRepository, DbMenuRepository>();
 builder.Services.AddScoped<IDbMenuService, DbMenuService>();

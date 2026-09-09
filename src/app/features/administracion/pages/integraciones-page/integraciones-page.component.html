@@ -254,6 +254,52 @@
     </section>
   }
 
+  <!-- ═══ Planta telefónica (PBX) ════════════════════════════════════════
+       Todo lo que el proveedor de la planta necesita, en un solo sitio: la
+       llave con la que entra, el webhook al que llama, el cuerpo exacto y la
+       explicación del ACD, que es lo que ata la llamada al operador y el
+       error de integración más probable si nadie se lo dice.
+       ═══════════════════════════════════════════════════════════════════ -->
+  @if (tab() === 'pbx') {
+    <section class="ig-panel ig-pbx">
+
+      <div class="ig-pbx__intro">
+        <i class="fa-solid fa-circle-nodes" aria-hidden="true"></i>
+        <div>
+          <strong>Cómo funciona</strong>
+          <span>
+            La planta telefónica llama al webhook de SECAD cada vez que una llamada entra y es
+            contestada por una extensión. SECAD la registra y el operador la ve aparecer en
+            Recepción sin hacer nada. La llave con la que entra dice a qué CAD pertenece la
+            planta, así que no hay que configurar códigos ni bases de datos del otro lado.
+          </span>
+        </div>
+      </div>
+
+      <app-api-keys-panel
+        alcanceFijo="PBX"
+        titulo="Llave de la planta telefónica"
+        descripcion="Es la credencial que se le entrega al proveedor. Identifica a este CAD, así que
+                     nadie más puede escribir llamadas aquí ni esta llave puede escribir en otro CAD."
+        (llaveSeleccionada)="onLlavePbx($event)"
+      />
+
+      @if (cargandoContrato()) {
+        <app-ui-spinner label="Preparando la ficha técnica…" contained />
+      } @else if (contratoPbx(); as contrato) {
+        <app-contrato-integracion [contrato]="contrato" />
+
+        @if (!llavePbx()) {
+          <p class="ig-pbx__aviso">
+            <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
+            Genere una llave arriba para que la ficha salga con la credencial puesta y se pueda
+            entregar tal cual.
+          </p>
+        }
+      }
+    </section>
+  }
+
   <!-- ═══ Proveedor SMS ══════════════════════════════════════════════════ -->
   @if (tab() === 'sms') {
     <section class="ig-panel">
@@ -717,6 +763,8 @@
         label="Tipo de canal"
         [options]="opcionesTipoCanal"
         [clearable]="false"
+        (ngModelChange)="onTipoCanalChange()"
+        hint="Decide el endpoint y la ficha técnica."
       />
     </div>
 
@@ -725,41 +773,33 @@
     <div class="ig-form__par">
       <app-ui-input
         formControlName="endpointRelativo"
-        label="Endpoint relativo"
-        placeholder="/api/RecepcionExterna/chat"
-        required
+        label="Endpoint"
+        readonly
+        hint="No se elige: la ruta la define el canal. Escribirla a mano no enrutaba nada."
       />
       <app-ui-input
         class="ig-form__corto"
         formControlName="sitioGrabaDefecto"
         label="Sitio grabación"
         type="number"
+        hint="0 = la de la llave"
       />
     </div>
 
-    <label class="ig-campo">
-      <span class="ig-campo__lbl">Headers requeridos</span>
-      <textarea
-        class="ig-campo__area"
-        rows="3"
-        placeholder='{ "X-Api-Key": "…", "X-Cod-Dane": "11001" }'
-        [value]="formEntHeaders()"
-        (input)="formEntHeaders.set(valorDe($event))"
-      ></textarea>
-      <span class="ig-campo__pie">Los que debe enviar el sistema externo, en JSON.</span>
-    </label>
-
-    <label class="ig-campo">
-      <span class="ig-campo__lbl">Payload de ejemplo</span>
-      <textarea
-        class="ig-campo__area"
-        rows="6"
-        placeholder='{ "sitioGraba": 1, "nombreReportante": "…" }'
-        [value]="formEntPayload()"
-        (input)="formEntPayload.set(valorDe($event))"
-      ></textarea>
-      <span class="ig-campo__pie">JSON de referencia para quien integre desde el otro lado.</span>
-    </label>
+    <!-- Antes aquí había dos áreas de texto —«headers requeridos» y «payload
+         de ejemplo»— que alguien llenaba a mano. En cuanto el código cambiaba,
+         esa documentación mentía y nadie se enteraba hasta que la integración
+         fallaba. Ahora sale del propio backend y no se puede editar. -->
+    @if (contratoEntrante(); as contrato) {
+      <div class="ig-contrato">
+        <app-contrato-integracion [contrato]="contrato" />
+      </div>
+    } @else {
+      <p class="ig-campo__pie">
+        Este tipo de canal no tiene un endpoint propio en SECAD: la ficha queda solo como
+        documentación interna. Los canales con endpoint son Chat y SMS.
+      </p>
+    }
 
     <app-ui-input
       formControlName="notas"

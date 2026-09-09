@@ -1,0 +1,159 @@
+// ══════════════════════════════════════════════════════════════════════════
+//  Ficha técnica de un canal entrante.
+//
+//  Casi todo es texto que alguien va a copiar y pegar en un correo o en una
+//  consola, así que manda la legibilidad del monoespaciado y que nada se
+//  desborde: los payload y los curl son largos por naturaleza.
+// ══════════════════════════════════════════════════════════════════════════
+
+.ci {
+  display:        flex;
+  flex-direction: column;
+  gap:            14px;
+}
+
+.ci-bloque {
+  display:        flex;
+  flex-direction: column;
+  gap:            6px;
+
+  &__titulo {
+    display:        flex;
+    align-items:    center;
+    gap:            8px;
+    font-size:      calc(11.5px * var(--font-size-scale, 1));
+    font-weight:    700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color:          var(--ui-text-muted, #64748b);
+  }
+
+  &__copiar { margin-left: auto; }
+
+  &--avisos {
+    padding:       10px 12px;
+    border-radius: 8px;
+    border:        1px solid rgba(217, 119, 6, .30);
+    background:    rgba(245, 158, 11, .08);
+  }
+}
+
+.ci-url {
+  display:       flex;
+  align-items:   center;
+  gap:           8px;
+  padding:       8px 10px;
+  border-radius: 8px;
+  border:        1px solid var(--ui-border, #e2e8f0);
+  background:    var(--ui-surface-muted, #f8fafc);
+
+  code {
+    flex:        1 1 auto;
+    min-width:   0;
+    overflow-x:  auto;
+    white-space: nowrap;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size:   calc(12px * var(--font-size-scale, 1));
+  }
+}
+
+.ci-nota {
+  margin:    0;
+  font-size: calc(11px * var(--font-size-scale, 1));
+  color:     var(--ui-text-muted, #64748b);
+}
+
+.ci-tabla {
+  border-collapse: collapse;
+  width:           100%;
+
+  td {
+    padding:       4px 8px;
+    border-bottom: 1px solid var(--ui-border, #e2e8f0);
+    font-size:     calc(12px * var(--font-size-scale, 1));
+    vertical-align: top;
+  }
+
+  &__clave { width: 190px; white-space: nowrap; }
+}
+
+// El valor de una cabecera puede ser una llave de 50 caracteres: que corte y no
+// estire la tabla.
+.ci-valor {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  word-break:  break-all;
+}
+
+.ci-code {
+  margin:        0;
+  padding:       10px 12px;
+  border-radius: 8px;
+  border:        1px solid var(--ui-border, #e2e8f0);
+  background:    var(--ui-surface-muted, #f8fafc);
+  font-family:   ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size:     calc(11.5px * var(--font-size-scale, 1));
+  line-height:   1.55;
+  overflow-x:    auto;
+  white-space:   pre;
+
+  &--curl { white-space: pre-wrap; word-break: break-all; }
+}
+
+.ci-campos {
+  border-collapse: collapse;
+  width:           100%;
+  font-size:       calc(12px * var(--font-size-scale, 1));
+
+  th {
+    text-align:     left;
+    padding:        4px 8px;
+    border-bottom:  2px solid var(--ui-border, #e2e8f0);
+    font-size:      calc(10.5px * var(--font-size-scale, 1));
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color:          var(--ui-text-muted, #64748b);
+  }
+
+  td {
+    padding:        6px 8px;
+    border-bottom:  1px solid var(--ui-border, #e2e8f0);
+    vertical-align: top;
+  }
+
+  code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-weight: 600; }
+
+  &__tipo { white-space: nowrap; color: var(--ui-text-muted, #64748b); }
+
+  // Las descripciones son largas a propósito: son lo que evita que el
+  // proveedor integre mal. Que la columna del medio no se las coma.
+  tr > td:last-child { min-width: 260px; }
+}
+
+.ci-lista {
+  margin:  0;
+  padding: 0 0 0 4px;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  li {
+    display:     flex;
+    gap:         7px;
+    align-items: baseline;
+    font-size:   calc(12px * var(--font-size-scale, 1));
+  }
+
+  code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size:   calc(11.5px * var(--font-size-scale, 1));
+    word-break:  break-word;
+  }
+
+  i { color: #b45309; }
+}
+
+:host-context(html.dark-mode) {
+  .ci-url, .ci-code { background: rgba(148, 163, 184, .10); }
+  .ci-bloque--avisos { background: rgba(245, 158, 11, .12); }
+}

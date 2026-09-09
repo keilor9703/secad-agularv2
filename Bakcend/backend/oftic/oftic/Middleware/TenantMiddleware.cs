@@ -1,3 +1,4 @@
+using Comun.Dtos.Integraciones;
 using Datos.Interfaz;
 using Datos.Tenant;
 using System.Security.Claims;
@@ -18,8 +19,10 @@ namespace Api.Middleware
         public async Task InvokeAsync(
             HttpContext        context,
             TenantContext      tenantContext,
+            ApiKeyContext      apiKeyContext,
             ConnectionPoolManager poolManager,
-            IDbMasterRepository   masterRepo)
+            IDbMasterRepository   masterRepo,
+            IDbApiKeyRepository   apiKeyRepo)
         {
             string? codDane   = null;
             string? nombreCad = null;
@@ -35,14 +38,41 @@ namespace Api.Middleware
             }
             else
             {
-                // Ruta externa sin JWT (Chat, SMS, PIP, callbacks de agencias externas).
-                // Prioridad:
-                //   1. Header X-Cod-Dane  — estándar para integraciones configuradas (PIP, bots).
-                //   2. Query ?codDane=    — callbackUrl autocontenida generada por DespacharAsync.
-                //      La agencia recibe la URL completa con el codDane embebido y la devuelve
-                //      tal cual. Así SECAD no depende de que la agencia sepa nada del tenant.
-                codDane = context.Request.Headers["X-Cod-Dane"].FirstOrDefault()
-                       ?? context.Request.Query["codDane"].FirstOrDefault();
+                // ── Ruta externa sin JWT (Chat, SMS, planta telefónica, PIP,
+                //    callbacks de agencias externas) ─────────────────────────
+                //
+                // La llave manda. Cada llave de secad_api_keys pertenece a UN
+                // CAD, así que resolverla resuelve el tenant y no hace falta
+                // creerle a ninguna cabecera. Antes el CAD lo decidía
+                // X-Cod-Dane mientras la clave era una sola para todo el país:
+                // quien la tuviera escribía en el CAD que quisiera cambiando esa
+                // cabecera. Aquí se cierra.
+                var presentada = context.Request.Headers["X-Api-Key"].FirstOrDefault();
+                if (!string.IsNullOrWhiteSpace(presentada))
+                {
+                    var llave = await apiKeyRepo.ResolverAsync(
+                        HuellaApiKey.Calcular(presentada), context.RequestAborted);
+
+                    if (llave is not null)
+                    {
+                        apiKeyContext.Set(llave);
+                        codDane       = llave.CodDane;
+                        sitioGrabaJwt = llave.SitioGrabaDefecto > 0 ? llave.SitioGrabaDefecto : null;
+
+                        if (llave.EnGracia)
+                            _logger.LogWarning(
+                                "Llave «{Nombre}» ({Dane}) usada dentro del periodo de gracia: el sistema " +
+                                "externo todavía no cambió a la nueva.", llave.Nombre, llave.CodDane);
+                    }
+                }
+
+                // Respaldo mientras queden integraciones con la clave global de
+                // appsettings —y para los callbacks de agencia, cuya URL lleva
+                // el codDane embebido y se entregó antes de que existieran las
+                // llaves. En cuanto la petición trae una llave válida, esto ya
+                // no se mira.
+                codDane ??= context.Request.Headers["X-Cod-Dane"].FirstOrDefault()
+                         ?? context.Request.Query["codDane"].FirstOrDefault();
             }
 
             if (!string.IsNullOrWhiteSpace(codDane))

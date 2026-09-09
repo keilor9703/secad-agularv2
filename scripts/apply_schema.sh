@@ -52,6 +52,9 @@ MASTER_FILES=(
   # V72 toca cad_sitios_grabacion (tenant) Y secad_tenants (master) en el mismo
   # archivo, cada bloque guardado por la existencia de su tabla (ver V31).
   "V72__centro_mapa_por_sitio.sql"
+  # V73 es solo de la maestra: las llaves de API identifican al tenant, así que
+  # tienen que poder consultarse ANTES de saber a qué base ir.
+  "V73__api_keys_por_tenant.sql"
 )
 
 # Todos los demás, EN ORDEN — aplican a cada base de datos de tenant/CAD.

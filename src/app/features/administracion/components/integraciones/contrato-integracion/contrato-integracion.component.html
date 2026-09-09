@@ -1,0 +1,133 @@
+<div class="ci">
+
+  @if (conEncabezado()) {
+    <app-ui-section-header
+      [title]="contrato().titulo"
+      icon="fa-solid fa-file-code"
+      [description]="contrato().descripcion"
+    >
+      <app-ui-button
+        header-actions
+        variant="secondary" appearance="ghost" size="sm"
+        [icon]="copiado() === 'todo' ? 'fa-solid fa-check' : 'fa-solid fa-clipboard'"
+        (buttonClick)="copiarTodo()"
+      >{{ copiado() === 'todo' ? 'Copiado' : 'Copiar todo' }}</app-ui-button>
+    </app-ui-section-header>
+  }
+
+  <!-- ── Endpoint ─────────────────────────────────────────────────────── -->
+  <div class="ci-bloque">
+    <span class="ci-bloque__titulo">Endpoint</span>
+    <div class="ci-url">
+      <app-ui-badge [label]="contrato().metodo" variant="info" size="xs" />
+      <code>{{ contrato().urlAbsoluta }}</code>
+      <app-ui-button
+        variant="secondary" appearance="ghost" size="sm" iconOnly
+        [icon]="copiado() === 'url' ? 'fa-solid fa-check' : 'fa-solid fa-copy'"
+        ariaLabel="Copiar la URL"
+        tooltip="Copiar la URL"
+        (buttonClick)="copiar(contrato().urlAbsoluta, 'url')"
+      />
+    </div>
+    <p class="ci-nota">
+      La ruta no es configurable: la define el propio sistema. Lo que se
+      configura es la llave con la que se entra.
+    </p>
+  </div>
+
+  <!-- ── Cabeceras ────────────────────────────────────────────────────── -->
+  <div class="ci-bloque">
+    <span class="ci-bloque__titulo">Cabeceras</span>
+    <table class="ci-tabla">
+      @for (h of cabeceras(); track h.clave) {
+        <tr>
+          <td class="ci-tabla__clave"><code>{{ h.clave }}</code></td>
+          <td><code class="ci-valor">{{ h.valor }}</code></td>
+        </tr>
+      }
+    </table>
+  </div>
+
+  <!-- ── Cuerpo ───────────────────────────────────────────────────────── -->
+  <div class="ci-bloque">
+    <span class="ci-bloque__titulo">
+      Cuerpo de la petición
+      <app-ui-button
+        class="ci-bloque__copiar"
+        variant="secondary" appearance="ghost" size="sm" iconOnly
+        [icon]="copiado() === 'payload' ? 'fa-solid fa-check' : 'fa-solid fa-copy'"
+        ariaLabel="Copiar el cuerpo"
+        tooltip="Copiar el cuerpo"
+        (buttonClick)="copiar(payloadFormateado(), 'payload')"
+      />
+    </span>
+    <pre class="ci-code">{{ payloadFormateado() }}</pre>
+  </div>
+
+  <!-- ── Campos ───────────────────────────────────────────────────────── -->
+  @if (contrato().campos.length) {
+    <div class="ci-bloque">
+      <span class="ci-bloque__titulo">Campos</span>
+      <table class="ci-campos">
+        <thead>
+          <tr><th>Campo</th><th>Tipo</th><th>Qué es</th></tr>
+        </thead>
+        <tbody>
+          @for (c of obligatorios(); track c.nombre) {
+            <tr>
+              <td><code>{{ c.nombre }}</code> <app-ui-badge label="obligatorio" variant="danger" size="xs" /></td>
+              <td class="ci-campos__tipo">{{ c.tipo }}</td>
+              <td>{{ c.descripcion }}</td>
+            </tr>
+          }
+          @for (c of opcionales(); track c.nombre) {
+            <tr>
+              <td><code>{{ c.nombre }}</code></td>
+              <td class="ci-campos__tipo">{{ c.tipo }}</td>
+              <td>{{ c.descripcion }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+
+  <!-- ── Respuestas ───────────────────────────────────────────────────── -->
+  @if (contrato().respuestas.length) {
+    <div class="ci-bloque">
+      <span class="ci-bloque__titulo">Respuestas</span>
+      <ul class="ci-lista">
+        @for (r of contrato().respuestas; track r) { <li><code>{{ r }}</code></li> }
+      </ul>
+    </div>
+  }
+
+  <!-- ── Notas ────────────────────────────────────────────────────────── -->
+  @if (contrato().notas.length) {
+    <div class="ci-bloque ci-bloque--avisos">
+      <span class="ci-bloque__titulo">Para tener en cuenta</span>
+      <ul class="ci-lista">
+        @for (n of contrato().notas; track n) {
+          <li><i class="fa-solid fa-circle-info" aria-hidden="true"></i> {{ n }}</li>
+        }
+      </ul>
+    </div>
+  }
+
+  <!-- ── curl ─────────────────────────────────────────────────────────── -->
+  <div class="ci-bloque">
+    <span class="ci-bloque__titulo">
+      Ejemplo listo para probar
+      <app-ui-button
+        class="ci-bloque__copiar"
+        variant="secondary" appearance="ghost" size="sm" iconOnly
+        [icon]="copiado() === 'curl' ? 'fa-solid fa-check' : 'fa-solid fa-copy'"
+        ariaLabel="Copiar el comando"
+        tooltip="Copiar el comando"
+        (buttonClick)="copiar(contrato().ejemploCurl, 'curl')"
+      />
+    </span>
+    <pre class="ci-code ci-code--curl">{{ contrato().ejemploCurl }}</pre>
+  </div>
+
+</div>
