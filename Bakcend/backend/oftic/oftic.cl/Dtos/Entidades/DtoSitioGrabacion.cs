@@ -19,6 +19,11 @@ namespace Comun.Dtos.Entidades
         /// <summary>DANE del municipio de la unidad (V31).</summary>
         public string? codDane       { get; set; }
         public string  vigente       { get; set; } = "S";
+        /// <summary>Centro del mapa de la unidad: es donde abre Recepción.</summary>
+        public decimal? latitud      { get; set; }
+        public decimal? longitud     { get; set; }
+        /// <summary>12-13 para un municipio, 8-9 para un departamento entero.</summary>
+        public int?     zoomMapa     { get; set; }
         /// <summary>Cuántas fuerzas están marcadas con este sitio.</summary>
         public int     totalFuerzas  { get; set; }
         /// <summary>Cuántos usuarios están marcados con este sitio.</summary>
@@ -50,5 +55,8 @@ namespace Comun.Dtos.Entidades
         public string? abreviatura { get; set; }
         public string? codDane     { get; set; }
         public string  vigente     { get; set; } = "S";
+        public decimal? latitud    { get; set; }
+        public decimal? longitud   { get; set; }
+        public int?     zoomMapa   { get; set; }
     }
 }

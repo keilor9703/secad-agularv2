@@ -1,3 +1,4 @@
+using Comun.Dtos.Entidades;
 using Comun.Dtos.Tenant;
 
 namespace Datos.Interfaz
@@ -6,6 +7,13 @@ namespace Datos.Interfaz
     {
         // ── Tenant resolution (used by TenantMiddleware + login flow) ─────────
         Task<DtoTenant?> GetTenantByCodDaneAsync(string codDane, CancellationToken ct);
+
+        /// <summary>
+        /// Centro del mapa del CAD (V72). Es el respaldo de las coordenadas del
+        /// sitio de grabación: sirve cuando ninguna unidad del CAD tiene las
+        /// suyas. null = tampoco el CAD las tiene.
+        /// </summary>
+        Task<DtoCentroMapa?> GetCentroMapaTenantAsync(string codDane, CancellationToken ct);
         Task<DtoTenant?> GetTenantByCodUnidadAsync(string codUnidad, CancellationToken ct);
         Task<(string? codDane, string? passwordHash)> GetFallbackUserAsync(string username, CancellationToken ct);
         Task AuditFallbackLoginAsync(string username, string codDane, string? ipOrigen, bool modoFallback, CancellationToken ct);

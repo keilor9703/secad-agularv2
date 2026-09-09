@@ -1,3 +1,4 @@
+using Comun.Dtos.Entidades;
 using Datos.Interfaz;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cors;
@@ -17,12 +18,59 @@ namespace Api.Controllers.Operacion
     public class MapaController : ControllerBase
     {
         private readonly IDbMapaRepository            _repo;
+        private readonly IDbSitioGrabacionRepository  _sitios;
+        private readonly IDbMasterRepository          _master;
         private readonly ILogger<MapaController>      _logger;
 
-        public MapaController(IDbMapaRepository repo, ILogger<MapaController> logger)
+        public MapaController(
+            IDbMapaRepository           repo,
+            IDbSitioGrabacionRepository sitios,
+            IDbMasterRepository         master,
+            ILogger<MapaController>     logger)
         {
             _repo   = repo;
+            _sitios = sitios;
+            _master = master;
             _logger = logger;
+        }
+
+        // ── GET /api/Mapa/centro ──────────────────────────────────────────────
+        /// <summary>
+        /// Dónde debe abrir el mapa para quien pregunta.
+        ///
+        /// En cascada, de lo más específico a lo más general:
+        ///   1. la unidad policial del usuario (cad_sitios_grabacion),
+        ///   2. cualquier otra unidad vigente del CAD que tenga coordenadas,
+        ///   3. el CAD (secad_tenants, en la maestra),
+        ///   4. Bogotá, marcado como `porDefecto` para que la pantalla lo diga.
+        ///
+        /// Antes no existía nada de esto: los tres mapas del sistema abrían con
+        /// Bogotá escrita en el código, así que el operador de Cali empezaba
+        /// cada llamada a 400 km de su ciudad.
+        /// </summary>
+        [HttpGet("centro")]
+        public async Task<ActionResult> GetCentro(CancellationToken ct)
+        {
+            var sitio   = int.TryParse(User.FindFirstValue("sitio_graba"), out var s) ? s : 0;
+            var codDane = User.FindFirstValue("cod_dane") ?? string.Empty;
+
+            try
+            {
+                var centro = await _sitios.GetCentroMapaAsync(sitio, ct);
+
+                if (centro is null && !string.IsNullOrWhiteSpace(codDane))
+                    centro = await _master.GetCentroMapaTenantAsync(codDane, ct);
+
+                return Ok(new { success = true, data = centro ?? DtoCentroMapa.Defecto() });
+            }
+            catch (Exception ex)
+            {
+                // Un mapa en Bogotá es peor que uno centrado, pero mucho mejor
+                // que una pantalla que no carga: nunca se propaga el error.
+                _logger.LogError(ex, "Error resolviendo el centro del mapa sitio={Sitio} codDane={CodDane}",
+                                 sitio, codDane);
+                return Ok(new { success = true, data = DtoCentroMapa.Defecto() });
+            }
         }
 
         /// <summary>

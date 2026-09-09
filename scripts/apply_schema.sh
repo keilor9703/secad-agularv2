@@ -49,6 +49,9 @@ MASTER_FILES=(
   "V31__tenant_sitio_grabacion_codane.sql"
   "V60__master_unidades.sql"
   "V66__master_super_admins.sql"
+  # V72 toca cad_sitios_grabacion (tenant) Y secad_tenants (master) en el mismo
+  # archivo, cada bloque guardado por la existencia de su tabla (ver V31).
+  "V72__centro_mapa_por_sitio.sql"
 )
 
 # Todos los demás, EN ORDEN — aplican a cada base de datos de tenant/CAD.
@@ -119,6 +122,7 @@ TENANT_FILES=(
   "V69__roles_administrativos.sql"
   "V70__sitios_grabacion_catalogo.sql"
   "V71__sitios_y_fuerzas_unificado.sql"
+  "V72__centro_mapa_por_sitio.sql"
 )
 
 case "$SCOPE" in

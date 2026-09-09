@@ -36,6 +36,9 @@ SELECT s.consecutivo,
        COALESCE(to_jsonb(s) ->> 'abreviatura', '')  AS abreviatura,
        COALESCE(to_jsonb(s) ->> 'cod_dane',    '')  AS cod_dane,
        COALESCE(to_jsonb(s) ->> 'vigente',     'S') AS vigente,
+       (to_jsonb(s) ->> 'latitud')::numeric         AS latitud,
+       (to_jsonb(s) ->> 'longitud')::numeric        AS longitud,
+       (to_jsonb(s) ->> 'zoom_mapa')::int           AS zoom_mapa,
        (SELECT COUNT(*) FROM cad_fuerzas  f WHERE f.sitio_graba     = s.consecutivo) AS total_fuerzas,
        (SELECT COUNT(*) FROM ctr_usuarios u WHERE u.sitio_grabacion = s.consecutivo) AS total_usuarios
 FROM cad_sitios_grabacion s";
@@ -67,6 +70,43 @@ FROM cad_sitios_grabacion s";
             return await reader.ReadAsync(ct) ? Map(reader) : null;
         }
 
+        public async Task<DtoCentroMapa?> GetCentroMapaAsync(int consecutivo, CancellationToken ct)
+        {
+            await using var conn = await _tenant.DataSource.OpenConnectionAsync(ct);
+            await using var cmd = conn.CreateCommand();
+            // Igual que el resto del repositorio: por to_jsonb, para que una API
+            // nueva sobre una base a la que todavía no se le ha pasado V72 no
+            // reviente — devuelve NULL y el llamador cae al respaldo.
+            //
+            // El ORDER BY pone primero la unidad pedida: si tiene coordenadas
+            // gana ella, y si no, sirve cualquier otra vigente del CAD antes que
+            // mandar al operador a Bogotá.
+            cmd.CommandText = @"
+SELECT (to_jsonb(s) ->> 'latitud')::numeric   AS latitud,
+       (to_jsonb(s) ->> 'longitud')::numeric  AS longitud,
+       COALESCE((to_jsonb(s) ->> 'zoom_mapa')::int, 12) AS zoom,
+       s.descripcion
+FROM   cad_sitios_grabacion s
+WHERE  to_jsonb(s) ->> 'latitud'  IS NOT NULL
+  AND  to_jsonb(s) ->> 'longitud' IS NOT NULL
+  AND  (s.consecutivo = @c OR COALESCE(to_jsonb(s) ->> 'vigente', 'S') = 'S')
+ORDER BY (s.consecutivo = @c) DESC, s.consecutivo
+LIMIT 1";
+            cmd.Parameters.AddWithValue("c", consecutivo);
+
+            await using var r = await cmd.ExecuteReaderAsync(ct);
+            if (!await r.ReadAsync(ct)) return null;
+
+            return new DtoCentroMapa
+            {
+                latitud     = r.GetDecimal(0),
+                longitud    = r.GetDecimal(1),
+                zoom        = r.GetInt32(2),
+                origen      = "sitio",
+                descripcion = r.IsDBNull(3) ? null : r.GetString(3),
+            };
+        }
+
         public async Task<DtoFuerzaResult> SaveSitioAsync(int? consecutivo, DtoSitioGrabacionRequest request, CancellationToken ct)
         {
             try
@@ -87,6 +127,12 @@ FROM cad_sitios_grabacion s";
                     opcionales.Add(("abreviatura", (object?)Limpiar(request.abreviatura)?.ToUpperInvariant() ?? DBNull.Value));
                 if (columnas.Contains("vigente"))
                     opcionales.Add(("vigente", request.vigente == "N" ? "N" : "S"));
+                if (columnas.Contains("latitud"))
+                    opcionales.Add(("latitud", (object?)request.latitud ?? DBNull.Value));
+                if (columnas.Contains("longitud"))
+                    opcionales.Add(("longitud", (object?)request.longitud ?? DBNull.Value));
+                if (columnas.Contains("zoom_mapa"))
+                    opcionales.Add(("zoom_mapa", (object?)request.zoomMapa ?? DBNull.Value));
 
                 if (consecutivo.HasValue && consecutivo.Value > 0)
                 {
@@ -243,8 +289,11 @@ SELECT column_name FROM information_schema.columns
             abreviatura   = r.IsDBNull(2) || r.GetString(2).Length == 0 ? null : r.GetString(2),
             codDane       = r.IsDBNull(3) || r.GetString(3).Length == 0 ? null : r.GetString(3),
             vigente       = r.IsDBNull(4) ? "S" : r.GetString(4),
-            totalFuerzas  = Convert.ToInt32(r.GetValue(5)),
-            totalUsuarios = Convert.ToInt32(r.GetValue(6))
+            latitud       = r.IsDBNull(5) ? null : r.GetDecimal(5),
+            longitud      = r.IsDBNull(6) ? null : r.GetDecimal(6),
+            zoomMapa      = r.IsDBNull(7) ? null : r.GetInt32(7),
+            totalFuerzas  = Convert.ToInt32(r.GetValue(8)),
+            totalUsuarios = Convert.ToInt32(r.GetValue(9))
         };
 
         private static DtoFuerzaResult Ok(int id, string mensaje) =>

@@ -30,6 +30,7 @@ import { takeUntil, switchMap, startWith, filter } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { ToastService } from '../../../../core/services/toast.service';
+import { CentroMapaService } from '../../../../core/services/operacion/centro-mapa.service';
 import { MapaService, DtoMapaIncidente } from '../../../../core/services/operacion/mapa.service';
 import { EventoService, DtoCanalItem } from '../../../../core/services/operacion/evento.service';
 
@@ -110,6 +111,7 @@ export class MapaIncidentesPageComponent implements OnInit, AfterViewInit, OnDes
   private readonly toast     = inject(ToastService);
   private readonly zone      = inject(NgZone);
   private readonly router    = inject(Router);
+  private readonly centroMapa = inject(CentroMapaService);
 
   // ══════════════════════════════════════════════════════════════════════════
   //  Lifecycle
@@ -168,10 +170,14 @@ export class MapaIncidentesPageComponent implements OnInit, AfterViewInit, OnDes
       return;
     }
 
+    // Centro de reserva mientras llega el del CAD. Antes era el definitivo:
+    // Bogotá escrita a mano, para todo el país.
+    const reserva = CentroMapaService.DEFECTO;
     this.map = L.map('mapaIncidentesDiv', {
       zoomControl: true,
       attributionControl: true
-    }).setView([4.7110, -74.0721], 12);
+    }).setView([reserva.latitud, reserva.longitud], reserva.zoom);
+    this.centrarEnElCad(this.map);
 
     // Capa base: OpenStreetMap
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -183,6 +189,22 @@ export class MapaIncidentesPageComponent implements OnInit, AfterViewInit, OnDes
     if (this.codDane) {
       this.cargarCapaMunicipios(this.codDane);
     }
+  }
+
+  /**
+   * Lleva el mapa a la unidad del usuario. Una sola vez y solo si nadie lo ha
+   * tocado todavía: recolocarlo bajo la mano de quien ya está mirando una zona
+   * sería peor que dejarlo donde estaba.
+   */
+  private centrarEnElCad(mapa: any): void {
+    let intacto = true;
+    mapa.on('dragstart', () => { intacto = false; });
+    mapa.on('click',     () => { intacto = false; });
+
+    this.centroMapa.centro().subscribe(centro => {
+      if (!intacto || this.map !== mapa) return;
+      mapa.setView([centro.latitud, centro.longitud], centro.zoom);
+    });
 
     // Invalidar tamaño al renderizar (evita mapa gris)
     setTimeout(() => this.map?.invalidateSize(), 200);

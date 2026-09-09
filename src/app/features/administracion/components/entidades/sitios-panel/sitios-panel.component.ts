@@ -88,6 +88,11 @@ export class SitiosPanelComponent implements OnInit {
     abreviatura: [''],
     codDane:     [''],
     vigente:     ['S'],
+    // Dónde abre el mapa para la gente de esta unidad. V72 las siembra por
+    // código DANE; esto es para el CAD que no esté en esa lista.
+    latitud:     this.fb.control<number | null>(null),
+    longitud:    this.fb.control<number | null>(null),
+    zoomMapa:    this.fb.control<number | null>(null),
   });
 
   readonly errorConsecutivo = computed(() =>
@@ -98,11 +103,30 @@ export class SitiosPanelComponent implements OnInit {
     this.intentoGuardar() && !this.form.controls.descripcion.value.trim()
       ? 'El nombre de la unidad es obligatorio.' : '');
 
+  /** Media coordenada no centra nada: o van las dos o no va ninguna. */
+  readonly errorCoordenadas = computed(() => {
+    if (!this.intentoGuardar()) return '';
+    const lat = this.form.controls.latitud.value;
+    const lng = this.form.controls.longitud.value;
+    if ((lat === null) !== (lng === null)) return 'Indique latitud y longitud, o deje las dos vacías.';
+    if (lat !== null && (lat < -90  || lat > 90))  return 'La latitud debe estar entre -90 y 90.';
+    if (lng !== null && (lng < -180 || lng > 180)) return 'La longitud debe estar entre -180 y 180.';
+    return '';
+  });
+
   ngOnInit(): void {
     this.columns = [
       { key: 'consecutivo', label: 'Código', align: 'center', width: '90px' },
       { key: 'descripcion', label: 'Unidad policial', cellTemplate: this.celdaUnidad },
       { key: 'codDane', label: 'DANE', align: 'center', value: s => s.codDane || '—' },
+      {
+        // Sin centro, el mapa de esa gente abre en Bogotá: conviene verlo en
+        // la lista y no solo al abrir el formulario.
+        key: 'latitud', label: 'Centro del mapa', align: 'center',
+        badge: s => (s.latitud != null && s.longitud != null)
+          ? { text: `${(+s.latitud).toFixed(4)}, ${(+s.longitud).toFixed(4)}`, variant: 'success' }
+          : { text: 'Sin definir', icon: 'fa-solid fa-location-crosshairs', variant: 'warning' },
+      },
       {
         key: 'totalFuerzas', label: 'Fuerzas', align: 'center',
         badge: s => ({ text: String(s.totalFuerzas), variant: s.totalFuerzas ? 'info' : 'neutral' }),
@@ -145,7 +169,10 @@ export class SitiosPanelComponent implements OnInit {
     // El código lo elige el CAD, pero se propone el siguiente libre para no
     // obligar a nadie a ir a buscarlo.
     const siguiente = this.sitios().reduce((max, s) => Math.max(max, s.consecutivo), 0) + 1;
-    this.form.reset({ consecutivo: siguiente, descripcion: '', abreviatura: '', codDane: '', vigente: 'S' });
+    this.form.reset({
+      consecutivo: siguiente, descripcion: '', abreviatura: '', codDane: '', vigente: 'S',
+      latitud: null, longitud: null, zoomMapa: 12,
+    });
     this.form.controls.consecutivo.enable();
     this.intentoGuardar.set(false);
     this.modo.set('crear');
@@ -160,6 +187,9 @@ export class SitiosPanelComponent implements OnInit {
       abreviatura: s.abreviatura ?? '',
       codDane:     s.codDane ?? '',
       vigente:     s.vigente,
+      latitud:     s.latitud  ?? null,
+      longitud:    s.longitud ?? null,
+      zoomMapa:    s.zoomMapa ?? 12,
     });
     // El código identifica al sitio en el JWT y en los registros históricos:
     // cambiarlo desligaría todo lo grabado hasta hoy.
@@ -177,7 +207,7 @@ export class SitiosPanelComponent implements OnInit {
 
   guardar(): void {
     this.intentoGuardar.set(true);
-    if (this.errorConsecutivo() || this.errorDescripcion()) return;
+    if (this.errorConsecutivo() || this.errorDescripcion() || this.errorCoordenadas()) return;
 
     const v = this.form.getRawValue();
     const request: DtoSitioGrabacionRequest = {
@@ -186,6 +216,9 @@ export class SitiosPanelComponent implements OnInit {
       abreviatura: v.abreviatura.trim() || null,
       codDane:     v.codDane.trim() || null,
       vigente:     v.vigente,
+      latitud:     v.latitud,
+      longitud:    v.longitud,
+      zoomMapa:    v.zoomMapa,
     };
 
     this.saving.set(true);

@@ -1,3 +1,4 @@
+using Comun.Dtos.Entidades;
 using Comun.Dtos.Tenant;
 using Datos.Interfaz;
 using Microsoft.Extensions.Logging;
@@ -14,6 +15,37 @@ namespace Datos.Gestion
         {
             _masterDb = masterDb;
             _logger = logger;
+        }
+
+        public async Task<DtoCentroMapa?> GetCentroMapaTenantAsync(string codDane, CancellationToken ct)
+        {
+            await using var conn = await _masterDb.OpenConnectionAsync(ct);
+            await using var cmd = conn.CreateCommand();
+            // Por to_jsonb, para no reventar contra una maestra a la que aún no
+            // se le ha pasado V72 (el despliegue levanta la API antes del SQL).
+            cmd.CommandText = @"
+SELECT (to_jsonb(t) ->> 'latitud')::numeric  AS latitud,
+       (to_jsonb(t) ->> 'longitud')::numeric AS longitud,
+       COALESCE((to_jsonb(t) ->> 'zoom_mapa')::int, 12) AS zoom,
+       COALESCE(t.municipio, t.nombre) AS descripcion
+FROM   secad_tenants t
+WHERE  t.cod_dane = @codDane
+  AND  to_jsonb(t) ->> 'latitud'  IS NOT NULL
+  AND  to_jsonb(t) ->> 'longitud' IS NOT NULL
+LIMIT 1";
+            cmd.Parameters.AddWithValue("codDane", codDane);
+
+            await using var r = await cmd.ExecuteReaderAsync(ct);
+            if (!await r.ReadAsync(ct)) return null;
+
+            return new DtoCentroMapa
+            {
+                latitud     = r.GetDecimal(0),
+                longitud    = r.GetDecimal(1),
+                zoom        = r.GetInt32(2),
+                origen      = "tenant",
+                descripcion = r.IsDBNull(3) ? null : r.GetString(3),
+            };
         }
 
         public async Task<DtoTenant?> GetTenantByCodDaneAsync(string codDane, CancellationToken ct)

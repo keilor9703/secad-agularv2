@@ -103,6 +103,39 @@
       />
     </div>
 
+    <app-ui-section-header
+      title="Centro del mapa"
+      icon="fa-solid fa-map-location-dot"
+      description="Donde abre el mapa para la gente de esta unidad, en Recepción, Mapa de
+                   Incidentes y GIS Estadístico. Se rellena solo por código DANE; complételo
+                   a mano si su municipio no viene en la lista."
+    />
+
+    <div class="sg-row">
+      <app-ui-input
+        class="sg-row__side"
+        formControlName="latitud"
+        label="Latitud"
+        type="number"
+        placeholder="10.9685"
+        [error]="errorCoordenadas()"
+      />
+      <app-ui-input
+        class="sg-row__side"
+        formControlName="longitud"
+        label="Longitud"
+        type="number"
+        placeholder="-74.7813"
+      />
+      <app-ui-input
+        class="sg-row__side"
+        formControlName="zoomMapa"
+        label="Zoom"
+        type="number"
+        hint="12-13 un municipio · 8-9 un departamento"
+      />
+    </div>
+
   </form>
 
   <div modal-actions class="sg-acciones">

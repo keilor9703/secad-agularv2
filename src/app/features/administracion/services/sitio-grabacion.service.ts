@@ -21,6 +21,11 @@ export interface DtoSitioGrabacion {
   /** DANE del municipio de la unidad. */
   codDane?: string | null;
   vigente: string;
+  /** Centro del mapa de la unidad: donde abre Recepción para su gente. */
+  latitud?: number | null;
+  longitud?: number | null;
+  /** 12-13 para un municipio, 8-9 para un departamento entero. */
+  zoomMapa?: number | null;
   totalFuerzas: number;
   totalUsuarios: number;
 }
@@ -32,6 +37,9 @@ export interface DtoSitioGrabacionRequest {
   abreviatura?: string | null;
   codDane?: string | null;
   vigente: string;
+  latitud?: number | null;
+  longitud?: number | null;
+  zoomMapa?: number | null;
 }
 
 export interface DtoSitioResult {

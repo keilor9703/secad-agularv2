@@ -25,6 +25,7 @@ import { UiSelectOption } from '../../../../shared/interfaces/ui-select-option.i
 import { AccessibilityService } from '../../../../core/services/accessibility.service';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { ToastService } from '../../../../core/services/toast.service';
+import { CentroMapaService } from '../../../../core/services/operacion/centro-mapa.service';
 import {
   MapaEstadisticoService,
   DtoFiltroEstadistico,
@@ -201,6 +202,7 @@ export class MapaEstadisticoPageComponent implements OnInit, AfterViewInit, OnDe
   private readonly svc   = inject(MapaEstadisticoService);
   private readonly toast = inject(ToastService);
   private readonly zone  = inject(NgZone);
+  private readonly centroMapa = inject(CentroMapaService);
 
   // ══════════════════════════════════════════════════════════════════════════
   //  Lifecycle
@@ -625,9 +627,14 @@ export class MapaEstadisticoPageComponent implements OnInit, AfterViewInit, OnDe
   // ══════════════════════════════════════════════════════════════════════════
 
   private initMap(): void {
+    // Centro de reserva mientras llega el del CAD. Antes era el definitivo:
+    // Bogotá escrita a mano, para todo el país. Un punto de zoom menos que en
+    // las otras pantallas, porque aquí se mira el municipio entero.
+    const reserva = CentroMapaService.DEFECTO;
     const mapa = L.map(this.mapaRef().nativeElement, { zoomControl: true })
-                  .setView([4.7110, -74.0721], 11);
+                  .setView([reserva.latitud, reserva.longitud], reserva.zoom - 1);
     this.map = mapa;
+    this.centrarEnElCad(mapa);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© <a href="https://openstreetmap.org">OpenStreetMap</a>',
@@ -636,6 +643,21 @@ export class MapaEstadisticoPageComponent implements OnInit, AfterViewInit, OnDe
 
     if (this.codDane) this.cargarCapaMunicipios(this.codDane);
     setTimeout(() => this.map?.invalidateSize(), 200);
+  }
+
+  /**
+   * Lleva el mapa a la unidad del usuario. Una sola vez y solo si nadie lo ha
+   * tocado todavía.
+   */
+  private centrarEnElCad(mapa: any): void {
+    let intacto = true;
+    mapa.on('dragstart', () => { intacto = false; });
+    mapa.on('click',     () => { intacto = false; });
+
+    this.centroMapa.centro().subscribe(centro => {
+      if (!intacto || this.map !== mapa) return;
+      mapa.setView([centro.latitud, centro.longitud], centro.zoom - 1);
+    });
   }
 
   cambiarCapa(capa: CapaMapa): void {

@@ -30,6 +30,7 @@ import { Subject, interval } from 'rxjs';
 import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { ToastService } from '../../../../core/services/toast.service';
+import { CentroMapaService } from '../../../../core/services/operacion/centro-mapa.service';
 import {
   RecepcionService,
   DtoCanalRecepcion,
@@ -265,6 +266,7 @@ export class RecepcionPageComponent implements OnInit, AfterViewInit, OnDestroy 
   private readonly zone          = inject(NgZone);
   private readonly asistenteSvc  = inject(AsistenteService);
   private readonly agenciaSvc    = inject(AgenciaExternaService);
+  private readonly centroMapa    = inject(CentroMapaService);
 
   ngOnInit(): void {
     const claims = this.auth.getJwtClaims();
@@ -348,10 +350,15 @@ export class RecepcionPageComponent implements OnInit, AfterViewInit, OnDestroy 
       popupAnchor: [0, -32]
     });
 
-    // Centro inicial: Bogotá (se reemplaza con el municipio del codDane)
+    // El mapa nace con el centro de reserva y se recoloca en cuanto llega el
+    // del CAD: crearlo tras la respuesta obligaría a esperar a la red para
+    // pintar nada. Antes ese centro de reserva era el definitivo —Bogotá, a
+    // mano— y el operador de Cali empezaba cada llamada a 400 km de su ciudad.
+    const reserva = CentroMapaService.DEFECTO;
     const mapa = L.map(this.mapaRef().nativeElement, { zoomControl: true })
-                  .setView([4.7110, -74.0721], 12);
+                  .setView([reserva.latitud, reserva.longitud], reserva.zoom);
     this.map = mapa;
+    this.centrarEnElCad(mapa);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© <a href="https://openstreetmap.org">OpenStreetMap</a>',
@@ -376,6 +383,22 @@ export class RecepcionPageComponent implements OnInit, AfterViewInit, OnDestroy 
       this.cargarCapaMunicipios(this.codDane);   // resalta el municipio activo
       this.cargarCapaCuadrantes(this.codDane);   // dibuja cuadrantes en rojo
     }
+  }
+
+  /**
+   * Lleva el mapa a la unidad del usuario. Se aplica una sola vez y solo si el
+   * operador todavía no ha tocado nada: mover el mapa bajo la mano de alguien
+   * que ya está ubicando un incidente sería peor que dejarlo donde estaba.
+   */
+  private centrarEnElCad(mapa: any): void {
+    let intacto = true;
+    mapa.on('dragstart', () => { intacto = false; });
+    mapa.on('click',     () => { intacto = false; });
+
+    this.centroMapa.centro().pipe(takeUntil(this.destroy$)).subscribe(centro => {
+      if (!intacto || this.destruido || this.map !== mapa) return;
+      mapa.setView([centro.latitud, centro.longitud], centro.zoom);
+    });
   }
 
   // ── Marcador verde persona ────────────────────────────────────────────────

@@ -14,6 +14,14 @@ namespace Datos.Interfaz
         /// <summary>Obtiene un sitio por su consecutivo.</summary>
         Task<DtoSitioGrabacion?> GetSitioAsync(int consecutivo, CancellationToken ct);
 
+        /// <summary>
+        /// Centro del mapa de una unidad. Con consecutivo 0 —o si esa unidad no
+        /// tiene coordenadas— devuelve el de la primera unidad vigente que sí
+        /// las tenga, que en un CAD de una sola unidad es justamente la suya.
+        /// null = ninguna las tiene y hay que recurrir al CAD.
+        /// </summary>
+        Task<DtoCentroMapa?> GetCentroMapaAsync(int consecutivo, CancellationToken ct);
+
         /// <summary>Crea (consecutivo=null) o actualiza un sitio.</summary>
         Task<DtoFuerzaResult> SaveSitioAsync(int? consecutivo, DtoSitioGrabacionRequest request, CancellationToken ct);
 
