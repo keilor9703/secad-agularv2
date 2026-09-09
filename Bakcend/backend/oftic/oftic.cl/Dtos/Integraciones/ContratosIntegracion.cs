@@ -54,6 +54,35 @@ namespace Comun.Dtos.Integraciones
             { CanalPbx, CanalChat, CanalSms, CanalActualizacion };
 
         /// <summary>
+        /// Tipo de canal del catálogo (cad_integraciones_entrantes.tipo_canal) →
+        /// canal con contrato. Los que no aparecen —API_FOTO, OTRA— no tienen un
+        /// endpoint propio en SECAD: son fichas puramente documentales.
+        /// </summary>
+        private static readonly Dictionary<string, string> PorTipoCanal = new(StringComparer.OrdinalIgnoreCase)
+        {
+            ["CHAT"] = CanalChat,
+            ["SMS"]  = CanalSms,
+            ["PBX"]  = CanalPbx,
+        };
+
+        /// <summary>
+        /// La ruta que le corresponde a un tipo de canal, o cadena vacía si ese
+        /// tipo no tiene endpoint.
+        ///
+        /// Existe para que la ruta la ponga el servidor y no el cliente: está
+        /// fija en los controladores, así que dejar que llegue del formulario
+        /// solo permitía guardar documentación equivocada.
+        /// </summary>
+        public static string RutaDeTipoCanal(string? tipoCanal)
+        {
+            if (tipoCanal is null || !PorTipoCanal.TryGetValue(tipoCanal, out var canal))
+                return string.Empty;
+
+            // El baseUrl no importa aquí: solo se lee la ruta relativa.
+            return Obtener(canal, string.Empty, null, 1)?.Ruta ?? string.Empty;
+        }
+
+        /// <summary>
         /// Devuelve el contrato del canal, ya resuelto para este CAD: URL con el
         /// host real, la llave si se le pasa una, y la unidad por defecto.
         /// </summary>
