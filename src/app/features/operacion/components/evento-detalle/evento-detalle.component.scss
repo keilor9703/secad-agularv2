@@ -1267,3 +1267,110 @@
   }
 }
 
+
+// ══════════════════════════════════════════════════════════════════════════
+//  Cámaras CCTV
+// ══════════════════════════════════════════════════════════════════════════
+
+// Pin de cámara en el mapa. Redondo y pequeño, distinto de la gota del hecho
+// y de los pines de recurso: en el mapa hay un hecho, varias patrullas y
+// muchas cámaras, y a un vistazo tienen que separarse por silueta.
+:host ::ng-deep .ev-cam {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 11px;
+  box-shadow: 0 2px 6px rgba(8, 12, 28, .35);
+}
+
+.ev-camaras {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  &__resumen {
+    margin: 0 0 2px;
+    color: var(--ui-text-muted, #6b7280);
+    font-size: calc(11px * var(--font-size-scale, 1));
+  }
+}
+
+.ev-camara {
+  border: 1px solid rgba(21, 27, 59, .14);
+  border-left: 3px solid #0ea5e9;
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--ui-surface, #fff);
+
+  // Está en el inventario pero SECAD no le puede pedir video: se apaga para
+  // que no compita visualmente con las que sí sirven ahora.
+  &--sinvideo { border-left-color: #94a3b8; opacity: .82; }
+  &--caida    { border-left-color: #ef4444; }
+
+  &__head {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    width: 100%;
+    padding: 9px 11px;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+
+    &:hover { background: rgba(8, 166, 203, .06); }
+    &:focus-visible { outline: 2px solid rgba(8, 166, 203, .45); outline-offset: -2px; }
+
+    > i { color: var(--policia-medio, #002a66); font-size: calc(13px * var(--font-size-scale, 1)); }
+  }
+
+  &__info {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    flex: 1 1 auto;
+
+    strong {
+      font-size: calc(12px * var(--font-size-scale, 1));
+      // Los nombres del censo son largos y no deben empujar la distancia.
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    small {
+      color: var(--ui-text-muted, #6b7280);
+      font-size: calc(10.5px * var(--font-size-scale, 1));
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
+
+  &__dist {
+    flex: 0 0 auto;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: rgba(21, 27, 59, .07);
+    font-size: calc(10.5px * var(--font-size-scale, 1));
+    font-weight: 700;
+
+    &--cerca { background: rgba(34, 197, 94, .16); color: #15803d; }
+  }
+
+  &__pie {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    padding: 0 11px 9px;
+  }
+
+  &__ver { margin-left: auto; }
+}

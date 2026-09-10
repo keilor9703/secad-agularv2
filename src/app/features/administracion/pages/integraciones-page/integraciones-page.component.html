@@ -1122,3 +1122,94 @@
     <app-ui-button variant="secondary" appearance="ghost" (buttonClick)="closeModal()">Cerrar</app-ui-button>
   </div>
 </app-ui-modal>
+
+<!-- ═══ Catálogo de cámaras: sincronizar y emparejar ═══════════════════════ -->
+<app-ui-modal
+  [open]="modal() === 'camara-catalogo'"
+  [title]="'Cámaras de ' + (catIntegracion()?.nombre || 'la integración')"
+  icon="fa-solid fa-clone"
+  size="lg"
+  (closeRequested)="closeModal()"
+>
+  <div modal-body class="ig-form">
+    <!-- Por qué esto no se aplica solo. Quien confirma tiene que entender que
+         está tomando una decisión, no apretando un botón de trámite. -->
+    <p class="ig-campo__pie">
+      El censo institucional no trae el identificador del sistema de video, así que la única
+      pista para saber qué cámara del inventario es cuál en el VMS es el nombre.
+      SECAD propone las parejas y <strong>usted confirma</strong>: una cámara mal emparejada
+      le mostraría al despachador el video de un lugar que no es.
+    </p>
+
+    <div class="ig-cat__barra">
+      <app-ui-button
+        variant="primary" icon="fa-solid fa-arrows-rotate"
+        [loading]="catSincronizando()"
+        [disabled]="catSincronizando()"
+        (buttonClick)="sincronizarCatalogo()"
+      >Sincronizar con el VMS</app-ui-button>
+      @if (catResumen()) { <span class="ig-cat__resumen">{{ catResumen() }}</span> }
+    </div>
+
+    @if (catCargando()) {
+      <app-ui-spinner label="Buscando coincidencias…" contained />
+    } @else if (!catPropuestas().length) {
+      <p class="ig-campo__pie">
+        No hay parejas por confirmar. Sincronice con el VMS: si después sigue vacío,
+        es que todas las cámaras que el VMS reporta ya están emparejadas, o que sus
+        nombres no se parecen a ninguno del censo y habrá que enlazarlas a mano.
+      </p>
+    } @else {
+      <ul class="ig-cat__lista">
+        @for (p of catPropuestas(); track p.vmsId) {
+          <li class="ig-cat__par">
+            <div class="ig-cat__lado">
+              <span class="ig-cat__rotulo">En el sistema de video</span>
+              <strong>{{ p.vmsNombre }}</strong>
+              <small>
+                código {{ p.vmsCodigo }} · {{ etiquetaEstadoVms(p.vmsEstado) }}
+              </small>
+            </div>
+
+            <div class="ig-cat__enlace">
+              <span class="ig-cat__puntaje"
+                    [class.ig-cat__puntaje--alto]="p.puntaje >= 80"
+                    [class.ig-cat__puntaje--medio]="p.puntaje >= 60 && p.puntaje < 80">
+                {{ p.puntaje }}%
+              </span>
+              <i class="fa-solid fa-left-right" aria-hidden="true"></i>
+            </div>
+
+            <div class="ig-cat__lado">
+              <span class="ig-cat__rotulo">En el censo (tiene la ubicación)</span>
+              <strong>{{ p.censoNombre }}</strong>
+              <small>
+                @if (p.censoNumero) { n.º {{ p.censoNumero }} · }
+                {{ p.censoDireccion || 'sin dirección' }}
+              </small>
+            </div>
+
+            <p class="ig-cat__motivo">{{ p.motivo }}</p>
+
+            <div class="ig-cat__acciones">
+              <app-ui-button
+                variant="secondary" appearance="ghost" size="sm"
+                (buttonClick)="descartarPropuesta(p)"
+              >No es</app-ui-button>
+              <app-ui-button
+                variant="primary" size="sm" icon="fa-solid fa-check"
+                [loading]="catConfirmando() === p.vmsId"
+                [disabled]="!!catConfirmando()"
+                (buttonClick)="confirmarEmparejamiento(p)"
+              >Es la misma</app-ui-button>
+            </div>
+          </li>
+        }
+      </ul>
+    }
+  </div>
+
+  <div modal-actions class="ig-acciones">
+    <app-ui-button variant="secondary" appearance="ghost" (buttonClick)="closeModal()">Cerrar</app-ui-button>
+  </div>
+</app-ui-modal>

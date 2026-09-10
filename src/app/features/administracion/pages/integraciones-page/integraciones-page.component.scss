@@ -581,3 +581,96 @@
 
   @media (max-width: 720px) { flex-wrap: wrap; &__sel { flex: 1 1 100%; } }
 }
+
+// ── Catálogo de cámaras: parejas propuestas ────────────────────────────────
+.ig-cat {
+  &__barra {
+    display:     flex;
+    flex-wrap:   wrap;
+    align-items: center;
+    gap:         10px;
+  }
+
+  &__resumen {
+    color:     var(--ui-text-muted, #6b7280);
+    font-size: calc(11px * var(--font-size-scale, 1));
+  }
+
+  &__lista {
+    display:    flex;
+    flex-direction: column;
+    gap:        8px;
+    margin:     0;
+    padding:    0;
+    list-style: none;
+  }
+
+  &__par {
+    display:               grid;
+    // Las dos cámaras enfrentadas con el puntaje en medio: se ve de un vistazo
+    // qué se está afirmando que es lo mismo.
+    grid-template-columns: 1fr auto 1fr;
+    gap:                   10px;
+    padding:               11px 12px;
+    border:                1px solid rgba(21, 27, 59, .15);
+    border-radius:         10px;
+
+    @media (max-width: 720px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  &__lado {
+    display:        flex;
+    flex-direction: column;
+    min-width:      0;
+
+    strong { font-size: calc(12px * var(--font-size-scale, 1)); }
+    small  { color: var(--ui-text-muted, #6b7280); font-size: calc(10.5px * var(--font-size-scale, 1)); }
+  }
+
+  &__rotulo {
+    margin-bottom:  2px;
+    color:          var(--policia-medio, #002a66);
+    font-size:      calc(9.5px * var(--font-size-scale, 1));
+    font-weight:    700;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+  }
+
+  &__enlace {
+    display:        flex;
+    flex-direction: column;
+    align-items:    center;
+    justify-content: center;
+    gap:            4px;
+    color:          var(--ui-text-muted, #6b7280);
+  }
+
+  &__puntaje {
+    padding:       2px 9px;
+    border-radius: 999px;
+    background:    rgba(21, 27, 59, .08);
+    font-size:     calc(11px * var(--font-size-scale, 1));
+    font-weight:   700;
+
+    // El color no decide por el usuario, solo ordena la atención: verde es
+    // «casi seguro», ámbar «mírelo bien».
+    &--alto  { background: rgba(34, 197, 94, .18);  color: #15803d; }
+    &--medio { background: rgba(245, 158, 11, .18); color: #b45309; }
+  }
+
+  &__motivo {
+    grid-column: 1 / -1;
+    margin:      0;
+    color:       var(--ui-text-muted, #6b7280);
+    font-size:   calc(10.5px * var(--font-size-scale, 1));
+  }
+
+  &__acciones {
+    grid-column:     1 / -1;
+    display:         flex;
+    gap:             6px;
+    justify-content: flex-end;
+  }
+}

@@ -49,7 +49,8 @@ import {
   CamaraIntegracionService,
   DtoCamaraIntegracion,
   DtoCamaraIntegracionRequest,
-  DtoVmsDriverDescriptor
+  DtoVmsDriverDescriptor,
+  DtoEmparejamientoCamara
 } from '../../services/camara-integracion.service';
 import { ActivatedRoute } from '@angular/router';
 import { ToastService } from '../../../../core/services/toast.service';
@@ -91,6 +92,7 @@ type Tab     = 'salientes' | 'entrantes' | 'pbx' | 'sms' | 'camaras' | 'auditori
 type ModalT  = 'saliente-create' | 'saliente-edit'
              | 'entrante-create' | 'entrante-edit'
              | 'camara-create'   | 'camara-edit'
+             | 'camara-catalogo'
              | 'payload-viewer'  | null;
 
 @Component({
@@ -494,6 +496,7 @@ export class IntegracionesPageComponent implements OnInit {
 
   readonly accionesCamaras: UiTableAction<DtoCamaraIntegracion>[] = [
     { id: 'editar', label: 'Editar', icon: 'fa-solid fa-pen' },
+    { id: 'catalogo', label: 'Sincronizar y emparejar cámaras', icon: 'fa-solid fa-arrows-rotate' },
     { id: 'toggle', label: 'Activar / desactivar', icon: 'fa-solid fa-power-off' },
     { id: 'eliminar', label: 'Eliminar', icon: 'fa-solid fa-trash' },
   ];
@@ -591,8 +594,91 @@ export class IntegracionesPageComponent implements OnInit {
 
   onAccionCamara(ev: UiTableActionEvent<DtoCamaraIntegracion>): void {
     if (ev.actionId === 'editar') this.openEditCam(ev.row);
+    else if (ev.actionId === 'catalogo') this.abrirCatalogo(ev.row);
     else if (ev.actionId === 'toggle') this.toggleCam(ev.row);
     else if (ev.actionId === 'eliminar') this.deleteCam(ev.row);
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  //  Catálogo de cámaras: sincronizar con el VMS y emparejar con el censo
+  // ══════════════════════════════════════════════════════════════════════════
+  //
+  // El emparejamiento no se aplica solo. El censo institucional NO trae el
+  // identificador del VMS, así que la única pista es el nombre; un nombre
+  // parecido no basta para que un despachador acabe viendo el video de una
+  // cámara que no es la que cree. SECAD propone y una persona confirma.
+
+  readonly catIntegracion  = signal<DtoCamaraIntegracion | null>(null);
+  readonly catSincronizando = signal(false);
+  readonly catCargando     = signal(false);
+  readonly catResumen      = signal('');
+  readonly catPropuestas   = signal<DtoEmparejamientoCamara[]>([]);
+  readonly catConfirmando  = signal('');
+
+  abrirCatalogo(c: DtoCamaraIntegracion): void {
+    this.catIntegracion.set(c);
+    this.catResumen.set('');
+    this.catPropuestas.set([]);
+    this.modal.set('camara-catalogo');
+    document.body.classList.add('ui-modal-open');
+    this.cargarPropuestas();
+  }
+
+  sincronizarCatalogo(): void {
+    const c = this.catIntegracion();
+    if (!c) return;
+    this.catSincronizando.set(true);
+    this.catResumen.set('');
+    this.camSvc.sincronizar(c.id).subscribe({
+      next: r => {
+        this.catSincronizando.set(false);
+        this.catResumen.set(r.mensaje);
+        if (r.ok) { this.toast.success('Cámaras', r.mensaje); this.cargarPropuestas(); }
+        else this.toast.warning('Cámaras', r.mensaje);
+      },
+      error: () => {
+        this.catSincronizando.set(false);
+        this.catResumen.set('No se pudo sincronizar con el VMS.');
+        this.toast.error('Cámaras', 'No se pudo sincronizar con el VMS.');
+      },
+    });
+  }
+
+  private cargarPropuestas(): void {
+    const c = this.catIntegracion();
+    if (!c) return;
+    this.catCargando.set(true);
+    this.camSvc.emparejamientos(c.id).subscribe({
+      next: r => { this.catCargando.set(false); this.catPropuestas.set(r.data ?? []); },
+      error: () => { this.catCargando.set(false); this.catPropuestas.set([]); },
+    });
+  }
+
+  confirmarEmparejamiento(p: DtoEmparejamientoCamara): void {
+    this.catConfirmando.set(p.vmsId);
+    this.camSvc.emparejar(p.censoId, p.vmsId).subscribe({
+      next: r => {
+        this.catConfirmando.set('');
+        if (r.success) {
+          this.toast.success('Cámaras', r.message);
+          // Se quita de la lista sin recargar: quien está revisando una lista
+          // larga no debe perder el sitio donde iba.
+          this.catPropuestas.update(l => l.filter(x => x.vmsId !== p.vmsId));
+          this.loadCamaras();
+        } else this.toast.warning('Cámaras', r.message);
+      },
+      error: () => { this.catConfirmando.set(''); this.toast.error('Cámaras', 'No se pudo emparejar.'); },
+    });
+  }
+
+  descartarPropuesta(p: DtoEmparejamientoCamara): void {
+    // Descartar es solo dejar de mostrarla ahora: no se guarda un «no» porque
+    // la próxima sincronización puede traer un nombre mejor.
+    this.catPropuestas.update(l => l.filter(x => x.vmsId !== p.vmsId));
+  }
+
+  etiquetaEstadoVms(estado: number): string {
+    return estado === 1 ? 'En línea' : estado === 2 ? 'Fuera de línea' : 'Desconocido';
   }
 
   onAccionAudSal(ev: UiTableActionEvent<DtoDespachoAuditoria>): void {

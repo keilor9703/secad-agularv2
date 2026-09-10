@@ -63,6 +63,31 @@ export interface DtoCamaraIntegracionRequest {
   activa:       boolean;
 }
 
+/** Un emparejamiento propuesto entre una cámara del VMS y una del censo. */
+export interface DtoEmparejamientoCamara {
+  censoId:        string;
+  censoNombre:    string;
+  censoNumero:    string | null;
+  censoDireccion: string | null;
+  vmsId:          string;
+  vmsCodigo:      string;
+  vmsNombre:      string;
+  vmsEstado:      number;
+  /** 0 a 100: cuánto se parecen los nombres, ya normalizados. */
+  puntaje:        number;
+  /** Por qué se propuso, en palabras, para poder juzgarlo. */
+  motivo:         string;
+}
+
+export interface DtoSyncResult {
+  ok:           boolean;
+  mensaje:      string;
+  reportadas:   number;
+  nuevas:       number;
+  actualizadas: number;
+  sinEmparejar: number;
+}
+
 export interface DtoCamaraPruebaResult {
   ok:                boolean;
   mensaje:           string;
@@ -75,6 +100,8 @@ export interface DtoCamaraPruebaResult {
 export class CamaraIntegracionService {
   private readonly http = inject(HttpClient);
   private readonly base = `${environment.apiBaseUrl}/CamaraIntegracion`;
+  /** El catálogo (sincronizar, emparejar) va por su propio controlador. */
+  private readonly adminBase = `${environment.apiBaseUrl}/CamarasAdmin`;
 
   getDrivers(): Observable<DtoVmsDriverDescriptor[]> {
     return this.http.get<DtoVmsDriverDescriptor[]>(`${this.base}/drivers`);
@@ -105,6 +132,29 @@ export class CamaraIntegracionService {
    * guardada, que es el caso normal: el formulario no reenvía el secreto —no
    * se muestra una vez guardado— y el backend usa el almacenado.
    */
+  // ── Catálogo: sincronizar y emparejar ──────────────────────────────────
+
+  /** Trae el catálogo del VMS y lo guarda. */
+  sincronizar(integracionId: string): Observable<DtoSyncResult> {
+    return this.http.post<DtoSyncResult>(`${this.adminBase}/sync/${integracionId}`, {});
+  }
+
+  /** Emparejamientos propuestos, para que una persona los confirme. */
+  emparejamientos(integracionId: string): Observable<{ success: boolean; data: DtoEmparejamientoCamara[] }> {
+    return this.http.get<{ success: boolean; data: DtoEmparejamientoCamara[] }>(
+      `${this.adminBase}/emparejamientos/${integracionId}`);
+  }
+
+  emparejar(censoId: string, vmsId: string): Observable<{ success: boolean; message: string }> {
+    return this.http.post<{ success: boolean; message: string }>(
+      `${this.adminBase}/emparejar`, { censoId, vmsId });
+  }
+
+  desemparejar(censoId: string): Observable<{ success: boolean; message: string }> {
+    return this.http.post<{ success: boolean; message: string }>(
+      `${this.adminBase}/desemparejar/${censoId}`, {});
+  }
+
   validar(req: DtoCamaraIntegracionRequest, id?: string): Observable<DtoCamaraPruebaResult> {
     const url = id ? `${this.base}/${id}/validar` : `${this.base}/validar`;
     return this.http.post<DtoCamaraPruebaResult>(url, req);

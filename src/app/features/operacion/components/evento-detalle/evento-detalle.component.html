@@ -377,6 +377,13 @@
           @if (recursos().length) { <b class="ev-tabc__n">{{ recursos().length }}</b> }
         </button>
         <button type="button" role="tab" class="ev-tabc"
+                [class.ev-tabc--sel]="panel() === 'camaras'"
+                [attr.aria-selected]="panel() === 'camaras'"
+                (click)="irAPanel('camaras')">
+          <i class="fa-solid fa-video" aria-hidden="true"></i><span>Cámaras</span>
+          @if (camaras().length) { <b class="ev-tabc__n">{{ camaras().length }}</b> }
+        </button>
+        <button type="button" role="tab" class="ev-tabc"
                 [class.ev-tabc--sel]="panel() === 'despacho'"
                 [attr.aria-selected]="panel() === 'despacho'"
                 (click)="irAPanel('despacho')">
@@ -623,6 +630,74 @@
                       }
                     </div>
                   </div>
+                }
+              }
+            </div>
+          }
+
+          @case ('camaras') {
+            <div class="ev-camaras">
+              @if (cargandoCamaras()) {
+                <p class="ev-cargando"><app-ui-spinner size="sm" /> <span>Buscando cámaras cercanas…</span></p>
+              } @else if (!camaras().length) {
+                <p class="ev-nota ev-nota--vacia">
+                  <i class="fa-solid fa-video-slash" aria-hidden="true"></i>
+                  {{ avisoCamaras() || 'No hay cámaras registradas cerca de este punto.' }}
+                </p>
+              } @else {
+                <!-- Se dice cuántas se pueden VER, no solo cuántas hay: es la
+                     diferencia entre un apoyo real y una lista de puntos. -->
+                <p class="ev-camaras__resumen">
+                  {{ camaras().length }} cámara(s) a menos de 1 km ·
+                  <strong>{{ camarasConVideo() }}</strong> con video disponible
+                </p>
+
+                @for (c of camaras(); track c.id) {
+                  <div class="ev-camara"
+                       [class.ev-camara--sinvideo]="!c.reproducible"
+                       [class.ev-camara--caida]="c.reproducible && c.estado === 2">
+                    <button type="button" class="ev-camara__head"
+                            (click)="ubicarCamara(c)"
+                            title="Centrar en el mapa">
+                      <i class="fa-solid {{ c.tienePtz ? 'fa-video' : 'fa-camera' }}" aria-hidden="true"></i>
+                      <span class="ev-camara__info">
+                        <strong>{{ c.nombre }}</strong>
+                        <small>{{ c.direccion || c.municipio || 'Sin dirección registrada' }}</small>
+                      </span>
+                      @if (c.distancia !== null) {
+                        <span class="ev-camara__dist" [class.ev-camara__dist--cerca]="c.distancia < 200">
+                          {{ c.distancia }} m
+                        </span>
+                      }
+                    </button>
+
+                    <div class="ev-camara__pie">
+                      @if (!c.reproducible) {
+                        <app-ui-badge label="Sin enlazar al video" variant="neutral" size="xs" />
+                      } @else if (c.estado === 2) {
+                        <app-ui-badge label="Fuera de línea" variant="danger" size="xs" />
+                      } @else if (c.estado === 1) {
+                        <app-ui-badge label="En línea" variant="success" size="xs" />
+                      } @else {
+                        <app-ui-badge label="Estado desconocido" variant="neutral" size="xs" />
+                      }
+                      @if (c.tienePtz) { <app-ui-badge label="PTZ" variant="info" size="xs" /> }
+
+                      <app-ui-button
+                        class="ev-camara__ver"
+                        variant="primary" size="sm" icon="fa-solid fa-play"
+                        [disabled]="!c.reproducible"
+                        [tooltip]="c.reproducible
+                          ? 'Ver el video en vivo'
+                          : 'Está en el inventario pero no se ha enlazado con el sistema de video'"
+                        (buttonClick)="abrirCamara(c)"
+                      >Ver</app-ui-button>
+                    </div>
+                  </div>
+                }
+
+                @if (avisoCamaras()) {
+                  <p class="ev-nota">{{ avisoCamaras() }}</p>
                 }
               }
             </div>
@@ -1696,3 +1771,13 @@ variant="primary" icon="fa-solid fa-share-from-square"
   </div>
 </app-ui-modal>
 
+
+<!-- ═══ Visor de cámara CCTV ═══════════════════════════════════════════════
+     Va al final y fuera de todo panel: se monta por encima de la consola sin
+     depender de qué pestaña esté abierta, para que el operador pueda mirar el
+     video y seguir viendo el caso detrás. -->
+<app-camara-visor
+  [camara]="camaraAbierta()"
+  [eventoId]="evento().id"
+  (cerrar)="cerrarCamara()"
+/>

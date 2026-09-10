@@ -1,0 +1,61 @@
+@if (camara(); as c) {
+  <div class="cv-fondo" (click)="cerrar.emit()"></div>
+
+  <section class="cv" role="dialog" aria-modal="true" [attr.aria-label]="'Cámara ' + titulo()">
+    <header class="cv__cab">
+      <div class="cv__ident">
+        <i class="fa-solid fa-video" aria-hidden="true"></i>
+        <div>
+          <h3 class="cv__titulo">{{ titulo() }}</h3>
+          @if (c.direccion) { <p class="cv__dir">{{ c.direccion }}</p> }
+        </div>
+      </div>
+      <div class="cv__acciones">
+        @if (urlActual()) {
+          <button type="button" class="cv__btn" title="Pantalla completa"
+                  aria-label="Pantalla completa" (click)="pantallaCompleta()">
+            <i class="fa-solid fa-expand" aria-hidden="true"></i>
+          </button>
+        }
+        <button type="button" class="cv__btn cv__btn--cerrar" title="Cerrar"
+                aria-label="Cerrar la cámara" (click)="cerrar.emit()">
+          <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+        </button>
+      </div>
+    </header>
+
+    <div class="cv__marco">
+      <!-- El <video> se mantiene siempre en el DOM: si se destruyera al mostrar
+           un mensaje, hls.js perdería el elemento al que se enganchó. -->
+      <video #video class="cv__video" playsinline muted controls
+             [class.cv__video--oculto]="!!error() || cargando()"></video>
+
+      @if (cargando()) {
+        <div class="cv__estado">
+          <i class="fa-solid fa-circle-notch fa-spin" aria-hidden="true"></i>
+          <p>Pidiendo el video al sistema de cámaras…</p>
+        </div>
+      } @else if (error()) {
+        <div class="cv__estado cv__estado--error">
+          <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
+          <p>{{ error() }}</p>
+          <button type="button" class="cv__reintentar" (click)="reintentar()">
+            <i class="fa-solid fa-rotate-right" aria-hidden="true"></i> Reintentar
+          </button>
+        </div>
+      }
+    </div>
+
+    <footer class="cv__pie">
+      <span class="cv__chip" [class.cv__chip--ok]="c.estado === 1"
+            [class.cv__chip--mal]="c.estado === 2">
+        {{ c.estado === 1 ? 'En línea' : c.estado === 2 ? 'Fuera de línea' : 'Estado desconocido' }}
+      </span>
+      @if (c.tienePtz) { <span class="cv__chip">PTZ</span> }
+      @if (c.distancia !== null) { <span class="cv__chip">{{ c.distancia }} m del hecho</span> }
+      <!-- Por dónde viajó la petición. Si el video no carga, saberlo es la
+           mitad del diagnóstico: dice si fue el nodo local o el central. -->
+      @if (nodo()) { <span class="cv__nodo" title="Nodo que atendió la petición">vía {{ nodo() }}</span> }
+    </footer>
+  </section>
+}

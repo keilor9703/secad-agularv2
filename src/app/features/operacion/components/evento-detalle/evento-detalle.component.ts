@@ -20,6 +20,8 @@ import { UiBadgeComponent } from '../../../../shared/components/ui-badge/ui-badg
 import { UiChipComponent } from '../../../../shared/components/ui-chip/ui-chip.component';
 import { UiSpinnerComponent } from '../../../../shared/components/ui-spinner/ui-spinner.component';
 import { AdjuntosCasoComponent } from '../adjuntos-caso/adjuntos-caso.component';
+import { CamaraVisorComponent } from '../camara-visor/camara-visor.component';
+import { CamaraService, DtoCamara } from '../../../../core/services/operacion/camara.service';
 import { UiSelectOption } from '../../../../shared/interfaces/ui-select-option.interface';
 import { animarMarcadorHasta, detenerAnimacionMarcador } from '../../../../shared/utils/leaflet-marker-animator';
 
@@ -79,7 +81,7 @@ export interface CambioEstadoEvento {
  */
 /** Pestañas del panel lateral de la consola. */
 export type PanelConsola =
-  | 'caso' | 'recursos' | 'despacho' | 'asistente' | 'notas' | 'archivos' | 'chat';
+  | 'caso' | 'recursos' | 'camaras' | 'despacho' | 'asistente' | 'notas' | 'archivos' | 'chat';
 
 @Component({
   selector: 'app-evento-detalle',
@@ -98,6 +100,7 @@ export type PanelConsola =
     UiChipComponent,
     UiSpinnerComponent,
     AdjuntosCasoComponent,
+    CamaraVisorComponent,
   ],
   templateUrl: './evento-detalle.component.html',
   styleUrls: ['./evento-detalle.component.scss', './evento-detalle.modales.scss'],
@@ -118,6 +121,17 @@ export class EventoDetalleComponent implements OnDestroy {
   /** Latido de un minuto de la página: mantiene vivos semáforo y cronómetros. */
   readonly tick        = input(0);
 
+  // ── Cámaras CCTV cercanas ────────────────────────────────────────────────
+  // El despachador ve qué cámaras hay alrededor del hecho y puede abrir la de
+  // la esquina sin salir del caso. Las que están en el inventario pero no
+  // emparejadas con el VMS también se pintan: saber que hay una cámara ahí es
+  // útil aunque no podamos darle el video.
+  readonly camaras         = signal<DtoCamara[]>([]);
+  readonly cargandoCamaras = signal(false);
+  readonly avisoCamaras    = signal('');
+  readonly camaraAbierta   = signal<DtoCamara | null>(null);
+  readonly camarasConVideo = computed(() => this.camaras().filter(c => c.reproducible).length);
+
   /** El caso dejó de estar abierto aquí: la bandeja vuelve a su estado vacío. */
   readonly cerrado         = output<void>();
   readonly estadoCambiado  = output<CambioEstadoEvento>();
@@ -134,6 +148,7 @@ export class EventoDetalleComponent implements OnDestroy {
   private readonly recepcionSvc = inject(RecepcionService);
   private readonly videoSvc     = inject(VideoLlamadaService);
   private readonly toast        = inject(ToastService);
+  private readonly camarasSvc   = inject(CamaraService);
 
   readonly ESTADOS = ESTADOS_EVENTO;
 
@@ -402,6 +417,7 @@ export class EventoDetalleComponent implements OnDestroy {
   readonly ultimaActRecursos = signal<Date | null>(null);
   readonly asignandoMedioId  = signal<string | null>(null);
   private readonly marcadoresRecurso = new Map<string, L.Marker>();
+  private readonly marcadoresCamara   = new Map<string, L.Marker>();
   private recursosSub: Subscription | null = null;
 
   // ── Sugerencia de cuadrante ───────────────────────────────────────────────
@@ -568,6 +584,9 @@ export class EventoDetalleComponent implements OnDestroy {
     this.nuevaAnotacion.set({ titulo: '', anotacion: '', tipoAnotacion: 'GENERAL' });
 
     this.destruirMapa();
+    this.camaras.set([]);
+    this.camaraAbierta.set(null);
+    this.avisoCamaras.set('');
     this.detenerPollingRecursos();
     this.detenerPollingActuaciones();
     this.detenerPollingPresencia();
@@ -603,6 +622,10 @@ export class EventoDetalleComponent implements OnDestroy {
         this.cargarHistorialEstado();
         this.cargarDuplicados();
         this.iniciarPollingPresencia(evento.id);
+        // Las cámaras no se refrescan en bucle: su posición no cambia y el
+        // estado en línea se consulta al abrir el video. Un polling más contra
+        // el VMS del municipio no compensa.
+        this.cargarCamaras(evento.id);
       },
       error: () => {
         if (this.evento()?.id !== pedido) return;
@@ -620,6 +643,9 @@ export class EventoDetalleComponent implements OnDestroy {
 
   private limpiar(): void {
     this.destruirMapa();
+    this.camaras.set([]);
+    this.camaraAbierta.set(null);
+    this.avisoCamaras.set('');
     this.detenerPollingRecursos();
     this.detenerPollingActuaciones();
     this.detenerPollingPresencia();
@@ -1873,6 +1899,104 @@ export class EventoDetalleComponent implements OnDestroy {
   }
 
   // ══════════════════════════════════════════════════════════════════════════
+  //  Cámaras CCTV
+  // ══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Cámaras alrededor del hecho. Las coordenadas las pone el backend a partir
+   * del propio caso, así que el operador no tiene que decir dónde mirar.
+   */
+  private cargarCamaras(eventoId: string | number): void {
+    this.cargandoCamaras.set(true);
+    this.avisoCamaras.set('');
+    this.camarasSvc.cercanasAlEvento(eventoId, 1000, 8).subscribe({
+      next: r => {
+        this.cargandoCamaras.set(false);
+        this.camaras.set(r.data ?? []);
+        // El backend devuelve lista vacía con motivo cuando el caso no tiene
+        // coordenadas: es normal y se dice, no se calla.
+        if (r.message) this.avisoCamaras.set(r.message);
+        this.pintarCamarasEnMapa();
+      },
+      error: () => {
+        this.cargandoCamaras.set(false);
+        this.camaras.set([]);
+        // No se molesta al operador con un toast: las cámaras son un apoyo,
+        // no el caso. El aviso queda en su propio panel.
+        this.avisoCamaras.set('No se pudieron consultar las cámaras cercanas.');
+      },
+    });
+  }
+
+  private pintarCamarasEnMapa(): void {
+    if (!this.mapa) return;
+
+    for (const m of this.marcadoresCamara.values()) {
+      try { m.remove(); } catch { /* el mapa pudo haberse destruido */ }
+    }
+    this.marcadoresCamara.clear();
+
+    for (const c of this.camaras()) {
+      if (c.latitud == null || c.longitud == null) continue;
+      const m = L.marker([c.latitud, c.longitud], { icon: this.iconoCamara(c) })
+        .addTo(this.mapa)
+        .bindPopup(this.popupCamara(c));
+      // Clic en el pin = abrir el video, igual que en la lista. Solo si hay
+      // algo que abrir: una cámara sin emparejar no reproduce nada.
+      if (c.reproducible) m.on('click', () => this.abrirCamara(c));
+      this.marcadoresCamara.set(c.id, m);
+    }
+  }
+
+  private iconoCamara(c: DtoCamara): L.DivIcon {
+    // Tres estados visuales, y son distintos entre sí a propósito:
+    //  · sin emparejar → gris: existe pero SECAD no le puede pedir video.
+    //  · fuera de línea → rojo: el VMS la conoce y dice que está caída.
+    //  · en línea → azul: se puede ver ahora.
+    const color = !c.reproducible ? '#94a3b8' : (c.estado === 2 ? '#ef4444' : '#0ea5e9');
+    return L.divIcon({
+      className: '',
+      html: `<div class="ev-cam" style="background:${color}"
+                  title="${escaparHtml(c.nombre)}">
+               <i class="fa-solid ${c.tienePtz ? 'fa-video' : 'fa-camera'}"></i>
+             </div>`,
+      iconSize:    [26, 26],
+      iconAnchor:  [13, 13],
+      popupAnchor: [0, -14],
+    });
+  }
+
+  private popupCamara(c: DtoCamara): string {
+    const estado = !c.reproducible
+      ? 'En el inventario, sin enlazar al sistema de video'
+      : c.estado === 1 ? 'En línea' : c.estado === 2 ? 'Fuera de línea' : 'Estado desconocido';
+    const dist = c.distancia !== null ? ` · ${c.distancia} m del hecho` : '';
+    return `<b>${escaparHtml(c.nombre)}</b><br>` +
+           `${escaparHtml(c.direccion ?? '')}<br>` +
+           `<small>${escaparHtml(estado)}${dist}</small>`;
+  }
+
+  /** Abre el visor. Pedir la URL y auditar la consulta es cosa del visor. */
+  abrirCamara(c: DtoCamara): void {
+    if (!c.reproducible) {
+      this.toast.info('Cámara',
+        'Esta cámara está en el inventario pero no se ha enlazado con el sistema de video. ' +
+        'Un administrador puede emparejarla en Hub de Integraciones → Cámaras.');
+      return;
+    }
+    this.camaraAbierta.set(c);
+  }
+
+  cerrarCamara(): void { this.camaraAbierta.set(null); }
+
+  /** Centra el mapa en una cámara de la lista sin abrir su video. */
+  ubicarCamara(c: DtoCamara): void {
+    if (!this.mapa || c.latitud == null || c.longitud == null) return;
+    this.mapa.flyTo([c.latitud, c.longitud], 17, { duration: 0.6 });
+    this.marcadoresCamara.get(c.id)?.openPopup();
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
   //  Mapa
   // ══════════════════════════════════════════════════════════════════════════
 
@@ -1894,6 +2018,9 @@ export class EventoDetalleComponent implements OnDestroy {
           .bindPopup(`<b>${escaparHtml(d.direCaso)}</b>`);
       }
       this.pintarRecursosEnMapa();
+      // Las cámaras pueden haber llegado antes que el mapa: se repintan aquí
+      // para que no se pierdan por el orden de carga.
+      this.pintarCamarasEnMapa();
     } catch (e) {
       console.warn('[Eventos] No se pudo inicializar el mapa:', e);
       this.toast.error('Mapa', 'No se pudo cargar el mapa. Recargue la página.');
@@ -1908,6 +2035,7 @@ export class EventoDetalleComponent implements OnDestroy {
     this.marcadorIncidente = null;
     for (const m of this.marcadoresRecurso.values()) detenerAnimacionMarcador(m);
     this.marcadoresRecurso.clear();
+    this.marcadoresCamara.clear();
     if (this.mapa) {
       try { this.mapa.remove(); } catch { /* ya removido */ }
       this.mapa = null;
