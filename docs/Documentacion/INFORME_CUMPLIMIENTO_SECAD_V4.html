@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>SECAD v4 — Informe de Cumplimiento de Especificaciones Técnicas</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap');
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Inter',Arial,sans-serif;background:#f1f5f9;color:#1e293b;font-size:12px}
+
+  .page{max-width:1200px;margin:0 auto;padding:24px}
+
+  /* ─ header ─ */
+  .hdr{background:linear-gradient(135deg,#001f6e,#003087 60%,#0052cc);color:#fff;border-radius:12px;padding:22px 30px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center}
+  .hdr h1{font-size:20px;font-weight:900}
+  .hdr h2{font-size:11px;opacity:.75;margin-top:4px}
+  .hdr-right{text-align:right;font-size:10px;opacity:.7;line-height:1.7}
+  .hdr-right strong{font-size:13px;opacity:1;color:#7dd3fc}
+
+  /* ─ KPI cards ─ */
+  .kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:20px}
+  .kpi{background:#fff;border-radius:10px;padding:14px 12px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.07)}
+  .kpi-n{font-size:32px;font-weight:900;line-height:1}
+  .kpi-l{font-size:9.5px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#64748b;margin-top:4px}
+  .kpi-pct{font-size:10px;margin-top:4px}
+  .kpi-verde  .kpi-n{color:#16a34a} .kpi-verde  .kpi-pct{color:#16a34a}
+  .kpi-amarillo .kpi-n{color:#d97706} .kpi-amarillo .kpi-pct{color:#d97706}
+  .kpi-rojo   .kpi-n{color:#dc2626} .kpi-rojo   .kpi-pct{color:#dc2626}
+  .kpi-azul   .kpi-n{color:#003087} .kpi-azul   .kpi-pct{color:#003087}
+  .kpi-gris   .kpi-n{color:#475569} .kpi-gris   .kpi-pct{color:#475569}
+
+  /* ─ barra de progreso global ─ */
+  .progreso-global{background:#fff;border-radius:10px;padding:16px 20px;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,0,0,.07)}
+  .prog-titulo{font-size:12px;font-weight:700;color:#003087;margin-bottom:10px}
+  .prog-barra-wrap{position:relative;height:28px;border-radius:14px;background:#f1f5f9;overflow:hidden}
+  .prog-seg{height:100%;position:absolute;top:0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff}
+  .prog-lbl{display:flex;gap:16px;margin-top:8px;flex-wrap:wrap}
+  .prog-lbl span{font-size:10px;display:flex;align-items:center;gap:5px}
+  .dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+
+  /* ─ secciones ─ */
+  .seccion{margin-bottom:20px}
+  .sec-header{background:#003087;color:#fff;padding:8px 16px;border-radius:8px 8px 0 0;font-size:12px;font-weight:800;letter-spacing:.04em;display:flex;justify-content:space-between;align-items:center}
+  .sec-badge{background:rgba(255,255,255,.2);border-radius:20px;padding:2px 10px;font-size:10px}
+
+  /* ─ tabla ─ */
+  table{width:100%;border-collapse:collapse;background:#fff;border-radius:0 0 8px 8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.07)}
+  th{background:#f8fafc;padding:7px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#475569;border-bottom:1px solid #e2e8f0;text-align:left}
+  td{padding:7px 10px;border-bottom:1px solid #f1f5f9;vertical-align:top;line-height:1.4}
+  tr:last-child td{border-bottom:none}
+  tr:hover td{background:#f8fafc}
+  .item-id{font-family:monospace;font-weight:700;color:#003087;font-size:11px;white-space:nowrap}
+  .desc{color:#334155}
+  .estado{text-align:center;white-space:nowrap}
+  .brecha{color:#64748b;font-size:10.5px}
+
+  /* ─ badges de estado ─ */
+  .b{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:10px;font-weight:700;white-space:nowrap}
+  .b-v {background:#dcfce7;color:#15803d}
+  .b-p {background:#fef9c3;color:#b45309}
+  .b-r {background:#fee2e2;color:#dc2626}
+  .b-na{background:#f1f5f9;color:#64748b}
+
+  /* ─ resumen de módulos ─ */
+  .mods{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px}
+  .mod{background:#fff;border-radius:8px;padding:12px;box-shadow:0 2px 6px rgba(0,0,0,.07);border-left:4px solid #e2e8f0}
+  .mod.v{border-color:#16a34a} .mod.p{border-color:#d97706} .mod.r{border-color:#dc2626}
+  .mod-name{font-weight:800;font-size:11px;margin-bottom:4px}
+  .mod.v .mod-name{color:#15803d}
+  .mod.p .mod-name{color:#b45309}
+  .mod.r .mod-name{color:#dc2626}
+  .mod-desc{font-size:10px;color:#64748b;line-height:1.4}
+
+  /* ─ notas críticas ─ */
+  .alerta{background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;padding:12px 16px;margin-bottom:16px}
+  .alerta h3{color:#991b1b;font-size:12px;font-weight:800;margin-bottom:6px}
+  .alerta ul{padding-left:16px;color:#7f1d1d;font-size:11px;line-height:1.8}
+  .info-box{background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:12px 16px;margin-bottom:16px}
+  .info-box h3{color:#1d4ed8;font-size:12px;font-weight:800;margin-bottom:6px}
+  .info-box ul{padding-left:16px;color:#1e40af;font-size:11px;line-height:1.8}
+
+  /* ─ roadmap ─ */
+  .roadmap{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px}
+  .fase{background:#fff;border-radius:8px;padding:14px;box-shadow:0 2px 6px rgba(0,0,0,.07)}
+  .fase-title{font-size:12px;font-weight:800;margin-bottom:8px;padding-bottom:6px;border-bottom:2px solid}
+  .fase-1 .fase-title{color:#16a34a;border-color:#16a34a}
+  .fase-2 .fase-title{color:#d97706;border-color:#d97706}
+  .fase-3 .fase-title{color:#dc2626;border-color:#dc2626}
+  .fase ul{padding-left:14px;font-size:10.5px;color:#334155;line-height:1.8}
+  .fase ul li{margin-bottom:2px}
+
+  .footer{text-align:center;color:#94a3b8;font-size:10px;margin-top:20px;padding-top:12px;border-top:1px solid #e2e8f0}
+
+  @media print{body{background:#fff}.hdr{-webkit-print-color-adjust:exact}}
+</style>
+</head>
+<body>
+<div class="page">
+
+<!-- ══ ENCABEZADO ═══════════════════════════════════════ -->
+<div class="hdr">
+  <div>
+    <h1>📋 SECAD v4 — Informe de Cumplimiento de Especificaciones Técnicas</h1>
+    <h2>Cruce: "Especificaciones Técnicas SECAD 25.05.2026" vs Estado actual del proyecto · Junio 2026</h2>
+  </div>
+  <div class="hdr-right">
+    <strong>Policía Nacional de Colombia</strong><br>
+    AITEC / OFTIC / GRUDE<br>
+    Elaboró: TE Kehilor Martínez Patiño<br>
+    Fecha: Junio 2026
+  </div>
+</div>
+
+<!-- ══ KPIs GLOBALES ════════════════════════════════════ -->
+<div class="kpis">
+  <div class="kpi kpi-verde">
+    <div class="kpi-n">22</div>
+    <div class="kpi-l">Requisitos cumplidos</div>
+    <div class="kpi-pct">✅ Implementados</div>
+  </div>
+  <div class="kpi kpi-amarillo">
+    <div class="kpi-n">14</div>
+    <div class="kpi-l">Cumplimiento parcial</div>
+    <div class="kpi-pct">🟡 En desarrollo</div>
+  </div>
+  <div class="kpi kpi-rojo">
+    <div class="kpi-n">22</div>
+    <div class="kpi-l">Sin implementar</div>
+    <div class="kpi-pct">🔴 Faltantes</div>
+  </div>
+  <div class="kpi kpi-azul">
+    <div class="kpi-n">58</div>
+    <div class="kpi-l">Total requisitos</div>
+    <div class="kpi-pct">📄 Ficha SECAD</div>
+  </div>
+  <div class="kpi kpi-gris">
+    <div class="kpi-n">~51%</div>
+    <div class="kpi-l">Avance global</div>
+    <div class="kpi-pct">⚡ Estimado ponderado</div>
+  </div>
+</div>
+
+<!-- ══ BARRA DE PROGRESO GLOBAL ══════════════════════════ -->
+<div class="progreso-global">
+  <div class="prog-titulo">Avance global por categoría</div>
+  <div style="margin-bottom:10px">
+    <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:4px">
+      <span style="font-weight:700;color:#003087">🔧 Módulos Funcionales</span><span style="color:#16a34a;font-weight:700">72% completo</span>
+    </div>
+    <div style="height:14px;background:#f1f5f9;border-radius:7px;overflow:hidden">
+      <div style="width:72%;height:100%;background:linear-gradient(90deg,#16a34a,#22c55e);border-radius:7px"></div>
+    </div>
+  </div>
+  <div style="margin-bottom:10px">
+    <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:4px">
+      <span style="font-weight:700;color:#003087">🔐 Seguridad e Integración</span><span style="color:#d97706;font-weight:700">55% completo</span>
+    </div>
+    <div style="height:14px;background:#f1f5f9;border-radius:7px;overflow:hidden">
+      <div style="width:55%;height:100%;background:linear-gradient(90deg,#d97706,#f59e0b);border-radius:7px"></div>
+    </div>
+  </div>
+  <div style="margin-bottom:10px">
+    <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:4px">
+      <span style="font-weight:700;color:#003087">🏗 Arquitectura e Infraestructura</span><span style="color:#dc2626;font-weight:700">28% completo</span>
+    </div>
+    <div style="height:14px;background:#f1f5f9;border-radius:7px;overflow:hidden">
+      <div style="width:28%;height:100%;background:linear-gradient(90deg,#dc2626,#ef4444);border-radius:7px"></div>
+    </div>
+  </div>
+  <div style="margin-bottom:6px">
+    <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:4px">
+      <span style="font-weight:700;color:#003087">📱 Módulos pendientes (Cámaras, IA, Alarmas, Chatbot)</span><span style="color:#dc2626;font-weight:700">0% completo</span>
+    </div>
+    <div style="height:14px;background:#f1f5f9;border-radius:7px;overflow:hidden">
+      <div style="width:3%;height:100%;background:#dc2626;border-radius:7px"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ ALERTA CRÍTICA ════════════════════════════════════ -->
+<div class="alerta">
+  <h3>⚠️ Brechas Críticas — Riesgo Alto para la Entrega</h3>
+  <ul>
+    <li><strong>Arquitectura de microservicios + Docker/Kubernetes:</strong> La ficha exige microservicios contenerizados. El proyecto actual es monolítico (.NET 8 + Angular SPA). Es la desviación arquitectónica más importante.</li>
+    <li><strong>Vault para cifrado de credenciales:</strong> Las credenciales de BD de tenants deben cifrarse con HashiCorp Vault y rotarse cada 90 días. No implementado.</li>
+    <li><strong>Modo Offline/Degradado:</strong> Requerido para zonas PDET (Vaupés, Amazonas, etc.). No existe lógica de resiliencia de 3 niveles.</li>
+    <li><strong>Módulo Cámaras (VMS), Análisis Predictivo, Chatbot 123, Alarmas Comunitarias, Calidad del Servicio:</strong> 5 módulos completos NO iniciados.</li>
+    <li><strong>ETL/Data Warehouse Nacional:</strong> Apache Airflow + DW centralizado + anonimización. No implementado.</li>
+    <li><strong>NG911/NG112/NENA i3:</strong> Estándares internacionales de interoperabilidad. No implementados.</li>
+    <li><strong>PWA (Progressive Web App):</strong> Carga offline de interfaz requerida. No configurado.</li>
+    <li><strong>Pruebas:</strong> No se encontraron tests unitarios, de integración ni de rendimiento en el proyecto.</li>
+  </ul>
+</div>
+
+<!-- ══ ESTADO POR MÓDULOS ════════════════════════════════ -->
+<div class="seccion">
+  <div class="sec-header">
+    📦 ESTADO POR MÓDULOS DEL SISTEMA
+    <span class="sec-badge">Obligaciones Específicas del Contratista</span>
+  </div>
+  <div style="background:#fff;padding:12px;border-radius:0 0 8px 8px;box-shadow:0 2px 8px rgba(0,0,0,.07)">
+    <div class="mods">
+
+      <div class="mod v">
+        <div class="mod-name">✅ LOGIN / Autenticación</div>
+        <div class="mod-desc">OUD + MFA/2FA + JWT + RBAC implementados. Pendiente: fallback local (tabla usuarios cifrada) y Vault.</div>
+      </div>
+      <div class="mod v">
+        <div class="mod-name">✅ ADMINISTRACIÓN</div>
+        <div class="mod-desc">Usuarios, roles, menú, entidades/fuerzas, configuración, branding, línea de mando, dominio. Completo.</div>
+      </div>
+      <div class="mod v">
+        <div class="mod-name">✅ TURNOS DE VIGILANCIA</div>
+        <div class="mod-desc">Turnos, medios disponibles, personal, historial estados. Minuta, SIVICC sync. Filtro por turno en reportes y GIS.</div>
+      </div>
+      <div class="mod v">
+        <div class="mod-name">✅ INGRESO / RECEPCIÓN DE CASOS</div>
+        <div class="mod-desc">Recepción multicanal (voz PlantaTel, chat, SMS, fotos), pedidos con ciclo de vida completo, asistente inteligente.</div>
+      </div>
+      <div class="mod v">
+        <div class="mod-name">✅ GIS ESTADÍSTICO</div>
+        <div class="mod-desc">HeatMap, clusters, puntos, filtros, métricas, gráficas Chart.js, informe PDF exportable.</div>
+      </div>
+      <div class="mod v">
+        <div class="mod-name">✅ REPORTES Y ESTADÍSTICAS</div>
+        <div class="mod-desc">Dashboard SLA, tiempos de respuesta, top casos, por fuerza, operadores. Filtro por turno de vigilancia.</div>
+      </div>
+      <div class="mod v">
+        <div class="mod-name">✅ SUPERADMIN / SALUD CADs</div>
+        <div class="mod-desc">Monitor salud multi-tenant, gestión de tenants, context switch entre CADs.</div>
+      </div>
+      <div class="mod v">
+        <div class="mod-name">✅ GESTIÓN DOCUMENTAL</div>
+        <div class="mod-desc">Archivado de correos electrónicos, carpetas, adjuntos, búsqueda.</div>
+      </div>
+      <div class="mod p">
+        <div class="mod-name">🟡 MULTIAGENCIA / HUB</div>
+        <div class="mod-desc">Hub integrado, agencias externas, múltiples métodos auth. <strong>Pendiente: EDXL-DE, 10 agencias por CAD, Swagger completo.</strong></div>
+      </div>
+      <div class="mod p">
+        <div class="mod-name">🟡 GIS 2D MAPA INCIDENTES</div>
+        <div class="mod-desc">Mapa base con incidentes activos, ArcGIS capas. <strong>Pendiente: geocercas, rutas dinámicas, cámaras VMS, reproducción cronológica.</strong></div>
+      </div>
+      <div class="mod p">
+        <div class="mod-name">🟡 ASISTENTE VIRTUAL (Chatbot)</div>
+        <div class="mod-desc">Asistente con preguntas orientadoras por tipo. <strong>Pendiente: NLP voz a texto, chatbot ciudadano 123, respuesta automática.</strong></div>
+      </div>
+      <div class="mod p">
+        <div class="mod-name">🟡 MONITOREO EXCEPCIONES</div>
+        <div class="mod-desc">CadHealthMonitor como BG service. <strong>Pendiente: módulo frontend completo con alertas, excepciones técnicas, dashboard.</strong></div>
+      </div>
+      <div class="mod r">
+        <div class="mod-name">🔴 MÓDULO CÁMARAS (VMS)</div>
+        <div class="mod-desc">No iniciado. Integración con VMS institucional, cámaras georreferenciadas en GIS, transmisión en vivo.</div>
+      </div>
+      <div class="mod r">
+        <div class="mod-name">🔴 ANÁLISIS PREDICTIVO / IA</div>
+        <div class="mod-desc">No iniciado. Voz a texto, extracción automática de campos, predicción de demanda, dashboards IA.</div>
+      </div>
+      <div class="mod r">
+        <div class="mod-name">🔴 ALARMAS COMUNITARIAS</div>
+        <div class="mod-desc">No iniciado. Botones de pánico, sirenas, sensores ciudadanos, participación ciudadana.</div>
+      </div>
+      <div class="mod r">
+        <div class="mod-name">🔴 CALIDAD DEL SERVICIO</div>
+        <div class="mod-desc">No iniciado. Métricas de calidad, SLA por tipo de incidente, evaluaciones de atención.</div>
+      </div>
+      <div class="mod r">
+        <div class="mod-name">🔴 MÓDULO CAPACITACIÓN</div>
+        <div class="mod-desc">No iniciado. Videos educativos existe parcial. Módulo formal de capacitación operadores no existe.</div>
+      </div>
+      <div class="mod r">
+        <div class="mod-name">🔴 DATA WAREHOUSE / ETL</div>
+        <div class="mod-desc">No iniciado. Apache Airflow, DW nacional, anonimización Ley 1581, reportes nacionales consolidados.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TABLA DETALLADA POR SECCIÓN ══════════════════════ -->
+
+<!-- SECCIÓN 1: GENERALIDADES -->
+<div class="seccion">
+  <div class="sec-header">1. GENERALIDADES (1.1 — 1.17) <span class="sec-badge">Arquitectura, Proceso y Documentación</span></div>
+  <table>
+    <tr><th style="width:60px">Ítem</th><th style="width:35%">Requisito</th><th style="width:100px">Estado</th><th>Brecha / Observación</th></tr>
+    <tr>
+      <td class="item-id">1.1</td>
+      <td class="desc">Arquitectura microservicios contenerizados (Docker/Kubernetes). Servicios: Auth, Tenant Resolver, Connection Pool Manager, API Gateway, Analytics ETL, CAD Core, Dispatch Engine, GIS, Communication Hub, AI Service.</td>
+      <td class="estado"><span class="b b-r">🔴 NO</span></td>
+      <td class="brecha">El sistema es monolítico (.NET 8 + Angular SPA). Existe un docker/ folder pero sin orquestación. <strong>Desviación arquitectónica crítica.</strong></td>
+    </tr>
+    <tr>
+      <td class="item-id">1.2</td>
+      <td class="desc">Propiedad exclusiva de la Policía Nacional. Cesión de derechos patrimoniales.</td>
+      <td class="estado"><span class="b b-na">📋 Proceso</span></td>
+      <td class="brecha">Requisito contractual/legal, no técnico.</td>
+    </tr>
+    <tr>
+      <td class="item-id">1.3</td>
+      <td class="desc">Integración OUD/LDAP como proveedor primario + fallback a BD local de usuarios cifrada cuando OUD no disponible.</td>
+      <td class="estado"><span class="b b-p">🟡 PARCIAL</span></td>
+      <td class="brecha">OUD + MFA implementados. <strong>Falta:</strong> fallback local (tabla local_users_fallback cifrada), flag modo_fallback en JWT, usuarios civiles de otras entidades.</td>
+    </tr>
+    <tr>
+      <td class="item-id">1.4</td>
+      <td class="desc">Levantamiento de información con formatos Policía Nacional. Mesas de trabajo técnico-operativas.</td>
+      <td class="estado"><span class="b b-na">📋 Proceso</span></td>
+      <td class="brecha">Actividad presencial/proceso. No es código.</td>
+    </tr>
+    <tr>
+      <td class="item-id">1.5</td>
+      <td class="desc">Interfaz web en Edge, Firefox, Chrome, Safari. Matriz de compatibilidad de versiones.</td>
+      <td class="estado"><span class="b b-v">✅ SÍ</span></td>
+      <td class="brecha">Angular 18 compatible con todos los navegadores modernos. Pendiente: matriz formal de versiones.</td>
+    </tr>
+    <tr>
+      <td class="item-id">1.6</td>
+      <td class="desc">Pruebas unitarias, integración, funcionales, usuario, rendimiento y seguridad (OWASP).</td>
+      <td class="estado"><span class="b b-r">🔴 NO</span></td>
+      <td class="brecha">No se encontraron archivos de test en el proyecto (.spec.ts mínimos). No hay pipelines de CI/CD con pruebas automatizadas.</td>
+    </tr>
+    <tr>
+      <td class="item-id">1.7 / 1.8</td>
+      <td class="desc">Despliegue en servidores de prueba (30 días) + pilotaje producción (60-90 días).</td>
+      <td class="estado"><span class="b b-na">📋 Proceso</span></td>
+      <td class="brecha">Actividad pendiente de ejecución. Requiere ambientes configurados.</td>
+    </tr>
+    <tr>
+      <td class="item-id">1.9</td>
+      <td class="desc">Componentes Open Source, última versión estable, con soporte activo.</td>
+      <td class="estado"><span class="b b-v">✅ SÍ</span></td>
+      <td class="brecha">Angular 18, .NET 8, PostgreSQL 16, Leaflet 1.9, Chart.js 4.4. Todos OSS con comunidad activa.</td>
+    </tr>
+    <tr>
+      <td class="item-id">1.10</td>
+      <td class="desc">Instalación de ambientes Desarrollo, Pruebas y Producción.</td>
+      <td class="estado"><span class="b b-p">🟡 PARCIAL</span></td>
+      <td class="brecha">Existe docker-compose en /docker/. Falta configuración formal de los 4 ambientes requeridos (Dev, Test, Prod, DRP).</td>
+    </tr>
+    <tr>
+      <td class="item-id">1.11</td>
+      <td class="desc">Cronograma de trabajo detallado con fases: levantamiento, análisis, diseño, construcción, pruebas, aceptación, implementación, capacitación.</td>
+      <td class="estado"><span class="b b-r">🔴 NO</span></td>
+      <td class="brecha">No se encontró cronograma formal en la documentación del proyecto.</td>
+    </tr>
+    <tr>
+      <td class="item-id">1.13</td>
+      <td class="desc">OWASP ASVS 4.0, ISO/IEC 27001, NIST 800-53. Pruebas de vulnerabilidad y corrección en 50 días.</td>
+      <td class="estado"><span class="b b-p">🟡 PARCIAL</span></td>
+      <td class="brecha">JWT, MFA, CORS, RBAC implementados. Falta: reporte formal OWASP, pruebas de penetración, certificación ISO.</td>
+    </tr>
+    <tr>
+      <td class="item-id">1.14</td>
+      <td class="desc">Compatibilidad con sistemas actuales (GESPO, VMS, ARCGIS, CTI).</td>
+      <td class="estado"><span class="b b-v">✅ SÍ</span></td>
+      <td class="brecha">Integraciones CTI, SIVICC, GESPO, ArcGIS implementadas.</td>
+    </tr>
+    <tr>
+      <td class="item-id">1.16</td>
+      <td class="desc">Documentación: manual usuario, manual técnico, modelos arquitectura, casos de uso, modelo entidad-relación.</td>
+      <td class="estado"><span class="b b-p">🟡 PARCIAL</span></td>
+      <td class="brecha">Diagrama de arquitectura generado. <strong>Faltan:</strong> manual de usuario, manual técnico, casos de uso formales, modelo ER completo.</td>
+    </tr>
+    <tr>
+      <td class="item-id">1.17</td>
+      <td class="desc">Entrega en repositorio DevOps OFTIC: rama master, historial, estructura estándar.</td>
+      <td class="estado"><span class="b b-p">🟡 PARCIAL</span></td>
+      <td class="brecha">Código en carpeta de proyecto. Falta: repositorio DevOps OFTIC, pipeline CI/CD.</td>
+    </tr>
+  </table>
+</div>
+
+<!-- SECCIÓN 2-3: CAPACIDADES ESENCIALES + MULTITENANT -->
+<div class="seccion">
+  <div class="sec-header">2–3. CAPACIDADES ESENCIALES + ARQUITECTURA MULTITENANT <span class="sec-badge">Core del Sistema</span></div>
+  <table>
+    <tr><th style="width:60px">Ítem</th><th style="width:35%">Requisito</th><th style="width:100px">Estado</th><th>Brecha / Observación</th></tr>
+    <tr>
+      <td class="item-id">2.1</td>
+      <td class="desc">Gestión integral de comunicaciones: voz (123+planta), chat, SMS, fotos, video. Transcripción voz a texto activable/desactivable.</td>
+      <td class="estado"><span class="b b-p">🟡 PARCIAL</span></td>
+      <td class="brecha">Voz PlantaTel, chat, SMS, fotos implementados. <strong>Falta:</strong> video en vivo (WebRTC), transcripción voz a texto, integración Webex.</td>
+    </tr>
+    <tr>
+      <td class="item-id">2.2</td>
+      <td class="desc">IA Operacional: verificación automática de ubicaciones, deduplicación, priorización por gravedad, recomendación de recursos cercanos.</td>
+      <td class="estado"><span class="b b-p">🟡 PARCIAL</span></td>
+      <td class="brecha">Asistente de preguntas orientadoras implementado. <strong>Falta:</strong> verificación automática de ubicación, detección de duplicados, recomendación IA de recursos.</td>
+    </tr>
+    <tr>
+      <td class="item-id">2.3</td>
+      <td class="desc">GIS 2D: imagen operativa común, geocercas, rutas dinámicas, cámaras via VMS.</td>
+      <td class="estado"><span class="b b-p">🟡 PARCIAL</span></td>
+      <td class="brecha">GIS 2D con incidentes y cuadrantes implementado. <strong>Falta:</strong> geocercas, rutas dinámicas, cámaras VMS, reproducción cronológica.</td>
+    </tr>
+    <tr>
+      <td class="item-id">2.4</td>
+      <td class="desc">Seguridad, interoperabilidad ecosistema COLAB, KPIs y analítica operacional.</td>
+      <td class="estado"><span class="b b-p">🟡 PARCIAL</span></td>
+      <td class="brecha">Seguridad JWT+MFA implementada. <strong>Falta:</strong> integración COLAB, KPIs dashboard ejecutivo, analítica avanzada.</td>
+    </tr>
+    <tr>
+      <td class="item-id">2.5</td>
+      <td class="desc">Administración nacional de CADs con monitoreo de salud, onboarding, configuración.</td>
+      <td class="estado"><span class="b b-v">✅ SÍ</span></td>
+      <td class="brecha">SuperAdmin + CadHealthMonitor implementados. Gestión de tenants operativa.</td>
+    </tr>
+    <tr>
+      <td class="item-id">3.1 / 3.2</td>
+      <td class="desc">DB-per-Tenant con aislamiento completo. Master schema solo con enrutamiento y auth.</td>
+      <td class="estado"><span class="b b-v">✅ SÍ</span></td>
+      <td class="brecha">Arquitectura multi-tenant completamente implementada con migraciones V1-V36.</td>
+    </tr>
+    <tr>
+      <td class="item-id">3.3</td>
+      <td class="desc">Flujo OUD → 2FA → Tenant Resolver → Vault → JWT. Fallback a usuarios locales cifrados.</td>
+      <td class="estado"><span class="b b-p">🟡 PARCIAL</span></td>
+      <td class="brecha">OUD + 2FA + JWT implementados. <strong>Falta:</strong> Vault para credenciales, fallback local cifrado, rotación automática 90 días.</td>
+    </tr>
+  </table>
+</div>
+
+<!-- SECCIÓN 4-5: RESILIENCIA + ANALÍTICA -->
+<div class="seccion">
+  <div class="sec-header">4–5. RESILIENCIA + ANALÍTICA NACIONAL <span class="sec-badge">Alta Disponibilidad</span></div>
+  <table>
+    <tr><th style="width:60px">Ítem</th><th style="width:35%">Requisito</th><th style="width:100px">Estado</th><th>Brecha / Observación</th></tr>
+    <tr>
+      <td class="item-id">4.1</td>
+      <td class="desc">3 niveles de operación: Normal (central), Degradado (latencia alta → réplica local), Offline (nodo edge autónomo). Reconciliación automática máx. 15 min.</td>
+      <td class="estado"><span class="b b-r">🔴 NO</span></td>
+      <td class="brecha">Sistema completamente online-only. No existe lógica de operación degradada ni offline. Crítico para zonas PDET (Vaupés, Amazonas, Vichada, Guainía).</td>
+    </tr>
+    <tr>
+      <td class="item-id">5.1</td>
+      <td class="desc">ETL/ELT con Apache Airflow → Data Warehouse centralizado. Pseudoanonimización (Ley 1581). Reportes nacionales desde DW sin afectar operación.</td>
+      <td class="estado"><span class="b b-r">🔴 NO</span></td>
+      <td class="brecha">No existe DW, ETL ni Airflow. Los reportes actuales son directos sobre la BD de tenant. Para escala nacional se requiere arquitectura de datos separada.</td>
+    </tr>
+  </table>
+</div>
+
+<!-- SECCIÓN 6: FUNCIONALES -->
+<div class="seccion">
+  <div class="sec-header">6. REQUISITOS FUNCIONALES (6.1 — 6.22) <span class="sec-badge">Funcionalidades del Sistema</span></div>
+  <table>
+    <tr><th style="width:60px">Ítem</th><th style="width:35%">Requisito</th><th style="width:100px">Estado</th><th>Brecha / Observación</th></tr>
+    <tr>
+      <td class="item-id">6.1</td>
+      <td class="desc">Integración agencias: endpoint REST in/out, EDXL-DE, catálogo auditable de agencias, min. 10 por CAD, documentación Swagger.</td>
+      <td class="estado"><span class="b b-p">🟡 PARCIAL</span></td>
+      <td class="brecha">Hub de integraciones + agencias externas con multi-auth. <strong>Falta:</strong> estándar EDXL-DE, catálogo geográfico de jurisdicciones, Swagger completo.</td>
+    </tr>
+    <tr>
+      <td class="item-id">6.2</td>
+      <td class="desc">RBAC mínimo privilegio, MFA, gestión de sesión (caducidad, bloqueo, cierre remoto), OUD primario + fallback.</td>
+      <td class="estado"><span class="b b-v">✅ SÍ</span></td>
+      <td class="brecha">Implementado completamente. Pendiente: cierre remoto de sesión y fallback local.</td>
+    </tr>
+    <tr>
+      <td class="item-id">6.3</td>
+      <td class="desc">Administración local de usuarios por CAD (policiales y civiles de otras entidades).</td>
+      <td class="estado"><span class="b b-v">✅ SÍ</span></td>
+      <td class="brecha">Módulo de usuarios implementado. Falta: interfaz específica para usuarios civiles.</td>
+    </tr>
+    <tr>
+      <td class="item-id">6.4</td>
+      <td class="desc">Administración nacional CADs: registro, Vault, feature flags, categoría conectividad A/B/C, mapeo OUD, onboarding paso a paso.</td>
+      <td class="estado"><span class="b b-p">🟡 PARCIAL</span></td>
+      <td class="brecha">SuperAdmin con gestión básica de tenants. <strong>Falta:</strong> Vault, feature flags, categorías de conectividad, onboarding guiado.</td>
+    </tr>
+    <tr>
+      <td class="item-id">6.5</td>
+      <td class="desc">Interfaz para gestión de migraciones Flyway por tenant (versión actual, historial, tenants desactualizados, disparo controlado).</td>
+      <td class="estado"><span class="b b-p">🟡 PARCIAL</span></td>
+      <td class="brecha">Migraciones V1-V36 existen. <strong>Falta:</strong> interfaz frontend para visualizar y gestionar estado de migraciones por tenant.</td>
+    </tr>
+    <tr>
+      <td class="item-id">6.6</td>
+      <td class="desc">Turnos de vigilancia + posición de recursos en campo desde GESPO en tiempo real.</td>
+      <td class="estado"><span class="b b-v">✅ SÍ</span></td>
+      <td class="brecha">Módulo de turnos completo con integración GESPO y SIVICC.</td>
+    </tr>
+    <tr>
+      <td class="item-id">6.7</td>
+      <td class="desc">Recepción multicanal: voz (123), chat REST, SMS REST, fotos REST, video en vivo (WebRTC, enlace temporal a PDA).</td>
+      <td class="estado"><span class="b b-p">🟡 PARCIAL</span></td>
+      <td class="brecha">Voz, chat, SMS, fotos implementados. <strong>Falta:</strong> video en vivo WebRTC con enlace temporal, integración Webex ciudadano-operador.</td>
+    </tr>
+    <tr>
+      <td class="item-id">6.8</td>
+      <td class="desc">Integración ELS/AML: ubicación automática del llamante (Google, Android/iOS). Sin app adicional. Visualización en GIS.</td>
+      <td class="estado"><span class="b b-r">🔴 NO</span></td>
+      <td class="brecha">No implementado. Depende de acuerdos con operadores móviles.</td>
+    </tr>
+    <tr>
+      <td class="item-id">6.10</td>
+      <td class="desc">Módulo IA: transcripción voz-a-texto de grabaciones, extracción automática (dirección, barrio, tipo emergencia, heridos, placas), campos sugeridos al operador.</td>
+      <td class="estado"><span class="b b-r">🔴 NO</span></td>
+      <td class="brecha">No implementado. Requiere integración con planta telefónica para archivos de audio + modelo NLP.</td>
+    </tr>
+    <tr>
+      <td class="item-id">6.11</td>
+      <td class="desc">Gestión de incidentes: ciclo de vida completo, dos vistas (lista + detalle), semáforo temporal, asignación recursos, novedades.</td>
+      <td class="estado"><span class="b b-v">✅ SÍ</span></td>
+      <td class="brecha">Módulo Pedido completamente implementado con lista + detalle + semáforo + timeline.</td>
+    </tr>
+    <tr>
+      <td class="item-id">6.12</td>
+      <td class="desc">GIS 2D: imagen operativa común, geocercas, rutas dinámicas, cámaras VMS, mapa calor, zonas mayor actividad, mín. 3 indicadores, reproducción cronológica.</td>
+      <td class="estado"><span class="b b-p">🟡 PARCIAL</span></td>
+      <td class="brecha">GIS 2D con incidentes activos + ArcGIS. <strong>Falta:</strong> geocercas, rutas dinámicas, cámaras VMS, reproducción cronológica post-evento.</td>
+    </tr>
+    <tr>
+      <td class="item-id">6.13</td>
+      <td class="desc">Dashboard nacional de salud de CADs: nivel operación 1/2/3, latencia, última sync, incidentes activos, alertas automáticas.</td>
+      <td class="estado"><span class="b b-v">✅ SÍ</span></td>
+      <td class="brecha">SuperAdmin/salud-cads implementado con CadHealthMonitor. Pendiente: alertas automáticas nivel 2/3.</td>
+    </tr>
+    <tr>
+      <td class="item-id">6.15</td>
+      <td class="desc">Anotaciones generales durante el turno: comunicados, revistas, actividades, novedades. ID único por registro.</td>
+      <td class="estado"><span class="b b-v">✅ SÍ</span></td>
+      <td class="brecha">Módulo AnotacionTurno implementado completamente.</td>
+    </tr>
+    <tr>
+      <td class="item-id">6.16</td>
+      <td class="desc">Reportes estadísticos: evaluación actividad usuarios/recursos, tiempos de atención, ciclo de vida del incidente.</td>
+      <td class="estado"><span class="b b-v">✅ SÍ</span></td>
+      <td class="brecha">Dashboard + 5 reportes detallados + filtro por turno implementados.</td>
+    </tr>
+    <tr>
+      <td class="item-id">6.17</td>
+      <td class="desc">Asistente inteligente: preguntas orientadoras por tipo de incidente, cargadas por administrador sin código fuente.</td>
+      <td class="estado"><span class="b b-v">✅ SÍ</span></td>
+      <td class="brecha">Módulo asistente implementado con configuración admin.</td>
+    </tr>
+    <tr>
+      <td class="item-id">6.18</td>
+      <td class="desc">Auditoría y logs: registro digital completo, trazabilidad de sesiones, actividades y cambios.</td>
+      <td class="estado"><span class="b b-p">🟡 PARCIAL</span></td>
+      <td class="brecha">Auditoría en ctr_auditoria + actuaciones implementada. <strong>Falta:</strong> módulo de consulta de logs para auditor, exportación de trazabilidad completa.</td>
+    </tr>
+    <tr>
+      <td class="item-id">6.19</td>
+      <td class="desc">DRP: alta disponibilidad 24/7, sitios alternos, diseño e implementación, simulacros periódicos.</td>
+      <td class="estado"><span class="b b-r">🔴 NO</span></td>
+      <td class="brecha">No implementado. Requiere infraestructura de DR (tema de infraestructura, no solo código).</td>
+    </tr>
+    <tr>
+      <td class="item-id">6.20</td>
+      <td class="desc">Sincronización NTP: servidor maestro+secundario, conmutación ≤30s, timestamps UTC con visualización UTC-5.</td>
+      <td class="estado"><span class="b b-p">🟡 PARCIAL</span></td>
+      <td class="brecha">Timestamps UTC-5 implementados. <strong>Falta:</strong> configuración NTP formal, servidor maestro/secundario.</td>
+    </tr>
+    <tr>
+      <td class="item-id">6.21</td>
+      <td class="desc">Colas ACD: distribución omnicanal, skills-based routing, monitoreo tiempo real, grabación, integración PlantaTel/SIP + Webex.</td>
+      <td class="estado"><span class="b b-r">🔴 NO</span></td>
+      <td class="brecha">Solo existe tabla cad_plantatel. No hay ACD, ni integración SIP/Webex.</td>
+    </tr>
+    <tr>
+      <td class="item-id">6.22</td>
+      <td class="desc">NG911/NG112/NENA i3, API Manager para COLAB, datos abiertos históricos.</td>
+      <td class="estado"><span class="b b-r">🔴 NO</span></td>
+      <td class="brecha">Estándares internacionales no implementados.</td>
+    </tr>
+  </table>
+</div>
+
+<!-- SECCIÓN 7: NO FUNCIONALES -->
+<div class="seccion">
+  <div class="sec-header">7. ARQUITECTURA Y TECNOLOGÍA — REQUISITOS NO FUNCIONALES <span class="sec-badge">Infraestructura</span></div>
+  <table>
+    <tr><th style="width:60px">Ítem</th><th style="width:35%">Requisito</th><th style="width:100px">Estado</th><th>Brecha / Observación</th></tr>
+    <tr>
+      <td class="item-id">7.1 / 7.8</td>
+      <td class="desc">Microservicios Docker/Kubernetes. Procesamiento paralelo y distribuido. Orquestación de contenedores.</td>
+      <td class="estado"><span class="b b-r">🔴 NO</span></td>
+      <td class="brecha">Arquitectura monolítica. Existe Dockerfile en /docker/ pero sin K8s ni orquestación.</td>
+    </tr>
+    <tr>
+      <td class="item-id">7.2</td>
+      <td class="desc">DB-per-Tenant + Flyway/Liquibase + Connection Pool + Vault para credenciales cifradas.</td>
+      <td class="estado"><span class="b b-p">🟡 PARCIAL</span></td>
+      <td class="brecha">DB-per-Tenant + Flyway V1-V36 + ConnectionPoolManager implementados. <strong>Falta:</strong> Vault para cifrado de credenciales de BD.</td>
+    </tr>
+    <tr>
+      <td class="item-id">7.3</td>
+      <td class="desc">Código abierto, C# .NET último estable.</td>
+      <td class="estado"><span class="b b-v">✅ SÍ</span></td>
+      <td class="brecha">.NET 8, Angular 18, PostgreSQL 16. Todo OSS.</td>
+    </tr>
+    <tr>
+      <td class="item-id">7.5</td>
+      <td class="desc">Escalabilidad horizontal (sin interrupción), SLA ≥99.95% globales, SLA ≥99.9% por tenant.</td>
+      <td class="estado"><span class="b b-r">🔴 NO</span></td>
+      <td class="brecha">No hay configuración de balanceo de carga, ni redundancia, ni métricas de SLA.</td>
+    </tr>
+    <tr>
+      <td class="item-id">7.6</td>
+      <td class="desc">PWA para carga offline de interfaz. Compatible Android, iOS y escritorio.</td>
+      <td class="estado"><span class="b b-r">🔴 NO</span></td>
+      <td class="brecha">No hay service worker ni manifest.json para PWA.</td>
+    </tr>
+    <tr>
+      <td class="item-id">7.7</td>
+      <td class="desc">Mínimo 4 ambientes: Desarrollo, Pruebas, Producción, DRP.</td>
+      <td class="estado"><span class="b b-r">🔴 NO</span></td>
+      <td class="brecha">Solo hay un ambiente en desarrollo. Los 4 ambientes no están formalizados.</td>
+    </tr>
+    <tr>
+      <td class="item-id">7.9</td>
+      <td class="desc">Cumplimiento Ley 1581/2012. Datos ciudadanos solo en BD del CAD. DW solo con datos anonimizados.</td>
+      <td class="estado"><span class="b b-p">🟡 PARCIAL</span></td>
+      <td class="brecha">Datos por tenant aislados. Falta: anonimización formal, política de privacidad documentada.</td>
+    </tr>
+  </table>
+</div>
+
+<!-- ══ ROADMAP ══════════════════════════════════════════ -->
+<div class="seccion">
+  <div class="sec-header">🗺 PLAN DE CIERRE DE BRECHAS — PRIORIZACIÓN SUGERIDA <span class="sec-badge">Ruta para Completar el Proyecto</span></div>
+  <div style="background:#fff;padding:14px;border-radius:0 0 8px 8px;box-shadow:0 2px 8px rgba(0,0,0,.07)">
+    <div class="roadmap">
+      <div class="fase fase-1">
+        <div class="fase-title">🚀 FASE 1 — Prioridad Alta (1-2 meses)</div>
+        <ul>
+          <li>OUD fallback local (tabla cifrada)</li>
+          <li>Vault para credenciales de BD</li>
+          <li>PWA básica (service worker + offline)</li>
+          <li>Pruebas unitarias mínimas (Jest/Jasmine)</li>
+          <li>Manual de usuario y técnico</li>
+          <li>Modelo ER completo y casos de uso</li>
+          <li>Feature flags en SuperAdmin</li>
+          <li>Alertas automáticas nivel 2/3 en salud CADs</li>
+          <li>Diagrama arquitectura (✅ ya generado)</li>
+          <li>Cierre remoto de sesiones</li>
+        </ul>
+      </div>
+      <div class="fase fase-2">
+        <div class="fase-title">⚡ FASE 2 — Prioridad Media (2-4 meses)</div>
+        <ul>
+          <li>Módulo Cámaras (integración VMS)</li>
+          <li>Geocercas y rutas dinámicas en GIS 2D</li>
+          <li>Video en vivo WebRTC (ciudadano → operador)</li>
+          <li>Chatbot/Asistente virtual 123 (NLP básico)</li>
+          <li>Módulo Calidad del Servicio</li>
+          <li>Reproducción cronológica post-evento</li>
+          <li>Módulo Alarmas Comunitarias</li>
+          <li>Gestión de migraciones en UI SuperAdmin</li>
+          <li>Integración Webex operador-ciudadano</li>
+          <li>Dashboard KPIs ejecutivos nacionales</li>
+        </ul>
+      </div>
+      <div class="fase fase-3">
+        <div class="fase-title">🏗 FASE 3 — Arquitectura (4-8 meses)</div>
+        <ul>
+          <li>Contenedorización Docker + K8s</li>
+          <li>Configuración 4 ambientes (Dev/Test/Prod/DRP)</li>
+          <li>Modo Offline/Degradado (nodos edge)</li>
+          <li>ETL/Airflow + Data Warehouse nacional</li>
+          <li>Módulo IA (voz-a-texto + extracción campos)</li>
+          <li>Integración ACD (colas de llamadas)</li>
+          <li>NG911/NG112/NENA i3</li>
+          <li>Análisis predictivo y prevención</li>
+          <li>SLA 99.95% + escalabilidad horizontal</li>
+          <li>DRP formal + simulacros</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ INFO POSITIVA ════════════════════════════════════ -->
+<div class="info-box">
+  <h3>✅ Lo que ya está bien implementado y es una fortaleza del proyecto</h3>
+  <ul>
+    <li><strong>Arquitectura multi-tenant DB-per-Tenant:</strong> correctamente implementada con Flyway (V1-V36), TenantMiddleware y ConnectionPoolManager.</li>
+    <li><strong>Seguridad:</strong> OUD + MFA/2FA + JWT + RBAC 3 niveles (Operador/Admin/SuperAdmin).</li>
+    <li><strong>Módulos operativos core:</strong> Recepción, Turnos, Pedido, Eventos, Reportes, GIS Estadístico — totalmente funcionales.</li>
+    <li><strong>Snowflake IDs:</strong> generación distribuida de IDs de 64 bits con prefijo DANE para unicidad nacional.</li>
+    <li><strong>Hub de integraciones:</strong> registro auditado de integraciones entrantes/salientes.</li>
+    <li><strong>Filtro por turno de vigilancia:</strong> implementado en Reportes, GIS y Pedido.</li>
+    <li><strong>Stack tecnológico 100% open source:</strong> Angular 18, .NET 8, PostgreSQL 16 — sin costos de licencias.</li>
+    <li><strong>Documentación técnica:</strong> migraciones SQL comentadas V1-V36, código bien estructurado en capas (API/Negocio/Datos/Común).</li>
+    <li><strong>Diagrama de arquitectura:</strong> generado en formato gerencial para presentación.</li>
+  </ul>
+</div>
+
+<div class="footer">
+  <strong>SECAD v4.0</strong> — Informe de Cumplimiento de Especificaciones Técnicas ·
+  Policía Nacional de Colombia · AITEC / GRUDE / OFTIC ·
+  Elaboró: TE Kehilor Martínez Patiño · Junio 2026 · <strong>Uso Interno — Confidencial</strong>
+</div>
+
+</div><!-- /page -->
+</body>
+</html>

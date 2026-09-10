@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>SECAD v4 — Diagrama de Arquitectura Lógica</title>
+<style>
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+  }
+
+  /* ─ encabezado ─ */
+  .hdr {
+    width: 100%;
+    max-width: 1100px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 4px solid #003087;
+    padding-bottom: 10px;
+    margin-bottom: 18px;
+  }
+  .hdr-title h1 { font-size: 20px; color: #003087; font-weight: 900; }
+  .hdr-title h2 { font-size: 12px; color: #64748b; font-weight: 400; margin-top: 2px; }
+  .hdr-badge {
+    background: #003087;
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 5px 14px;
+    border-radius: 20px;
+    letter-spacing: .06em;
+  }
+
+  /* ─ diagrama ─ */
+  .wrap {
+    width: 100%;
+    max-width: 1100px;
+  }
+  svg { display:block; width:100%; height:auto; }
+
+  /* ─ footer ─ */
+  .foot {
+    width: 100%;
+    max-width: 1100px;
+    border-top: 2px solid #e2e8f0;
+    margin-top: 14px;
+    padding-top: 8px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: #94a3b8;
+  }
+  .foot strong { color: #003087; }
+
+  @media print {
+    body { padding: 8px; }
+    .hdr { margin-bottom: 10px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- encabezado -->
+<div class="hdr">
+  <div class="hdr-title">
+    <h1>⬡ SECAD — Diagrama de Arquitectura Lógica · Versión 4.0</h1>
+    <h2>Sistema Estratégico del Centro de Atención de Denuncias · Policía Nacional de Colombia · AITEC / GRUDE / OFTIC</h2>
+  </div>
+  <div class="hdr-badge">USO INTERNO · CONFIDENCIAL</div>
+</div>
+
+<!-- diagrama SVG compacto -->
+<div class="wrap">
+<svg viewBox="0 0 1100 680" xmlns="http://www.w3.org/2000/svg"
+     font-family="'Segoe UI',Arial,sans-serif">
+
+  <!-- ══ FONDO POR ZONAS ══════════════════════════════════════════════ -->
+  <defs>
+    <marker id="arr" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0,8 3,0 6" fill="#94a3b8"/>
+    </marker>
+    <marker id="arr-b" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0,8 3,0 6" fill="#003087"/>
+    </marker>
+    <marker id="arr-g" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0,8 3,0 6" fill="#047857"/>
+    </marker>
+    <marker id="arr-o" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0,8 3,0 6" fill="#b45309"/>
+    </marker>
+    <!-- sombra suave -->
+    <filter id="sombra" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="1" dy="2" stdDeviation="3" flood-opacity=".12"/>
+    </filter>
+  </defs>
+
+  <!-- zona usuarios -->
+  <rect x="8" y="8" width="140" height="660" rx="10"
+        fill="#f8fafc" stroke="#e2e8f0" stroke-width="1.5"/>
+  <text x="78" y="26" text-anchor="middle" font-size="9" font-weight="700"
+        fill="#64748b" letter-spacing=".07em">USUARIOS</text>
+
+  <!-- zona central app -->
+  <rect x="158" y="8" width="590" height="440" rx="10"
+        fill="#eff6ff" stroke="#bfdbfe" stroke-width="1.5"/>
+  <text x="453" y="26" text-anchor="middle" font-size="9" font-weight="700"
+        fill="#1d4ed8" letter-spacing=".07em">PLATAFORMA SECAD — .NET 8 + Angular 18</text>
+
+  <!-- zona base de datos -->
+  <rect x="158" y="458" width="590" height="208" rx="10"
+        fill="#ecfdf5" stroke="#86efac" stroke-width="1.5"/>
+  <text x="453" y="476" text-anchor="middle" font-size="9" font-weight="700"
+        fill="#047857" letter-spacing=".07em">BASE DE DATOS — PostgreSQL</text>
+
+  <!-- zona integraciones -->
+  <rect x="760" y="8" width="332" height="660" rx="10"
+        fill="#fff7ed" stroke="#fed7aa" stroke-width="1.5"/>
+  <text x="926" y="26" text-anchor="middle" font-size="9" font-weight="700"
+        fill="#b45309" letter-spacing=".07em">INTEGRACIONES EXTERNAS</text>
+
+
+  <!-- ══ USUARIOS ══════════════════════════════════════════════════════ -->
+
+  <!-- monitor SVG simple -->
+  <!-- Operador -->
+  <g transform="translate(20,52)" filter="url(#sombra)">
+    <!-- monitor -->
+    <rect x="4" y="0" width="96" height="64" rx="6" fill="#1e40af"/>
+    <rect x="10" y="6" width="84" height="48" rx="3" fill="#bfdbfe"/>
+    <!-- teclado -->
+    <rect x="20" y="68" width="64" height="8" rx="3" fill="#94a3b8"/>
+    <rect x="46" y="64" width="12" height="6" rx="1" fill="#94a3b8"/>
+    <!-- ícono pantalla -->
+    <text x="52" y="36" text-anchor="middle" font-size="22" fill="#1e40af">👤</text>
+  </g>
+  <text x="78" y="150" text-anchor="middle" font-size="9.5" font-weight="700" fill="#1e40af">Operador</text>
+  <text x="78" y="162" text-anchor="middle" font-size="8.5" fill="#64748b">Recepción</text>
+
+  <!-- Despachador -->
+  <g transform="translate(20,190)" filter="url(#sombra)">
+    <rect x="4" y="0" width="96" height="64" rx="6" fill="#0369a1"/>
+    <rect x="10" y="6" width="84" height="48" rx="3" fill="#e0f2fe"/>
+    <rect x="20" y="68" width="64" height="8" rx="3" fill="#94a3b8"/>
+    <rect x="46" y="64" width="12" height="6" rx="1" fill="#94a3b8"/>
+    <text x="52" y="36" text-anchor="middle" font-size="22" fill="#0369a1">🚔</text>
+  </g>
+  <text x="78" y="288" text-anchor="middle" font-size="9.5" font-weight="700" fill="#0369a1">Despachador</text>
+  <text x="78" y="300" text-anchor="middle" font-size="8.5" fill="#64748b">Eventos</text>
+
+  <!-- Supervisor/Admin -->
+  <g transform="translate(20,330)" filter="url(#sombra)">
+    <rect x="4" y="0" width="96" height="64" rx="6" fill="#7c3aed"/>
+    <rect x="10" y="6" width="84" height="48" rx="3" fill="#f5f3ff"/>
+    <rect x="20" y="68" width="64" height="8" rx="3" fill="#94a3b8"/>
+    <rect x="46" y="64" width="12" height="6" rx="1" fill="#94a3b8"/>
+    <text x="52" y="36" text-anchor="middle" font-size="22" fill="#7c3aed">🛡</text>
+  </g>
+  <text x="78" y="428" text-anchor="middle" font-size="9.5" font-weight="700" fill="#7c3aed">Supervisor /</text>
+  <text x="78" y="440" text-anchor="middle" font-size="9.5" font-weight="700" fill="#7c3aed">Administrador</text>
+
+  <!-- SuperAdmin -->
+  <g transform="translate(20,480)" filter="url(#sombra)">
+    <rect x="4" y="0" width="96" height="64" rx="6" fill="#991b1b"/>
+    <rect x="10" y="6" width="84" height="48" rx="3" fill="#fee2e2"/>
+    <rect x="20" y="68" width="64" height="8" rx="3" fill="#94a3b8"/>
+    <rect x="46" y="64" width="12" height="6" rx="1" fill="#94a3b8"/>
+    <text x="52" y="36" text-anchor="middle" font-size="22" fill="#991b1b">⭐</text>
+  </g>
+  <text x="78" y="578" text-anchor="middle" font-size="9.5" font-weight="700" fill="#991b1b">SuperAdmin</text>
+  <text x="78" y="590" text-anchor="middle" font-size="8.5" fill="#64748b">Multi-Tenant</text>
+
+
+  <!-- ══ FLECHAS USUARIOS → PLATAFORMA ═══════════════════════════════ -->
+  <line x1="147" y1="100" x2="175" y2="100" stroke="#1e40af" stroke-width="1.8"
+        stroke-dasharray="5,3" marker-end="url(#arr-b)"/>
+  <line x1="147" y1="240" x2="175" y2="240" stroke="#0369a1" stroke-width="1.8"
+        stroke-dasharray="5,3" marker-end="url(#arr-b)"/>
+  <line x1="147" y1="375" x2="175" y2="375" stroke="#7c3aed" stroke-width="1.8"
+        stroke-dasharray="5,3" marker-end="url(#arr-b)"/>
+  <line x1="147" y1="515" x2="175" y2="515" stroke="#991b1b" stroke-width="1.8"
+        stroke-dasharray="5,3" marker-end="url(#arr-b)"/>
+
+  <!-- etiqueta HTTPS -->
+  <text x="158" y="222" font-size="7.5" fill="#1d4ed8" text-anchor="middle">HTTPS / REST</text>
+
+
+  <!-- ══ PLATAFORMA — COLUMNAS ════════════════════════════════════════ -->
+
+  <!-- ─ COLUMNA 1: FRONTEND ANGULAR ─ -->
+  <!-- caja -->
+  <rect x="172" y="36" width="148" height="390" rx="8"
+        fill="white" stroke="#93c5fd" stroke-width="1.5" filter="url(#sombra)"/>
+  <!-- header -->
+  <rect x="172" y="36" width="148" height="28" rx="8" fill="#003087"/>
+  <rect x="172" y="52" width="148" height="12" fill="#003087"/>
+  <text x="246" y="54" text-anchor="middle" font-size="10" font-weight="900" fill="white">⚡ ANGULAR 18</text>
+  <!-- ícono browser -->
+  <rect x="196" y="74" width="100" height="70" rx="6" fill="#eff6ff" stroke="#93c5fd" stroke-width="1"/>
+  <rect x="196" y="74" width="100" height="16" rx="6" fill="#bfdbfe"/>
+  <text x="246" y="128" text-anchor="middle" font-size="28">🌐</text>
+  <text x="246" y="158" text-anchor="middle" font-size="8.5" fill="#003087" font-weight="700">SPA / Browser</text>
+  <!-- módulos -->
+  <rect x="184" y="170" width="124" height="20" rx="4" fill="#eff6ff" stroke="#93c5fd" stroke-width="1"/>
+  <text x="246" y="184" text-anchor="middle" font-size="8.5" fill="#1d4ed8">📞 Recepción / Pedidos</text>
+  <rect x="184" y="196" width="124" height="20" rx="4" fill="#eff6ff" stroke="#93c5fd" stroke-width="1"/>
+  <text x="246" y="210" text-anchor="middle" font-size="8.5" fill="#1d4ed8">🚔 Eventos / Despacho</text>
+  <rect x="184" y="222" width="124" height="20" rx="4" fill="#eff6ff" stroke="#93c5fd" stroke-width="1"/>
+  <text x="246" y="236" text-anchor="middle" font-size="8.5" fill="#1d4ed8">🗂 Turnos / Minuta</text>
+  <rect x="184" y="248" width="124" height="20" rx="4" fill="#eff6ff" stroke="#93c5fd" stroke-width="1"/>
+  <text x="246" y="262" text-anchor="middle" font-size="8.5" fill="#1d4ed8">🗺 GIS / Estadístico</text>
+  <rect x="184" y="274" width="124" height="20" rx="4" fill="#eff6ff" stroke="#93c5fd" stroke-width="1"/>
+  <text x="246" y="288" text-anchor="middle" font-size="8.5" fill="#1d4ed8">📊 Reportes / Turnos</text>
+  <rect x="184" y="300" width="124" height="20" rx="4" fill="#eff6ff" stroke="#93c5fd" stroke-width="1"/>
+  <text x="246" y="314" text-anchor="middle" font-size="8.5" fill="#1d4ed8">⚙️ Admin / Configuración</text>
+  <!-- stack -->
+  <rect x="184" y="330" width="124" height="86" rx="4" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="246" y="346" text-anchor="middle" font-size="8" fill="#64748b" font-weight="700">Stack técnico</text>
+  <text x="246" y="359" text-anchor="middle" font-size="7.5" fill="#94a3b8">Leaflet 1.9 · Chart.js 4.4</text>
+  <text x="246" y="371" text-anchor="middle" font-size="7.5" fill="#94a3b8">TypeScript · RxJS · SCSS</text>
+  <text x="246" y="383" text-anchor="middle" font-size="7.5" fill="#94a3b8">AuthGuard · JWT Interceptor</text>
+  <text x="246" y="395" text-anchor="middle" font-size="7.5" fill="#94a3b8">Standalone Components</text>
+  <text x="246" y="413" text-anchor="middle" font-size="7.5" fill="#003087" font-weight="700">CORS · HTTPS / TLS 1.3</text>
+
+  <!-- ─ COLUMNA 2: SEGURIDAD ─ -->
+  <rect x="332" y="36" width="148" height="390" rx="8"
+        fill="white" stroke="#c4b5fd" stroke-width="1.5" filter="url(#sombra)"/>
+  <rect x="332" y="36" width="148" height="28" rx="8" fill="#7c3aed"/>
+  <rect x="332" y="52" width="148" height="12" fill="#7c3aed"/>
+  <text x="406" y="54" text-anchor="middle" font-size="10" font-weight="900" fill="white">🔐 SEGURIDAD</text>
+
+  <!-- FIREWALL icon -->
+  <rect x="360" y="74" width="92" height="58" rx="6" fill="#fdf4ff" stroke="#c4b5fd" stroke-width="1"/>
+  <text x="406" y="110" text-anchor="middle" font-size="30">🔥</text>
+  <text x="406" y="143" text-anchor="middle" font-size="8.5" fill="#7c3aed" font-weight="700">Firewall / VPN</text>
+
+  <!-- flecha 1 OUD -->
+  <text x="406" y="168" text-anchor="middle" font-size="7.5" fill="#7c3aed">▼</text>
+  <rect x="354" y="174" width="104" height="42" rx="5" fill="#fdf4ff" stroke="#a855f7" stroke-width="1.5"/>
+  <text x="406" y="191" text-anchor="middle" font-size="9" font-weight="700" fill="#6d28d9">1. OUD / LDAP</text>
+  <text x="406" y="204" text-anchor="middle" font-size="8" fill="#94a3b8">Active Directory Policía</text>
+
+  <text x="406" y="227" text-anchor="middle" font-size="7.5" fill="#7c3aed">▼</text>
+  <rect x="354" y="232" width="104" height="42" rx="5" fill="#fdf4ff" stroke="#a855f7" stroke-width="1.5"/>
+  <text x="406" y="249" text-anchor="middle" font-size="9" font-weight="700" fill="#6d28d9">2. MFA / 2FA</text>
+  <text x="406" y="262" text-anchor="middle" font-size="8" fill="#94a3b8">OTP · Api2FA · PONAL</text>
+
+  <text x="406" y="285" text-anchor="middle" font-size="7.5" fill="#7c3aed">▼</text>
+  <rect x="354" y="290" width="104" height="42" rx="5" fill="#fdf4ff" stroke="#a855f7" stroke-width="1.5"/>
+  <text x="406" y="307" text-anchor="middle" font-size="9" font-weight="700" fill="#6d28d9">3. JWT Bearer</text>
+  <text x="406" y="320" text-anchor="middle" font-size="8" fill="#94a3b8">Claims · Roles RBAC</text>
+
+  <text x="406" y="343" text-anchor="middle" font-size="7.5" fill="#7c3aed">▼</text>
+  <rect x="354" y="348" width="104" height="42" rx="5" fill="#ede9fe" stroke="#7c3aed" stroke-width="2"/>
+  <text x="406" y="365" text-anchor="middle" font-size="9" font-weight="700" fill="#5b21b6">4. Tenant MW</text>
+  <text x="406" y="378" text-anchor="middle" font-size="8" fill="#6d28d9">cod_dane → DB Tenant</text>
+
+  <text x="406" y="413" text-anchor="middle" font-size="7.5" fill="#7c3aed" font-weight="700">SuperAdmin: Context Switch</text>
+
+  <!-- ─ COLUMNA 3: API SERVER ─ -->
+  <rect x="492" y="36" width="240" height="390" rx="8"
+        fill="white" stroke="#7dd3fc" stroke-width="1.5" filter="url(#sombra)"/>
+  <rect x="492" y="36" width="240" height="28" rx="8" fill="#0369a1"/>
+  <rect x="492" y="52" width="240" height="12" fill="#0369a1"/>
+  <text x="612" y="54" text-anchor="middle" font-size="10" font-weight="900" fill="white">⚙️  SERVIDOR DE APLICACIÓN — .NET 8</text>
+
+  <!-- servidor icon -->
+  <rect x="544" y="70" width="136" height="58" rx="6" fill="#f0f9ff" stroke="#7dd3fc" stroke-width="1"/>
+  <!-- stack de discos de servidor -->
+  <rect x="554" y="76" width="116" height="12" rx="3" fill="#0369a1"/>
+  <rect x="554" y="92" width="116" height="12" rx="3" fill="#0284c7"/>
+  <rect x="554" y="108" width="116" height="12" rx="3" fill="#0ea5e9"/>
+  <circle cx="654" cy="82" r="3" fill="#7dd3fc"/>
+  <circle cx="654" cy="98" r="3" fill="#7dd3fc"/>
+  <circle cx="654" cy="114" r="3" fill="#7dd3fc"/>
+  <text x="612" y="145" text-anchor="middle" font-size="8.5" fill="#0369a1" font-weight="700">Kestrel Web Server</text>
+
+  <!-- controllers grid -->
+  <text x="612" y="166" text-anchor="middle" font-size="8.5" fill="#0369a1" font-weight="700">Controllers REST API</text>
+
+  <rect x="502" y="172" width="104" height="18" rx="3" fill="#f0f9ff" stroke="#bae6fd"/>
+  <text x="554" y="185" text-anchor="middle" font-size="7.5" fill="#0369a1">📞 Pedido / Recepción</text>
+  <rect x="618" y="172" width="104" height="18" rx="3" fill="#f0f9ff" stroke="#bae6fd"/>
+  <text x="670" y="185" text-anchor="middle" font-size="7.5" fill="#0369a1">🚔 Evento / Actuación</text>
+
+  <rect x="502" y="196" width="104" height="18" rx="3" fill="#f0f9ff" stroke="#bae6fd"/>
+  <text x="554" y="209" text-anchor="middle" font-size="7.5" fill="#0369a1">🗂 Turno / Minuta</text>
+  <rect x="618" y="196" width="104" height="18" rx="3" fill="#f0f9ff" stroke="#bae6fd"/>
+  <text x="670" y="209" text-anchor="middle" font-size="7.5" fill="#0369a1">🗺 Mapa / GIS Estadíst.</text>
+
+  <rect x="502" y="220" width="104" height="18" rx="3" fill="#f0f9ff" stroke="#bae6fd"/>
+  <text x="554" y="233" text-anchor="middle" font-size="7.5" fill="#0369a1">📊 Reportes / SLA</text>
+  <rect x="618" y="220" width="104" height="18" rx="3" fill="#f0f9ff" stroke="#bae6fd"/>
+  <text x="670" y="233" text-anchor="middle" font-size="7.5" fill="#0369a1">⚙️ Admin / Usuarios</text>
+
+  <!-- servicios transversales -->
+  <line x1="502" y1="248" x2="722" y2="248" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="612" y="262" text-anchor="middle" font-size="8" fill="#374151" font-weight="700">Servicios Transversales</text>
+
+  <rect x="502" y="270" width="100" height="16" rx="3" fill="#fff7ed" stroke="#fcd34d"/>
+  <text x="552" y="281" text-anchor="middle" font-size="7.5" fill="#b45309">❄ Snowflake ID</text>
+  <rect x="614" y="270" width="108" height="16" rx="3" fill="#fff7ed" stroke="#fcd34d"/>
+  <text x="668" y="281" text-anchor="middle" font-size="7.5" fill="#b45309">🏊 Connection Pool</text>
+
+  <rect x="502" y="292" width="100" height="16" rx="3" fill="#fff7ed" stroke="#fcd34d"/>
+  <text x="552" y="303" text-anchor="middle" font-size="7.5" fill="#b45309">⏱ Health Monitor</text>
+  <rect x="614" y="292" width="108" height="16" rx="3" fill="#fff7ed" stroke="#fcd34d"/>
+  <text x="668" y="303" text-anchor="middle" font-size="7.5" fill="#b45309">🤖 Asistente IA</text>
+
+  <rect x="502" y="314" width="100" height="16" rx="3" fill="#fff7ed" stroke="#fcd34d"/>
+  <text x="552" y="325" text-anchor="middle" font-size="7.5" fill="#b45309">📧 Email Service</text>
+  <rect x="614" y="314" width="108" height="16" rx="3" fill="#fff7ed" stroke="#fcd34d"/>
+  <text x="668" y="325" text-anchor="middle" font-size="7.5" fill="#b45309">📁 Static Files</text>
+
+  <rect x="502" y="344" width="220" height="70" rx="4" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="612" y="360" text-anchor="middle" font-size="8" fill="#374151" font-weight="700">Arquitectura por capas (Clean Architecture)</text>
+  <text x="612" y="374" text-anchor="middle" font-size="7.5" fill="#94a3b8">API (Controllers) → Negocio (Services) → Datos (Repositories)</text>
+  <text x="612" y="386" text-anchor="middle" font-size="7.5" fill="#94a3b8">Inyección de dependencias · Scoped / Singleton</text>
+  <text x="612" y="399" text-anchor="middle" font-size="7.5" fill="#94a3b8">TimeZone: America/Bogota (UTC-5) · Sin horario de verano</text>
+  <text x="612" y="413" text-anchor="middle" font-size="7.5" fill="#0369a1" font-weight="700">Swagger UI · MaxUpload 150 MB · NpgsqlDataSource</text>
+
+
+  <!-- ══ FLECHAS ENTRE COLUMNAS ═════════════════════════════════════════ -->
+  <!-- Angular ↔ Seguridad -->
+  <line x1="320" y1="240" x2="332" y2="240" stroke="#7c3aed" stroke-width="1.8" marker-end="url(#arr)"/>
+
+  <!-- Seguridad ↔ API Server -->
+  <line x1="480" y1="240" x2="492" y2="240" stroke="#0369a1" stroke-width="1.8" marker-end="url(#arr)"/>
+
+
+  <!-- ══ BASE DE DATOS ══════════════════════════════════════════════════ -->
+
+  <!-- ─ MASTER DB ─ -->
+  <g transform="translate(172,460)" filter="url(#sombra)">
+    <rect x="0" y="0" width="195" height="190" rx="8"
+          fill="white" stroke="#34d399" stroke-width="1.5"/>
+    <rect x="0" y="0" width="195" height="26" rx="8" fill="#047857"/>
+    <rect x="0" y="14" width="195" height="12" fill="#047857"/>
+    <text x="97" y="19" text-anchor="middle" font-size="10" font-weight="900" fill="white">🐘 DB MAESTRA</text>
+
+    <!-- cilindro DB master -->
+    <ellipse cx="97" cy="56" rx="50" ry="12" fill="#d1fae5" stroke="#34d399" stroke-width="1.5"/>
+    <rect x="47" y="44" width="100" height="40" fill="#d1fae5" stroke="#34d399" stroke-width="1.5"/>
+    <ellipse cx="97" cy="84" rx="50" ry="12" fill="#a7f3d0" stroke="#34d399" stroke-width="1.5"/>
+    <text x="97" y="67" text-anchor="middle" font-size="8.5" fill="#065f46" font-weight="700">secad_tenants</text>
+
+    <text x="10" y="112" font-size="8" fill="#047857">• Registro de CADs activos</text>
+    <text x="10" y="124" font-size="8" fill="#047857">• cod_dane · db_host · db_name</text>
+    <text x="10" y="136" font-size="8" fill="#047857">• secad_salud_historial</text>
+    <text x="10" y="148" font-size="8" fill="#047857">• Health Monitor — CADs</text>
+    <text x="10" y="163" font-size="8" fill="#047857" font-weight="700">PostgreSQL 16</text>
+    <text x="10" y="176" font-size="8" fill="#064e3b">Migraciones: Flyway V1–V36</text>
+  </g>
+
+  <!-- ─ TENANT DBs ─ -->
+  <g transform="translate(378,460)" filter="url(#sombra)">
+    <rect x="0" y="0" width="365" height="190" rx="8"
+          fill="white" stroke="#34d399" stroke-width="1.5"/>
+    <rect x="0" y="0" width="365" height="26" rx="8" fill="#059669"/>
+    <rect x="0" y="14" width="365" height="12" fill="#059669"/>
+    <text x="182" y="19" text-anchor="middle" font-size="10" font-weight="900" fill="white">🏛 DB TENANTS — Un DB por CAD/Municipio (cod_dane)</text>
+
+    <!-- 3 cilindros tenant -->
+    <!-- Bogotá -->
+    <ellipse cx="65" cy="56" rx="52" ry="11" fill="#bbf7d0" stroke="#16a34a" stroke-width="1.5"/>
+    <rect x="13" y="45" width="104" height="38" fill="#bbf7d0" stroke="#16a34a" stroke-width="1.5"/>
+    <ellipse cx="65" cy="83" rx="52" ry="11" fill="#86efac" stroke="#16a34a" stroke-width="1.5"/>
+    <text x="65" y="65" text-anchor="middle" font-size="8" fill="#14532d" font-weight="700">CAD Bogotá</text>
+    <text x="65" y="77" text-anchor="middle" font-size="7.5" fill="#14532d">cod_dane: 11001</text>
+
+    <!-- Medellín -->
+    <ellipse cx="183" cy="56" rx="52" ry="11" fill="#bbf7d0" stroke="#16a34a" stroke-width="1.5"/>
+    <rect x="131" y="45" width="104" height="38" fill="#bbf7d0" stroke="#16a34a" stroke-width="1.5"/>
+    <ellipse cx="183" cy="83" rx="52" ry="11" fill="#86efac" stroke="#16a34a" stroke-width="1.5"/>
+    <text x="183" y="65" text-anchor="middle" font-size="8" fill="#14532d" font-weight="700">CAD Medellín</text>
+    <text x="183" y="77" text-anchor="middle" font-size="7.5" fill="#14532d">cod_dane: 05001</text>
+
+    <!-- N -->
+    <ellipse cx="301" cy="56" rx="52" ry="11" fill="#d1fae5" stroke="#34d399" stroke-width="1.5" stroke-dasharray="5,3"/>
+    <rect x="249" y="45" width="104" height="38" fill="#d1fae5" stroke="#34d399" stroke-width="1.5" stroke-dasharray="5,3"/>
+    <ellipse cx="301" cy="83" rx="52" ry="11" fill="#a7f3d0" stroke="#34d399" stroke-width="1.5" stroke-dasharray="5,3"/>
+    <text x="301" y="65" text-anchor="middle" font-size="10" fill="#065f46" font-weight="700">CAD N</text>
+    <text x="301" y="77" text-anchor="middle" font-size="8" fill="#065f46">Escalable ∞</text>
+
+    <!-- tablas principales -->
+    <text x="182" y="108" text-anchor="middle" font-size="8" fill="#065f46" font-weight="700">Tablas principales (por tenant):</text>
+    <text x="40"  y="122" font-size="7.5" fill="#047857">• cad_pedidos (incidentes)</text>
+    <text x="40"  y="133" font-size="7.5" fill="#047857">• cad_eventos (despachos)</text>
+    <text x="40"  y="144" font-size="7.5" fill="#047857">• cad_actuaciones (recursos)</text>
+    <text x="40"  y="155" font-size="7.5" fill="#047857">• cad_turnos · cad_medios</text>
+    <text x="200" y="122" font-size="7.5" fill="#047857">• ctr_usuarios · ctr_roles</text>
+    <text x="200" y="133" font-size="7.5" fill="#047857">• cad_fuerzas · cad_canales</text>
+    <text x="200" y="144" font-size="7.5" fill="#047857">• cad_barrios · cad_casos</text>
+    <text x="200" y="155" font-size="7.5" fill="#047857">• cad_anotaciones · cad_adjuntos</text>
+    <text x="182" y="176" text-anchor="middle" font-size="8" fill="#059669" font-weight="700">
+      Aislamiento total · Pool por tenant · IDs Snowflake 64-bit
+    </text>
+  </g>
+
+  <!-- flecha App Server → DB Master -->
+  <line x1="612" y1="430" x2="450" y2="495" stroke="#047857" stroke-width="1.8"
+        stroke-dasharray="5,3" marker-end="url(#arr-g)"/>
+  <!-- flecha App Server → Tenant DBs -->
+  <line x1="612" y1="430" x2="612" y2="460" stroke="#059669" stroke-width="2"
+        marker-end="url(#arr-g)"/>
+  <!-- flecha Master DB → Tenants -->
+  <line x1="367" y1="555" x2="378" y2="555" stroke="#059669" stroke-width="1.5"
+        stroke-dasharray="4,2" marker-end="url(#arr-g)"/>
+  <text x="370" y="545" font-size="7.5" fill="#059669" text-anchor="middle">resuelve</text>
+
+
+  <!-- ══ INTEGRACIONES ═══════════════════════════════════════════════════ -->
+
+  <!-- PlantaTel -->
+  <g transform="translate(772,36)">
+    <rect x="0" y="0" width="148" height="118" rx="8" fill="white" stroke="#fdba74" stroke-width="1.5" filter="url(#sombra)"/>
+    <rect x="0" y="0" width="148" height="24" rx="8" fill="#ea580c"/>
+    <rect x="0" y="12" width="148" height="12" fill="#ea580c"/>
+    <text x="74" y="17" text-anchor="middle" font-size="10" font-weight="900" fill="white">📞 PlantaTel — Telefonía</text>
+    <text x="74" y="50" text-anchor="middle" font-size="26">☎️</text>
+    <text x="74" y="76" text-anchor="middle" font-size="8.5" fill="#9a3412">Línea 112 / 123 / 156</text>
+    <text x="74" y="89" text-anchor="middle" font-size="8" fill="#9a3412">cad_plantatel</text>
+    <text x="74" y="103" text-anchor="middle" font-size="7.5" fill="#ea580c" font-weight="700">INBOUND → Pedido</text>
+  </g>
+
+  <!-- SIVICC -->
+  <g transform="translate(930,36)">
+    <rect x="0" y="0" width="152" height="118" rx="8" fill="white" stroke="#fdba74" stroke-width="1.5" filter="url(#sombra)"/>
+    <rect x="0" y="0" width="152" height="24" rx="8" fill="#b45309"/>
+    <rect x="0" y="12" width="152" height="12" fill="#b45309"/>
+    <text x="76" y="17" text-anchor="middle" font-size="10" font-weight="900" fill="white">🛡 SIVICC</text>
+    <text x="76" y="50" text-anchor="middle" font-size="26">📋</text>
+    <text x="76" y="76" text-anchor="middle" font-size="8.5" fill="#9a3412">Minuta electrónica</text>
+    <text x="76" y="89" text-anchor="middle" font-size="8" fill="#9a3412">Unidades · FDW</text>
+    <text x="76" y="103" text-anchor="middle" font-size="7.5" fill="#b45309" font-weight="700">BIDIRECCIONAL</text>
+  </g>
+
+  <!-- GESPO GPS -->
+  <g transform="translate(772,170)">
+    <rect x="0" y="0" width="148" height="118" rx="8" fill="white" stroke="#fdba74" stroke-width="1.5" filter="url(#sombra)"/>
+    <rect x="0" y="0" width="148" height="24" rx="8" fill="#b45309"/>
+    <rect x="0" y="12" width="148" height="12" fill="#b45309"/>
+    <text x="74" y="17" text-anchor="middle" font-size="10" font-weight="900" fill="white">📍 GESPO — GPS</text>
+    <text x="74" y="50" text-anchor="middle" font-size="26">🛰️</text>
+    <text x="74" y="76" text-anchor="middle" font-size="8.5" fill="#9a3412">Posicionamiento vehicular</text>
+    <text x="74" y="89" text-anchor="middle" font-size="8" fill="#9a3412">lat · lng · velocidad</text>
+    <text x="74" y="103" text-anchor="middle" font-size="7.5" fill="#b45309" font-weight="700">INBOUND · Real Time</text>
+  </g>
+
+  <!-- Agencias Externas -->
+  <g transform="translate(930,170)">
+    <rect x="0" y="0" width="152" height="118" rx="8" fill="white" stroke="#fdba74" stroke-width="1.5" filter="url(#sombra)"/>
+    <rect x="0" y="0" width="152" height="24" rx="8" fill="#b45309"/>
+    <rect x="0" y="12" width="152" height="12" fill="#b45309"/>
+    <text x="76" y="17" text-anchor="middle" font-size="10" font-weight="900" fill="white">🤝 Agencias Ext.</text>
+    <text x="76" y="50" text-anchor="middle" font-size="26">🚑</text>
+    <text x="76" y="76" text-anchor="middle" font-size="8.5" fill="#9a3412">Bomberos · Cruz Roja</text>
+    <text x="76" y="89" text-anchor="middle" font-size="8" fill="#9a3412">Bearer/APIKey · REST</text>
+    <text x="76" y="103" text-anchor="middle" font-size="7.5" fill="#b45309" font-weight="700">OUTBOUND · Despacho</text>
+  </g>
+
+  <!-- ArcGIS / Cartografía -->
+  <g transform="translate(772,304)">
+    <rect x="0" y="0" width="148" height="118" rx="8" fill="white" stroke="#fdba74" stroke-width="1.5" filter="url(#sombra)"/>
+    <rect x="0" y="0" width="148" height="24" rx="8" fill="#0369a1"/>
+    <rect x="0" y="12" width="148" height="12" fill="#0369a1"/>
+    <text x="74" y="17" text-anchor="middle" font-size="10" font-weight="900" fill="white">🗺 ArcGIS / OSM</text>
+    <text x="74" y="50" text-anchor="middle" font-size="26">🌍</text>
+    <text x="74" y="76" text-anchor="middle" font-size="8.5" fill="#075985">Municipios · Cuadrantes</text>
+    <text x="74" y="89" text-anchor="middle" font-size="8" fill="#075985">GeoJSON · WGS84</text>
+    <text x="74" y="103" text-anchor="middle" font-size="7.5" fill="#0369a1" font-weight="700">OUTBOUND · REST</text>
+  </g>
+
+  <!-- OUD + Api2FA (Seguridad Nacional) -->
+  <g transform="translate(930,304)">
+    <rect x="0" y="0" width="152" height="118" rx="8" fill="white" stroke="#fca5a5" stroke-width="2" filter="url(#sombra)"/>
+    <rect x="0" y="0" width="152" height="24" rx="8" fill="#be123c"/>
+    <rect x="0" y="12" width="152" height="12" fill="#be123c"/>
+    <text x="76" y="17" text-anchor="middle" font-size="10" font-weight="900" fill="white">🔑 OUD + Api2FA</text>
+    <text x="76" y="50" text-anchor="middle" font-size="26">🔐</text>
+    <text x="76" y="76" text-anchor="middle" font-size="8.5" fill="#9f1239">AD Policía · LDAP</text>
+    <text x="76" y="89" text-anchor="middle" font-size="8" fill="#9f1239">OTP · MFA PONAL</text>
+    <text x="76" y="103" text-anchor="middle" font-size="7.5" fill="#be123c" font-weight="700">AUTH PRIMARIA</text>
+  </g>
+
+  <!-- Hub Integraciones -->
+  <g transform="translate(772,438)">
+    <rect x="0" y="0" width="310" height="100" rx="8" fill="white" stroke="#0ea5e9" stroke-width="1.5" filter="url(#sombra)"/>
+    <rect x="0" y="0" width="310" height="24" rx="8" fill="#0284c7"/>
+    <rect x="0" y="12" width="310" height="12" fill="#0284c7"/>
+    <text x="155" y="17" text-anchor="middle" font-size="10" font-weight="900" fill="white">🔀 Hub de Integraciones — Auditoría</text>
+    <text x="155" y="44" text-anchor="middle" font-size="22">📡</text>
+    <text x="155" y="62" text-anchor="middle" font-size="8.5" fill="#0c4a6e">Chat · SMS · REST Webhooks · Adjuntos (fotos/video)</text>
+    <text x="155" y="76" text-anchor="middle" font-size="8" fill="#0c4a6e">Trazabilidad completa · cad_integraciones_clientes</text>
+    <text x="155" y="91" text-anchor="middle" font-size="7.5" fill="#0284c7" font-weight="700">BIDIRECCIONAL · Registro auditado de todas las integraciones</text>
+  </g>
+
+  <!-- Email + Correo institucional -->
+  <g transform="translate(772,554)">
+    <rect x="0" y="0" width="310" height="96" rx="8" fill="white" stroke="#fcd34d" stroke-width="1.5" filter="url(#sombra)"/>
+    <rect x="0" y="0" width="310" height="24" rx="8" fill="#d97706"/>
+    <rect x="0" y="12" width="310" height="12" fill="#d97706"/>
+    <text x="155" y="17" text-anchor="middle" font-size="10" font-weight="900" fill="white">📧 Correo + Gestión Documental</text>
+    <text x="155" y="44" text-anchor="middle" font-size="22">✉️</text>
+    <text x="155" y="62" text-anchor="middle" font-size="8.5" fill="#92400e">Email institucional · Carpetas · Adjuntos</text>
+    <text x="155" y="76" text-anchor="middle" font-size="8" fill="#92400e">DbCuentaEmailRepository · IEmailService · SMTP</text>
+    <text x="155" y="91" text-anchor="middle" font-size="7.5" fill="#d97706" font-weight="700">OUTBOUND · SMTP / IMAP</text>
+  </g>
+
+
+  <!-- ══ FLECHAS PLATAFORMA ↔ INTEGRACIONES ══════════════════════════ -->
+  <!-- PlantaTel → API -->
+  <line x1="772" y1="95" x2="732" y2="230" stroke="#ea580c" stroke-width="1.5"
+        stroke-dasharray="5,3" marker-end="url(#arr-o)"/>
+  <!-- SIVICC → API -->
+  <line x1="930" y1="95" x2="732" y2="250" stroke="#b45309" stroke-width="1.5"
+        stroke-dasharray="5,3" marker-end="url(#arr-o)"/>
+  <!-- GESPO → API -->
+  <line x1="772" y1="229" x2="732" y2="270" stroke="#b45309" stroke-width="1.5"
+        stroke-dasharray="5,3" marker-end="url(#arr-o)"/>
+  <!-- Agencias ← API -->
+  <line x1="732" y1="290" x2="930" y2="229" stroke="#b45309" stroke-width="1.5"
+        stroke-dasharray="5,3" marker-end="url(#arr-o)"/>
+  <!-- ArcGIS ← Angular -->
+  <line x1="772" y1="363" x2="732" y2="300" stroke="#0369a1" stroke-width="1.5"
+        stroke-dasharray="5,3" marker-end="url(#arr)"/>
+  <!-- OUD ↔ Seguridad -->
+  <line x1="930" y1="363" x2="480" y2="310" stroke="#be123c" stroke-width="1.5"
+        stroke-dasharray="5,3" marker-end="url(#arr)"/>
+
+
+  <!-- ══ TÍTULO Y LEYENDA INFERIOR ═══════════════════════════════════ -->
+
+  <!-- Separadores internos de zona -->
+  <line x1="320" y1="36" x2="320" y2="426" stroke="#dbeafe" stroke-width="1" stroke-dasharray="4,4"/>
+  <line x1="480" y1="36" x2="480" y2="426" stroke="#dbeafe" stroke-width="1" stroke-dasharray="4,4"/>
+
+
+</svg>
+</div>
+
+<!-- footer -->
+<div class="foot">
+  <span>
+    <strong>SECAD v4.0</strong> · Diagrama de Arquitectura Lógica ·
+    Policía Nacional de Colombia — AITEC / GRUDE / OFTIC
+  </span>
+  <span>
+    Angular 18 + .NET 8 / ASP.NET Core + PostgreSQL 16 · Multi-Tenant · JWT + MFA + OUD ·
+    <strong>Uso Interno — Confidencial</strong>
+  </span>
+</div>
+
+</body>
+</html>
