@@ -48,7 +48,12 @@ namespace Negocio.Gestion
                             Ayuda = "Secreto para firmar (AK/SK HMAC-SHA256). No se muestra una vez guardado." },
                     new() { Key = "streamType", Nombre = "Calidad de video", Tipo = "select", Requerido = false,
                             Opciones = new() { "1", "0" },
-                            Ayuda = "1 = sub-stream (H.264, recomendado para el navegador) · 0 = main (suele H.265)." }
+                            Ayuda = "1 = sub-stream (H.264, recomendado para el navegador) · 0 = main (suele H.265)." },
+                    new() { Key = "protocol", Nombre = "Protocolo de video", Tipo = "select", Requerido = false,
+                            Opciones = new() { "hls_s", "hls", "websocket" },
+                            Ayuda = "hls_s = HLS sobre TLS (recomendado: la especificación exige cifrado en " +
+                                    "tránsito; lo añadió la OpenAPI V3.1.1) · hls = sin cifrar · " +
+                                    "websocket = para el reproductor jsDecoder, necesario si la cámara solo tiene H.265." }
                 }
             },
             new DtoVmsDriverDescriptor

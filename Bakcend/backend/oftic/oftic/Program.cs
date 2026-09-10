@@ -279,6 +279,8 @@ builder.Services.AddSingleton<Servicios.ApiInterfaz.IVmsReader, Servicios.Vms.Hi
 builder.Services.AddSingleton<Servicios.ApiInterfaz.IVmsReaderFactory, Servicios.Vms.VmsReaderFactory>();
 
 builder.Services.AddScoped<IDbCamaraIntegracionRepository, DbCamaraIntegracionRepository>();
+builder.Services.AddScoped<IDbCamaraRepository, DbCamaraRepository>();
+builder.Services.AddScoped<IDbCamaraService,    DbCamaraService>();
 builder.Services.AddScoped<IDbCamaraIntegracionService,    DbCamaraIntegracionService>();
 
 // Módulo Reportes y Estadísticas (§6.16)

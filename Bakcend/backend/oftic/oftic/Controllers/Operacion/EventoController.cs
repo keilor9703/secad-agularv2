@@ -1,3 +1,4 @@
+using System.Globalization;
 using Comun.Dtos.Incidentes;
 using Ev = Comun.Dtos.Eventos;
 using Microsoft.AspNetCore.Authorization;
@@ -25,15 +26,18 @@ namespace Api.Controllers.Operacion
     public class EventoController : ControllerBase
     {
         private readonly IDbPedidoService     _service;
+        private readonly IDbCamaraService     _camaras;
         private readonly IDbRecepcionService  _recepcionService;
         private readonly ILogger<EventoController> _logger;
 
         public EventoController(
             IDbPedidoService service, IDbRecepcionService recepcionService,
+            IDbCamaraService camaras,
             ILogger<EventoController> logger)
         {
             _service          = service;
             _recepcionService = recepcionService;
+            _camaras          = camaras;
             _logger           = logger;
         }
 
@@ -274,6 +278,46 @@ namespace Api.Controllers.Operacion
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error al cerrar evento id={Id}", id);
+                return StatusCode(500, new { success = false, message = $"Error: {ex.Message}" });
+            }
+        }
+
+        /// <summary>
+        /// Cámaras CCTV más cercanas al incidente de este evento.
+        ///
+        /// Las coordenadas salen del propio caso, así que el despachador no
+        /// tiene que decir dónde mirar. Un evento sin coordenada devuelve lista
+        /// vacía y no un error: es normal que un caso entre sin ubicar y el
+        /// panel de cámaras simplemente no tiene nada que mostrar.
+        /// </summary>
+        [HttpGet("{id:long}/camaras-cercanas")]
+        public async Task<ActionResult> GetCamarasCercanas(
+            long id,
+            [FromQuery] int radioMetros = 1000,
+            [FromQuery] int limite = 8,
+            CancellationToken ct = default)
+        {
+            try
+            {
+                var evento = await _service.GetByIdAsync(id, ct);
+                if (evento is null)
+                    return NotFound(new { success = false, message = "Evento no encontrado." });
+
+                // El punto decimal es el separador: las coordenadas viajan como
+                // texto y en un servidor con configuración regional española
+                // «4,65» se leería como 465.
+                var okLat = double.TryParse(evento.LatitudCaso,  NumberStyles.Float, CultureInfo.InvariantCulture, out var lat);
+                var okLng = double.TryParse(evento.LongitudCaso, NumberStyles.Float, CultureInfo.InvariantCulture, out var lng);
+                if (!okLat || !okLng || (lat == 0 && lng == 0))
+                    return Ok(new { success = true, data = Array.Empty<object>(),
+                                    message = "El caso no tiene coordenadas: no se pueden buscar cámaras cercanas." });
+
+                var data = await _camaras.CercanasAsync(evento.SitioGraba, lat, lng, radioMetros, limite, ct);
+                return Ok(new { success = true, data });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al buscar cámaras cercanas al evento {Id}", id);
                 return StatusCode(500, new { success = false, message = $"Error: {ex.Message}" });
             }
         }

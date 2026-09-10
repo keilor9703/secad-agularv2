@@ -130,7 +130,11 @@ namespace Servicios.Vms
                 cameraIndexCodes = camaraCodigo,
                 cameraIndexCode  = camaraCodigo,
                 streamType       = tipo,
-                protocol         = cx.Publico("protocol", "hls"),
+                // hls_s es HLS sobre TLS y lo añadió la OpenAPI V3.1.1; la
+                // especificación de SECAD exige cifrado en tránsito, así que es
+                // el valor por defecto. Un HikCentral en 3.1.0 no lo conoce:
+                // ahí hay que bajar a "hls" desde la ficha.
+                protocol         = cx.Publico("protocol", "hls_s"),
                 transmode        = int.TryParse(cx.Publico("transmode", "1"), out var tm) ? tm : 1,
             });
 
@@ -148,7 +152,7 @@ namespace Servicios.Vms
             {
                 Url           = url!,
                 Autenticacion = Texto(data, "authentication"),
-                Protocolo     = cx.Publico("protocol", "hls"),
+                Protocolo     = cx.Publico("protocol", "hls_s"),
                 TipoStream    = tipo,
             });
         }
