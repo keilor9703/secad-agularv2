@@ -65,6 +65,14 @@ namespace Comun.Dtos.Camaras
         public bool    TieneSecreto { get; set; }
         public bool    Activa       { get; set; }
         public int     TotalCamaras { get; set; }
+        /// <summary>
+        /// Nodo que atiende el video de esta integración. Por segmentación de
+        /// VLAN los servidores centrales no alcanzan la red de cámaras del
+        /// municipio: el driver firma contra el VMS desde el edge de la sede, y
+        /// el frontend dirige ahí las operaciones de video. Vacío = lo atiende
+        /// este mismo backend.
+        /// </summary>
+        public string? NodoEdgeUrl  { get; set; }
         public string? FechaCreacion     { get; set; }
         public string? FechaModificacion { get; set; }
     }
@@ -76,6 +84,7 @@ namespace Comun.Dtos.Camaras
         public string? Descripcion { get; set; }
         public string  Driver      { get; set; } = "";
         public string? BaseUrl     { get; set; }
+        public string? NodoEdgeUrl { get; set; }
         public Dictionary<string, string>  Config   { get; set; } = new();
         /// <summary>Secretos a guardar. En edición, si un secreto llega vacío, se conserva el anterior.</summary>
         public Dictionary<string, string>? Secretos { get; set; }

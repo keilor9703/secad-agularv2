@@ -247,6 +247,9 @@ builder.Services.AddScoped<IDbIntegracionRepository, DbIntegracionRepository>();
 builder.Services.AddScoped<IDbIntegracionService,    DbIntegracionService>();
 
 // Integración de Cámaras (VMS) — configurable por el administrador
+// Cifrado reversible de secretos de integración (VMS, y lo que venga). Comparte
+// la clave con las llaves de API: es el mismo secreto del mismo servidor.
+builder.Services.AddSingleton<Comun.Security.ICifradoSecretos, Comun.Security.CifradoSecretos>();
 builder.Services.AddScoped<IDbCamaraIntegracionRepository, DbCamaraIntegracionRepository>();
 builder.Services.AddScoped<IDbCamaraIntegracionService,    DbCamaraIntegracionService>();
 

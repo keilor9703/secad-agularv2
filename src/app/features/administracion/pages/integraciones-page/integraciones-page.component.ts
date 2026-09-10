@@ -363,6 +363,8 @@ export class IntegracionesPageComponent implements OnInit {
   camForm: Record<string, string> = {};
   readonly camNombre      = signal('');
   readonly camDescripcion = signal('');
+  /** Nodo que alcanza la red de cámaras; vacío = este mismo backend. */
+  readonly camEdge        = signal('');
   readonly camActiva      = signal(true);
   readonly editCamId      = signal('');
   readonly camPrueba      = signal('');        // resultado de "validar configuración"
@@ -1178,6 +1180,7 @@ export class IntegracionesPageComponent implements OnInit {
     this.editCamId.set('');
     this.camNombre.set('');
     this.camDescripcion.set('');
+    this.camEdge.set('');
     this.camActiva.set(true);
     this.camPrueba.set('');
     this.camDriver.set(null);
@@ -1191,6 +1194,7 @@ export class IntegracionesPageComponent implements OnInit {
     this.editCamId.set(c.id);
     this.camNombre.set(c.nombre);
     this.camDescripcion.set(c.descripcion ?? '');
+    this.camEdge.set(c.nodoEdgeUrl ?? '');
     this.camActiva.set(c.activa);
     this.camPrueba.set('');
     const driver = this.drivers().find(d => d.driver === c.driver) ?? null;
@@ -1217,6 +1221,7 @@ export class IntegracionesPageComponent implements OnInit {
       nombre:      this.camNombre().trim(),
       descripcion: this.camDescripcion().trim() || undefined,
       driver:      driver?.driver ?? '',
+      nodoEdgeUrl: this.camEdge().trim() || undefined,
       config,
       secretos,
       activa:      this.camActiva()

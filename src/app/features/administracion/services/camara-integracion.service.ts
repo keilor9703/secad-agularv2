@@ -41,6 +41,13 @@ export interface DtoCamaraIntegracion {
   tieneSecreto:      boolean;
   activa:            boolean;
   totalCamaras:      number;
+  /**
+   * Nodo que atiende el video de esta integración. Los servidores centrales no
+   * alcanzan la red de cámaras del municipio (segmentación de VLAN): el driver
+   * firma contra el VMS desde el edge de la sede. Vacío = lo atiende el mismo
+   * backend que responde.
+   */
+  nodoEdgeUrl:       string | null;
   fechaCreacion:     string | null;
   fechaModificacion: string | null;
 }
@@ -50,6 +57,7 @@ export interface DtoCamaraIntegracionRequest {
   descripcion?: string;
   driver:       string;
   baseUrl?:     string;
+  nodoEdgeUrl?: string;
   config:       Record<string, string>;
   secretos?:    Record<string, string>;
   activa:       boolean;

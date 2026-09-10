@@ -1054,6 +1054,19 @@
       }
     }
 
+    <!-- El video no puede pasar por Bogotá: por segmentación de VLAN los
+         servidores centrales no alcanzan la red de cámaras del municipio. El
+         driver firma contra el VMS desde el nodo de la sede. -->
+    <app-ui-input
+      label="Nodo que atiende el video (edge)"
+      placeholder="https://edge-tunja.local:8443"
+      hint="Servidor SECAD que sí alcanza la red de cámaras y firma contra el VMS.
+            Déjelo vacío si este mismo backend la alcanza."
+      [ngModel]="camEdge()"
+      (ngModelChange)="camEdge.set($event)"
+      [ngModelOptions]="{ standalone: true }"
+    />
+
     <app-ui-toggle
       label="Integración activa"
       showStateText

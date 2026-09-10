@@ -128,6 +128,10 @@ TENANT_FILES=(
   "V72__centro_mapa_por_sitio.sql"
   # V74: los canales de despacho de una integración entrante los fija el CAD.
   "V74__integraciones_canales_destino.sql"
+  # V75/V76: integración de cámaras — nodo edge, cifrado del secreto, auditoría
+  # de visualización, y cad_camaras preparada para el censo institucional.
+  "V75__camaras_edge_cifrado_auditoria.sql"
+  "V76__camaras_censo_institucional.sql"
 )
 
 case "$SCOPE" in
