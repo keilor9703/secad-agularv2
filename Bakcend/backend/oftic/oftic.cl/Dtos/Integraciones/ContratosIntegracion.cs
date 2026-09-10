@@ -101,7 +101,7 @@ namespace Comun.Dtos.Integraciones
 
             c.UrlAbsoluta = $"{baseUrl.TrimEnd('/')}{c.Ruta}";
             c.Headers["X-Api-Key"] = string.IsNullOrWhiteSpace(clave)
-                ? "«genere la llave en esta pantalla y péguela aquí»"
+                ? "«genere la llave en Hub de Integraciones y péguela aquí»"
                 : clave;
             c.Headers["Content-Type"] = "application/json";
             c.EjemploCurl =

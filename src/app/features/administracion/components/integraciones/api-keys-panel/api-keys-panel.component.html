@@ -159,9 +159,9 @@
         <app-ui-select
           formControlName="alcance"
           label="Para qué sirve"
-          [options]="opcionesAlcance"
+          [options]="opcionesAlcance()"
           [clearable]="false"
-          [disabled]="!!alcanceFijo() || !!editandoId()"
+          [disabled]="alcanceUnico() || !!editandoId()"
           [hint]="editandoId()
                     ? 'El alcance no se cambia: ampliarlo en caliente le daría más permisos a un secreto que ya está en manos de un tercero.'
                     : 'Acota lo que puede hacer. La llave de la planta no debería poder crear casos por chat.'"

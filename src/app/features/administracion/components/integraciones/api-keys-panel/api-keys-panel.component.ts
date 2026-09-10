@@ -51,8 +51,14 @@ export class ApiKeysPanelComponent implements OnInit {
   private readonly alert  = inject(AlertService);
   private readonly fb     = inject(FormBuilder);
 
-  /** Si se fija, el panel solo trabaja con llaves de ese alcance. */
-  readonly alcanceFijo = input<AlcanceApiKey | null>(null);
+  /**
+   * Alcances con los que trabaja este panel. Vacío = todos.
+   *
+   * La pestaña de la planta pasa ['PBX'] y la de entrantes los canales que le
+   * corresponden, de forma que cada una enseña y emite sus propias llaves sin
+   * repetir las de la otra.
+   */
+  readonly alcances = input<AlcanceApiKey[]>([]);
   readonly titulo      = input('Llaves de API');
   readonly descripcion = input(
     'Con estas llaves se autentica el sistema externo. Cada una pertenece a este CAD: ' +
@@ -94,8 +100,15 @@ export class ApiKeysPanelComponent implements OnInit {
     this.intento() && !this.form.controls.nombre.value.trim()
       ? 'Póngale un nombre que diga de quién es la llave, por ejemplo «Planta Avaya».' : '');
 
-  readonly opcionesAlcance: UiSelectOption<string>[] =
-    ALCANCES.map(a => ({ label: a.label, value: a.value }));
+  /** Solo se puede emitir dentro de los alcances del panel. */
+  readonly opcionesAlcance = computed<UiSelectOption<string>[]>(() => {
+    const permitidos = this.alcances();
+    const lista = permitidos.length ? ALCANCES.filter(a => permitidos.includes(a.value)) : ALCANCES;
+    return lista.map(a => ({ label: a.label, value: a.value }));
+  });
+
+  /** Con un solo alcance posible no hay nada que elegir. */
+  readonly alcanceUnico = computed(() => this.alcances().length === 1);
 
   readonly opcionesUnidad = computed<UiSelectOption<number>[]>(() => [
     { label: 'Sin unidad por defecto', value: 0 },
@@ -103,8 +116,10 @@ export class ApiKeysPanelComponent implements OnInit {
   ]);
 
   readonly listaFiltrada = computed(() => {
-    const a = this.alcanceFijo();
-    return a ? this.llaves().filter(l => l.alcance === a || l.alcance === 'TODO') : this.llaves();
+    const permitidos = this.alcances();
+    if (!permitidos.length) return this.llaves();
+    // La comodín «TODO» sirve para cualquier canal, así que aparece siempre.
+    return this.llaves().filter(l => permitidos.includes(l.alcance) || l.alcance === 'TODO');
   });
 
   readonly hayActiva = computed(() => this.listaFiltrada().some(l => l.activa));
@@ -139,7 +154,7 @@ export class ApiKeysPanelComponent implements OnInit {
     const unidad = this.unidades().length === 1 ? this.unidades()[0].consecutivo : 0;
     this.form.reset({
       nombre: '',
-      alcance: this.alcanceFijo() ?? 'PBX',
+      alcance: (this.alcances()[0] ?? 'PBX') as AlcanceApiKey,
       sitioGrabaDefecto: unidad,
       notas: '',
     });

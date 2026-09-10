@@ -316,6 +316,12 @@ export class IntegracionesPageComponent implements OnInit {
   readonly llavePbx         = signal<DtoApiKey | null>(null);
   readonly cargandoContrato = signal(false);
 
+  /** Llaves de los canales entrantes, para poder insertarlas en la ficha. */
+  readonly llavesEntrantes  = signal<DtoApiKey[]>([]);
+  readonly llaveElegida     = signal('');
+  /** true = la ficha que se está viendo ya trae una credencial de verdad. */
+  readonly llaveEnContrato  = signal(false);
+
   /** Los canales que tienen contrato; el resto del catálogo es documental. */
   private readonly canalDeTipo: Record<string, string> = { CHAT: 'CHAT', SMS: 'SMS' };
 
@@ -607,6 +613,7 @@ export class IntegracionesPageComponent implements OnInit {
     // El contrato de la PBX se pide al abrir; el panel de llaves lo vuelve a
     // pedir en cuanto sabe cuál es la llave activa, para que salga con ella.
     if (t === 'pbx' && !this.contratoPbx()) this.cargarContrato('PBX', undefined, 'pbx');
+    if (t === 'entrantes' && !this.llavesEntrantes().length) this.onLlaveEntrante(null);
     if (t === 'auditoria' && !this.audSalientes().length && !this.audEntrantes().length)
       this.loadAuditoria();
     if (t === 'camaras') {
@@ -766,11 +773,48 @@ export class IntegracionesPageComponent implements OnInit {
   }
 
   /**
+   * El panel de llaves de la pestaña de entrantes avisa cuál está activa. No se
+   * usa para recargar la ficha —eso sería revelar la llave sin que nadie lo
+   * pida— sino para saber qué ofrecer en el selector del modal.
+   */
+  onLlaveEntrante(l: DtoApiKey | null): void {
+    this.apiKeys.listar().subscribe({
+      next: r => this.llavesEntrantes.set((r.data ?? []).filter(k => k.activa)),
+      error: () => { /* el selector es una comodidad: la pantalla sirve igual */ },
+    });
+  }
+
+  /** Las llaves que sirven para el canal del formulario abierto. */
+  readonly llavesDelCanal = computed(() => {
+    const canal = this.canalDeTipo[this.formEnt.controls.tipoCanal.value];
+    if (!canal) return [];
+    return this.llavesEntrantes().filter(k => k.alcance === canal || k.alcance === 'TODO');
+  });
+
+  readonly opcionesLlaveCanal = computed<UiSelectOption<string>[]>(() => [
+    { label: 'Sin credencial', value: '' },
+    ...this.llavesDelCanal().map(k => ({ label: `${k.nombre} (${k.prefijo}…)`, value: k.id })),
+  ]);
+
+  /** Recarga la ficha con esa llave puesta. Cuenta como revelado y se audita. */
+  usarLlaveEnContrato(llaveId: string): void {
+    this.llaveElegida.set(llaveId);
+    const canal = this.canalDeTipo[this.formEnt.controls.tipoCanal.value];
+    if (!canal) return;
+    this.llaveEnContrato.set(!!llaveId);
+    this.cargarContrato(canal, llaveId || undefined, 'entrante');
+  }
+
+  /**
    * El canal del formulario de entrantes decide la ruta: no es un texto libre.
    * Las rutas están fijas en los controladores, así que escribirlas a mano no
    * enrutaba nada — solo servía para documentar mal.
    */
   onTipoCanalChange(): void {
+    // La llave elegida era de otro canal: se descarta con él.
+    this.llaveElegida.set('');
+    this.llaveEnContrato.set(false);
+
     const canal = this.canalDeTipo[this.formEnt.controls.tipoCanal.value];
     if (!canal) { this.contratoEntrante.set(null); return; }
 

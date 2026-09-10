@@ -457,3 +457,23 @@
 :host-context(html.dark-mode) {
   .ig-pbx__intro { background: rgba(8, 166, 203, .12); }
 }
+
+// Insertar una credencial en la ficha del modal. Es una acción explícita
+// porque mostrar la llave es un revelado, y un revelado se audita.
+.ig-insertar-llave {
+  display:       flex;
+  align-items:   center;
+  gap:           10px;
+  padding:       10px 12px;
+  margin-bottom: 12px;
+  border-radius: 8px;
+  border:        1px solid rgba(217, 119, 6, .30);
+  background:    rgba(245, 158, 11, .08);
+
+  > i    { color: #b45309; }
+  > span { flex: 1 1 auto; font-size: calc(11.5px * var(--font-size-scale, 1)); }
+
+  &__sel { flex: 0 0 260px; }
+
+  @media (max-width: 720px) { flex-wrap: wrap; &__sel { flex: 1 1 100%; } }
+}

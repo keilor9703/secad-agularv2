@@ -169,14 +169,18 @@
         >Nueva integración</app-ui-button>
       </app-ui-section-header>
 
-      <p class="ig-aviso">
-        <i class="fa-solid fa-key" aria-hidden="true"></i>
-        <span>
-          <strong>Autenticación:</strong> la API Key vive en
-          <code>appsettings.json → RecepcionExterna:ApiKey</code>. Los sistemas externos la envían en
-          la cabecera <code>X-Api-Key</code>, junto con <code>X-Cod-Dane</code> (el CAD destino).
-        </span>
-      </p>
+      <!-- Aquí se generan las llaves de estos canales. Antes este aviso decía
+           que la clave vivía en appsettings.json y que había que mandar también
+           X-Cod-Dane; las dos cosas dejaron de ser ciertas con V73, y además la
+           ficha técnica pedía una llave que esta pantalla no ofrecía crear. -->
+      <app-api-keys-panel
+        [alcances]="['CHAT', 'SMS', 'ACTUALIZACION']"
+        titulo="Llaves de API de los canales entrantes"
+        descripcion="Es la credencial que se le entrega a quien integra. Cada llave pertenece a este
+                     CAD, así que es lo que permite que SECAD sepa a qué base escribir sin que el
+                     sistema externo tenga que decírselo."
+        (llaveSeleccionada)="onLlaveEntrante($event)"
+      />
 
       @if (loadingEnt()) {
         <app-ui-spinner label="Cargando integraciones…" contained />
@@ -277,7 +281,7 @@
       </div>
 
       <app-api-keys-panel
-        alcanceFijo="PBX"
+        [alcances]="['PBX']"
         titulo="Llave de la planta telefónica"
         descripcion="Es la credencial que se le entrega al proveedor. Identifica a este CAD, así que
                      nadie más puede escribir llamadas aquí ni esta llave puede escribir en otro CAD."
@@ -792,6 +796,30 @@
          fallaba. Ahora sale del propio backend y no se puede editar. -->
     @if (contratoEntrante(); as contrato) {
       <div class="ig-contrato">
+        <!-- Insertar la llave es una acción explícita y no algo que pase al
+             abrir el modal: mostrarla es un revelado, y un revelado se audita.
+             Que lo pida quien lo necesita, no cada vez que alguien mira. -->
+        @if (llavesDelCanal().length && !llaveEnContrato()) {
+          <div class="ig-insertar-llave">
+            <i class="fa-solid fa-key" aria-hidden="true"></i>
+            <span>La ficha sale sin credencial. Insértele una llave para poder entregarla tal cual.</span>
+            <app-ui-select
+              class="ig-insertar-llave__sel"
+              label="Llave"
+              [options]="opcionesLlaveCanal()"
+              [ngModel]="llaveElegida()"
+              (ngModelChange)="usarLlaveEnContrato($event)"
+              [ngModelOptions]="{ standalone: true }"
+              [clearable]="false"
+            />
+          </div>
+        } @else if (!llavesDelCanal().length) {
+          <p class="ig-campo__pie">
+            Este canal todavía no tiene ninguna llave. Ciérre esta ventana y genérela en
+            «Llaves de API de los canales entrantes», arriba.
+          </p>
+        }
+
         <app-contrato-integracion [contrato]="contrato" />
       </div>
     } @else {
