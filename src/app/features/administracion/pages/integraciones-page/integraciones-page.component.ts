@@ -31,12 +31,14 @@ import { UiSelectOption } from '../../../../shared/interfaces/ui-select-option.i
 import { UiSegmentedTabItem } from '../../../../shared/components/ui-segmented-tabs/ui-segmented-tabs.types';
 import {
   IntegracionesService,
+  DtoCanalIntegracion,
   DtoIntegracionEntrante,
   DtoIntegracionEntranteRequest,
   DtoDespachoAuditoria,
   DtoRecepcionAuditoria,
   TIPOS_CANAL_ENTRANTE
 } from '../../services/integraciones.service';
+import { FuerzaService, DtoFuerza, DtoCanalFuerza } from '../../services/fuerza.service';
 import {
   AgenciaExternaService,
   DtoAgenciaExterna,
@@ -122,6 +124,7 @@ export class IntegracionesPageComponent implements OnInit {
   private readonly camSvc = inject(CamaraIntegracionService);
   private readonly smsSvc = inject(ConfigSmsService);
   private readonly apiKeys = inject(ApiKeysService);
+  private readonly fuerzaSvc = inject(FuerzaService);
   private readonly route  = inject(ActivatedRoute);
   private readonly toast  = inject(ToastService);
   private readonly auth   = inject(AuthService);
@@ -306,6 +309,28 @@ export class IntegracionesPageComponent implements OnInit {
   readonly formEntHeaders = signal('');
   readonly formEntPayload = signal('');
   readonly editEntId      = signal('');
+
+  // ── Canales destino de la integración ───────────────────────────────────
+  // El canal de despacho lo decide el CAD, no el sistema externo. Hasta V74 el
+  // proveedor lo mandaba en el cuerpo de la petición: no conoce el catálogo de
+  // fuerzas del CAD, en la práctica lo mandaba vacío —así que todos los casos
+  // de integración caían sin despachar— y con una llave de alcance CHAT se
+  // podía inyectar un caso en cualquier canal, incluso el de otra unidad.
+  readonly fuerzas        = signal<DtoFuerza[]>([]);
+  readonly canalesFuerza  = signal<DtoCanalFuerza[]>([]);
+  readonly entFuerzaSel   = signal<number | null>(null);
+  readonly entCanalSel    = signal<number | null>(null);
+  /** Los canales ya elegidos para esta ficha. Pueden ser de fuerzas distintas. */
+  readonly entCanales     = signal<DtoCanalIntegracion[]>([]);
+  /** Llave asociada a la ficha; se guarda con ella y empareja las peticiones. */
+  readonly entApiKeyId    = signal<string | null>(null);
+  /**
+   * Espejo en señal de formEnt.sitioGrabaDefecto. El aviso de desalineación
+   * se calcula con computed(), y un computed no ve cambiar un FormControl:
+   * leerlo del control directamente dejaba el aviso congelado en el valor que
+   * tenía al abrir el modal.
+   */
+  readonly entSitio       = signal(0);
 
   // ── Contratos ──────────────────────────────────────────────────────────────
   // Lo que hay que entregarle a quien integra, generado desde los propios
@@ -593,6 +618,8 @@ export class IntegracionesPageComponent implements OnInit {
   ngOnInit(): void {
     this.construirColumnas();
     this.formSal.controls.tipoAuth.valueChanges.subscribe((v) => this.authSeleccionado.set(v));
+    this.formEnt.controls.sitioGrabaDefecto.valueChanges
+      .subscribe((v) => this.entSitio.set(Number(v) || 0));
     this.loadSalientes();
     this.loadEntrantes();
 
@@ -796,14 +823,101 @@ export class IntegracionesPageComponent implements OnInit {
     ...this.llavesDelCanal().map(k => ({ label: `${k.nombre} (${k.prefijo}…)`, value: k.id })),
   ]);
 
-  /** Recarga la ficha con esa llave puesta. Cuenta como revelado y se audita. */
+  /**
+   * Elegir la llave hace dos cosas a la vez, y las dos las quiere quien la
+   * elige: ATA la integración a esa credencial —es lo que permite saber qué
+   * ficha está escribiendo cuando llega una petición, y por tanto a qué
+   * canales va el caso— y la INSERTA en la ficha para poder entregarla. Lo
+   * segundo cuenta como revelado y se audita, por eso es un acto explícito y
+   * no algo que pase solo con abrir el modal.
+   */
   usarLlaveEnContrato(llaveId: string): void {
     this.llaveElegida.set(llaveId);
+    this.entApiKeyId.set(llaveId || null);
     const canal = this.canalDeTipo[this.formEnt.controls.tipoCanal.value];
     if (!canal) return;
     this.llaveEnContrato.set(!!llaveId);
     this.cargarContrato(canal, llaveId || undefined, 'entrante');
   }
+
+  // ── Canales destino ───────────────────────────────────────────────────────
+
+  /**
+   * Todas las fuerzas del CAD, no solo las de una unidad: una integración
+   * puede repartir a canales de fuerzas distintas (sitio 0 = el CAD entero,
+   * que es lo que ve un administrador).
+   */
+  private cargarFuerzas(): void {
+    if (this.fuerzas().length) return;
+    this.fuerzaSvc.getFuerzas(0).subscribe({
+      next: r => this.fuerzas.set((r.data ?? []).filter(f => f.vigente === 'S')),
+      error: () => this.toast.error('Error', 'No se pudieron cargar las fuerzas.'),
+    });
+  }
+
+  readonly opcionesFuerzaEnt = computed<UiSelectOption<number>[]>(() =>
+    this.fuerzas().map(f => ({
+      label: f.abreviatura ? `${f.descripcion} (${f.abreviatura})` : f.descripcion,
+      value: f.id,
+    })),
+  );
+
+  readonly opcionesCanalEnt = computed<UiSelectOption<number>[]>(() =>
+    this.canalesFuerza()
+      .filter(c => c.vigente === 'S')
+      .map(c => ({ label: `${c.descripcion} (${c.codigo})`, value: c.codigo })),
+  );
+
+  /** Los canales de la fuerza elegida se piden en el momento: cambian por CAD. */
+  onFuerzaEntChange(fuerzaId: number | null): void {
+    this.entFuerzaSel.set(fuerzaId);
+    this.entCanalSel.set(null);
+    this.canalesFuerza.set([]);
+    if (!fuerzaId) return;
+    this.fuerzaSvc.getCanales(fuerzaId).subscribe({
+      next: r => this.canalesFuerza.set(r.data ?? []),
+      error: () => this.toast.error('Error', 'No se pudieron cargar los canales de la fuerza.'),
+    });
+  }
+
+  agregarCanalEnt(): void {
+    const fuerzaId = this.entFuerzaSel();
+    const codigo   = this.entCanalSel();
+    if (!fuerzaId || !codigo)
+      return void this.toast.warning('Validar', 'Elija la fuerza y su canal.');
+
+    if (this.entCanales().some(c => c.fuerzaId === fuerzaId && c.codigo === codigo))
+      return void this.toast.info('Canales', 'Ese canal ya está en la lista.');
+
+    const fuerza = this.fuerzas().find(f => f.id === fuerzaId);
+    const canal  = this.canalesFuerza().find(c => c.codigo === codigo);
+    this.entCanales.update(list => [...list, {
+      fuerzaId,
+      codigo,
+      fuerzaDescripcion: fuerza?.descripcion ?? null,
+      canalDescripcion:  canal?.descripcion  ?? null,
+      sitioGraba:        fuerza?.sitioGraba ?? 0,
+    }]);
+    this.entCanalSel.set(null);
+  }
+
+  quitarCanalEnt(c: DtoCanalIntegracion): void {
+    this.entCanales.update(list =>
+      list.filter(x => !(x.fuerzaId === c.fuerzaId && x.codigo === c.codigo)));
+  }
+
+  /**
+   * Recepción filtra estrictamente por sitio de grabación: un canal de una
+   * fuerza de otra unidad recibe el caso y no se lo muestra a nadie. Con la
+   * unidad en 0 la hereda la llave y no hay nada que comparar todavía.
+   */
+  desalineado(c: DtoCanalIntegracion): boolean {
+    const sitioFicha = this.entSitio();
+    return !!sitioFicha && !!c.sitioGraba && c.sitioGraba !== sitioFicha;
+  }
+
+  readonly hayCanalDesalineado = computed(() =>
+    this.entCanales().some(c => this.desalineado(c)));
 
   /**
    * El canal del formulario de entrantes decide la ruta: no es un texto libre.
@@ -814,6 +928,7 @@ export class IntegracionesPageComponent implements OnInit {
     // La llave elegida era de otro canal: se descarta con él.
     this.llaveElegida.set('');
     this.llaveEnContrato.set(false);
+    this.entApiKeyId.set(null);
 
     const canal = this.canalDeTipo[this.formEnt.controls.tipoCanal.value];
     if (!canal) { this.contratoEntrante.set(null); return; }
@@ -833,6 +948,9 @@ export class IntegracionesPageComponent implements OnInit {
     this.formEntPayload.set('');
     this.editEntId.set('');
     this.contratoEntrante.set(null);
+    this.limpiarCanalesEnt();
+    this.entSitio.set(0);
+    this.cargarFuerzas();
     this.onTipoCanalChange();
     this.modal.set('entrante-create');
     document.body.classList.add('ui-modal-open');
@@ -851,9 +969,29 @@ export class IntegracionesPageComponent implements OnInit {
     });
     this.formEntHeaders.set(e.headersRequeridos ?? '');
     this.formEntPayload.set(e.ejemploPayload ?? '');
+    this.limpiarCanalesEnt();
+    this.entSitio.set(e.sitioGrabaDefecto ?? 0);
+    this.entCanales.set([...(e.canales ?? [])]);
+    this.cargarFuerzas();
+
+    // onTipoCanalChange() limpia la llave porque normalmente se llama al
+    // CAMBIAR de canal; aquí el canal no cambia, así que la de la ficha se
+    // restituye después. Sin esto, guardar una edición desataba la
+    // integración de su credencial sin que nadie lo pidiera.
     this.onTipoCanalChange();
+    this.entApiKeyId.set(e.apiKeyId ?? null);
+    this.llaveElegida.set(e.apiKeyId ?? '');
+
     this.modal.set('entrante-edit');
     document.body.classList.add('ui-modal-open');
+  }
+
+  private limpiarCanalesEnt(): void {
+    this.entCanales.set([]);
+    this.entFuerzaSel.set(null);
+    this.entCanalSel.set(null);
+    this.canalesFuerza.set([]);
+    this.entApiKeyId.set(null);
   }
 
   saveEnt(): void {
@@ -868,10 +1006,18 @@ export class IntegracionesPageComponent implements OnInit {
     if (payload.trim() && !this.isValidJson(payload))
       return void this.toast.warning('JSON inválido', 'El payload de ejemplo no es un JSON válido.');
 
+    if (this.hayCanalDesalineado())
+      this.toast.warning(
+        'Canales',
+        'Hay canales de una unidad distinta a la de la ficha: esos casos no se verán en Recepción.');
+
     const request: DtoIntegracionEntranteRequest = {
       ...v,
       headersRequeridos: headers.trim() || undefined,
       ejemploPayload:    payload.trim() || undefined,
+      apiKeyId:          this.entApiKeyId(),
+      // Solo la llave compuesta: las descripciones son de salida.
+      canales:           this.entCanales().map(c => ({ fuerzaId: c.fuerzaId, codigo: c.codigo })),
     };
 
     this.saving.set(true);
@@ -1443,5 +1589,7 @@ export class IntegracionesPageComponent implements OnInit {
   private emptyEnt() {
     return { nombre: '', descripcion: '', tipoCanal: 'OTRA',
              endpointRelativo: '', sitioGrabaDefecto: 0, activa: true, notas: '' };
+    // canales y apiKeyId viven en señales aparte (no son controles del form):
+    // los limpia limpiarCanalesEnt().
   }
 }

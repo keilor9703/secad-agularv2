@@ -8,6 +8,15 @@ namespace Datos.Gestion
 {
     public class DbIntegracionRepository : IDbIntegracionRepository
     {
+        /// <summary>
+        /// «relation does not exist». El despliegue arranca la API ANTES de
+        /// correr las migraciones, así que todo lo que V74 añade tiene que
+        /// tolerar la base todavía sin migrar: sin canales configurados el
+        /// sistema se comporta como antes —el caso entra sin despachar— en
+        /// lugar de reventar en cada petición.
+        /// </summary>
+        private const string TablaInexistente = "42P01";
+
         private readonly TenantContext                    _tenant;
         private readonly ISnowflakeGenerator              _snowflake;
         private readonly ILogger<DbIntegracionRepository> _logger;
@@ -31,19 +40,33 @@ namespace Datos.Gestion
             var list = new List<DtoIntegracionEntrante>();
             await using var conn = await _tenant.DataSource.OpenConnectionAsync(ct);
             await using var cmd  = conn.CreateCommand();
+            // to_jsonb(e) ->> 'api_key_id' en vez de e.api_key_id: la columna la
+            // añade V74 y la API arranca antes que las migraciones. Nombrarla
+            // directamente rompería la pantalla entera en ese hueco.
             cmd.CommandText = """
-                SELECT id, nombre, descripcion, tipo_canal,
-                       endpoint_relativo,
-                       headers_requeridos::text, ejemplo_payload::text,
-                       sitio_graba_defecto, activa, notas,
-                       TO_CHAR(fecha_creacion AT TIME ZONE 'America/Bogota','DD/MM/YYYY HH24:MI') AS fc,
-                       TO_CHAR(fecha_modificacion AT TIME ZONE 'America/Bogota','DD/MM/YYYY HH24:MI') AS fm
-                FROM   cad_integraciones_entrantes
-                ORDER  BY tipo_canal, nombre
+                SELECT e.id, e.nombre, e.descripcion, e.tipo_canal,
+                       e.endpoint_relativo,
+                       e.headers_requeridos::text, e.ejemplo_payload::text,
+                       e.sitio_graba_defecto, e.activa, e.notas,
+                       TO_CHAR(e.fecha_creacion AT TIME ZONE 'America/Bogota','DD/MM/YYYY HH24:MI') AS fc,
+                       TO_CHAR(e.fecha_modificacion AT TIME ZONE 'America/Bogota','DD/MM/YYYY HH24:MI') AS fm,
+                       (to_jsonb(e) ->> 'api_key_id')::bigint AS api_key_id
+                FROM   cad_integraciones_entrantes e
+                ORDER  BY e.tipo_canal, e.nombre
                 """;
-            await using var rdr = await cmd.ExecuteReaderAsync(ct);
-            while (await rdr.ReadAsync(ct))
-                list.Add(MapEntrante(rdr));
+            await using (var rdr = await cmd.ExecuteReaderAsync(ct))
+            {
+                while (await rdr.ReadAsync(ct))
+                    list.Add(MapEntrante(rdr));
+            }
+
+            // Los canales en una sola consulta para toda la lista: una por fila
+            // convertiría la pantalla en N+1 viajes contra la base.
+            var porIntegracion = await CanalesDeTodasAsync(conn, ct);
+            foreach (var e in list)
+                if (porIntegracion.TryGetValue(e.Id, out var canales))
+                    e.Canales = canales;
+
             return list;
         }
 
@@ -52,18 +75,25 @@ namespace Datos.Gestion
             await using var conn = await _tenant.DataSource.OpenConnectionAsync(ct);
             await using var cmd  = conn.CreateCommand();
             cmd.CommandText = """
-                SELECT id, nombre, descripcion, tipo_canal,
-                       endpoint_relativo,
-                       headers_requeridos::text, ejemplo_payload::text,
-                       sitio_graba_defecto, activa, notas,
-                       TO_CHAR(fecha_creacion AT TIME ZONE 'America/Bogota','DD/MM/YYYY HH24:MI'),
-                       TO_CHAR(fecha_modificacion AT TIME ZONE 'America/Bogota','DD/MM/YYYY HH24:MI')
-                FROM   cad_integraciones_entrantes
-                WHERE  id = @id
+                SELECT e.id, e.nombre, e.descripcion, e.tipo_canal,
+                       e.endpoint_relativo,
+                       e.headers_requeridos::text, e.ejemplo_payload::text,
+                       e.sitio_graba_defecto, e.activa, e.notas,
+                       TO_CHAR(e.fecha_creacion AT TIME ZONE 'America/Bogota','DD/MM/YYYY HH24:MI'),
+                       TO_CHAR(e.fecha_modificacion AT TIME ZONE 'America/Bogota','DD/MM/YYYY HH24:MI'),
+                       (to_jsonb(e) ->> 'api_key_id')::bigint
+                FROM   cad_integraciones_entrantes e
+                WHERE  e.id = @id
                 """;
             cmd.Parameters.AddWithValue("@id", id);
-            await using var rdr = await cmd.ExecuteReaderAsync(ct);
-            return await rdr.ReadAsync(ct) ? MapEntrante(rdr) : null;
+
+            DtoIntegracionEntrante? dto;
+            await using (var rdr = await cmd.ExecuteReaderAsync(ct))
+                dto = await rdr.ReadAsync(ct) ? MapEntrante(rdr) : null;
+
+            if (dto is not null)
+                dto.Canales = await CanalesDeAsync(conn, id, ct);
+            return dto;
         }
 
         public async Task<long> CreateEntranteAsync(
@@ -71,17 +101,27 @@ namespace Datos.Gestion
         {
             var id = _snowflake.NextId();
             await using var conn = await _tenant.DataSource.OpenConnectionAsync(ct);
+            var conLlave = await TieneColumnaApiKeyAsync(conn, ct);
+
+            // La ficha y sus canales se guardan juntos o no se guardan: una
+            // integración a medias despacharía a un canal que el CAD no eligió.
+            await using var tx = await conn.BeginTransactionAsync(ct);
             await using var cmd  = conn.CreateCommand();
-            cmd.CommandText = """
+            cmd.Transaction = tx;
+            cmd.CommandText = $"""
                 INSERT INTO cad_integraciones_entrantes
                     (id, nombre, descripcion, tipo_canal, endpoint_relativo,
                      headers_requeridos, ejemplo_payload, sitio_graba_defecto,
-                     activa, notas, usuario_creacion, fecha_creacion)
+                     activa, notas, usuario_creacion, fecha_creacion
+                     {(conLlave ? ", api_key_id" : "")})
                 VALUES
                     (@id, @nom, @desc, @tipo, @ep,
                      @hdr::jsonb, @ej::jsonb, @sg,
-                     @act, @notas, @usr, NOW())
+                     @act, @notas, @usr, NOW()
+                     {(conLlave ? ", @llave" : "")})
                 """;
+            if (conLlave)
+                cmd.Parameters.AddWithValue("@llave", (object?)req.ApiKeyId ?? DBNull.Value);
             cmd.Parameters.AddWithValue("@id",    id);
             cmd.Parameters.AddWithValue("@nom",   req.Nombre);
             cmd.Parameters.AddWithValue("@desc",  (object?)req.Descripcion ?? DBNull.Value);
@@ -94,6 +134,9 @@ namespace Datos.Gestion
             cmd.Parameters.AddWithValue("@notas", (object?)req.Notas ?? DBNull.Value);
             cmd.Parameters.AddWithValue("@usr",   usuario);
             await cmd.ExecuteNonQueryAsync(ct);
+
+            await GuardarCanalesAsync(conn, tx, id, req.Canales, ct);
+            await tx.CommitAsync(ct);
             return id;
         }
 
@@ -101,8 +144,12 @@ namespace Datos.Gestion
             long id, DtoIntegracionEntranteRequest req, string usuario, CancellationToken ct)
         {
             await using var conn = await _tenant.DataSource.OpenConnectionAsync(ct);
+            var conLlave = await TieneColumnaApiKeyAsync(conn, ct);
+
+            await using var tx = await conn.BeginTransactionAsync(ct);
             await using var cmd  = conn.CreateCommand();
-            cmd.CommandText = """
+            cmd.Transaction = tx;
+            cmd.CommandText = $"""
                 UPDATE cad_integraciones_entrantes
                 SET    nombre             = @nom,
                        descripcion        = @desc,
@@ -114,8 +161,11 @@ namespace Datos.Gestion
                        activa             = @act,
                        notas              = @notas,
                        fecha_modificacion = NOW()
+                       {(conLlave ? ", api_key_id = @llave" : "")}
                 WHERE  id = @id
                 """;
+            if (conLlave)
+                cmd.Parameters.AddWithValue("@llave", (object?)req.ApiKeyId ?? DBNull.Value);
             cmd.Parameters.AddWithValue("@id",    id);
             cmd.Parameters.AddWithValue("@nom",   req.Nombre);
             cmd.Parameters.AddWithValue("@desc",  (object?)req.Descripcion ?? DBNull.Value);
@@ -126,7 +176,15 @@ namespace Datos.Gestion
             cmd.Parameters.AddWithValue("@sg",    req.SitioGrabaDefecto);
             cmd.Parameters.AddWithValue("@act",   req.Activa);
             cmd.Parameters.AddWithValue("@notas", (object?)req.Notas ?? DBNull.Value);
-            return await cmd.ExecuteNonQueryAsync(ct) > 0;
+            if (await cmd.ExecuteNonQueryAsync(ct) == 0)
+            {
+                await tx.RollbackAsync(ct);
+                return false;
+            }
+
+            await GuardarCanalesAsync(conn, tx, id, req.Canales, ct);
+            await tx.CommitAsync(ct);
+            return true;
         }
 
         public async Task<bool> ToggleEntranteAsync(long id, CancellationToken ct)
@@ -232,6 +290,223 @@ namespace Datos.Gestion
             return list;
         }
 
+        // ════════════════════════════════════════════════════════════════════════
+        // CANALES DESTINO DE UNA INTEGRACIÓN ENTRANTE (V74)
+        // ════════════════════════════════════════════════════════════════════════
+
+        /// <summary>
+        /// A qué canales va un caso que entra por este tipo de canal.
+        ///
+        /// El emparejamiento correcto es por LLAVE: cada proveedor autentica con
+        /// la suya y la ficha guarda cuál es. El respaldo por tipo de canal solo
+        /// desempata cuando hay una única ficha activa —el caso normal de un CAD
+        /// con un solo proveedor de chat—; con varias no se adivina, porque
+        /// acertar por casualidad es peor que dejarlo sin despachar.
+        /// </summary>
+        public async Task<DtoDestinoIntegracion> ResolverDestinoAsync(
+            string tipoCanal, long? apiKeyId, CancellationToken ct)
+        {
+            var destino = new DtoDestinoIntegracion();
+            try
+            {
+                await using var conn = await _tenant.DataSource.OpenConnectionAsync(ct);
+
+                long? integracionId = null;
+                string nombre = string.Empty;
+
+                if (apiKeyId is > 0 && await TieneColumnaApiKeyAsync(conn, ct))
+                {
+                    await using var porLlave = conn.CreateCommand();
+                    porLlave.CommandText = """
+                        SELECT e.id, e.nombre
+                        FROM   cad_integraciones_entrantes e
+                        WHERE  e.activa
+                          AND  e.tipo_canal = @tipo
+                          AND  (to_jsonb(e) ->> 'api_key_id')::bigint = @llave
+                        LIMIT  1
+                        """;
+                    porLlave.Parameters.AddWithValue("@tipo",  tipoCanal);
+                    porLlave.Parameters.AddWithValue("@llave", apiKeyId.Value);
+                    await using var r = await porLlave.ExecuteReaderAsync(ct);
+                    if (await r.ReadAsync(ct))
+                    {
+                        integracionId = r.GetInt64(0);
+                        nombre        = r.GetString(1);
+                    }
+                }
+
+                if (integracionId is null)
+                {
+                    await using var porTipo = conn.CreateCommand();
+                    porTipo.CommandText = """
+                        SELECT id, nombre, COUNT(*) OVER () AS total
+                        FROM   cad_integraciones_entrantes
+                        WHERE  activa AND tipo_canal = @tipo
+                        ORDER  BY id
+                        LIMIT  2
+                        """;
+                    porTipo.Parameters.AddWithValue("@tipo", tipoCanal);
+                    await using var r = await porTipo.ExecuteReaderAsync(ct);
+                    if (await r.ReadAsync(ct))
+                    {
+                        if (r.GetInt64(2) > 1) { destino.Ambiguo = true; return destino; }
+                        integracionId = r.GetInt64(0);
+                        nombre        = r.GetString(1);
+                    }
+                }
+
+                if (integracionId is null) return destino;
+
+                destino.IntegracionId = integracionId;
+                destino.Nombre        = nombre;
+                destino.Canales       = await CanalesDeAsync(conn, integracionId.Value, ct);
+                return destino;
+            }
+            catch (Npgsql.PostgresException ex) when (ex.SqlState == TablaInexistente)
+            {
+                // Base sin migrar: se comporta como antes de V74.
+                _logger.LogWarning("ResolverDestinoAsync: falta una tabla de V74 ({Tabla}).", ex.TableName);
+                return destino;
+            }
+        }
+
+        private static async Task<List<DtoCanalIntegracion>> CanalesDeAsync(
+            Npgsql.NpgsqlConnection conn, long integracionId, CancellationToken ct)
+        {
+            var list = new List<DtoCanalIntegracion>();
+            try
+            {
+                await using var cmd = conn.CreateCommand();
+                cmd.CommandText = """
+                    SELECT c.cadfuerz_id, c.canal_codigo,
+                           f.descripcion, ca.descripcion, COALESCE(f.sitio_graba, 0)
+                    FROM   cad_integraciones_entrantes_canales c
+                    LEFT   JOIN cad_fuerzas f  ON f.id = c.cadfuerz_id
+                    LEFT   JOIN cad_canales ca ON ca.codigo = c.canal_codigo
+                                              AND ca.cadfuerz_id = c.cadfuerz_id
+                    WHERE  c.integracion_id = @id
+                    ORDER  BY f.descripcion, ca.descripcion
+                    """;
+                cmd.Parameters.AddWithValue("@id", integracionId);
+                await using var r = await cmd.ExecuteReaderAsync(ct);
+                while (await r.ReadAsync(ct))
+                    list.Add(new DtoCanalIntegracion
+                    {
+                        FuerzaId          = r.GetInt32(0),
+                        Codigo            = r.GetInt32(1),
+                        FuerzaDescripcion = r.IsDBNull(2) ? null : r.GetString(2),
+                        CanalDescripcion  = r.IsDBNull(3) ? null : r.GetString(3),
+                        SitioGraba        = r.GetInt32(4),
+                    });
+            }
+            catch (Npgsql.PostgresException ex) when (ex.SqlState == TablaInexistente)
+            {
+                // Todavía sin V74: ninguna integración tiene canales configurados.
+            }
+            return list;
+        }
+
+        private static async Task<Dictionary<long, List<DtoCanalIntegracion>>> CanalesDeTodasAsync(
+            Npgsql.NpgsqlConnection conn, CancellationToken ct)
+        {
+            var mapa = new Dictionary<long, List<DtoCanalIntegracion>>();
+            try
+            {
+                await using var cmd = conn.CreateCommand();
+                cmd.CommandText = """
+                    SELECT c.integracion_id, c.cadfuerz_id, c.canal_codigo,
+                           f.descripcion, ca.descripcion, COALESCE(f.sitio_graba, 0)
+                    FROM   cad_integraciones_entrantes_canales c
+                    LEFT   JOIN cad_fuerzas f  ON f.id = c.cadfuerz_id
+                    LEFT   JOIN cad_canales ca ON ca.codigo = c.canal_codigo
+                                              AND ca.cadfuerz_id = c.cadfuerz_id
+                    ORDER  BY f.descripcion, ca.descripcion
+                    """;
+                await using var r = await cmd.ExecuteReaderAsync(ct);
+                while (await r.ReadAsync(ct))
+                {
+                    var id = r.GetInt64(0);
+                    if (!mapa.TryGetValue(id, out var lista))
+                        mapa[id] = lista = new List<DtoCanalIntegracion>();
+                    lista.Add(new DtoCanalIntegracion
+                    {
+                        FuerzaId          = r.GetInt32(1),
+                        Codigo            = r.GetInt32(2),
+                        FuerzaDescripcion = r.IsDBNull(3) ? null : r.GetString(3),
+                        CanalDescripcion  = r.IsDBNull(4) ? null : r.GetString(4),
+                        SitioGraba        = r.GetInt32(5),
+                    });
+                }
+            }
+            catch (Npgsql.PostgresException ex) when (ex.SqlState == TablaInexistente)
+            {
+            }
+            return mapa;
+        }
+
+        /// <summary>Reemplaza los canales de la ficha por los que llegan del formulario.</summary>
+        private async Task GuardarCanalesAsync(
+            Npgsql.NpgsqlConnection conn, Npgsql.NpgsqlTransaction tx,
+            long integracionId, List<DtoCanalIntegracion> canales, CancellationToken ct)
+        {
+            try
+            {
+                await using (var del = conn.CreateCommand())
+                {
+                    del.Transaction = tx;
+                    del.CommandText = "DELETE FROM cad_integraciones_entrantes_canales WHERE integracion_id = @id";
+                    del.Parameters.AddWithValue("@id", integracionId);
+                    await del.ExecuteNonQueryAsync(ct);
+                }
+
+                // Distinct: el formulario impide repetir, pero un cliente de API
+                // no, y la PK compuesta lo rechazaría abortando la transacción.
+                foreach (var c in canales
+                             .Where(c => c.FuerzaId > 0 && c.Codigo > 0)
+                             .DistinctBy(c => (c.FuerzaId, c.Codigo)))
+                {
+                    await using var ins = conn.CreateCommand();
+                    ins.Transaction = tx;
+                    ins.CommandText = """
+                        INSERT INTO cad_integraciones_entrantes_canales
+                            (integracion_id, cadfuerz_id, canal_codigo)
+                        VALUES (@id, @f, @c)
+                        ON CONFLICT DO NOTHING
+                        """;
+                    ins.Parameters.AddWithValue("@id", integracionId);
+                    ins.Parameters.AddWithValue("@f",  c.FuerzaId);
+                    ins.Parameters.AddWithValue("@c",  c.Codigo);
+                    await ins.ExecuteNonQueryAsync(ct);
+                }
+            }
+            catch (Npgsql.PostgresException ex) when (ex.SqlState == TablaInexistente)
+            {
+                // Sin V74 no hay dónde guardarlos. Se avisa y la ficha se guarda
+                // igual: bloquear la administración entera por una migración
+                // pendiente sería peor que quedarse sin el dato nuevo.
+                _logger.LogWarning(
+                    "No se guardaron los canales de la integración {Id}: falta la tabla de V74.",
+                    integracionId);
+            }
+        }
+
+        /// <summary>
+        /// ¿Ya corrió V74 en esta base? El despliegue levanta la API antes que
+        /// las migraciones, así que nombrar la columna sin comprobarlo rompería
+        /// el alta de integraciones durante ese hueco.
+        /// </summary>
+        private static async Task<bool> TieneColumnaApiKeyAsync(
+            Npgsql.NpgsqlConnection conn, CancellationToken ct)
+        {
+            await using var cmd = conn.CreateCommand();
+            cmd.CommandText = """
+                SELECT 1 FROM information_schema.columns
+                WHERE  table_name = 'cad_integraciones_entrantes'
+                  AND  column_name = 'api_key_id'
+                """;
+            return await cmd.ExecuteScalarAsync(ct) is not null;
+        }
+
         // ── Helpers ───────────────────────────────────────────────────────────────
 
         private static DtoIntegracionEntrante MapEntrante(Npgsql.NpgsqlDataReader r) => new()
@@ -247,7 +522,8 @@ namespace Datos.Gestion
             Activa            = r.GetBoolean(8),
             Notas             = r.IsDBNull(9) ? null : r.GetString(9),
             FechaCreacion     = r.IsDBNull(10) ? null : r.GetString(10),
-            FechaModificacion = r.IsDBNull(11) ? null : r.GetString(11)
+            FechaModificacion = r.IsDBNull(11) ? null : r.GetString(11),
+            ApiKeyId          = r.IsDBNull(12) ? null : r.GetInt64(12)
         };
     }
 }

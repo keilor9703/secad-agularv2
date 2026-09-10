@@ -21,7 +21,11 @@ namespace Comun.Dtos.Recepcion
         /// <summary>Código de calidad / urgencia (01 = urgente por defecto).</summary>
         public string CaliPedido       { get; set; } = "01";
         public string? Comentario      { get; set; }
-        public List<DtoCanalSeleccionado> Canales { get; set; } = new();
+        // Los canales de despacho NO llegan del sistema externo: los fija el CAD
+        // en Hub de Integraciones → Entrantes, eligiendo fuerza y canal. Un
+        // proveedor de chat no conoce el catálogo de fuerzas y, cuando podía
+        // mandarlo, una llave de alcance CHAT servía para inyectar casos en
+        // cualquier canal del CAD.
     }
 
     // ── Payload de recepción por SMS (REST API externa) ──────────────────────
@@ -40,7 +44,7 @@ namespace Comun.Dtos.Recepcion
         public string? LongitudCaso    { get; set; }
         public string CodigoCaso       { get; set; } = "";
         public string CaliPedido       { get; set; } = "01";
-        public List<DtoCanalSeleccionado> Canales { get; set; } = new();
+        // Sin «canales»: los decide el CAD en la ficha de la integración.
     }
 
     // ── Resultado devuelto a sistemas externos ────────────────────────────────

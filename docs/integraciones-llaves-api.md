@@ -111,3 +111,54 @@ El despliegue levanta la API **antes** de correr el SQL. Entre esos dos
 momentos `secad_api_keys` no existe todavía; todas las consultas lo contemplan
 y responden «no hay llaves», así que las integraciones siguen entrando por la
 clave global y nada se cae. Emitir una llave sí avisa de que falta aplicar V73.
+
+## El canal de despacho lo fija el CAD (V74)
+
+Hasta V74 los endpoints `/chat` y `/sms` aceptaban un array `canales` en el
+cuerpo: el sistema externo decidía a qué fuerza y a qué canal de despacho
+entraba el caso. Estaba mal por tres motivos:
+
+1. El proveedor no conoce el catálogo de fuerzas y canales del CAD, que además
+   cambia. Nadie del otro lado puede mantener eso al día.
+2. Con una llave de alcance `CHAT` se podían inyectar casos en **cualquier**
+   canal del CAD, incluido el de otra unidad. El alcance limitaba el endpoint,
+   no el destino.
+3. En la práctica llegaba siempre vacío, así que todos los casos de integración
+   caían en la bandeja sin despachar.
+
+Ahora el destino se configura en **Hub de Integraciones → Entrantes → editar la
+ficha → Canales de despacho**: se elige la entidad/fuerza y, en cascada, su
+canal. Se pueden agregar varios, incluso de fuerzas distintas. El campo
+`canales` desapareció del contrato; si un cliente antiguo lo sigue enviando, se
+ignora.
+
+### Cómo sabe SECAD qué ficha está escribiendo
+
+Por la **llave**. La ficha guarda la llave del proveedor (`api_key_id`), así que
+al llegar una petición se busca la integración activa de ese canal atada a esa
+llave y se toman sus canales. Por eso el selector «Llave» del formulario no es
+solo para copiar la credencial: es lo que empareja las peticiones con su ficha.
+
+Si la llave no está atada a ninguna ficha, hay un respaldo: si existe **una
+sola** integración activa de ese tipo de canal, se usa esa. Con varias no se
+adivina —el caso entra sin despachar y queda este aviso en el log:
+
+```
+Canal CHAT del CAD …: hay varias integraciones activas y la llave usada no está
+asociada a ninguna. El caso entra sin despachar.
+```
+
+### Canales de otra unidad
+
+Recepción filtra estrictamente por sitio de grabación. Un canal de una fuerza de
+**otra** unidad recibe la fila y no se la muestra a nadie. El formulario lo marca
+en ámbar al configurarlo y el backend lo deja dicho en el log al despachar; no
+se filtra por cuenta propia, porque hacer desaparecer un destino en silencio es
+peor que avisarlo.
+
+### Antes de aplicar V74
+
+Igual que con V73: la API arranca antes que el SQL. Sin la tabla ni la columna,
+las consultas responden «sin canales» y el sistema se comporta como antes —los
+casos entran a la bandeja sin despachar—, con un aviso en el log al guardar una
+ficha. Nada se cae.

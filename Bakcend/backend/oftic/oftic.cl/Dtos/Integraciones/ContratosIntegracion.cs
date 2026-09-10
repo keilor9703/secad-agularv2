@@ -54,6 +54,22 @@ namespace Comun.Dtos.Integraciones
             { CanalPbx, CanalChat, CanalSms, CanalActualizacion };
 
         /// <summary>
+        /// Por qué el contrato no lleva un campo «canales».
+        ///
+        /// Lo llevó hasta V74 y era un error: el proveedor externo decidía a
+        /// qué fuerza y a qué canal de despacho entraba el caso. No conoce el
+        /// catálogo del CAD —que además cambia—, en la práctica lo mandaba
+        /// vacío (todos los casos caían sin despachar) y, sobre todo, con una
+        /// llave de alcance CHAT se podían inyectar casos en cualquier canal,
+        /// incluido el de otra unidad del mismo CAD.
+        /// </summary>
+        private const string NotaCanalDestino =
+            "El canal de despacho NO se envía en el cuerpo: lo fija el CAD en Hub de Integraciones → " +
+            "Entrantes, eligiendo fuerza y canal en la ficha de esta integración. Pueden configurarse " +
+            "varios, incluso de fuerzas distintas. Si no se configura ninguno, el caso queda en la " +
+            "bandeja de recepción sin despachar.";
+
+        /// <summary>
         /// Tipo de canal del catálogo (cad_integraciones_entrantes.tipo_canal) →
         /// canal con contrato. Los que no aparecen —API_FOTO, OTRA— no tienen un
         /// endpoint propio en SECAD: son fichas puramente documentales.
@@ -192,14 +208,12 @@ namespace Comun.Dtos.Integraciones
                         Descripcion = "Código de caso del catálogo del CAD (Administración → Códigos de Caso). Vacío = lo tipifica el operador." },
                 new() { Nombre = "caliPedido", Tipo = "string", Obligatorio = false, Ejemplo = "01", Descripcion = "Calificación del pedido." },
                 new() { Nombre = "comentario", Tipo = "string", Obligatorio = false, Descripcion = "Texto adicional para el operador." },
-                new() { Nombre = "canales", Tipo = "array", Obligatorio = false, Ejemplo = "[{\"codigo\":1,\"fuerzaId\":1}]",
-                        Descripcion = "Canales de despacho a los que enviar el caso. Vacío = queda en la bandeja sin despachar." },
             },
             EjemploPayload =
                 $"{{\"sitioGraba\":{sitio},\"nombreReportante\":\"Juan García\",\"contactoId\":\"3001234567\"," +
                 "\"mensaje\":\"Hay un hurto en la Cra 7 con 32\",\"direccionCaso\":\"Carrera 7 # 32-15\"," +
                 "\"ciudad\":\"Bogotá\",\"barrio\":\"Candelaria\",\"latitudCaso\":\"4.598056\"," +
-                "\"longitudCaso\":\"-74.075833\",\"codigoCaso\":\"120\",\"caliPedido\":\"01\",\"canales\":[]}",
+                "\"longitudCaso\":\"-74.075833\",\"codigoCaso\":\"120\",\"caliPedido\":\"01\"}",
             Respuestas = new()
             {
                 "200 → {\"success\":true,\"pedidoId\":\"…\"}",
@@ -208,6 +222,7 @@ namespace Comun.Dtos.Integraciones
             },
             Notas = new()
             {
+                NotaCanalDestino,
                 "Todo lo que llega queda en Hub de Integraciones → Auditoría → Recepciones entrantes, " +
                 "con el payload crudo y la IP, se haya procesado o no.",
             },
@@ -237,18 +252,18 @@ namespace Comun.Dtos.Integraciones
                 new() { Nombre = "barrio", Tipo = "string", Obligatorio = false, Ejemplo = "Fontibón", Descripcion = "Barrio." },
                 new() { Nombre = "codigoCaso", Tipo = "string", Obligatorio = false, Ejemplo = "300", Descripcion = "Código de caso del catálogo del CAD." },
                 new() { Nombre = "caliPedido", Tipo = "string", Obligatorio = false, Ejemplo = "01", Descripcion = "Calificación del pedido." },
-                new() { Nombre = "canales", Tipo = "array", Obligatorio = false, Descripcion = "Canales de despacho destino." },
             },
             EjemploPayload =
                 $"{{\"sitioGraba\":{sitio},\"numeroCelular\":\"+573001234567\",\"nombreReportante\":\"CIUDADANO\"," +
                 "\"mensajeSms\":\"Accidente en Av El Dorado con Cra 50\",\"direccionCaso\":\"Av El Dorado con Cra 50\"," +
-                "\"ciudad\":\"Bogotá\",\"barrio\":\"Fontibón\",\"codigoCaso\":\"300\",\"caliPedido\":\"01\",\"canales\":[]}",
+                "\"ciudad\":\"Bogotá\",\"barrio\":\"Fontibón\",\"codigoCaso\":\"300\",\"caliPedido\":\"01\"}",
             Respuestas = new()
             {
                 "200 → {\"success\":true,\"pedidoId\":\"…\"}",
                 "400 → falta sitioGraba.",
                 "401 / 403 → llave inválida o sin alcance SMS.",
             },
+            Notas = new() { NotaCanalDestino },
         };
 
         // ── Actualización de un caso ya creado ───────────────────────────────

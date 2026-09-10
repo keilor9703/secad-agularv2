@@ -11,6 +11,13 @@ namespace Datos.Interfaz
         Task<bool> UpdateEntranteAsync(long id, DtoIntegracionEntranteRequest req, string usuario, CancellationToken ct);
         Task<bool> ToggleEntranteAsync(long id, CancellationToken ct);
 
+        /// <summary>
+        /// Canales de despacho a los que va un caso recibido por este tipo de
+        /// canal, según la ficha de integración. Los fija el CAD: el sistema
+        /// externo dejó de mandarlos en V74.
+        /// </summary>
+        Task<DtoDestinoIntegracion> ResolverDestinoAsync(string tipoCanal, long? apiKeyId, CancellationToken ct);
+
         // ── Auditoría salientes (cad_despachos_externos) ─────────────────────────
         Task<List<DtoDespachoAuditoria>> GetDespachoAuditoriaAsync(
             int limit, string? agenciaId, CancellationToken ct);

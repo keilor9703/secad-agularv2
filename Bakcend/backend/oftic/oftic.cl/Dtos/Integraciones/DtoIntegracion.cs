@@ -2,6 +2,25 @@ using System.Text.Json.Serialization;
 
 namespace Comun.Dtos.Integraciones
 {
+    /// <summary>
+    /// Un canal de despacho destino de una integración entrante.
+    ///
+    /// La llave es COMPUESTA (Codigo + FuerzaId): el código de canal no es
+    /// único, dos fuerzas distintas pueden tener el canal 1. Por eso se elige
+    /// primero la fuerza y después su canal, y nunca se guarda el código solo.
+    /// </summary>
+    public class DtoCanalIntegracion
+    {
+        public int     FuerzaId          { get; set; }
+        public int     Codigo            { get; set; }
+        // Solo de lectura: los rellena el repositorio para que la pantalla no
+        // tenga que cruzar catálogos para pintar un nombre.
+        public string? FuerzaDescripcion { get; set; }
+        public string? CanalDescripcion  { get; set; }
+        /// <summary>Unidad policial de la fuerza. Sirve para avisar de un destino que nadie vería.</summary>
+        public int     SitioGraba        { get; set; }
+    }
+
     // ── Integración entrante (canal que RECIBE casos) ─────────────────────────
 
     public class DtoIntegracionEntrante
@@ -20,6 +39,17 @@ namespace Comun.Dtos.Integraciones
         public string? Notas              { get; set; }
         public string? FechaCreacion      { get; set; }
         public string? FechaModificacion  { get; set; }
+
+        /// <summary>
+        /// Llave (secad_api_keys, base maestra) con la que autentica este
+        /// proveedor. Es lo que empareja una petición entrante con su ficha, y
+        /// por tanto lo que dice qué canales aplicarle.
+        /// </summary>
+        [JsonNumberHandling(JsonNumberHandling.WriteAsString | JsonNumberHandling.AllowReadingFromString)]
+        public long?   ApiKeyId           { get; set; }
+
+        /// <summary>Canales de despacho destino. Los fija el CAD, no el sistema externo.</summary>
+        public List<DtoCanalIntegracion> Canales { get; set; } = new();
     }
 
     public class DtoIntegracionEntranteRequest
@@ -33,6 +63,29 @@ namespace Comun.Dtos.Integraciones
         public int     SitioGrabaDefecto { get; set; }
         public bool    Activa            { get; set; } = true;
         public string? Notas             { get; set; }
+
+        [JsonNumberHandling(JsonNumberHandling.WriteAsString | JsonNumberHandling.AllowReadingFromString)]
+        public long?   ApiKeyId          { get; set; }
+
+        /// <summary>Solo se leen FuerzaId y Codigo; las descripciones son de salida.</summary>
+        public List<DtoCanalIntegracion> Canales { get; set; } = new();
+    }
+
+    /// <summary>
+    /// A qué ficha de integración se atribuyó una petición entrante y, por
+    /// tanto, a qué canales va el caso.
+    /// </summary>
+    public class DtoDestinoIntegracion
+    {
+        public long?  IntegracionId { get; set; }
+        public string Nombre        { get; set; } = string.Empty;
+        /// <summary>
+        /// true = había varias fichas activas de ese canal y ninguna llave que
+        /// desempatara. No se adivina: el caso entra sin despachar y queda el
+        /// aviso en el log para que el CAD ate cada ficha a su llave.
+        /// </summary>
+        public bool   Ambiguo       { get; set; }
+        public List<DtoCanalIntegracion> Canales { get; set; } = new();
     }
 
     // ── Auditoría: despacho saliente (cad_despachos_externos) ─────────────────

@@ -219,6 +219,29 @@
                   Sitio de grabación por defecto: <strong>{{ e.sitioGrabaDefecto }}</strong>
                 </p>
               }
+              <!-- Los canales destino son el dato que decide si el caso se
+                   despacha o se queda en la bandeja, así que se ve sin abrir
+                   la ficha. -->
+              @if (e.canales?.length) {
+                <p class="ig-tarjeta__dato">
+                  <i class="fa-solid fa-share-nodes" aria-hidden="true"></i>
+                  Despacha a:
+                  <span class="ig-canales-linea">
+                    @for (c of e.canales; track c.fuerzaId + '-' + c.codigo) {
+                      <span class="ig-canal-chip ig-canal-chip--mini">
+                        {{ c.fuerzaDescripcion || ('Fuerza ' + c.fuerzaId) }}
+                        · {{ c.canalDescripcion || ('Canal ' + c.codigo) }}
+                      </span>
+                    }
+                  </span>
+                </p>
+              } @else if (e.tipoCanal === 'CHAT' || e.tipoCanal === 'SMS') {
+                <p class="ig-tarjeta__dato ig-tarjeta__dato--aviso">
+                  <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
+                  Sin canal de despacho: los casos entrarán a la bandeja de recepción sin despachar.
+                </p>
+              }
+
               @if (e.notas) {
                 <p class="ig-tarjeta__dato">
                   <i class="fa-solid fa-note-sticky" aria-hidden="true"></i> {{ e.notas }}
@@ -790,6 +813,88 @@
       />
     </div>
 
+    <!-- ── Canales de despacho destino ──────────────────────────────────
+         El canal lo fija el CAD aquí, no el sistema externo. Hasta V74 venía
+         en el cuerpo de la petición: el proveedor no conoce el catálogo de
+         fuerzas, en la práctica lo mandaba vacío —así que todos los casos
+         caían sin despachar— y con una llave de un canal se podía inyectar
+         un caso en cualquier otro, incluso el de otra unidad. -->
+    <fieldset class="ig-canales">
+      <legend class="ig-canales__titulo">
+        <i class="fa-solid fa-share-nodes" aria-hidden="true"></i>
+        Canales de despacho
+      </legend>
+      <p class="ig-campo__pie">
+        Elija la fuerza y después su canal. Puede agregar varios, incluso de fuerzas
+        distintas. Si no agrega ninguno, los casos entrarán a la bandeja de recepción
+        sin despachar.
+      </p>
+
+      <div class="ig-canales__selectores">
+        <app-ui-select
+          label="Entidad / fuerza"
+          placeholder="Seleccione la fuerza"
+          [options]="opcionesFuerzaEnt()"
+          [ngModel]="entFuerzaSel()"
+          (ngModelChange)="onFuerzaEntChange($event)"
+          [ngModelOptions]="{ standalone: true }"
+        />
+        <app-ui-select
+          label="Canal"
+          placeholder="Primero elija la fuerza"
+          [options]="opcionesCanalEnt()"
+          [disabled]="!entFuerzaSel()"
+          [ngModel]="entCanalSel()"
+          (ngModelChange)="entCanalSel.set($event)"
+          [ngModelOptions]="{ standalone: true }"
+        />
+        <app-ui-button
+          class="ig-canales__agregar"
+          variant="secondary"
+          icon="fa-solid fa-plus"
+          [disabled]="!entFuerzaSel() || !entCanalSel()"
+          (buttonClick)="agregarCanalEnt()"
+        >Agregar</app-ui-button>
+      </div>
+
+      @if (entCanales().length) {
+        <ul class="ig-canales__lista">
+          @for (c of entCanales(); track c.fuerzaId + '-' + c.codigo) {
+            <li class="ig-canal-chip" [class.ig-canal-chip--aviso]="desalineado(c)">
+              <span>
+                <strong>{{ c.fuerzaDescripcion || ('Fuerza ' + c.fuerzaId) }}</strong>
+                · {{ c.canalDescripcion || ('Canal ' + c.codigo) }}
+              </span>
+              @if (desalineado(c)) {
+                <i
+                  class="fa-solid fa-triangle-exclamation"
+                  title="Esta fuerza es de otra unidad: Recepción filtra por sitio de grabación y nadie vería el caso en ese canal."
+                  aria-hidden="true"
+                ></i>
+              }
+              <button
+                type="button"
+                class="ig-canal-chip__quitar"
+                [attr.aria-label]="'Quitar ' + (c.canalDescripcion || c.codigo)"
+                (click)="quitarCanalEnt(c)"
+              ><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+            </li>
+          }
+        </ul>
+      } @else {
+        <p class="ig-campo__pie ig-campo__pie--aviso">
+          Todavía no hay ningún canal: los casos de esta integración quedarán sin despachar.
+        </p>
+      }
+
+      @if (hayCanalDesalineado()) {
+        <p class="ig-campo__pie ig-campo__pie--aviso">
+          Hay canales de una unidad distinta a la de esta ficha. Recepción filtra estrictamente
+          por sitio de grabación, así que esos casos no se verían en el canal elegido.
+        </p>
+      }
+    </fieldset>
+
     <!-- Antes aquí había dos áreas de texto —«headers requeridos» y «payload
          de ejemplo»— que alguien llenaba a mano. En cuanto el código cambiaba,
          esa documentación mentía y nadie se enteraba hasta que la integración
@@ -802,7 +907,17 @@
         @if (llavesDelCanal().length && !llaveEnContrato()) {
           <div class="ig-insertar-llave">
             <i class="fa-solid fa-key" aria-hidden="true"></i>
-            <span>La ficha sale sin credencial. Insértele una llave para poder entregarla tal cual.</span>
+            <span>
+              @if (entApiKeyId()) {
+                Esta integración ya está atada a esa llave. Vuelva a elegirla para insertar la
+                credencial en la ficha y poder entregarla tal cual —mostrarla se audita, por eso
+                no aparece sola.
+              } @else {
+                Elija la llave de este proveedor: ata la integración a esa credencial —es lo que
+                permite saber a qué canales va cada caso que llega— y la inserta en la ficha para
+                poder entregarla tal cual.
+              }
+            </span>
             <app-ui-select
               class="ig-insertar-llave__sel"
               label="Llave"

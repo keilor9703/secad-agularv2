@@ -193,12 +193,17 @@
 
   &__dato {
     display:     flex;
+    flex-wrap:   wrap;
     gap:         6px;
     margin:      0;
     color:       var(--ui-text-muted, #6b7280);
     font-size:   calc(11px * var(--font-size-scale, 1));
 
     i { margin-top: 2px; }
+
+    // Un canal entrante sin destino configurado deja los casos sin despachar:
+    // se dice en la tarjeta, no solo al abrir la ficha.
+    &--aviso { color: #b45309; font-weight: 600; }
   }
 
   &__pie {
@@ -279,7 +284,106 @@
     code {
       font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     }
+
+    &--aviso { color: #b45309; font-weight: 600; }
   }
+}
+
+// ── Canales de despacho de una integración entrante ────────────────────────
+// El canal lo elige el CAD (fuerza → canal), no el sistema externo.
+.ig-canales {
+  display:        flex;
+  flex-direction: column;
+  gap:            8px;
+  margin:         0;
+  padding:        12px;
+  border:         1px solid rgba(21, 27, 59, .15);
+  border-radius:  10px;
+
+  &__titulo {
+    display:     flex;
+    align-items: center;
+    gap:         6px;
+    padding:     0 4px;
+    color:       var(--policia-medio, #002a66);
+    font-size:   calc(11.5px * var(--font-size-scale, 1));
+    font-weight: 700;
+  }
+
+  &__selectores {
+    display:               grid;
+    grid-template-columns: 1fr 1fr auto;
+    align-items:           end;
+    gap:                   10px;
+
+    @media (max-width: 720px) {
+      grid-template-columns: 1fr;
+      align-items:           stretch;
+    }
+  }
+
+  &__agregar { align-self: end; }
+
+  &__lista {
+    display:    flex;
+    flex-wrap:  wrap;
+    gap:        6px;
+    margin:     0;
+    padding:    0;
+    list-style: none;
+  }
+}
+
+.ig-canal-chip {
+  display:       inline-flex;
+  align-items:   center;
+  gap:           6px;
+  padding:       4px 6px 4px 10px;
+  border:        1px solid rgba(21, 27, 59, .18);
+  border-radius: 999px;
+  background:    rgba(8, 166, 203, .08);
+  font-size:     calc(11px * var(--font-size-scale, 1));
+
+  // La fuerza es de otra unidad: Recepción filtra por sitio de grabación, así
+  // que el caso llegaría a un canal donde nadie lo ve.
+  &--aviso {
+    border-color: rgba(217, 119, 6, .40);
+    background:   rgba(245, 158, 11, .12);
+    > i          { color: #b45309; }
+  }
+
+  // En la tarjeta del listado, donde solo se informa y no se quita nada.
+  &--mini {
+    padding:    2px 8px;
+    background: rgba(21, 27, 59, .06);
+    font-size:  calc(10.5px * var(--font-size-scale, 1));
+  }
+
+  &__quitar {
+    display:       inline-flex;
+    align-items:   center;
+    justify-content: center;
+    width:         20px;
+    height:        20px;
+    padding:       0;
+    border:        0;
+    border-radius: 50%;
+    background:    transparent;
+    color:         var(--ui-text-muted, #6b7280);
+    cursor:        pointer;
+
+    &:hover  { background: rgba(220, 38, 38, .12); color: #dc2626; }
+    &:focus-visible {
+      outline:        2px solid rgba(8, 166, 203, .45);
+      outline-offset: 1px;
+    }
+  }
+}
+
+.ig-canales-linea {
+  display:   inline-flex;
+  flex-wrap: wrap;
+  gap:       4px;
 }
 
 .ig-acciones {

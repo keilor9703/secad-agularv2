@@ -126,6 +126,8 @@ TENANT_FILES=(
   "V70__sitios_grabacion_catalogo.sql"
   "V71__sitios_y_fuerzas_unificado.sql"
   "V72__centro_mapa_por_sitio.sql"
+  # V74: los canales de despacho de una integración entrante los fija el CAD.
+  "V74__integraciones_canales_destino.sql"
 )
 
 case "$SCOPE" in

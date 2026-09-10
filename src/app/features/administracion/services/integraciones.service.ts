@@ -11,6 +11,23 @@ import {
 
 // ─── DTOs — Integraciones Entrantes ───────────────────────────────────────────
 
+/**
+ * Un canal de despacho destino de una integración entrante.
+ *
+ * La llave es compuesta (fuerzaId + codigo): el código de canal no es único
+ * entre fuerzas. Por eso en el formulario se elige primero la fuerza y luego
+ * su canal, nunca el código suelto.
+ */
+export interface DtoCanalIntegracion {
+  fuerzaId:           number;
+  codigo:             number;
+  /** Solo de lectura, los rellena el backend. */
+  fuerzaDescripcion?: string | null;
+  canalDescripcion?:  string | null;
+  /** Unidad policial de la fuerza — sirve para avisar de un destino que nadie vería. */
+  sitioGraba?:        number;
+}
+
 export interface DtoIntegracionEntrante {
   /** Snowflake ID como string */
   id:                string;
@@ -26,6 +43,10 @@ export interface DtoIntegracionEntrante {
   notas:             string | null;
   fechaCreacion:     string | null;
   fechaModificacion: string | null;
+  /** Llave con la que autentica el proveedor. Empareja la petición con esta ficha. */
+  apiKeyId:          string | null;
+  /** Canales de despacho destino. Los fija el CAD, no el sistema externo. */
+  canales:           DtoCanalIntegracion[];
 }
 
 export interface DtoIntegracionEntranteRequest {
@@ -38,6 +59,8 @@ export interface DtoIntegracionEntranteRequest {
   sitioGrabaDefecto:  number;
   activa:             boolean;
   notas?:             string;
+  apiKeyId?:          string | null;
+  canales:            DtoCanalIntegracion[];
 }
 
 // ─── DTOs — Auditoría ─────────────────────────────────────────────────────────

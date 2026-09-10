@@ -34,6 +34,7 @@ namespace Api.Controllers.Operacion
         private readonly ApiKeyContext                 _llave;
         private readonly TenantContext                 _tenant;
         private readonly IDbApiKeyRepository           _apiKeyRepo;
+        private readonly IDbIntegracionRepository      _integracionRepo;
         private readonly string                        _apiKeyGlobal;
 
         public RecepcionExternaController(
@@ -43,17 +44,19 @@ namespace Api.Controllers.Operacion
             ApiKeyContext                 llave,
             TenantContext                 tenant,
             IDbApiKeyRepository           apiKeyRepo,
+            IDbIntegracionRepository      integracionRepo,
             ILogger<RecepcionExternaController> logger,
             IConfiguration                configuration)
         {
-            _recepcionSvc = recepcionSvc;
-            _adjuntoRepo  = adjuntoRepo;
-            _snowflake    = snowflake;
-            _llave        = llave;
-            _tenant       = tenant;
-            _apiKeyRepo   = apiKeyRepo;
-            _logger       = logger;
-            _apiKeyGlobal = configuration["RecepcionExterna:ApiKey"] ?? "";
+            _recepcionSvc    = recepcionSvc;
+            _adjuntoRepo     = adjuntoRepo;
+            _snowflake       = snowflake;
+            _llave           = llave;
+            _tenant          = tenant;
+            _apiKeyRepo      = apiKeyRepo;
+            _integracionRepo = integracionRepo;
+            _logger          = logger;
+            _apiKeyGlobal    = configuration["RecepcionExterna:ApiKey"] ?? "";
         }
 
         // ── Helpers ──────────────────────────────────────────────────────────────
@@ -120,6 +123,75 @@ namespace Api.Controllers.Operacion
         private string IpCliente =>
             HttpContext.Connection.RemoteIpAddress?.ToString() ?? "desconocido";
 
+        /// <summary>
+        /// Los canales de despacho del caso, sacados de la ficha de integración
+        /// configurada en SECAD.
+        ///
+        /// Hasta V74 venían en el cuerpo de la petición: el proveedor externo
+        /// elegía la fuerza y el canal. Eso significaba que una llave de alcance
+        /// CHAT servía para meter casos en cualquier canal del CAD, incluido el
+        /// de otra unidad, y además obligaba al proveedor a conocer un catálogo
+        /// que ni conoce ni tiene por qué seguir cuando cambia.
+        ///
+        /// Un fallo resolviendo esto no puede tumbar la recepción: si algo va
+        /// mal el caso entra sin despachar —visible en la bandeja— en lugar de
+        /// perderse.
+        /// </summary>
+        private async Task<List<DtoCanalSeleccionado>> CanalesDeLaFichaAsync(
+            string tipoCanal, int sitioGraba, CancellationToken ct)
+        {
+            try
+            {
+                var destino = await _integracionRepo.ResolverDestinoAsync(
+                    tipoCanal, _llave.Resuelta ? _llave.Llave!.Id : null, ct);
+
+                if (destino.Ambiguo)
+                {
+                    _logger.LogWarning(
+                        "Canal {Tipo} del CAD {Dane}: hay varias integraciones activas y la llave usada no está " +
+                        "asociada a ninguna. El caso entra sin despachar. Asocie cada ficha a su llave en " +
+                        "Hub de Integraciones → Entrantes.",
+                        tipoCanal, _tenant.CodDane);
+                    return new List<DtoCanalSeleccionado>();
+                }
+
+                if (destino.IntegracionId is null)
+                {
+                    _logger.LogInformation(
+                        "Canal {Tipo} del CAD {Dane}: no hay ficha de integración activa; el caso entra sin despachar.",
+                        tipoCanal, _tenant.CodDane);
+                    return new List<DtoCanalSeleccionado>();
+                }
+
+                if (destino.Canales.Count == 0)
+                    _logger.LogInformation(
+                        "La integración «{Nombre}» no tiene canales configurados; el caso entra sin despachar.",
+                        destino.Nombre);
+
+                // Recepción filtra estrictamente por sitio_graba: un canal de una
+                // fuerza de OTRA unidad recibe la fila y no se la muestra a
+                // nadie. Se despacha igual —quitarlo por nuestra cuenta sería
+                // otra desaparición silenciosa— pero queda dicho en el log.
+                foreach (var c in destino.Canales.Where(c => c.SitioGraba > 0 && c.SitioGraba != sitioGraba))
+                    _logger.LogWarning(
+                        "Integración «{Nombre}»: el canal {Canal} pertenece a la fuerza {Fuerza} de la unidad " +
+                        "{SitioCanal}, pero el caso se graba en la unidad {SitioCaso}. Nadie lo verá en ese canal.",
+                        destino.Nombre, c.CanalDescripcion ?? c.Codigo.ToString(),
+                        c.FuerzaDescripcion ?? c.FuerzaId.ToString(), c.SitioGraba, sitioGraba);
+
+                return destino.Canales
+                    .Select(c => new DtoCanalSeleccionado { Codigo = c.Codigo, FuerzaId = c.FuerzaId })
+                    .ToList();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex,
+                    "No se pudieron resolver los canales destino del canal {Tipo}; el caso entra sin despachar.",
+                    tipoCanal);
+                return new List<DtoCanalSeleccionado>();
+            }
+        }
+
         // ── POST api/RecepcionExterna/chat ────────────────────────────────────────
         /// <summary>
         /// Recibe un mensaje de chat (WhatsApp, Telegram, etc.) y crea un pedido.
@@ -158,6 +230,7 @@ namespace Api.Controllers.Operacion
             {
                 var pedidoId = _snowflake.NextId();
                 var ahora = DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss");
+                var canales = await CanalesDeLaFichaAsync("CHAT", req.SitioGraba, ct);
 
                 var dto = new DtoRecepcion
                 {
@@ -182,9 +255,10 @@ namespace Api.Controllers.Operacion
                     IMPORTANCIA = "01",
                     PRIORIDAD = "01",
                     ESTADO = "A",
-                    ENVIAR = req.Canales.Count > 0 ? "S" : "N",
+                    ENVIAR = canales.Count > 0 ? "S" : "N",
                     Origen = "CHAT",
-                    CANALES_SELECCIONADOS = req.Canales,    // ✅ ya es List<DtoCanalSeleccionado>
+                    // Los pone SECAD desde la ficha de integración, no el llamante.
+                    CANALES_SELECCIONADOS = canales,
                     CANAL_FUERZA = null
                 };
 
@@ -257,6 +331,7 @@ namespace Api.Controllers.Operacion
             {
                 var pedidoId = _snowflake.NextId();
                 var ahora    = DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss");
+                var canales  = await CanalesDeLaFichaAsync("SMS", req.SitioGraba, ct);
 
                 var dto = new DtoRecepcion
                 {
@@ -279,9 +354,9 @@ namespace Api.Controllers.Operacion
                     IMPORTANCIA     = "01",
                     PRIORIDAD       = "01",
                     ESTADO          = "A",
-                    ENVIAR          = (req.Canales?.Count ?? 0) > 0 ? "S" : "N",
+                    ENVIAR          = canales.Count > 0 ? "S" : "N",
                     Origen          = "SMS",
-                    CANALES_SELECCIONADOS = req.Canales,    // ✅ ya es List<DtoCanalSeleccionado>
+                    CANALES_SELECCIONADOS = canales,
                     CANAL_FUERZA    = null
                 };
 
