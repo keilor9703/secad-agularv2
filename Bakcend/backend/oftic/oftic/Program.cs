@@ -250,6 +250,34 @@ builder.Services.AddScoped<IDbIntegracionService,    DbIntegracionService>();
 // Cifrado reversible de secretos de integración (VMS, y lo que venga). Comparte
 // la clave con las llaves de API: es el mismo secreto del mismo servidor.
 builder.Services.AddSingleton<Comun.Security.ICifradoSecretos, Comun.Security.CifradoSecretos>();
+
+// ── Drivers de VMS (cámaras CCTV) ────────────────────────────────────────────
+// Añadir un proveedor nuevo (Genetec, Bosch…) es escribir su IVmsReader y
+// registrarlo aquí: la fábrica lo resuelve por su identificador y ni la UI ni
+// el resto del backend se enteran.
+//
+// El HttpClient va con nombre y no tipado porque la URL, las credenciales y el
+// tiempo de espera son de CADA integración —cada municipio tiene su HikCentral—
+// y no de la aplicación.
+builder.Services.AddHttpClient(Servicios.Vms.HikCentralVmsReader.NombreCliente, c =>
+{
+    c.Timeout = TimeSpan.FromSeconds(
+        builder.Configuration.GetValue("Vms:TimeoutSegundos", 15));
+})
+.ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+{
+    // Los HikCentral institucionales se despliegan con certificado propio y
+    // nombre interno; validar contra CAs públicas haría fallar toda conexión.
+    // Se acepta solo si el operador lo habilita explícitamente, y queda dicho
+    // en el arranque para que no pase inadvertido.
+    ServerCertificateCustomValidationCallback =
+        builder.Configuration.GetValue("Vms:AceptarCertificadoPropio", true)
+            ? HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+            : null,
+});
+builder.Services.AddSingleton<Servicios.ApiInterfaz.IVmsReader, Servicios.Vms.HikCentralVmsReader>();
+builder.Services.AddSingleton<Servicios.ApiInterfaz.IVmsReaderFactory, Servicios.Vms.VmsReaderFactory>();
+
 builder.Services.AddScoped<IDbCamaraIntegracionRepository, DbCamaraIntegracionRepository>();
 builder.Services.AddScoped<IDbCamaraIntegracionService,    DbCamaraIntegracionService>();
 

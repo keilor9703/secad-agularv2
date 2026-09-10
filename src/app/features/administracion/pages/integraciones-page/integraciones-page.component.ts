@@ -1230,7 +1230,8 @@ export class IntegracionesPageComponent implements OnInit {
 
   probarCam(): void {
     if (!this.camDriver()) { this.toast.warning('Cámaras', 'Seleccione un driver.'); return; }
-    this.camSvc.validar(this.buildCamRequest()).subscribe({
+    this.camPrueba.set('Probando la conexión con el VMS…');
+    this.camSvc.validar(this.buildCamRequest(), this.editCamId() || undefined).subscribe({
       next:  r => { this.camPrueba.set(r.mensaje); if (r.ok) this.toast.success('Validación', r.mensaje); else this.toast.warning('Validación', r.mensaje); },
       error: e => { this.camPrueba.set(e.error?.mensaje ?? 'Error al validar.'); }
     });

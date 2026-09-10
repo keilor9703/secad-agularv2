@@ -100,7 +100,13 @@ export class CamaraIntegracionService {
     return this.http.delete<{ success: boolean; message: string }>(`${this.base}/${id}`);
   }
 
-  validar(req: DtoCamaraIntegracionRequest): Observable<DtoCamaraPruebaResult> {
-    return this.http.post<DtoCamaraPruebaResult>(`${this.base}/validar`, req);
+  /**
+   * Prueba la conexión real contra el VMS. Con `id` se prueba una ficha ya
+   * guardada, que es el caso normal: el formulario no reenvía el secreto —no
+   * se muestra una vez guardado— y el backend usa el almacenado.
+   */
+  validar(req: DtoCamaraIntegracionRequest, id?: string): Observable<DtoCamaraPruebaResult> {
+    const url = id ? `${this.base}/${id}/validar` : `${this.base}/validar`;
+    return this.http.post<DtoCamaraPruebaResult>(url, req);
   }
 }

@@ -25,6 +25,17 @@ namespace Negocio.Interfaz
         /// La prueba real de conectividad contra el VMS se habilita con el runtime
         /// del driver (entrega posterior, requiere credenciales y acceso de red).
         /// </summary>
-        DtoCamaraPruebaResult ValidarConfiguracion(DtoCamaraIntegracionRequest req);
+        /// <summary>
+        /// Prueba la integración de verdad contra el VMS. Antes solo miraba que
+        /// los campos estuvieran llenos, así que decía «configuración válida»
+        /// de un servidor que no existe — que es justo lo contrario de lo que
+        /// el administrador necesita saber.
+        /// </summary>
+        /// <param name="id">
+        /// Ficha ya guardada, para poder reutilizar el secreto almacenado
+        /// cuando el formulario no lo reenvía. 0 = probar solo lo que llega.
+        /// </param>
+        Task<DtoCamaraPruebaResult> ProbarConexionAsync(
+            long id, DtoCamaraIntegracionRequest req, CancellationToken ct);
     }
 }

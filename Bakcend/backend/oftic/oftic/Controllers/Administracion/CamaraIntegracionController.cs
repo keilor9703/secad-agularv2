@@ -130,14 +130,32 @@ namespace Api.Controllers.Administracion
         }
 
         /// <summary>
-        /// Valida que la configuración esté completa según el driver. La prueba
-        /// real de conectividad al VMS se habilita con el runtime del driver.
+        /// Prueba la integración contra el VMS de verdad: se conecta con las
+        /// credenciales configuradas y dice cuántas cámaras ve, o exactamente
+        /// por qué no pudo.
         /// </summary>
         [HttpPost("validar")]
-        public IActionResult Validar([FromBody] DtoCamaraIntegracionRequest req)
+        [HttpPost("{id}/validar")]
+        public async Task<IActionResult> Validar(
+            [FromBody] DtoCamaraIntegracionRequest req, CancellationToken ct, string? id = null)
         {
             if (req is null) return BadRequest(new { ok = false, mensaje = "Datos requeridos." });
-            return Ok(_svc.ValidarConfiguracion(req));
+
+            // Con id se prueba una ficha ya guardada, que es el caso normal:
+            // el formulario no reenvía el secreto y hay que usar el almacenado.
+            long.TryParse(id, out var idLong);
+            try
+            {
+                var r = await _svc.ProbarConexionAsync(idLong, req, ct);
+                _logger.LogInformation("[CamaraIntegracion] {User} probó {Driver} → {Ok}: {Msg}",
+                    UsuarioClaim, req.Driver, r.Ok, r.Mensaje);
+                return Ok(r);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Validar CamaraIntegracion error");
+                return Ok(new DtoCamaraPruebaResult { Ok = false, Mensaje = "Error interno al probar: " + ex.Message });
+            }
         }
     }
 }

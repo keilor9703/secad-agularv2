@@ -212,6 +212,33 @@ WHERE id = @id";
             return n > 0 ? (true, "Integración actualizada.") : (false, "Integración no encontrada.");
         }
 
+        public async Task<DtoVmsConexion?> GetConexionAsync(long id, CancellationToken ct)
+        {
+            await using var conn = await _tenant.DataSource.OpenConnectionAsync(ct);
+            await using var cmd  = conn.CreateCommand();
+            cmd.CommandText = @"
+SELECT i.driver, i.base_url, i.config_publico::text,
+       to_jsonb(i) ->> 'nodo_edge_url'
+FROM   cad_camara_integracion i
+WHERE  i.id = @id AND i.activa";
+            cmd.Parameters.AddWithValue("id", id);
+
+            DtoVmsConexion? cx = null;
+            await using (var r = await cmd.ExecuteReaderAsync(ct))
+                if (await r.ReadAsync(ct))
+                    cx = new DtoVmsConexion
+                    {
+                        Driver      = r.IsDBNull(0) ? "" : r.GetString(0),
+                        BaseUrl     = r.IsDBNull(1) ? "" : r.GetString(1),
+                        Config      = DeserializeDict(r.IsDBNull(2) ? null : r.GetString(2)),
+                        NodoEdgeUrl = r.IsDBNull(3) ? null : r.GetString(3),
+                    };
+
+            if (cx is null) return null;
+            cx.Secretos = await LeerSecretosAsync(conn, id, ct);
+            return cx;
+        }
+
         public async Task<(bool, string)> ToggleAsync(long id, CancellationToken ct)
         {
             await using var conn = await _tenant.DataSource.OpenConnectionAsync(ct);

@@ -1,6 +1,7 @@
 using Comun.Dtos.Camaras;
 using Datos.Interfaz;
 using Negocio.Interfaz;
+using Servicios.ApiInterfaz;
 
 namespace Negocio.Gestion
 {
@@ -11,10 +12,14 @@ namespace Negocio.Gestion
     public class DbCamaraIntegracionService : IDbCamaraIntegracionService
     {
         private readonly IDbCamaraIntegracionRepository _repo;
+        private readonly IVmsReaderFactory               _drivers2;
 
-        public DbCamaraIntegracionService(IDbCamaraIntegracionRepository repo)
+        public DbCamaraIntegracionService(
+            IDbCamaraIntegracionRepository repo,
+            IVmsReaderFactory drivers)
         {
-            _repo = repo;
+            _repo     = repo;
+            _drivers2 = drivers;
         }
 
         // ════════════════════════════════════════════════════════════════════════
@@ -106,15 +111,46 @@ namespace Negocio.Gestion
         public Task<(bool, string)> ToggleAsync(long id, CancellationToken ct) => _repo.ToggleAsync(id, ct);
         public Task<(bool, string)> DeleteAsync(long id, CancellationToken ct) => _repo.DeleteAsync(id, ct);
 
-        public DtoCamaraPruebaResult ValidarConfiguracion(DtoCamaraIntegracionRequest req)
+        public async Task<DtoCamaraPruebaResult> ProbarConexionAsync(
+            long id, DtoCamaraIntegracionRequest req, CancellationToken ct)
         {
-            var val = Validar(req, esCreacion: true);
+            // Si la ficha ya existe, el formulario puede no reenviar el
+            // secreto (se muestra vacío para no revelarlo). Se valida contra
+            // el que está guardado, que es el que se va a usar de verdad.
+            var guardada = id > 0 ? await _repo.GetConexionAsync(id, ct) : null;
+            var val = Validar(req, esCreacion: guardada is null);
             if (!val.Ok) return new DtoCamaraPruebaResult { Ok = false, Mensaje = val.Mensaje };
+
+            NormalizarBaseUrl(req);
+
+            var lector = _drivers2.Para(req.Driver);
+            if (lector is null)
+                return new DtoCamaraPruebaResult
+                {
+                    Ok = false,
+                    Mensaje = $"El driver '{req.Driver}' está en el catálogo pero todavía no tiene " +
+                              "implementación de conexión. La configuración se puede guardar; probarla, no."
+                };
+
+            var cx = new DtoVmsConexion
+            {
+                Driver      = req.Driver,
+                BaseUrl     = req.BaseUrl ?? guardada?.BaseUrl ?? "",
+                NodoEdgeUrl = req.NodoEdgeUrl ?? guardada?.NodoEdgeUrl,
+                Config      = new Dictionary<string, string>(req.Config ?? new()),
+                Secretos    = new Dictionary<string, string>(guardada?.Secretos ?? new()),
+            };
+            // Lo que el formulario sí manda pisa lo guardado: es lo que el
+            // administrador quiere probar ahora.
+            foreach (var kv in req.Secretos ?? new())
+                if (!string.IsNullOrWhiteSpace(kv.Value)) cx.Secretos[kv.Key] = kv.Value;
+
+            var r = await lector.ProbarAsync(cx, ct);
             return new DtoCamaraPruebaResult
             {
-                Ok      = true,
-                Mensaje = "Configuración completa y válida. La prueba de conexión real al VMS " +
-                          "se habilita con el runtime del driver (requiere credenciales y acceso de red)."
+                Ok                = r.Ok,
+                Mensaje           = r.Mensaje,
+                CamarasDetectadas = r.Ok ? r.Datos : null,
             };
         }
 
