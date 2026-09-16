@@ -168,7 +168,13 @@ Request body:
 }
 ```
 - `streamType`: `0` = main (suele H.265) · **`1` = sub-stream (H.264, ligero) ← usar este**.
-- `protocol`: **`"hls"`** para el navegador. (Otros: `rtsp`, `websocket`, `rtmp`.)
+- `protocol`: la lista completa del manual es `rtsp` (valor por defecto del VMS),
+  `rtsp_s`, `websocket`, `websocket_s`, `hls`, **`hls_s`** y `rtmp`. El sufijo
+  `_s` es la variante sobre TLS; `hls_s` lo agregó la OpenAPI **V3.1.1** (en la
+  V3.1.0 no existe). SECAD usa **`hls_s`** y cae a `hls` si el servidor no lo
+  soporta: son los dos que reproduce `hls.js` en el navegador sin instalar nada.
+  `websocket` solo sirve con el SDK jsDecoder de Hikvision (plan B para cámaras
+  que únicamente tengan H.265); `rtsp` y `rtmp` no se reproducen en un navegador.
 - `transmode`: `1` = TCP (default).
 
 Respuesta:
@@ -177,8 +183,8 @@ Respuesta:
   "data": { "url": "...m3u8...", "authentication": "<token/credenciales>" } }
 ```
 
-> ⚠️ **Restricción del manual:** *"Streaming via RTMP and HLS only supports H.264
-> video encoding."* → Por eso pedimos `streamType: 1` (sub-stream H.264). Si una
+> ⚠️ **Restricción del manual (V3.1.1):** *"Streaming via RTMP, HLS, and HLS_S
+> only supports H.264 video encoding."* — el audio, solo AAC. → Por eso pedimos `streamType: 1` (sub-stream H.264). Si una
 > cámara no tiene sub-stream H.264, su HLS fallará; en ese caso quedaría para una
 > fase con transcodificación o el player WebSocket/JsDecoder de Hikvision.
 

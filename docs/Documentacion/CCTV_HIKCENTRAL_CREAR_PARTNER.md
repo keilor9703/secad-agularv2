@@ -116,7 +116,17 @@ HikCentral trae un probador integrado:
 - ✅ **Usuario** vinculado al Partner (userId)
 - ✅ Lista de **coordenadas de las cámaras** (`cameraIndexCode`/nombre → lat/lng)
   — la API no expone la ubicación de cámaras fijas, se siembra en SECAD.
-- ✅ Confirmar que las cámaras tienen **sub-stream en H.264**.
+- ✅ Confirmar que las cámaras tienen **sub-stream en H.264** (el navegador no
+  reproduce H.265, y el manual restringe HLS/HLS_S/RTMP a H.264).
+- ✅ **Versión de la OpenAPI** del servidor (V3.1.0 o V3.1.1). `hls_s` — HLS
+  sobre TLS, que es lo que SECAD pide por defecto — solo existe desde la V3.1.1;
+  si el servidor es V3.1.0 hay que dejar la integración en `hls`.
+- ✅ **Cuántos streams simultáneos** admite la licencia/el servidor: es el tope
+  de cámaras que un CAD puede tener abiertas a la vez.
+- ✅ Confirmar que el **servidor de streaming** (el host que aparece en la URL
+  `.m3u8`, que puede no ser el mismo del HikCentral) es alcanzable desde los
+  puestos de despacho, no solo desde el servidor edge: el HLS es HTTP directo
+  y no atraviesa NAT como sí lo hace una videollamada WebRTC.
 
 ---
 
