@@ -1017,7 +1017,7 @@
         @if (campo.tipo === 'select') {
           <app-ui-select
             [label]="campo.nombre"
-            [options]="[]"
+            [options]="opcionesCampo(campo)"
             [required]="!!campo.requerido"
             [(ngModel)]="camForm[campo.key]"
             [ngModelOptions]="{ standalone: true }"

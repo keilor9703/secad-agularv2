@@ -15,7 +15,15 @@ export interface DtoVmsDriverField {
   secreto:   boolean;
   ayuda?:    string;
   ejemplo?:  string;
-  opciones?: string[];
+  /** Opciones del campo "select", declaradas por el driver con etiqueta legible. */
+  opciones?: DtoVmsDriverOpcion[];
+}
+
+export interface DtoVmsDriverOpcion {
+  /** Valor que se guarda y viaja al VMS (p. ej. "hls_s"). */
+  valor:    string;
+  /** Texto que ve el administrador. */
+  etiqueta: string;
 }
 
 export interface DtoVmsDriverDescriptor {

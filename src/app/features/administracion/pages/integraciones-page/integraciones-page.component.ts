@@ -50,6 +50,7 @@ import {
   DtoCamaraIntegracion,
   DtoCamaraIntegracionRequest,
   DtoVmsDriverDescriptor,
+  DtoVmsDriverField,
   DtoEmparejamientoCamara
 } from '../../services/camara-integracion.service';
 import { ActivatedRoute } from '@angular/router';
@@ -1255,11 +1256,23 @@ export class IntegracionesPageComponent implements OnInit {
   /** Campo actual del driver seleccionado (para el template). */
   get camCampos() { return this.camDriver()?.campos ?? []; }
 
+  /**
+   * Opciones de un campo "select" en el formato que espera app-ui-select. Las
+   * declara el driver (el backend) porque el valor que viaja al VMS — "1",
+   * "hls_s" — no le dice nada a quien llena el formulario.
+   */
+  opcionesCampo(campo: DtoVmsDriverField): UiSelectOption<string>[] {
+    return (campo.opciones ?? []).map(o => ({ label: o.etiqueta, value: o.valor }));
+  }
+
   onCamDriverChange(driverId: string): void {
     this.camDriver.set(this.drivers().find(d => d.driver === driverId) ?? null);
-    // Reiniciar valores del formulario a los campos del nuevo driver.
+    // Reiniciar valores del formulario a los campos del nuevo driver. Un select
+    // arranca en su primera opción: es la recomendada por el driver y así el
+    // campo nunca se guarda vacío por descuido.
     this.camForm = {};
-    for (const c of this.camDriver()?.campos ?? []) this.camForm[c.key] = '';
+    for (const c of this.camDriver()?.campos ?? [])
+      this.camForm[c.key] = c.opciones?.length ? c.opciones[0].valor : '';
   }
 
   openCreateCam(): void {
@@ -1287,8 +1300,14 @@ export class IntegracionesPageComponent implements OnInit {
     this.camDriver.set(driver);
     // Cargar valores no secretos; los secretos quedan vacíos (write-only).
     this.camForm = {};
-    for (const campo of driver?.campos ?? [])
-      this.camForm[campo.key] = campo.secreto ? '' : (c.config[campo.key] ?? '');
+    for (const campo of driver?.campos ?? []) {
+      if (campo.secreto) { this.camForm[campo.key] = ''; continue; }
+      const guardado = c.config[campo.key] ?? '';
+      // Fichas creadas antes de que el driver declarara el campo no traen valor:
+      // se muestra la opción recomendada en vez de un desplegable en blanco.
+      this.camForm[campo.key] =
+        guardado || (campo.opciones?.length ? campo.opciones[0].valor : '');
+    }
     this.modal.set('camara-edit');
     document.body.classList.add('ui-modal-open');
   }

@@ -47,13 +47,23 @@ namespace Negocio.Gestion
                     new() { Key = "appSecret", Nombre = "App Secret", Tipo = "password", Requerido = true, Secreto = true,
                             Ayuda = "Secreto para firmar (AK/SK HMAC-SHA256). No se muestra una vez guardado." },
                     new() { Key = "streamType", Nombre = "Calidad de video", Tipo = "select", Requerido = false,
-                            Opciones = new() { "1", "0" },
-                            Ayuda = "1 = sub-stream (H.264, recomendado para el navegador) · 0 = main (suele H.265)." },
+                            Opciones = new()
+                            {
+                                new("1", "Sub-stream — resolución menor, normalmente H.264 (recomendado)"),
+                                new("0", "Main stream — máxima resolución, normalmente H.265")
+                            },
+                            Ayuda = "El navegador solo reproduce H.264. El sub-stream es el que suele estar " +
+                                    "en H.264; el main suele estar en H.265 y no se verá. Si la cámara no " +
+                                    "tiene sub-stream H.264 hay que pedírselo al administrador del VMS." },
                     new() { Key = "protocol", Nombre = "Protocolo de video", Tipo = "select", Requerido = false,
-                            Opciones = new() { "hls_s", "hls", "websocket" },
-                            Ayuda = "hls_s = HLS sobre TLS (recomendado: la especificación exige cifrado en " +
-                                    "tránsito; lo añadió la OpenAPI V3.1.1) · hls = sin cifrar · " +
-                                    "websocket = para el reproductor jsDecoder, necesario si la cámara solo tiene H.265." }
+                            Opciones = new()
+                            {
+                                new("hls_s", "HLS sobre TLS (hls_s) — cifrado, requiere OpenAPI V3.1.1"),
+                                new("hls",   "HLS sin cifrar (hls) — solo si el servidor no ofrece hls_s")
+                            },
+                            Ayuda = "Son los dos protocolos que el visor del despachador sabe reproducir. " +
+                                    "HikCentral también entrega rtsp, rtsp_s, rtmp y websocket, pero ninguno " +
+                                    "se reproduce en el navegador sin un componente adicional." }
                 }
             },
             new DtoVmsDriverDescriptor

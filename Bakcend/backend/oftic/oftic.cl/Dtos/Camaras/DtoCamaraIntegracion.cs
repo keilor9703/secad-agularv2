@@ -26,8 +26,26 @@ namespace Comun.Dtos.Camaras
         public bool   Secreto   { get; set; }
         public string? Ayuda    { get; set; }
         public string? Ejemplo  { get; set; }
-        /// <summary>Opciones para tipo "select".</summary>
-        public List<string>? Opciones { get; set; }
+        /// <summary>Opciones para tipo "select". El driver las declara con etiqueta
+        /// legible porque el valor que viaja al VMS (p. ej. "1" o "hls_s") no le
+        /// dice nada al administrador que llena el formulario.</summary>
+        public List<DtoVmsDriverOpcion>? Opciones { get; set; }
+    }
+
+    /// <summary>Una opción de un campo "select" declarado por un driver.</summary>
+    public class DtoVmsDriverOpcion
+    {
+        /// <summary>Valor que se guarda en la configuración y viaja al VMS.</summary>
+        public string Valor    { get; set; } = "";
+        /// <summary>Texto que ve el administrador en la lista desplegable.</summary>
+        public string Etiqueta { get; set; } = "";
+
+        public DtoVmsDriverOpcion() { }
+        public DtoVmsDriverOpcion(string valor, string etiqueta)
+        {
+            Valor    = valor;
+            Etiqueta = etiqueta;
+        }
     }
 
     /// <summary>
