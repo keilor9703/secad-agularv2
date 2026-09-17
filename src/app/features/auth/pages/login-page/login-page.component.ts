@@ -36,8 +36,8 @@ interface LoginBrandViewModel extends LoginBrandPreferences {
 
 const DEFAULT_LOGIN_BRAND: LoginBrandViewModel = {
   ...DEFAULT_LOGIN_BRAND_PREFERENCES,
-  acronym: 'SISGE',
-  systemName: 'SISGE',
+  acronym: 'SECAD',
+  systemName: 'SECAD',
   logoUrl: '/escudo.png',
 };
 
@@ -140,8 +140,8 @@ export class LoginPageComponent implements OnInit, OnDestroy {
       next: (cfg) => {
         const defaults = DEFAULT_LOGIN_BRAND_PREFERENCES;
         this.loginBrand.set({
-          acronym: (cfg?.sistema ?? '').trim() || 'SISGE',
-          systemName: (cfg?.nombreSistema ?? cfg?.systemName ?? '').trim() || 'SISGE',
+          acronym: (cfg?.sistema ?? '').trim() || 'SECAD',
+          systemName: (cfg?.nombreSistema ?? cfg?.systemName ?? '').trim() || 'SECAD',
           nombreInstitucion: (cfg?.nombreInstitucion ?? '').trim() || defaults.nombreInstitucion,
           logoUrl: (cfg?.logoUrl ?? '').trim() || '/escudo.png',
           loginShowLogo: cfg?.loginShowLogo ?? defaults.loginShowLogo,

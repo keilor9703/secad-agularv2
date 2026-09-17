@@ -13,7 +13,7 @@
   <div class="vc-call">
     <div class="vc-call-top">
       @switch (estado()) {
-        @case ('esperando')  { <span class="vc-pill vc-pill--warning"><i class="vc-dot"></i>Conectando con el despachador…</span> }
+        @case ('esperando')  { <span class="vc-pill vc-pill--warning"><i class="vc-dot"></i>Conectando con un funcionario</span> }
         @case ('conectada')  { <span class="vc-pill vc-pill--live"><i class="vc-dot"></i>En vivo con la Policía</span> }
       }
       @if (ubicacionActiva()) {

@@ -41,11 +41,11 @@ export interface JwtClaims {
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  private readonly tokenKey = 'sisge_token';
-  private readonly userKey = 'sisge_usuario';
-  private readonly authKey = 'sisge_auth';
-  private readonly userIdKey = 'sisge_user_id';
-  private readonly identificationKey = 'sisge_identificacion';
+  private readonly tokenKey = 'secad_token';
+  private readonly userKey = 'secad_usuario';
+  private readonly authKey = 'secad_auth';
+  private readonly userIdKey = 'secad_user_id';
+  private readonly identificationKey = 'secad_identificacion';
   private readonly loginUrl = `${environment.apiBaseUrl}/Cuenta/Token`;
   private readonly lastLoginUrl = `${environment.apiBaseUrl}/Usuario/UltimoIngreso`;
   private readonly maxJwtLength = 8192;

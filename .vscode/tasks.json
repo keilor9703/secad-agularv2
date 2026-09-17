@@ -3,6 +3,33 @@
   "version": "2.0.0",
   "tasks": [
     {
+      // Compila la solución completa (Api + Negocio + Datos + Comun + Servicios).
+      "label": "build: API",
+      "command": "dotnet",
+      "type": "process",
+      "args": [
+        "build",
+        "${workspaceFolder}/Bakcend/backend/oftic/oftic/oftic.sln",
+        "/property:GenerateFullPaths=true",
+        "/consoleloggerparameters:NoSummary"
+      ],
+      "problemMatcher": "$msCompile",
+      "group": "build"
+    },
+    {
+      // Backend sin depurador, con recarga en caliente.
+      "label": "watch: API",
+      "command": "dotnet",
+      "type": "process",
+      "args": ["watch", "run", "--project", "Api.csproj"],
+      "options": {
+        "cwd": "${workspaceFolder}/Bakcend/backend/oftic/oftic",
+        "env": { "ASPNETCORE_ENVIRONMENT": "Development" }
+      },
+      "isBackground": true,
+      "problemMatcher": "$msCompile"
+    },
+    {
       "type": "npm",
       "script": "start",
       "isBackground": true,

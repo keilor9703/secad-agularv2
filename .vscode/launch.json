@@ -3,6 +3,31 @@
   "version": "0.2.0",
   "configurations": [
     {
+      // Backend .NET 8 — Bakcend/backend/oftic/oftic/Api.csproj
+      // Escucha en http://localhost:5224, que es justo a donde apunta el
+      // proxy de Angular (proxy.conf.json → /api y /uploads).
+      "name": "API (.NET)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build: API",
+      "program": "${workspaceFolder}/Bakcend/backend/oftic/oftic/bin/Debug/net8.0/Api.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/Bakcend/backend/oftic/oftic",
+      "stopAtEntry": false,
+      "serverReadyAction": {
+        "action": "openExternally",
+        "pattern": "\\bNow listening on:\\s+(https?://\\S+)",
+        "uriFormat": "%s/swagger"
+      },
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ASPNETCORE_URLS": "http://localhost:5224"
+      },
+      "sourceFileMap": {
+        "/Views": "${workspaceFolder}/Views"
+      }
+    },
+    {
       "name": "ng serve",
       "type": "chrome",
       "request": "launch",
@@ -15,6 +40,14 @@
       "request": "launch",
       "preLaunchTask": "npm: test",
       "url": "http://localhost:9876/debug.html"
+    }
+  ],
+  "compounds": [
+    {
+      // Arranca backend y frontend juntos con un solo F5.
+      "name": "SECAD (API + Angular)",
+      "configurations": ["API (.NET)", "ng serve"],
+      "stopAll": true
     }
   ]
 }
