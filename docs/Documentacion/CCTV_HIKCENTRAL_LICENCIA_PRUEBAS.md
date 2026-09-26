@@ -257,6 +257,20 @@ Instalarlo genera servicios propios —el manual nombra *OpenAPI Translation
 Service*, *artemis* y *artemis-portal* (§2.1)—, así que la comprobación es
 directa. En PowerShell, en el servidor:
 
+> ⚠️ En la 3.1.1 real ni los nombres de servicio ni la ruta del manual
+> coinciden: la plataforma se instaló en `C:\Program Files (x86)\HikCentral`
+> (no `VMSPlatform`) y ningún servicio tiene "HikCentral" ni "artemis" en su
+> nombre visible. **La prueba que vale es la del `curl` de más abajo**; estas
+> dos sirven cuando coinciden, pero su silencio no prueba nada. Para buscar por
+> la ruta del ejecutable, que sí es fiable:
+>
+> ```powershell
+> Get-CimInstance Win32_Service |
+>     Where-Object { $_.PathName -match 'HikCentral|VMSPlatform|artemis' } |
+>     Select-Object Name, DisplayName, State
+> ```
+
+
 ```powershell
 Get-Service | Where-Object { $_.Name -match 'artemis|OpenAPI' -or $_.DisplayName -match 'artemis|OpenAPI' }
 dir "C:\Program Files (x86)\VMSPlatform\VSM Servers\OpenAPI"
@@ -291,6 +305,14 @@ curl.exe -sk -i -X POST https://127.0.0.1/artemis/api/resource/v1/cameras `
   `/artemis`** en su proxy, pero detrás no hay nada escuchando: el componente
   **no está instalado**. Es lo que se ve en una 3.1.1 recién instalada
   (verificado el 26/09/2026).
+- Responde **HTTP 200 con `{"code":"64","msg":"User authentication failed"}`**
+  → **el gateway está vivo** y rechaza por falta de credenciales, que es lo
+  correcto en esta prueba. Así respondió el servidor de pruebas una vez
+  instalado el componente.
+
+> **Ojo con el código HTTP.** El gateway real contesta **200** y mete el error
+> en el campo `code` del JSON; no usa 401 ni 403 como cabría esperar. Por eso
+> `hikcentral_probar.py` mira el `code`, no solo el estado HTTP.
 - Responde **404** o la página del Web Client → tampoco está, y además la ruta
   ni siquiera está mapeada.
 

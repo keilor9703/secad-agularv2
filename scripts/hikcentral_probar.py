@@ -139,6 +139,36 @@ def llamar(base_url, ruta, cuerpo, app_key, app_secret, user_id,
         return None, f"{type(e.reason).__name__}: {e.reason}"
 
 
+# Códigos del apéndice A.4 del Developer Guide. Traducirlos ahorra la mitad
+# del tiempo de depuración: casi todos se confunden con "no conecta".
+CODIGOS = {
+    "0":          "Correcto.",
+    "0x02401000": "No se envió AppKey.",
+    "0x02401001": "El AppKey no corresponde a ningún Partner. ¿Se copió completo? ¿El Partner existe?",
+    "0x02401002": "No se envió firma.",
+    "0x02401003": "Firma inválida: el AppSecret no corresponde, o la cadena firmada no cuadra.",
+    "0x02401004": "Falló la autenticación del token.",
+    "0x02401007": "Sin permisos. El usuario del Partner no tiene acceso a lo que se pidió.",
+    "0x02401008": "Excepción de autenticación: revisar el servicio del gateway.",
+    "0x02401009": "Se alcanzó el máximo de llamadas permitidas al API.",
+    "0x00072001": "Faltan parámetros obligatorios en la petición.",
+    "0x00072004": "La respuesta es demasiado larga: hay que reducir el pageSize.",
+    "0x00052104": "El servicio no está disponible. Revisar que los servicios de la plataforma estén arriba.",
+    "0x00072201": "Sin permiso sobre el recurso. Hay que dar acceso a las cámaras al usuario del Partner.",
+    "0x00072202": "El recurso no existe: ese cameraIndexCode no está en la plataforma.",
+    "0x00072203": "Se alcanzó el máximo de licencias.",
+    "0x00072204": "La licencia no habilita esta función. Revisar Third-Party Integration en License Details.",
+    "64":         "Autenticación de usuario fallida. Es lo que responde el gateway a una petición sin "
+                  "credenciales válidas; con AppKey/AppSecret correctos no debería aparecer.",
+}
+
+
+def explicar_codigo(codigo, msg):
+    detalle = CODIGOS.get(str(codigo))
+    linea = f"code={codigo} msg={msg}"
+    return f"{linea}\n  → {detalle}" if detalle else linea
+
+
 def explicar(estado, texto):
     """Traduce el fallo a lo que hay que revisar."""
     if estado is None:
@@ -146,6 +176,8 @@ def explicar(estado, texto):
                 "  · ¿La IP y el puerto son los correctos?\n"
                 "  · ¿El firewall de Windows deja pasar el 443?\n"
                 "  · ¿Estás en la misma red que el HikCentral?")
+    if estado == 200:
+        return ("El servidor respondió 200 pero con un código de error: mira el code.")
     if estado == 401:
         return ("401: el gateway rechazó la firma.\n"
                 "  · AppKey/AppSecret equivocados, o el Partner quedó deshabilitado.\n"
@@ -197,8 +229,8 @@ def main():
             return 1
 
         if str(cuerpo.get("code")) != "0":
-            print(f"\n✗ La API respondió code={cuerpo.get('code')} msg={cuerpo.get('msg')}")
-            print("  code distinto de 0 es un error de la plataforma, no de la red.")
+            print("\n✗ " + explicar_codigo(cuerpo.get("code"), cuerpo.get("msg")))
+            print("\n  La plataforma respondió: el problema no es de red.")
             return 1
 
         datos = cuerpo.get("data") or {}
@@ -236,7 +268,7 @@ def main():
 
     cuerpo = json.loads(texto)
     if str(cuerpo.get("code")) != "0":
-        print(f"✗ code={cuerpo.get('code')} msg={cuerpo.get('msg')}")
+        print("✗ " + explicar_codigo(cuerpo.get("code"), cuerpo.get("msg")))
         if a.protocol.startswith("hls"):
             print("  Si el servidor es V3.1.0 no existe hls_s: prueba --protocol hls.")
         return 1
