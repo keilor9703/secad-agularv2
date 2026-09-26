@@ -1,0 +1,81 @@
+# Orden de aplicación — base de cada TENANT/CAD.
+#
+# Una ruta por línea, EN ORDEN. Las líneas que empiezan por # son
+# comentarios. Este archivo es la única fuente de verdad del orden:
+# lo leen scripts/apply_schema.sh (Linux) y
+# scripts/preparar_local_windows.ps1 (Windows). Al añadir una
+# migración nueva, basta con sumarla aquí.
+#
+V2__tenant_schema.sql
+V3__incidents_schema.sql
+V4__reception_tables.sql
+V5__eventos_canal.sql
+V6__snowflake_id.sql
+V7b__cad_eventos_alter.sql
+V7__cad_eventos.sql
+V8__cad_actuaciones.sql
+V9__turnos.sql
+V10 Menú de Operación – Recepción, Eventos y Turnos.sql
+V12__actividades_delitos.sql
+V13__snowflake_pedidos.sql
+V14__sla_auditoria_acceso.sql
+V15__gestion_documental_correos.sql
+V15__pedidos_username_creacion.sql
+V16__anotaciones_turno.sql
+V17__asistente_inteligente.sql
+V18__casos_categoria_asistente.sql
+V19__civil_usuarios.sql
+V20__menu_entidades_fuerzas.sql
+V21__roles_user_auditoria.sql
+V22__super_admin_rbac.sql
+V24__multicanal_adjuntos.sql
+V25__agencias_externas.sql
+V26__pedidos_canales_unique.sql
+V27__integraciones_entrantes.sql
+V28__menu_reportes.sql
+V29__agencias_auth_modes.sql
+V30__actualizacion_externa_entrante.sql
+V31__tenant_sitio_grabacion_codane.sql
+V32__agencia_formato_payload.sql
+V33__mfa_integracion_nota.sql
+V34__menu_mapa_incidentes.sql
+V35__ampliar_cedu_empleado.sql
+V36__menu_mapa_estadistico.sql
+V37__eventos_estado_check.sql
+V38__rename_cti_a_plantatel.sql
+V40__postgis_medios_geo.sql
+V42__medios_origen.sql
+V43__eventos_operador_mejoras.sql
+V44__camaras_integracion.sql
+V45__video_llamadas.sql
+V46__adjuntos_canal_videollamada.sql
+V47__menu_completo.sql
+V48__menu_ajustes_reales.sql
+V49__video_sesion_telefono.sql
+V50__menu_codigos_caso.sql
+V51__config_sms_proveedor.sql
+V52__menu_proveedor_sms.sql
+V53__video_sesion_ubicacion.sql
+V54__video_grabacion_resiliente.sql
+V55__video_chat_mensajes.sql
+V56__menu_admin_faltantes.sql
+V57__reparar_menu_v56.sql
+V58__unificar_menu_duplicado.sql
+V59__menu_grupos_a_raiz.sql
+V61__menu_super_unidades.sql
+V62__menu_tipos_coherentes.sql
+V63__codigos_caso_superadmin.sql
+V64__reubicar_menu_proveedor_sms.sql
+V65__roles_coherentes.sql
+V67__tenant_sin_rol_superadmin.sql
+V68__menu_super_admins.sql
+V69__roles_administrativos.sql
+V70__sitios_grabacion_catalogo.sql
+V71__sitios_y_fuerzas_unificado.sql
+V72__centro_mapa_por_sitio.sql
+# V74: los canales de despacho de una integración entrante los fija el CAD.
+V74__integraciones_canales_destino.sql
+# V75/V76: integración de cámaras — nodo edge, cifrado del secreto, auditoría
+# de visualización, y cad_camaras preparada para el censo institucional.
+V75__camaras_edge_cifrado_auditoria.sql
+V76__camaras_censo_institucional.sql

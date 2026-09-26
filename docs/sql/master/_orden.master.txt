@@ -1,0 +1,23 @@
+# Orden de aplicación — base MAESTRA (secad_tenants y las llaves de API).
+#
+# Una ruta por línea, EN ORDEN. Las líneas que empiezan por # son
+# comentarios. Este archivo es la única fuente de verdad del orden:
+# lo leen scripts/apply_schema.sh (Linux) y
+# scripts/preparar_local_windows.ps1 (Windows). Al añadir una
+# migración nueva, basta con sumarla aquí.
+#
+V1__master_schema.sql
+V23__master_salud_cad.sql
+V41__tenant_gespo_sigla_unidad.sql
+# V31 toca secad_tenants (master) Y cad_sitios_grabacion (tenant) en el
+# mismo archivo — cada bloque se protege comprobando que su tabla exista,
+# así que es seguro correrlo contra ambas bases (ver el archivo).
+V31__tenant_sitio_grabacion_codane.sql
+V60__master_unidades.sql
+V66__master_super_admins.sql
+# V72 toca cad_sitios_grabacion (tenant) Y secad_tenants (master) en el mismo
+# archivo, cada bloque guardado por la existencia de su tabla (ver V31).
+V72__centro_mapa_por_sitio.sql
+# V73 es solo de la maestra: las llaves de API identifican al tenant, así que
+# tienen que poder consultarse ANTES de saber a qué base ir.
+V73__api_keys_por_tenant.sql
