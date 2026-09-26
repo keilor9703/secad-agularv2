@@ -18,8 +18,10 @@
    posible bloqueo.** La OpenAPI es un módulo **licenciado** de HikCentral. Si el
    HikCentral de Tunja no tiene esa licencia, hay que **adquirirla/activarla** con
    Hikvision o el integrador antes de continuar. Verificar en el Web Client:
-   menú → **License** (o *About/Acerca de*) → confirmar que aparece habilitado
-   *Third-Party Integration / OpenAPI*.
+   menú → **License Details** → en *Authorization Details* debe decir
+   **`Third-Party Integration` → `Enabled`**.
+   *(Para el servidor de pruebas propio, con el código de licencia que envió
+   Hikvision, ver `CCTV_HIKCENTRAL_LICENCIA_PRUEBAS.md`.)*
 2. **Componente OpenAPI instalado.** Si al buscar el menú de OpenAPI (Paso 1) no
    aparece, hay que instalar el componente ejecutando **`VMSPlatform_OpenAPI.exe`
    como administrador** en el servidor de HikCentral (viene con el instalador de
