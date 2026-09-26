@@ -141,17 +141,34 @@ namespace Servicios.Vms
             var r = await LlamarAsync(cx, RutaPreview, cuerpo, ct);
             if (!r.Ok) return DtoVmsResultado<DtoVmsStream>.Mal(r.Mensaje);
 
+            // La v2 es la versión POR LOTES: devuelve «data.list[0].url», no
+            // «data.url». La v1, que sí devuelve la URL suelta, sigue
+            // soportada por si un despliegue viejo obliga a bajar de versión.
+            // Leerlo mal daba URL vacía con code 0 — comprobado contra un
+            // HikCentral 3.1.1 real.
             var data = r.Datos!.Value;
-            var url  = Texto(data, "url");
+            var nodo = data;
+            if (data.TryGetProperty("list", out var lista)
+                && lista.ValueKind == JsonValueKind.Array
+                && lista.GetArrayLength() > 0)
+                nodo = lista[0];
+
+            var url = Texto(nodo, "url");
             if (string.IsNullOrWhiteSpace(url))
                 return DtoVmsResultado<DtoVmsStream>.Mal(
                     "El VMS aceptó la petición pero no devolvió URL. Suele significar que esa cámara " +
                     "no tiene sub-stream en H.264, que es lo único que HLS admite.");
 
+            // Cuando el stream sale por un servidor de medios, el manual
+            // antepone un marcador entre corchetes —«[sms:preview]rtsp://…»—
+            // que ningún reproductor entiende. Se quita si viene.
+            if (url!.StartsWith('[') && url.IndexOf(']') > 0)
+                url = url[(url.IndexOf(']') + 1)..];
+
             return DtoVmsResultado<DtoVmsStream>.Bien(new DtoVmsStream
             {
-                Url           = url!,
-                Autenticacion = Texto(data, "authentication"),
+                Url           = url,
+                Autenticacion = Texto(nodo, "authentication"),
                 Protocolo     = cx.Publico("protocol", "hls_s"),
                 TipoStream    = tipo,
             });

@@ -279,8 +279,19 @@ def main():
             print("  hls_s solo existe desde la OpenAPI V3.1.1: en un servidor 3.1.0, --protocol hls.")
         return 1
 
-    url = (cuerpo.get("data") or {}).get("url")
+    # La v2 es por lotes: data.list[0].url. La v1 devolvía data.url.
+    data = cuerpo.get("data") or {}
+    nodo = (data.get("list") or [{}])[0] if isinstance(data.get("list"), list) else data
+    url = nodo.get("url")
+    if url and url.startswith("[") and "]" in url:
+        url = url.split("]", 1)[1]          # quita marcadores tipo [sms:preview]
+    if not url:
+        print("✗ El VMS respondió correctamente pero sin URL.")
+        print(f"  respuesta cruda: {texto[:300]}")
+        return 1
     print(f"✓ {url}")
+    if nodo.get("authentication"):
+        print("  (trae además un campo 'authentication' para el stream)")
     print("\n  Esa URL es la que el navegador del despachador tiene que poder abrir.")
     print("  Si el host que aparece ahí no es alcanzable desde el puesto de")
     print("  despacho, el video no se verá aunque la integración esté bien.")

@@ -145,11 +145,16 @@ class Handler(BaseHTTPRequestHandler):
                 return self._responder(200, {"code": "0x02100003", "msg": "Camera does not exist"})
             # El real falla así cuando piden HLS de un main stream en H.265.
             if req.get("protocol", "").startswith("hls") and int(req.get("streamType", 0)) != 1:
-                return self._responder(200, {"code": "0", "msg": "Success", "data": {}})
+                return self._responder(200, {"code": "0", "msg": "Success", "data": {"list": []}})
             base = CFG["url_publica"].rstrip("/")
+            # La v2 es POR LOTES y devuelve data.list[]. El simulador devolvía
+            # «data.url», que es la forma de la v1: reproducía mi lectura
+            # equivocada del manual y por eso nunca detectó el fallo. Lo
+            # encontró el HikCentral real. Ahora responde como §5.4.13.
             return self._responder(200, {"code": "0", "msg": "Success", "data": {
-                "url": f"{base}/hls/{cod}_{req.get('streamType')}.m3u8",
-                "authentication": "token-efimero-de-prueba"}})
+                "list": [{
+                    "url": f"{base}/hls/{cod}_{req.get('streamType')}.m3u8",
+                    "authentication": "token-efimero-de-prueba"}]}})
 
         return self._responder(404, {"code": "0x02404", "msg": "Not found"})
 

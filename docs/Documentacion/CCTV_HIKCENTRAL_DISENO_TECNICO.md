@@ -177,11 +177,19 @@ Request body:
   que únicamente tengan H.265); `rtsp` y `rtmp` no se reproducen en un navegador.
 - `transmode`: `1` = TCP (default).
 
-Respuesta:
+Respuesta — **ojo, la v2 es por lotes y devuelve una lista**:
 ```json
 { "code": "0", "msg": "Success",
-  "data": { "url": "...m3u8...", "authentication": "<token/credenciales>" } }
+  "data": { "list": [ { "url": "...m3u8...",
+                        "authentication": "<token/credenciales>" } ] } }
 ```
+
+> ⚠️ La v1 devuelve `data.url` directamente; la **v2 devuelve `data.list[0].url`**
+> (§5.4.13: *"Batch get streaming URLs for live view"*). Leerlo como la v1 da
+> una URL vacía con `code: 0`, que parece un problema de la cámara y no lo es.
+> Si el `url` llega con un marcador entre corchetes —`[sms:preview]rtsp://…`,
+> que aparece cuando el stream sale por un servidor de medios— hay que quitarlo
+> antes de dárselo al reproductor.
 
 > ⚠️ **Restricción del manual (V3.1.1):** *"Streaming via RTMP, HLS, and HLS_S
 > only supports H.264 video encoding."* — el audio, solo AAC. → Por eso pedimos `streamType: 1` (sub-stream H.264). Si una
