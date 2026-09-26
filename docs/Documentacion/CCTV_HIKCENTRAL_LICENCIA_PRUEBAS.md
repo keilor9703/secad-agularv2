@@ -73,12 +73,29 @@ defecto. Lo que pruebes contra este servidor es lo que va a pasar en producción
 ## 5. Dónde se pone la licencia — paso a paso
 
 ### Paso 1 — Descargar el instalador de la **misma** versión
-Del portal de partners de Hikvision (`tpp.hikvision.com` → Resource), descarga
-**HikCentral Professional 3.1.1**. La versión del instalador debe coincidir con
-la del código; un código de 3.1.1 no activa un 2.x.
 
-Baja también, del mismo sitio, el paquete de **OpenAPI** (trae
-`VMSPlatform_OpenAPI.exe`) si viene por separado.
+> ⚠️ **No es en el TPP.** El Technology Partner Portal (`tpp.hikvision.com`) es
+> para recursos de integración —SDKs, guías ISAPI/OTAP, casos de soporte, demo
+> room—, **no** para el instalador de la plataforma. Ahí no está.
+
+El instalador vive en el **centro de descargas público** de Hikvision:
+
+**hikvision.com → Support → Download → Software → HikCentral Professional V3.1.1**
+<https://www.hikvision.com/en/support/download/software/hikcentral-professional-v3-1-1/>
+
+De esa página se baja el **Base Pack** (el servidor). El *Control Client* es el
+cliente de escritorio de Hikvision: **no hace falta** para SECAD, que trabaja
+contra la OpenAPI, pero sirve para verificar que las cámaras se ven bien sin
+meter a SECAD en el medio.
+
+La versión debe coincidir con la del código: **un código de 3.1.1 no activa un
+3.0.x ni un 2.x**. Si el sitio de tu región no muestra la 3.1.1, usa el global
+(`/en/`). Verifica el **MD5** que publica la página al terminar la descarga.
+
+El componente de **OpenAPI** (`VMSPlatform_OpenAPI.exe`) suele venir con el
+paquete de la plataforma; si no aparece, se baja del TPP en
+**Integration Support → Download Integration Resources**. Esa —y las guías de
+desarrollo— sí es la parte que corresponde al TPP.
 
 ### Paso 2 — Instalar
 Ejecutar el instalador como administrador en la máquina Windows elegida.
