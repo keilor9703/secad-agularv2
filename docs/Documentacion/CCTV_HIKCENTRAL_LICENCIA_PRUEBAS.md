@@ -396,6 +396,44 @@ del despachador tiene que poder abrir.
 > verificación de la §3.2 por separado: lista cámaras con credenciales buenas y
 > da 401 con un secreto equivocado.
 
+## 6c. Verificado contra hardware real — 27/09/2026
+
+Cadena completa probada contra un HikCentral Professional 3.1.1 con una cámara
+Hikvision iDS-2CD7A86G0-IZHS: licencia → OpenAPI → Partner → catálogo → URL de
+video → **reproducción en el navegador con hls.js**, el mismo reproductor del
+visor de SECAD.
+
+Cuatro hallazgos que valen para el despliegue en la Policía:
+
+**1. El video sale por el propio HikCentral, no por el servidor de streaming.**
+La URL devuelta tiene esta forma:
+
+```
+https://<ip-hikcentral>:443/proxy/<ip-hikcentral>:83/sms/HCPEurl/commonvideobiz_<token>/live.m3u8
+```
+
+El servicio interno de streaming (`BeeStream`, puerto 83) queda **detrás del
+proxy del puerto 443**. Es una buena noticia para la arquitectura: el navegador
+del despachador solo necesita alcanzar **un host y un puerto**, los mismos del
+Web Client. No hay que abrir una segunda ruta ni coordinar dos reglas de
+firewall, que era justo lo que íbamos a tener que preguntar.
+
+**2. El token va embebido en la URL.** Para HLS no hace falta usar el campo
+`authentication` que devuelve la API.
+
+**3. El manifiesto no declara el códec** (`CODECS` ausente), así que la
+detección temprana de H.265 no siempre avisa. La prueba real es que reproduzca.
+En este servidor el sub-stream estaba en H.264 sin tocar nada.
+
+**4. `bufferStalledError` es normal y no es fatal.** Aparece en HLS en vivo
+cuando el reproductor alcanza el borde de la emisión. No indica un problema.
+
+> **Cuidado con el servidor de la Policía:** este hallazgo vale para *esta*
+> topología, donde la OpenAPI y el streaming están en la misma máquina. Si allá
+> el streaming está en un servidor aparte (*Streaming Server* separado), la URL
+> podría apuntar a otro host y volvería la pregunta. Se comprueba en un minuto
+> con `hikcentral_probar.py` y `hls_probar.html`.
+
 ## 7. Qué pedirle al ingeniero de Hikvision ahora
 
 La lista completa está en `CCTV_HIKCENTRAL_CREAR_PARTNER.md`. Con la licencia ya
