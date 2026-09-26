@@ -319,6 +319,31 @@ curl.exe -sk -i -X POST https://127.0.0.1/artemis/api/resource/v1/cameras `
 Después de instalar el componente, ese mismo `curl` debe pasar de **502** a
 **401**: ese cambio es la señal de que el gateway quedó vivo.
 
+### Cómo se llaman los servicios de verdad
+
+Los servicios de HikCentral llevan el prefijo **`Bee`**, que es el nombre
+interno del producto. Buscar "HikCentral" o "artemis" entre los servicios no
+encuentra nada aunque todo esté bien. Los que importan, de un servidor 3.1.1
+real:
+
+| Servicio | Qué es |
+|---|---|
+| `SYS` · *BeeSYS* | **System Management Server**: el núcleo de la plataforma |
+| `STREAM` · *BeeStream Media Service* | **Servidor de streaming.** Es quien sirve el video al navegador; la URL que devuelve `previewURLs` apunta aquí |
+| `Nginx` … `Nginx5` | El proxy que publica el Web Client y enruta `/artemis` |
+| `PostgreSQL` | Base de datos de la plataforma |
+| `BeeAgent` | El *watchdog* que levanta y vigila a los demás |
+| `BeeOnvifGateway` | Pasarela ONVIF. **Arranca detenida**; si se van a usar cámaras ONVIF y fallan, mirar aquí |
+| `OpenDataServer` · `3rd Party Device Access Gateway` | Servicios de apertura e integración de dispositivos |
+
+Las cosas del OpenAPI (*artemis*, *artemis-portal*) **no aparecen como servicios
+de Windows** en esta versión: las gestiona el watchdog / Service Manager, no el
+administrador de servicios. Otra razón para fiarse del `curl` y no del
+inventario.
+
+> El **Service Manager** de HikCentral (la aplicación de bandeja del servidor)
+> es la herramienta canónica para ver, detener y arrancar todo esto.
+
 ### Si no está: de dónde se baja
 
 No viene en el instalador de la plataforma. Está en el **Technology Partner
