@@ -102,9 +102,32 @@ Ejecutar el instalador como administrador en la máquina Windows elegida.
 Instalación **centralizada** (todo en un mismo servidor) salvo que tengas razón
 para separar.
 
-### Paso 3 — Entrar al Web Client
+### Paso 3 — Entrar al Web Client y crear la contraseña de `admin`
 Desde el navegador: `https://<ip-del-servidor>` (el instalador indica el puerto).
-En el primer ingreso se crea la contraseña del usuario `admin`.
+En el primer ingreso aparece **Create Password**: es la contraseña del usuario
+`admin`, que tiene todos los permisos del sistema.
+
+- El sistema exige fuerza **Medium** y recomienda **Strong**: 8+ caracteres con
+  mayúsculas, minúsculas, números y un símbolo.
+- **Guárdala en el archivo de credenciales en ese mismo momento.** Recuperar la
+  contraseña de `admin` de HikCentral no es un "olvidé mi clave": exige un
+  procedimiento de reseteo con soporte de Hikvision.
+
+Tres cosas que conviene dejar resueltas aquí mismo:
+
+1. **`127.0.0.1` no sirve para SECAD.** Si abriste el Web Client desde el propio
+   servidor verás esa dirección, pero es local a esa máquina. Anota la **IP de
+   la red** (`ipconfig` en Windows) — esa es la que va en el campo *URL del
+   HikCentral* de la integración.
+2. **Firewall de Windows**: hay que permitir el puerto (443 por defecto) para
+   que SECAD y el navegador del despachador alcancen el servidor desde otra
+   máquina de la red.
+3. **El certificado es autofirmado** (el navegador dirá "No seguro"). Para el
+   backend de SECAD **no es problema**: el cliente HTTP del driver acepta
+   certificado propio (`Vms:AceptarCertificadoPropio`, por defecto `true` —
+   los HikCentral institucionales se despliegan igual). Para el navegador del
+   despachador sí implica aceptar la excepción la primera vez, o instalarle un
+   certificado válido al servidor.
 
 ### Paso 4 — Activar
 El sistema pide activar la licencia antes de dejarte operar:
