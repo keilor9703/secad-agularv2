@@ -161,6 +161,30 @@ es idioma y formato de fecha.
 
 Escribe el código **con los guiones, tal como llegó**.
 
+### Resultado de la activación — 26/09/2026
+
+La licencia quedó activada en el servidor de pruebas. Lo que trae:
+
+| Recurso | Cantidad |
+|---|---|
+| **Cámaras** | **36** (y 36 ONVIF) |
+| Personas / Vehículos / Usuarios | 100.000 / 500.000 / 10.000 |
+| Cámaras ANPR · AcuSeek · AcuSeek Advanced | 10 · 10 · 10 |
+| Puntos de acceso · Puertas | 10 · 10 |
+| Terminales de visitante · Dispositivos portátiles | 32 · 10 |
+
+> ⏳ **Vence el 26/12/2026** — 90 días exactos desde la activación. Esa es la
+> ventana real para montar las cámaras, terminar la integración y dejar
+> registrada la demo con la Policía.
+
+36 cámaras sobran para el piloto de Tunja, donde el censo se empareja contra un
+catálogo mucho menor.
+
+> ⚠️ **Esta lista no responde la pregunta de la OpenAPI.** Son los recursos
+> *contables* de la licencia; los módulos funcionales —entre ellos
+> **Third-Party Integration**— viven en otra pantalla, y ahí es donde hay que
+> mirar. Ver el paso siguiente.
+
 ### Paso 5 — Verificar que quedó bien
 En el Web Client, abre **License Details**. Debe verse:
 
