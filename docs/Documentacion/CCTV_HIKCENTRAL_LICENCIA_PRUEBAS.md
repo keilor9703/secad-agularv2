@@ -262,7 +262,19 @@ Get-Service | Where-Object { $_.Name -match 'artemis|OpenAPI' -or $_.DisplayName
 dir "C:\Program Files (x86)\VMSPlatform\VSM Servers\OpenAPI"
 ```
 
-Esa ruta es el directorio por defecto que indica el manual. Y en el Web Client:
+Esa ruta es el directorio por defecto que indica el manual, pero la plataforma
+puede haber quedado en otro sitio. Para saber dónde está de verdad y con qué
+versión exacta —que es la que debe coincidir con el paquete de OpenAPI—:
+
+```powershell
+Get-Service | Where-Object { $_.DisplayName -match 'HikCentral|VMS' } |
+    Select-Object Name, DisplayName, Status
+
+Get-ItemProperty HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*,
+                 HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\* |
+    Where-Object DisplayName -match 'HikCentral|VMS' |
+    Select-Object DisplayName, DisplayVersion, InstallLocation
+``` Y en el Web Client:
 si **System Configuration → Third-Party Integration → OpenAPI Gateway** ya
 aparece, el componente está y solo falta encenderlo.
 
@@ -275,7 +287,15 @@ curl.exe -sk -i -X POST https://127.0.0.1/artemis/api/resource/v1/cameras `
 
 - Responde **401** o un JSON con `code` → el gateway **está ahí** (rechaza por
   firma, que es lo correcto sin credenciales).
-- Responde **404** o la página del Web Client → **no está instalado**.
+- Responde **502 Bad Gateway** → la plataforma **ya tiene reservada la ruta
+  `/artemis`** en su proxy, pero detrás no hay nada escuchando: el componente
+  **no está instalado**. Es lo que se ve en una 3.1.1 recién instalada
+  (verificado el 26/09/2026).
+- Responde **404** o la página del Web Client → tampoco está, y además la ruta
+  ni siquiera está mapeada.
+
+Después de instalar el componente, ese mismo `curl` debe pasar de **502** a
+**401**: ese cambio es la señal de que el gateway quedó vivo.
 
 ### Si no está: de dónde se baja
 
