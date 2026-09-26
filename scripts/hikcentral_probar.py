@@ -208,7 +208,19 @@ def main():
     ap.add_argument("--verificar-tls", action="store_true",
                     help="Exigir certificado válido (por defecto se acepta el autofirmado)")
     ap.add_argument("-v", "--verboso", action="store_true", help="Mostrar la cadena firmada")
+    ap.add_argument("--solo-url", action="store_true",
+                    help="Imprimir ÚNICAMENTE la URL de video, para canalizarla "
+                         "a otro comando. En PowerShell: ... --solo-url | Set-Clipboard")
     a = ap.parse_args()
+
+    # Con --solo-url, stdout queda reservado para la URL: todo lo demás va a
+    # stderr. Así la salida se puede canalizar sin arrastrar adornos, que es
+    # justo donde se cuelan los errores al copiar a mano una URL de 400
+    # caracteres.
+    global print
+    if a.solo_url:
+        _print = print
+        print = lambda *x, **k: _print(*x, **{**k, "file": sys.stderr})
 
     print(f"→ {a.url}{RUTA_CAMARAS}")
     total_listadas = 0
@@ -289,7 +301,10 @@ def main():
         print("✗ El VMS respondió correctamente pero sin URL.")
         print(f"  respuesta cruda: {texto[:300]}")
         return 1
-    print(f"✓ {url}")
+    if a.solo_url:
+        sys.stdout.write(url + "\n")
+    else:
+        print(f"✓ {url}")
     if nodo.get("authentication"):
         print("  (trae además un campo 'authentication' para el stream)")
     print("\n  Esa URL es la que el navegador del despachador tiene que poder abrir.")
