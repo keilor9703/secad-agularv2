@@ -204,6 +204,31 @@ En el Web Client, abre **License Details**. Debe verse:
 
 ---
 
+## 5b. El paso "More" del asistente
+
+Seis pestañas que el asistente deja al final. Para lo nuestro:
+
+| Pestaña | Qué hacer |
+|---|---|
+| **WAN Access** | **Apagado.** Es para publicar servidores de una LAN hacia internet con mapeos NAT. En la red de pruebas no aplica |
+| **NTP** | **Vale la pena configurarlo** (ver abajo) |
+| **Transport Protocol** | Por defecto. Solo se toca si un dispositivo concreto exige otra cosa |
+| **Email Settings** | Opcional, solo para notificaciones |
+| **Person Picture Data** | No aplica: es de control de acceso y rostros |
+| **Address for Receiving Device Info** | La dirección a la que los dispositivos reportan. Si la máquina tiene varias interfaces —Wi-Fi, Ethernet y los adaptadores virtuales que dejan VirtualBox, VMware o Docker— hay que confirmar que sea la IP de la LAN donde están las cámaras, no una virtual |
+
+### Por qué el NTP importa para *esta* integración
+
+SECAD firma cada llamada con AK/SK y envía `x-ca-timestamp` y `x-ca-nonce`. El
+manual describe ese par como el mecanismo **anti-replay** de la plataforma
+(§3.2): el timestamp es el número de milisegundos desde 1970 en el momento de
+llamar. Si el reloj del servidor de HikCentral y el de quien llama quedan
+corridos entre sí, ese mecanismo puede rechazar peticiones perfectamente
+firmadas — y el síntoma es un 401 sin explicación, de los que cuestan horas.
+
+Con sincronizar la hora de ambas máquinas y dejar la zona horaria correcta
+(Colombia, UTC-5) se evita por completo.
+
 ## 6. Lo que sigue, una vez activada
 
 1. **Instalar el componente OpenAPI**: `VMSPlatform_OpenAPI.exe` como
