@@ -249,6 +249,56 @@ Con sincronizar la hora de ambas máquinas y dejar la zona horaria correcta
 
 ---
 
+## 6a. El componente de OpenAPI: saber si está y de dónde sale
+
+### ¿Ya está instalado?
+
+Instalarlo genera servicios propios —el manual nombra *OpenAPI Translation
+Service*, *artemis* y *artemis-portal* (§2.1)—, así que la comprobación es
+directa. En PowerShell, en el servidor:
+
+```powershell
+Get-Service | Where-Object { $_.Name -match 'artemis|OpenAPI' -or $_.DisplayName -match 'artemis|OpenAPI' }
+dir "C:\Program Files (x86)\VMSPlatform\VSM Servers\OpenAPI"
+```
+
+Esa ruta es el directorio por defecto que indica el manual. Y en el Web Client:
+si **System Configuration → Third-Party Integration → OpenAPI Gateway** ya
+aparece, el componente está y solo falta encenderlo.
+
+Una prueba más, que además confirma que el gateway responde:
+
+```powershell
+curl.exe -sk -i -X POST https://127.0.0.1/artemis/api/resource/v1/cameras `
+  -H "Content-Type: application/json;charset=UTF-8" -d "{}"
+```
+
+- Responde **401** o un JSON con `code` → el gateway **está ahí** (rechaza por
+  firma, que es lo correcto sin credenciales).
+- Responde **404** o la página del Web Client → **no está instalado**.
+
+### Si no está: de dónde se baja
+
+No viene en el instalador de la plataforma. Está en el **Technology Partner
+Portal**, que es justo lo contrario del instalador del servidor:
+
+| Qué | Dónde |
+|---|---|
+| HikCentral Professional (el servidor) | Centro de descargas público de hikvision.com |
+| **Componente de OpenAPI** (`VMSPlatform_OpenAPI.exe`) | **TPP → Resource** (`tpp.hikvision.com/tpp/Resource`), o *Integration Support → Download Integration Resources* en el panel del TPP |
+
+En el TPP, sección **HikCentral**, hay que bajar el paquete de OpenAPI de la
+**misma versión de la plataforma** (3.1.1). Trae, además del instalador, los
+SDKs: WebSDK, C++, C#, HttpUtillib y **jsDecoder** —este último es el
+reproductor sin plugin, el plan B si alguna cámara solo tiene H.265—.
+
+### Después de instalarlo
+
+Solo hay que encender la Open Platform (§2.2.2). El paso de **autenticar el
+certificado de servicio** (§2.2.1) aplica **únicamente al modo distribuido**,
+con la OpenAPI en otro servidor. En instalación centralizada, que es la nuestra,
+se salta.
+
 ## 6b. Probar la OpenAPI sin SECAD
 
 Cuando algo no funciona hay tres culpables posibles y se confunden entre sí: la
