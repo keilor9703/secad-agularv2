@@ -160,6 +160,10 @@ CODIGOS = {
     "0x00072204": "La licencia no habilita esta función. Revisar Third-Party Integration en License Details.",
     "64":         "Autenticación de usuario fallida. Es lo que responde el gateway a una petición sin "
                   "credenciales válidas; con AppKey/AppSecret correctos no debería aparecer.",
+    "69":         "La API existe y las credenciales son válidas, pero ESTA api no está autorizada al "
+                  "Partner. Web Client → OpenAPI Gateway → Basic Configuration → editar el Partner → "
+                  "Authorized APIs, y marcar la que falta (ojo: hay versiones v1 y v2 del mismo "
+                  "endpoint; el driver usa video/v2/cameras/previewURLs).",
 }
 
 
@@ -269,8 +273,10 @@ def main():
     cuerpo = json.loads(texto)
     if str(cuerpo.get("code")) != "0":
         print("✗ " + explicar_codigo(cuerpo.get("code"), cuerpo.get("msg")))
-        if a.protocol.startswith("hls"):
-            print("  Si el servidor es V3.1.0 no existe hls_s: prueba --protocol hls.")
+        # El aviso de hls_s solo aplica a errores de PARÁMETRO. Mostrarlo ante un
+        # problema de permisos manda a cambiar algo que no tiene nada que ver.
+        if a.protocol == "hls_s" and str(cuerpo.get("code")) in ("0x00072002", "0x00072003"):
+            print("  hls_s solo existe desde la OpenAPI V3.1.1: en un servidor 3.1.0, --protocol hls.")
         return 1
 
     url = (cuerpo.get("data") or {}).get("url")
