@@ -249,6 +249,36 @@ Con sincronizar la hora de ambas máquinas y dejar la zona horaria correcta
 
 ---
 
+## 6b. Probar la OpenAPI sin SECAD
+
+Cuando algo no funciona hay tres culpables posibles y se confunden entre sí: la
+red, las credenciales o SECAD. `scripts/hikcentral_probar.py` deja fuera a
+SECAD — firma igual que el driver y dice qué respondió el VMS:
+
+```bash
+python3 scripts/hikcentral_probar.py \
+    --url https://192.168.1.50:443 \
+    --app-key AK... --app-secret SK... --user-id svc_secad_cctv
+```
+
+Solo usa la biblioteca estándar de Python 3, así que corre en la misma máquina
+del HikCentral sin instalar nada más.
+
+- **Lista cámaras** → la red y las credenciales están bien; si SECAD falla, el
+  problema es de SECAD.
+- **401** → firma rechazada: AppKey/AppSecret, Partner deshabilitado o relojes
+  corridos.
+- **403** → firma correcta pero el usuario no tiene permiso sobre las cámaras.
+- **404** → el gateway de OpenAPI no está instalado o está apagado.
+- **Sin respuesta** → firewall, IP o red.
+
+Con `--camara <codigo>` pide además la URL de video, que es la que el navegador
+del despachador tiene que poder abrir.
+
+> Verificado contra `scripts/hikcentral_simulador.py`, que implementa la
+> verificación de la §3.2 por separado: lista cámaras con credenciales buenas y
+> da 401 con un secreto equivocado.
+
 ## 7. Qué pedirle al ingeniero de Hikvision ahora
 
 La lista completa está en `CCTV_HIKCENTRAL_CREAR_PARTNER.md`. Con la licencia ya

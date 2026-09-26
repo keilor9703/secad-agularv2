@@ -1,0 +1,253 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Probar la OpenAPI de HikCentral sin levantar SECAD.
+
+Para qué sirve
+──────────────
+Cuando la integración no funciona, hay tres cosas que pueden estar mal y se
+confunden entre sí: la red (no llego al servidor), las credenciales (la firma
+no cuadra) o SECAD. Este script deja fuera a SECAD: se ejecuta en cualquier
+máquina que alcance el HikCentral, firma igual que el driver y dice qué
+respondió el VMS.
+
+Si este script lista cámaras, el problema está en SECAD. Si no, el problema
+está antes y no vale la pena tocar SECAD todavía.
+
+Uso
+───
+    python3 scripts/hikcentral_probar.py \
+        --url https://192.168.1.50:443 \
+        --app-key AK... --app-secret SK... --user-id svc_secad_cctv
+
+    # y para probar el video de una cámara concreta
+    python3 scripts/hikcentral_probar.py --url ... --app-key ... \
+        --app-secret ... --user-id ... --camara 103
+
+No necesita instalar nada: solo la biblioteca estándar de Python 3.
+
+La firma es la §3.2 del Developer Guide, la misma que implementa
+`HikSignature.cs`. Si cambia una, hay que cambiar la otra.
+"""
+
+import argparse
+import base64
+import hashlib
+import hmac
+import json
+import ssl
+import sys
+import time
+import urllib.error
+import urllib.request
+import uuid
+
+CONTENT_TYPE = "application/json;charset=UTF-8"
+ACCEPT       = "application/json"
+
+RUTA_CAMARAS = "/artemis/api/resource/v1/cameras"
+RUTA_PREVIEW = "/artemis/api/video/v2/cameras/previewURLs"
+
+# El gateway excluye estas del cálculo aunque se envíen. Firmar una produce un
+# 401 que no dice por qué.
+NO_SE_FIRMAN = {
+    "x-ca-signature", "x-ca-signature-headers", "accept", "content-md5",
+    "content-type", "date", "content-length", "server", "connection",
+    "host", "transfer-encoding", "x-application-context", "content-encoding",
+}
+
+
+def firmables(cabeceras):
+    """Nombre en minúscula, valor recortado, orden alfabético."""
+    return sorted(
+        ((k.lower(), (v or "").strip()) for k, v in cabeceras.items()
+         if k.lower() not in NO_SE_FIRMAN),
+        key=lambda kv: kv[0],
+    )
+
+
+def cadena_a_firmar(metodo, accept, content_md5, content_type, date, cabeceras, uri):
+    """
+    MÉTODO \n Accept \n Content-MD5 \n Content-Type \n Date \n
+    cabeceras-firmadas
+    URI
+
+    Una cabecera ausente OMITE su línea entera; no deja una línea vacía.
+    """
+    partes = [metodo.upper() + "\n"]
+    for valor in (accept, content_md5, content_type, date):
+        if valor is not None:
+            partes.append(valor + "\n")
+    for k, v in firmables(cabeceras):
+        partes.append(f"{k}:{v}\n")
+    partes.append(uri)
+    return "".join(partes)
+
+
+def firmar(cadena, app_secret):
+    mac = hmac.new(app_secret.encode("utf-8"), cadena.encode("utf-8"), hashlib.sha256)
+    return base64.b64encode(mac.digest()).decode("ascii")
+
+
+def llamar(base_url, ruta, cuerpo, app_key, app_secret, user_id,
+           inseguro=True, timeout=15, verboso=False):
+    cuerpo_json = json.dumps(cuerpo, separators=(",", ":"))
+
+    firmadas = {
+        "x-ca-key":       app_key,
+        "x-ca-timestamp": str(int(time.time() * 1000)),
+        "x-ca-nonce":     str(uuid.uuid4()),
+        "userid":         user_id,
+    }
+    cadena = cadena_a_firmar("POST", ACCEPT, None, CONTENT_TYPE, None, firmadas, ruta)
+    firma  = firmar(cadena, app_secret)
+
+    if verboso:
+        print("── cadena firmada ──")
+        print(cadena.replace("\n", "\\n\n"))
+        print("── firma ──")
+        print(firma, "\n")
+
+    cabeceras = {
+        "Accept":                 ACCEPT,
+        "Content-Type":           CONTENT_TYPE,
+        "X-Ca-Key":               app_key,
+        "X-Ca-Signature":         firma,
+        "X-Ca-Signature-Headers": ",".join(k for k, _ in firmables(firmadas)),
+    }
+    for k, v in firmadas.items():
+        if k != "x-ca-key":
+            cabeceras[k] = v
+
+    req = urllib.request.Request(
+        base_url.rstrip("/") + ruta,
+        data=cuerpo_json.encode("utf-8"),
+        headers=cabeceras,
+        method="POST",
+    )
+
+    # El HikCentral se instala con certificado autofirmado. SECAD hace lo mismo
+    # (Vms:AceptarCertificadoPropio) porque los institucionales también lo son.
+    ctx = ssl._create_unverified_context() if inseguro else None
+
+    try:
+        with urllib.request.urlopen(req, timeout=timeout, context=ctx) as r:
+            return r.status, r.read().decode("utf-8", "replace")
+    except urllib.error.HTTPError as e:
+        return e.code, e.read().decode("utf-8", "replace")
+    except urllib.error.URLError as e:
+        return None, f"{type(e.reason).__name__}: {e.reason}"
+
+
+def explicar(estado, texto):
+    """Traduce el fallo a lo que hay que revisar."""
+    if estado is None:
+        return ("No hubo respuesta: el servidor no es alcanzable desde esta máquina.\n"
+                "  · ¿La IP y el puerto son los correctos?\n"
+                "  · ¿El firewall de Windows deja pasar el 443?\n"
+                "  · ¿Estás en la misma red que el HikCentral?")
+    if estado == 401:
+        return ("401: el gateway rechazó la firma.\n"
+                "  · AppKey/AppSecret equivocados, o el Partner quedó deshabilitado.\n"
+                "  · Relojes desincronizados (x-ca-timestamp se usa como anti-replay).")
+    if estado == 403:
+        return ("403: la firma se aceptó pero el usuario no tiene permiso.\n"
+                "  · Revisa que el userId esté vinculado al Partner y tenga acceso a las cámaras.")
+    if estado == 404:
+        return ("404: la ruta no existe en este servidor.\n"
+                "  · ¿El componente de OpenAPI está instalado y el gateway encendido?")
+    return f"HTTP {estado}."
+
+
+def main():
+    ap = argparse.ArgumentParser(description="Probar la OpenAPI de HikCentral.")
+    ap.add_argument("--url",        required=True, help="https://IP:PUERTO del HikCentral")
+    ap.add_argument("--app-key",    required=True)
+    ap.add_argument("--app-secret", required=True)
+    ap.add_argument("--user-id",    required=True, help="Usuario vinculado al Partner")
+    ap.add_argument("--camara",     help="cameraIndexCode para pedir además la URL de video")
+    ap.add_argument("--protocol",   default="hls_s", help="hls_s (por defecto) | hls")
+    ap.add_argument("--stream-type", type=int, default=1, help="1 = sub-stream | 0 = main")
+    ap.add_argument("--paginas",    type=int, default=1, help="Cuántas páginas de 20 listar")
+    ap.add_argument("--verificar-tls", action="store_true",
+                    help="Exigir certificado válido (por defecto se acepta el autofirmado)")
+    ap.add_argument("-v", "--verboso", action="store_true", help="Mostrar la cadena firmada")
+    a = ap.parse_args()
+
+    print(f"→ {a.url}{RUTA_CAMARAS}")
+    total_listadas = 0
+    primera = None
+
+    for pagina in range(1, a.paginas + 1):
+        estado, texto = llamar(
+            a.url, RUTA_CAMARAS, {"pageNo": pagina, "pageSize": 20},
+            a.app_key, a.app_secret, a.user_id,
+            inseguro=not a.verificar_tls, verboso=a.verboso and pagina == 1)
+
+        if estado != 200:
+            print(f"\n✗ {explicar(estado, texto)}")
+            if texto:
+                print(f"\n  respuesta: {texto[:400]}")
+            return 1
+
+        try:
+            cuerpo = json.loads(texto)
+        except json.JSONDecodeError:
+            print(f"\n✗ El servidor respondió 200 pero no es JSON:\n  {texto[:300]}")
+            return 1
+
+        if str(cuerpo.get("code")) != "0":
+            print(f"\n✗ La API respondió code={cuerpo.get('code')} msg={cuerpo.get('msg')}")
+            print("  code distinto de 0 es un error de la plataforma, no de la red.")
+            return 1
+
+        datos = cuerpo.get("data") or {}
+        lista = datos.get("list") or []
+        if pagina == 1:
+            print(f"\n✓ Conexión y firma correctas. Cámaras en el sistema: {datos.get('total')}\n")
+            print(f"  {'cameraIndexCode':<40} {'estado':<10} nombre")
+            print(f"  {'-'*40} {'-'*10} {'-'*30}")
+
+        for c in lista:
+            estado_cam = {1: "en línea", 0: "fuera"}.get(c.get("status"), str(c.get("status")))
+            print(f"  {str(c.get('cameraIndexCode')):<40} {estado_cam:<10} {c.get('cameraName')}")
+            primera = primera or c.get("cameraIndexCode")
+        total_listadas += len(lista)
+        if not lista:
+            break
+
+    if total_listadas == 0:
+        print("\n⚠ La API respondió bien pero no hay ninguna cámara.")
+        print("  Agrega al menos una en Device → Device y asígnala a un Area:")
+        print("  sin cámaras el catálogo de SECAD llegaría vacío.")
+        return 0
+
+    codigo = a.camara or primera
+    print(f"\n→ URL de video de {codigo} (protocol={a.protocol}, streamType={a.stream_type})")
+    estado, texto = llamar(
+        a.url, RUTA_PREVIEW,
+        {"cameraIndexCodes": codigo, "cameraIndexCode": codigo,
+         "streamType": a.stream_type, "protocol": a.protocol, "transmode": 1},
+        a.app_key, a.app_secret, a.user_id, inseguro=not a.verificar_tls)
+
+    if estado != 200:
+        print(f"✗ {explicar(estado, texto)}\n  respuesta: {texto[:300]}")
+        return 1
+
+    cuerpo = json.loads(texto)
+    if str(cuerpo.get("code")) != "0":
+        print(f"✗ code={cuerpo.get('code')} msg={cuerpo.get('msg')}")
+        if a.protocol.startswith("hls"):
+            print("  Si el servidor es V3.1.0 no existe hls_s: prueba --protocol hls.")
+        return 1
+
+    url = (cuerpo.get("data") or {}).get("url")
+    print(f"✓ {url}")
+    print("\n  Esa URL es la que el navegador del despachador tiene que poder abrir.")
+    print("  Si el host que aparece ahí no es alcanzable desde el puesto de")
+    print("  despacho, el video no se verá aunque la integración esté bien.")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
