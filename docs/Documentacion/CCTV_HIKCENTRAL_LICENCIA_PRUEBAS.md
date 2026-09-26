@@ -130,7 +130,26 @@ Tres cosas que conviene dejar resueltas aquí mismo:
    certificado válido al servidor.
 
 ### Paso 4 — Activar
-El sistema pide activar la licencia antes de dejarte operar:
+
+Al entrar arranca un asistente de cuatro pasos: **Activate License → Storage on
+SYS Server → User Preference → More**. El primero es el que importa, y tiene
+tres decisiones que conviene no equivocar:
+
+| Campo | Qué poner |
+|---|---|
+| **Activation Type** | *Online* si el servidor llega a internet; si no, *Offline* |
+| **Machine Environment Type** | **Physical Machine** solo si es un equipo físico. Si HikCentral está sobre VMware/Hyper-V/VirtualBox hay que marcar **Virtual Machine**: la huella con la que se amarra la licencia se calcula distinto y equivocarse aquí es de las cosas que obligan a reactivar |
+| **Hot Spare** | **Apagado.** Es para un par de servidores SYS redundantes; no aplica a un servidor de pruebas |
+
+El botón **`+`** al lado del código sirve para agregar *varios* códigos (base y
+complementos). Con un solo código de prueba se ignora.
+
+Los dos pasos siguientes del asistente no tienen misterio para lo nuestro:
+*Storage on SYS Server* configura dónde se graba —la integración con SECAD solo
+usa video en vivo, así que los valores por defecto sirven— y *User Preference*
+es idioma y formato de fecha.
+
+**Formas de activar:**
 
 - **Online Activation** (lo normal): pegar el código de activación. El servidor
   necesita salida a internet para hablar con el servicio de licencias de
