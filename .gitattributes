@@ -1,0 +1,4 @@
+
+# Los .ps1 van con CRLF y BOM: PowerShell 5.1 lee sin BOM como ANSI y
+# rompe el script al toparse con caracteres multibyte.
+*.ps1 text eol=crlf working-tree-encoding=UTF-8

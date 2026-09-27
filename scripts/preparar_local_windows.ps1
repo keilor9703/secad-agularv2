@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Deja lista la base de datos de SECAD en un Windows local, sin Docker.
 
@@ -7,8 +7,8 @@
     integración de cámaras contra un VMS real.
 
     No hay runner de migraciones: el esquema se pone al día aplicando la lista
-    COMPLETA en orden, que vive en docs/sql/master/_orden.*.txt. Es repetible —
-    verificado sobre PostgreSQL 16, dos pasadas seguidas, cero errores—, así
+    COMPLETA en orden, que vive en docs/sql/master/_orden.*.txt. Es repetible -
+    verificado sobre PostgreSQL 16, dos pasadas seguidas, cero errores-, así
     que si algo falla a mitad se corrige y se vuelve a lanzar entero.
 
     Crea dos bases: la MAESTRA (que sabe qué CAD vive en qué base) y una de
@@ -41,7 +41,7 @@ $ErrorActionPreference = "Stop"
 $env:PGCLIENTENCODING = "UTF8"
 $env:PGPASSWORD       = $Password
 
-# ── Localizar psql ────────────────────────────────────────────────────────
+# -- Localizar psql --------------------------------------------------------
 if ($PgBin) {
     $psql = Join-Path $PgBin "psql.exe"
 } else {
@@ -81,7 +81,7 @@ function Aplicar-Orden {
     $lista = Get-Content $Manifiesto -Encoding UTF8 |
              Where-Object { $_.Trim() -ne "" -and -not $_.Trim().StartsWith("#") }
     Write-Host ""
-    Write-Host "  $Titulo — $($lista.Count) archivos sobre $Base" -ForegroundColor Cyan
+    Write-Host "  $Titulo - $($lista.Count) archivos sobre $Base" -ForegroundColor Cyan
     $i = 0
     foreach ($nombre in $lista) {
         $i++
@@ -93,26 +93,26 @@ function Aplicar-Orden {
 }
 
 Write-Host "==========================================================" -ForegroundColor Yellow
-Write-Host "  SECAD — preparar base de datos local"                     -ForegroundColor Yellow
+Write-Host "  SECAD - preparar base de datos local"                     -ForegroundColor Yellow
 Write-Host "    psql    : $psql"
 Write-Host "    servidor: ${PgHost}:${Puerto}  usuario: $Usuario"
 Write-Host "    maestra : $BaseMaestra     tenant: $BaseTenant  (cod_dane $CodDane)"
 Write-Host "==========================================================" -ForegroundColor Yellow
 
-# ── 1. Conexión ───────────────────────────────────────────────────────────
+# -- 1. Conexión -----------------------------------------------------------
 Write-Host ""
-Write-Host "1/4 · Probando la conexión" -ForegroundColor Cyan
+Write-Host "1/4 - Probando la conexión" -ForegroundColor Cyan
 $v = & $psql -h $PgHost -p $Puerto -U $Usuario -d postgres -t -A -c "SELECT version()"
 if ($LASTEXITCODE -ne 0) {
     Write-Host "No se pudo conectar. Revisa que el servicio de PostgreSQL esté" -ForegroundColor Red
     Write-Host "arriba, y que el puerto y la contraseña sean los correctos."    -ForegroundColor Red
     exit 1
 }
-Write-Host "   $($v.Substring(0, [Math]::Min(50, $v.Length)))…"
+Write-Host "   $($v.Substring(0, [Math]::Min(50, $v.Length)))..."
 
-# ── 2. Bases de datos ─────────────────────────────────────────────────────
+# -- 2. Bases de datos -----------------------------------------------------
 Write-Host ""
-Write-Host "2/4 · Bases de datos" -ForegroundColor Cyan
+Write-Host "2/4 - Bases de datos" -ForegroundColor Cyan
 foreach ($b in @($BaseMaestra, $BaseTenant)) {
     $existe = & $psql -h $PgHost -p $Puerto -U $Usuario -d postgres -t -A `
                       -c "SELECT 1 FROM pg_database WHERE datname = '$b'"
@@ -124,18 +124,18 @@ foreach ($b in @($BaseMaestra, $BaseTenant)) {
     }
 }
 
-# ── 3. Esquemas ───────────────────────────────────────────────────────────
+# -- 3. Esquemas -----------------------------------------------------------
 Write-Host ""
-Write-Host "3/4 · Aplicando el esquema (repetible)" -ForegroundColor Cyan
+Write-Host "3/4 - Aplicando el esquema (repetible)" -ForegroundColor Cyan
 Aplicar-Orden -Manifiesto (Join-Path $sqlDir "_orden.master.txt") -Base $BaseMaestra -Titulo "MAESTRA"
 Aplicar-Orden -Manifiesto (Join-Path $sqlDir "_orden.tenant.txt") -Base $BaseTenant  -Titulo "TENANT"
 
-# ── 4. Registrar el CAD en la maestra ─────────────────────────────────────
+# -- 4. Registrar el CAD en la maestra -------------------------------------
 # V1 siembra el tenant 11001 apuntando a localhost:5433. Aquí se corrige con
 # los datos REALES de esta instalación: si no coinciden, el backend levanta
 # pero no encuentra la base del CAD y todo responde vacío.
 Write-Host ""
-Write-Host "4/4 · Registrando el CAD en la maestra" -ForegroundColor Cyan
+Write-Host "4/4 - Registrando el CAD en la maestra" -ForegroundColor Cyan
 $sqlTenant = @"
 INSERT INTO secad_tenants
     (cod_dane, cod_unidad, nombre, departamento, municipio,
@@ -152,7 +152,7 @@ ON CONFLICT (cod_dane) DO UPDATE SET
     activo      = TRUE;
 "@
 Invoke-Psql -Base $BaseMaestra -Sql $sqlTenant
-Write-Host "   tenant $CodDane → $BaseTenant en ${PgHost}:${Puerto}" -ForegroundColor Green
+Write-Host "   tenant $CodDane -> $BaseTenant en ${PgHost}:${Puerto}" -ForegroundColor Green
 
 $usuarios = Invoke-Psql -Base $BaseTenant -Sql "SELECT count(*) FROM ctr_usuarios"
 Write-Host "   usuarios en el CAD: $usuarios  (V2 siembra 'admin')"
