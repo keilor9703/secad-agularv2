@@ -58,8 +58,16 @@
       <div class="cv__marco">
         <!-- El <video> se mantiene siempre en el DOM: si se destruyera al mostrar
              un mensaje, hls.js perdería el elemento al que se enganchó. -->
-        <video #video class="cv__video" playsinline muted controls
-               [class.cv__video--oculto]="!!error() || cargando()"></video>
+        @if (!usaJsDecoder()) {
+          <video #video class="cv__video" playsinline muted controls
+                 [class.cv__video--oculto]="!!error() || cargando()"></video>
+        } @else {
+          <!-- El jsDecoder de Hikvision pinta sobre un div, no sobre un <video>,
+               y el manual dice que tiene que ser un div —ni iframe ni ventana
+               aparte—. Ver jsdecoder.ts. -->
+          <div #lienzo class="cv__video cv__lienzo"
+               [class.cv__video--oculto]="!!error() || cargando()"></div>
+        }
 
         @if (cargando()) {
           <div class="cv__estado">

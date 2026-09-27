@@ -47,8 +47,11 @@ namespace Api.Controllers.Operacion
         }
 
         /// <summary>
-        /// URL para reproducir una cámara en vivo. La URL es de corta vida y no
-        /// se guarda; cada consulta queda auditada.
+        /// URL para reproducir una cámara en vivo.
+        ///
+        /// Ojo con la caducidad: el manual la describe como «permanently valid»,
+        /// así que NO caduca sola. No se guarda en ninguna parte, se pide de
+        /// nuevo en cada apertura y cada consulta queda auditada.
         /// </summary>
         [HttpGet("{codigo}/stream")]
         public async Task<IActionResult> Stream(

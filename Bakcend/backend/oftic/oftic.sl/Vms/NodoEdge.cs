@@ -70,12 +70,56 @@ namespace Servicios.Vms
             var prefijo = edge.AbsolutePath.TrimEnd('/');
             if (prefijo == "/") prefijo = string.Empty;
 
-            return new UriBuilder(edge.Scheme, edge.Host, edge.IsDefaultPort ? -1 : edge.Port)
+            // Un stream de WebSocket o RTSP no se puede reescribir con el
+            // esquema del edge a secas: dejaría «http://» en una URL que el
+            // navegador tiene que abrir como «wss://», y no conectaría nunca.
+            // Ver EsquemaEquivalente.
+            var esquema = EsquemaEquivalente(original.Scheme, edge.Scheme);
+            if (esquema is null)
+                // Esquema que el proxy HTTP del edge no atiende (rtsp, rtmp): se
+                // cambia solo el host y se conserva puerto y esquema, porque lo
+                // que haría falta ahí es un reenvío TCP del MISMO puerto, no el
+                // proxy de HTTP. Si el edge no lo tiene montado, esto no
+                // funciona —y es mejor que devolver una URL http:// que tampoco
+                // habría funcionado y además engaña sobre el motivo—.
+                return new UriBuilder(original.Scheme, edge.Host,
+                                      original.IsDefaultPort ? -1 : original.Port)
+                {
+                    Path     = original.AbsolutePath,
+                    Query    = original.Query.TrimStart('?'),
+                    Fragment = original.Fragment.TrimStart('#'),
+                }.Uri.ToString();
+
+            return new UriBuilder(esquema, edge.Host, edge.IsDefaultPort ? -1 : edge.Port)
             {
                 Path     = prefijo + original.AbsolutePath,
                 Query    = original.Query.TrimStart('?'),
                 Fragment = original.Fragment.TrimStart('#'),
             }.Uri.ToString();
+        }
+
+        /// <summary>
+        /// Con qué esquema debe salir la URL reescrita.
+        ///
+        /// La regla es: la FAMILIA la manda la URL original —si el VMS devolvió
+        /// un WebSocket, sigue siendo un WebSocket— y el CIFRADO lo manda el
+        /// edge, porque es el edge quien termina la conexión del navegador. Así,
+        /// un «ws://vms/...» detrás de un edge con TLS sale como «wss://edge/...»,
+        /// que es lo correcto: el tramo que ve el navegador va cifrado.
+        ///
+        /// Devuelve null cuando el esquema no lo atiende un proxy de HTTP.
+        /// </summary>
+        private static string? EsquemaEquivalente(string original, string esquemaEdge)
+        {
+            var edgeSeguro = esquemaEdge.Equals("https", StringComparison.OrdinalIgnoreCase)
+                          || esquemaEdge.Equals("wss",   StringComparison.OrdinalIgnoreCase);
+
+            return original.ToLowerInvariant() switch
+            {
+                "http" or "https" => edgeSeguro ? "https" : "http",
+                "ws"   or "wss"   => edgeSeguro ? "wss"   : "ws",
+                _                 => null,
+            };
         }
 
         private static string Limpiar(string? u) => (u ?? string.Empty).Trim().TrimEnd('/');

@@ -35,7 +35,8 @@ Uso
 Endpoints que atiende
 ─────────────────────
     POST /artemis/api/resource/v1/cameras          catálogo paginado
-    POST /artemis/api/video/v2/cameras/previewURLs URL de video
+    POST /artemis/api/video/v2/cameras/previewURLs URL de video (lote, data.list[])
+    POST /artemis/api/video/v1/cameras/previewURLs URL de video (una, data.url)
     POST /artemis/api/video/v1/ptzs/controlling    control PTZ (arranca / para)
     GET  /hls/<id>.m3u8                            manifiesto de prueba
     GET  /__diagnostico                            qué ha visto el simulador
@@ -151,26 +152,70 @@ class Handler(BaseHTTPRequestHandler):
                 "list": CFG["camaras"][(n - 1) * t: n * t]}})
 
         if self.path == "/artemis/api/video/v2/cameras/previewURLs":
-            cod = req.get("cameraIndexCodes") or req.get("cameraIndexCode")
-            if not any(c["cameraIndexCode"] == cod for c in CFG["camaras"]):
-                return self._responder(200, {"code": "0x02100003", "msg": "Camera does not exist"})
-            # El real falla así cuando piden HLS de un main stream en H.265.
-            if req.get("protocol", "").startswith("hls") and int(req.get("streamType", 0)) != 1:
-                return self._responder(200, {"code": "0", "msg": "Success", "data": {"list": []}})
-            base = CFG["url_publica"].rstrip("/")
-            # La v2 es POR LOTES y devuelve data.list[]. El simulador devolvía
-            # «data.url», que es la forma de la v1: reproducía mi lectura
-            # equivocada del manual y por eso nunca detectó el fallo. Lo
-            # encontró el HikCentral real. Ahora responde como §5.4.13.
-            return self._responder(200, {"code": "0", "msg": "Success", "data": {
-                "list": [{
-                    "url": f"{base}/hls/{cod}_{req.get('streamType')}.m3u8",
-                    "authentication": "token-efimero-de-prueba"}]}})
+            return self._preview(req, v1=False)
+
+        if self.path == "/artemis/api/video/v1/cameras/previewURLs":
+            return self._preview(req, v1=True)
 
         if self.path == "/artemis/api/video/v1/ptzs/controlling":
             return self._ptz(req)
 
         return self._responder(404, {"code": "0x02404", "msg": "Not found"})
+
+    def _preview(self, req, v1):
+        """
+        URL de video. Las dos versiones del endpoint existen de verdad y NO son
+        intercambiables:
+
+        - v2 (§5.4.13) es por LOTES y responde «data.list[0].url».
+        - v1 (§5.4.12) es de una cámara y responde «data.url», y es la única que
+          lleva «requestWebsocketProtocol» en el cuerpo — obligatorio cuando
+          protocol es «websocket».
+
+        El simulador devolvía la forma de la v1 para la v2, reproduciendo mi
+        lectura equivocada del manual: por eso nunca detectó el fallo y lo
+        encontró el HikCentral real.
+
+        Sobre la v2 con protocol «websocket»: aquí se rechaza, porque es lo que
+        se deduce de que el campo obligatorio no exista en su cuerpo. Eso es una
+        DEDUCCIÓN del manual, no algo comprobado contra hardware — lo que esta
+        regla protege de verdad es que el driver no vuelva a pedir websocket por
+        la v2. Confirmar qué hace el HikCentral real en ese caso está pendiente.
+        """
+        cod = req.get("cameraIndexCodes") or req.get("cameraIndexCode")
+        if not any(c["cameraIndexCode"] == cod for c in CFG["camaras"]):
+            return self._responder(200, {"code": "0x02100003", "msg": "Camera does not exist"})
+
+        protocolo = (req.get("protocol") or "rtsp").lower()
+        base = CFG["url_publica"].rstrip("/")
+
+        if protocolo in ("websocket", "websocket_s"):
+            if not v1:
+                return self._responder(200, {"code": "0x00000002", "msg":
+                    "websocket requires requestWebsocketProtocol, absent from the v2 request body"})
+            if protocolo == "websocket" and req.get("requestWebsocketProtocol") not in (0, 1):
+                return self._responder(200, {"code": "0x00000002", "msg":
+                    "requestWebsocketProtocol is required when protocol is websocket"})
+            # wss cuando lo pide el campo, o cuando el nombre ya dice seguro.
+            seguro = protocolo == "websocket_s" or req.get("requestWebsocketProtocol") == 1
+            host = base.split("://", 1)[-1]
+            url = f"{'wss' if seguro else 'ws'}://{host}/ws/{cod}?token=simulado"
+            return self._responder(200, self._forma(v1, url))
+
+        # El real falla así cuando piden HLS de un main stream en H.265.
+        if protocolo.startswith("hls") and int(req.get("streamType", 0)) != 1:
+            return self._responder(200, {"code": "0", "msg": "Success",
+                                         "data": {"list": []} if not v1 else {}})
+
+        return self._responder(
+            200, self._forma(v1, f"{base}/hls/{cod}_{req.get('streamType')}.m3u8"))
+
+    @staticmethod
+    def _forma(v1, url):
+        """La v1 devuelve la URL suelta; la v2, una lista."""
+        nodo = {"url": url, "authentication": "token-de-prueba"}
+        return {"code": "0", "msg": "Success",
+                "data": nodo if v1 else {"list": [nodo]}}
 
     def _ptz(self, req):
         """

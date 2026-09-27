@@ -1,4 +1,4 @@
-// Prueba de integración del control PTZ.
+// Prueba de integración del control PTZ y del protocolo de video.
 //
 // Ejercita el CAMINO REAL: DbCamaraService -> HikCentralVmsReader (que firma de
 // verdad y habla HTTP) -> simulador, y DbCamaraRepository -> PostgreSQL de
@@ -219,7 +219,68 @@ else
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
-Console.WriteLine("\n9) Firmas");
+Console.WriteLine("\n9) Protocolo de video: qué endpoint y qué reproductor");
+await Reset();
+
+// HLS va por la v2 (por lotes, data.list[0].url).
+var hls = await svc.ObtenerStreamAsync("1002", SITIO, null, 5, "operador1", null, ct);
+Afirmar(hls.Ok, $"HLS entregado: {hls.Mensaje}");
+Afirmar(hls.Datos?.Url.EndsWith(".m3u8") == true, $"URL de HLS: {hls.Datos?.Url ?? "(nada)"}");
+Afirmar(hls.Datos?.Reproductor == "hls", $"reproductor «{hls.Datos?.Reproductor ?? "(nada)"}»");
+var rutas = (await Diag()).GetProperty("peticiones").EnumerateArray().Select(x => x.GetString()).ToList();
+Afirmar(rutas.Contains("/artemis/api/video/v2/cameras/previewURLs"), "HLS fue por la v2");
+
+// WebSocket tiene que ir por la v1: es la única que lleva
+// requestWebsocketProtocol, y el simulador rechaza pedirlo por la v2.
+await Ejecutar("UPDATE cad_camara_integracion SET config_publico = "
+             + "jsonb_set(config_publico, '{protocol}', '\"websocket\"')");
+await Reset();
+var ws = await svc.ObtenerStreamAsync("1002", SITIO, null, 5, "operador1", null, ct);
+Afirmar(ws.Ok, $"WebSocket entregado: {ws.Mensaje}");
+Afirmar(ws.Datos?.Url.StartsWith("wss://") == true, $"URL segura de WebSocket: {ws.Datos?.Url ?? "(nada)"}");
+Afirmar(ws.Datos?.Reproductor == "jsdecoder",
+    $"el backend avisa de que hace falta el jsDecoder («{ws.Datos?.Reproductor ?? "(nada)"}»)");
+rutas = (await Diag()).GetProperty("peticiones").EnumerateArray().Select(x => x.GetString()).ToList();
+Afirmar(rutas.Contains("/artemis/api/video/v1/cameras/previewURLs"),
+    $"WebSocket fue por la v1 (rutas vistas: {string.Join(", ", rutas)})");
+
+// websocket_s no manda requestWebsocketProtocol: el nombre ya dice seguro.
+await Ejecutar("UPDATE cad_camara_integracion SET config_publico = "
+             + "jsonb_set(config_publico, '{protocol}', '\"websocket_s\"')");
+var wss = await svc.ObtenerStreamAsync("1002", SITIO, null, 5, "operador1", null, ct);
+Afirmar(wss.Ok && wss.Datos?.Url.StartsWith("wss://") == true, $"websocket_s entregado: {wss.Mensaje}");
+
+// Y se deja como estaba, que es lo que funciona hoy en producción.
+await Ejecutar("UPDATE cad_camara_integracion SET config_publico = "
+             + "jsonb_set(config_publico, '{protocol}', '\"hls_s\"')");
+
+// ═════════════════════════════════════════════════════════════════════════════
+Console.WriteLine("\n10) Reescritura por el nodo edge");
+// Un ws:// reescrito con el esquema del edge saldría como http:// y el navegador
+// no conectaría nunca. La familia la manda la URL original; el cifrado, el edge.
+var casos = new (string Url, string Edge, string Esperado, string Porque)[]
+{
+    ("http://10.1.1.5:83/hls/a.m3u8",  "https://edge.local",
+     "https://edge.local/hls/a.m3u8",  "http tras un edge con TLS sale https"),
+    ("ws://10.1.1.5:559/ws/1?t=x",     "https://edge.local",
+     "wss://edge.local/ws/1?t=x",      "ws tras un edge con TLS sale wss, no https"),
+    ("wss://10.1.1.5:559/ws/1",        "http://edge.local:8080",
+     "ws://edge.local:8080/ws/1",      "wss tras un edge sin TLS baja a ws"),
+    ("https://10.1.1.5/proxy/x/a.m3u8", "https://edge.local/vms",
+     "https://edge.local/vms/proxy/x/a.m3u8", "se respeta el prefijo del edge"),
+    ("rtsp://10.1.1.5:554/Streaming/1", "https://edge.local",
+     "rtsp://edge.local:554/Streaming/1", "rtsp conserva esquema y puerto"),
+};
+foreach (var c in casos)
+{
+    var obtenido = Servicios.Vms.NodoEdge.ReescribirOrigen(c.Url, c.Edge).TrimEnd('/');
+    Afirmar(obtenido == c.Esperado.TrimEnd('/'), $"{c.Porque} → {obtenido}");
+}
+Afirmar(Servicios.Vms.NodoEdge.ReescribirOrigen("ws://vms/x", null) == "ws://vms/x",
+    "sin edge configurado, la URL no se toca");
+
+// ═════════════════════════════════════════════════════════════════════════════
+Console.WriteLine("\n11) Firmas");
 var fin = await Diag();
 Afirmar(fin.GetProperty("firmas_mal").GetArrayLength() == 0,
     $"el simulador validó todas las firmas ({fin.GetProperty("firmas_mal")})");

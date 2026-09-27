@@ -305,6 +305,18 @@ Lo que **no** se debe hacer es abrir `connect-src` a `https:` en general: eso
 deja que cualquier XSS exfiltre datos a donde quiera, y la CSP dejaría de
 servir para lo que está.
 
+### El video por WebSocket no necesita nada de esto, y conviene saber por qué
+
+Un stream `wss://` lo gobierna también `connect-src`, igual que hls.js. Pero la
+CSP de producción **ya trae `ws: wss:`** —sin host— porque la videollamada los
+necesita. Consecuencia: si se configura una integración con protocolo
+`websocket_s`, el video pasa la CSP sin tocar nada.
+
+Eso es cómodo y a la vez es una grieta: `wss:` a secas permite abrir un
+WebSocket contra cualquier servidor del mundo. No se cambia aquí porque
+recortarlo sin revisar la videollamada la rompería, pero queda anotado como
+tarea aparte: acotar `ws:`/`wss:` a los hosts que de verdad se usan.
+
 ### Para probar en local
 
 Mientras se decide, en una instalación de pruebas basta con añadir el host a

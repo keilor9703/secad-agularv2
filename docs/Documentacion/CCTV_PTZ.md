@@ -205,12 +205,12 @@ las nueve pruebas.
 
 ## 7. Lo que NO entra todavía
 
-- **Latencia.** El HLS de HikCentral llega con ~7 s de retraso (segmentos de
-  1,665 s + búfer de 3). Para mirar una cámara no cambia ninguna decisión, pero
-  **para mover una cámara sí**: el operador corrige contra una imagen de hace
-  siete segundos y se pasa de largo. La ruta para bajarlo a 1–3 s es el
-  jsDecoder de Hikvision por WebSocket. Con PTZ confirmado, deja de ser
-  opcional. Ver `CCTV_HIKCENTRAL_DISENO_TECNICO.md` §11, fase 2.
+- **Latencia.** El HLS de HikCentral llega con ~7 s de retraso. Para mirar una
+  cámara no cambia ninguna decisión, pero **para mover una cámara sí**: el
+  operador corrige contra una imagen de hace siete segundos y se pasa de largo.
+  Hay dos caminos para bajarlo a 1–3 s y están comparados en
+  **`CCTV_LATENCIA.md`**; el backend ya sabe pedir video por WebSocket y el
+  visor ya elige reproductor, pero falta decidir la ruta y conseguir sus piezas.
 - **Enfoque e iris** (`FOCUS_NEAR`, `FOUCS_FAR`, `IRIS_ENLARGE`, `IRIS_REDUCE`):
   el backend los acepta; el mando del visor no los muestra, porque en una
   cámara con enfoque automático solo sirven para desenfocarla.

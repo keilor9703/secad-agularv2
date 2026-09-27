@@ -8,7 +8,7 @@ import { Observable, of, timer } from 'rxjs';
 import { delay, map } from 'rxjs/operators';
 import { CamaraVisorComponent } from './camara-visor.component';
 import {
-  CamaraService, DtoCamara, DtoPtzPeticion, DtoPtzResultado, PTZ,
+  CamaraService, DtoCamara, DtoPtzPeticion, DtoPtzResultado, PTZ, Reproductor,
 } from '../../../../core/services/operacion/camara.service';
 
 /** Cámara PTZ de prueba. */
@@ -27,10 +27,15 @@ class CamaraServiceFalso {
   siguienteFalla = false;
   detenida = true;
 
+  /** Lo que devolvería el backend. Se cambia en las pruebas de protocolo. */
+  respuestaStream = {
+    url: 'http://localhost/x.m3u8', autenticacion: null as string | null,
+    protocolo: 'hls_s', reproductor: 'hls' as Reproductor,
+    camaraNombre: 'PTZ Parque', nodo: 'central',
+  };
+
   stream() {
-    return of({ success: true, message: '', data: {
-      url: 'http://localhost/x.m3u8', autenticacion: null, protocolo: 'hls_s',
-      camaraNombre: 'PTZ Parque', nodo: 'central' } });
+    return of({ success: true, message: '', data: this.respuestaStream });
   }
 
   ptz(_codigo: string, p: DtoPtzPeticion):

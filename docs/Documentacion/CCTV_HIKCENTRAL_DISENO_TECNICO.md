@@ -299,7 +299,11 @@ sean solo un driver nuevo, sin tocar el resto (igual que abstrajimos GESPO).
   activa en tenants con conectividad suficiente. Tunja: activo.
 - **RBAC**: solo roles autorizados ven cámaras.
 - **Tokens efímeros**: nunca exponer en el frontend URLs RTSP permanentes ni el
-  AppSecret; el backend firma y entrega la URL de corta vida.
+  AppSecret; el backend firma y entrega la URL del stream.
+
+  > La URL del stream **no caduca sola** — el manual la describe como
+  > *«permanently valid»* (§5.4.12, §5.4.13). Por eso no se guarda en ninguna
+  > parte: se pide en cada apertura y cada petición queda auditada.
 - **Auditoría**: cada visualización queda registrada (quién, qué cámara, cuándo,
   con qué caso) — dato sensible.
 - **HTTPS**: el manual recomienda HTTPS entre HikCentral y el navegador; usar el

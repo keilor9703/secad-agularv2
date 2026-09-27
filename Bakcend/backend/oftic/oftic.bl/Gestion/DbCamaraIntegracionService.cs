@@ -56,14 +56,15 @@ namespace Negocio.Gestion
                                     "en H.264; el main suele estar en H.265 y no se verá. Si la cámara no " +
                                     "tiene sub-stream H.264 hay que pedírselo al administrador del VMS." },
                     new() { Key = "protocol", Nombre = "Protocolo de video", Tipo = "select", Requerido = false,
-                            Opciones = new()
-                            {
-                                new("hls_s", "HLS sobre TLS (hls_s) — cifrado, requiere OpenAPI V3.1.1"),
-                                new("hls",   "HLS sin cifrar (hls) — solo si el servidor no ofrece hls_s")
-                            },
-                            Ayuda = "Son los dos protocolos que el visor del despachador sabe reproducir. " +
-                                    "HikCentral también entrega rtsp, rtsp_s, rtmp y websocket, pero ninguno " +
-                                    "se reproduce en el navegador sin un componente adicional." }
+                            // Una sola fuente de verdad: la misma lista que usa el
+                            // driver para decidir endpoint y reproductor.
+                            Opciones = VmsProtocolos.Opciones
+                                .Select(o => new DtoVmsDriverOpcion(o.Valor, o.Etiqueta)).ToList(),
+                            Ayuda = "HLS funciona en cualquier navegador pero llega con unos 7 segundos de " +
+                                    "retraso. WebSocket baja el retraso a 1-3 s y admite H.265, pero exige " +
+                                    "instalar el jsDecoder de Hikvision en cada puesto y solo funciona en " +
+                                    "Windows con Chrome o Firefox. RTSP y RTMP no se ofrecen: ningún " +
+                                    "navegador los reproduce." }
                 }
             },
             new DtoVmsDriverDescriptor

@@ -26,6 +26,12 @@ namespace Comun.Dtos.Camaras
         /// <summary>Credenciales/token que algunos despliegues devuelven aparte.</summary>
         public string? Autenticacion  { get; set; }
         public string  Protocolo      { get; set; } = "hls";
+        /// <summary>
+        /// Con qué reproductor hay que abrir la URL: «hls», «jsdecoder» o
+        /// «ninguno». Lo decide el backend a partir del protocolo pedido, no el
+        /// navegador mirando la URL.
+        /// </summary>
+        public string  Reproductor    { get; set; } = VmsProtocolos.ReproductorHls;
         /// <summary>0 main (suele H.265) · 1 sub-stream (H.264, el que reproduce el navegador).</summary>
         public int     TipoStream     { get; set; }
     }

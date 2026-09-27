@@ -3,13 +3,16 @@ import {
   computed, effect, inject, input, output, signal, untracked, viewChild,
 } from '@angular/core';
 import Hls from 'hls.js';
-import { CamaraService, DtoCamara, PTZ } from '../../../../core/services/operacion/camara.service';
+import {
+  CamaraService, DtoCamara, DtoStreamCamara, PTZ,
+} from '../../../../core/services/operacion/camara.service';
+import * as jsDecoder from './jsdecoder';
 
 /**
  * Reproduce una cámara CCTV en vivo.
  *
  * El video va del navegador AL VMS, sin pasar por el backend de SECAD: el
- * backend solo autoriza y entrega una URL de corta vida. Meter el stream por
+ * backend solo autoriza y entrega la URL. Meter el stream por
  * Kestrel tumbaría el servidor con tres operadores mirando.
  *
  * Se usa hls.js y no el <video> a secas porque Chrome y Firefox no reproducen
@@ -38,6 +41,14 @@ export class CamaraVisorComponent implements OnDestroy {
   readonly error    = signal('');
   readonly nodo     = signal('');
   readonly urlActual = signal('');
+  /** Respuesta completa del backend: dice también con qué reproducirla. */
+  private readonly stream = signal<DtoStreamCamara | null>(null);
+
+  /** Contenedor donde pinta el jsDecoder; el SDK exige un div, no un <video>. */
+  private readonly lienzo = viewChild<ElementRef<HTMLElement>>('lienzo');
+
+  /** true = este stream lo pinta el jsDecoder, no el <video>. */
+  readonly usaJsDecoder = computed(() => this.stream()?.reproductor === 'jsdecoder');
 
   // ── Ventana flotante ─────────────────────────────────────────────────────
   // Antes el visor era un modal con fondo oscuro: abrir una cámara dejaba el
@@ -90,6 +101,7 @@ export class CamaraVisorComponent implements OnDestroy {
   private manteniendo = false;
 
   private hls: Hls | null = null;
+  private decodificador: jsDecoder.Reproductor | null = null;
 
   readonly titulo = computed(() => {
     const c = this.camara();
@@ -121,6 +133,7 @@ export class CamaraVisorComponent implements OnDestroy {
         this.urlEnganchada = '';
         this.error.set('');
         this.urlActual.set('');
+        this.stream.set(null);
         this.nodo.set('');
         if (c?.camaraCodigo) {
           // Al abrir se recupera dónde y de qué tamaño la dejó el operador la
@@ -137,10 +150,12 @@ export class CamaraVisorComponent implements OnDestroy {
     // suponer un orden.
     effect(() => {
       const url = this.urlActual();
-      const el  = this.video()?.nativeElement;
+      // Según el protocolo, el destino es el <video> (HLS) o el div del
+      // jsDecoder: se espera al elemento que toque, no a uno fijo.
+      const el  = this.usaJsDecoder() ? this.lienzo()?.nativeElement : this.video()?.nativeElement;
       if (!url || !el || this.urlEnganchada === url) return;
       this.urlEnganchada = url;
-      untracked(() => this.engancharVideo(el, url));
+      untracked(() => this.abrirReproductor(el, url));
     });
   }
 
@@ -154,8 +169,9 @@ export class CamaraVisorComponent implements OnDestroy {
           return;
         }
         this.nodo.set(r.data.nodo ?? '');
+        this.stream.set(r.data);
         // Escribir la URL es lo que dispara el enganche; no se llama aquí
-        // directamente porque el <video> puede no existir todavía.
+        // directamente porque el elemento puede no existir todavía.
         this.urlActual.set(r.data.url);
       },
       error: e => {
@@ -165,6 +181,33 @@ export class CamaraVisorComponent implements OnDestroy {
         this.error.set(e?.error?.message ?? 'No se pudo obtener el video de la cámara.');
       },
     });
+  }
+
+  /**
+   * Abre el stream con el reproductor que corresponda. Quién decide es el
+   * BACKEND, en el campo «reproductor» de la respuesta: el navegador no tiene
+   * que deducirlo de la URL.
+   */
+  private abrirReproductor(el: HTMLElement, url: string): void {
+    const datos = this.stream();
+
+    if (datos?.reproductor === 'jsdecoder') {
+      // Baja latencia por WebSocket. Hoy esto informa de qué falta en vez de
+      // reproducir; ver jsdecoder.ts para el motivo y para dónde entra el SDK.
+      const r = jsDecoder.reproducir(el, url, datos.autenticacion);
+      if (!r.ok) this.error.set(r.mensaje);
+      else this.decodificador = r.reproductor;
+      return;
+    }
+
+    if (datos?.reproductor === 'ninguno') {
+      this.error.set(
+        `El VMS entregó el video por «${datos.protocolo}», que ningún navegador reproduce. ` +
+        `Cambie el protocolo de la integración a HLS.`);
+      return;
+    }
+
+    this.engancharVideo(el as HTMLVideoElement, url);
   }
 
   private engancharVideo(el: HTMLVideoElement, url: string): void {
@@ -214,9 +257,9 @@ export class CamaraVisorComponent implements OnDestroy {
       // Techo de memoria: una cámara abierta mucho rato no debe crecer sin
       // límite en el navegador del despachador.
       backBufferLength: 30,
-      // La URL es de corta vida; reintentar eternamente solo esconde el fallo.
-      // Un reintento más en los segmentos absorbe el tropiezo puntual de red
-      // sin llegar a tapar una caída real.
+      // Reintentar eternamente solo esconde el fallo. Un reintento más en los
+      // segmentos absorbe el tropiezo puntual de red sin llegar a tapar una
+      // caída real.
       manifestLoadingMaxRetry: 2,
       levelLoadingMaxRetry: 2,
       fragLoadingMaxRetry: 4,
@@ -244,6 +287,10 @@ export class CamaraVisorComponent implements OnDestroy {
   }
 
   private soltarReproductor(): void {
+    if (this.decodificador) {
+      try { this.decodificador.destruir(); } catch { /* ya destruido */ }
+      this.decodificador = null;
+    }
     if (this.hls) {
       try { this.hls.destroy(); } catch { /* ya destruido */ }
       this.hls = null;

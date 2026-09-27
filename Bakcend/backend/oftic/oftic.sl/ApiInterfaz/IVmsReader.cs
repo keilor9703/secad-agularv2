@@ -29,7 +29,11 @@ namespace Servicios.ApiInterfaz
 
         /// <summary>
         /// URL para reproducir una cámara en vivo. La devuelve el VMS y es de
-        /// corta vida: no se guarda, se entrega al navegador y se audita.
+        /// El manual dice que la URL es «permanently valid» (§5.4.12 y
+        /// §5.4.13): NO caduca sola. Por eso no se guarda en ninguna parte y se
+        /// pide de nuevo en cada apertura —cada petición queda auditada, y así
+        /// una URL filtrada es un incidente acotado y no un acceso permanente
+        /// que nadie vuelve a mirar.
         /// </summary>
         Task<DtoVmsResultado<DtoVmsStream>> ObtenerStreamAsync(
             DtoVmsConexion cx, string camaraCodigo, CancellationToken ct);

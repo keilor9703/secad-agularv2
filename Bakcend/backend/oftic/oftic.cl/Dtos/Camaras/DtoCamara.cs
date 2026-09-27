@@ -89,6 +89,12 @@ namespace Comun.Dtos.Camaras
         public string  Url           { get; set; } = string.Empty;
         public string? Autenticacion { get; set; }
         public string  Protocolo     { get; set; } = "hls_s";
+        /// <summary>
+        /// Con qué reproductor debe abrir el navegador esta URL: «hls»,
+        /// «jsdecoder» o «ninguno». Lo decide el backend; el navegador no tiene
+        /// que adivinarlo mirando la URL.
+        /// </summary>
+        public string  Reproductor   { get; set; } = VmsProtocolos.ReproductorHls;
         public string  CamaraNombre  { get; set; } = string.Empty;
         /// <summary>
         /// Nodo desde el que se pidió la URL. Informativo para el operador:

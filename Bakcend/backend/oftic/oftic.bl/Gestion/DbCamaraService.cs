@@ -134,6 +134,7 @@ namespace Negocio.Gestion
                 Url           = r.Datos!.Url,
                 Autenticacion = r.Datos.Autenticacion,
                 Protocolo     = r.Datos.Protocolo,
+                Reproductor   = r.Datos.Reproductor,
                 CamaraNombre  = camara.Nombre,
                 // De dónde salió la URL. Si el video no carga, saber por qué
                 // nodo iba es la mitad del diagnóstico.

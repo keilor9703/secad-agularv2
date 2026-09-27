@@ -68,10 +68,18 @@ export const PTZ = {
   irAPreset:    'GOTO_PRESET',
 } as const;
 
+/** Con qué se reproduce lo que devolvió el VMS. Lo decide el backend. */
+export type Reproductor = 'hls' | 'jsdecoder' | 'ninguno';
+
 export interface DtoStreamCamara {
   url:           string;
   autenticacion: string | null;
   protocolo:     string;
+  /**
+   * Qué reproductor hace falta. Viene del backend a propósito: deducirlo
+   * mirando la URL es la clase de adivinanza que ya rompió el video una vez.
+   */
+  reproductor:   Reproductor;
   camaraNombre:  string;
   /** Nodo por el que se pidió la URL; ayuda a diagnosticar si el video no carga. */
   nodo:          string | null;
@@ -103,8 +111,12 @@ export class CamaraService {
   }
 
   /**
-   * URL para reproducir la cámara. Es de corta vida y no se guarda: se pide
-   * cada vez que alguien abre el visor, y cada petición queda auditada.
+   * URL para reproducir la cámara. No se guarda: se pide cada vez que alguien
+   * abre el visor, y cada petición queda auditada.
+   *
+   * No se guarda precisamente porque el manual de HikCentral la describe como
+   * «permanently valid» — no caduca sola. Guardarla en el cliente sería dejar
+   * una llave del video sin fecha de vencimiento.
    */
   stream(codigo: string, eventoId?: string | number, pedidoId?: string | number):
     Observable<{ success: boolean; message: string; data: DtoStreamCamara }> {

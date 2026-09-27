@@ -124,6 +124,10 @@
     &--oculto { visibility: hidden; }
   }
 
+  // Lienzo del jsDecoder: mismo hueco que el <video>, para que cambiar de
+  // protocolo no mueva nada de sitio en la ventana.
+  &__lienzo { position: relative; }
+
   &__estado {
     position: absolute;
     inset: 0;

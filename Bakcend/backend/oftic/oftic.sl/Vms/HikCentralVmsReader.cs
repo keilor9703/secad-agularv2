@@ -25,6 +25,11 @@ namespace Servicios.Vms
 
         private const string RutaCamaras  = "/artemis/api/resource/v1/cameras";
         private const string RutaPreview  = "/artemis/api/video/v2/cameras/previewURLs";
+        // La v1 no es un respaldo para despliegues viejos: es la ÚNICA que
+        // acepta «requestWebsocketProtocol», y el manual lo marca obligatorio
+        // cuando protocol es «websocket» (§5.4.12 lo tiene en el cuerpo, §5.4.13
+        // no). Sin ella no se puede pedir un stream de baja latencia.
+        private const string RutaPreviewV1 = "/artemis/api/video/v1/cameras/previewURLs";
         // PTZ es v1: no existe v2 de este endpoint (§5.4.23).
         private const string RutaPtz      = "/artemis/api/video/v1/ptzs/controlling";
 
@@ -126,6 +131,13 @@ namespace Servicios.Vms
             // el administrador puede cambiarlo en la ficha.
             var tipo = int.TryParse(cx.Publico("streamType", "1"), out var t) ? t : 1;
 
+            // hls_s es HLS sobre TLS y lo añadió la OpenAPI V3.1.1; la
+            // especificación de SECAD exige cifrado en tránsito, así que es el
+            // valor por defecto. Un HikCentral en 3.1.0 no lo conoce: ahí hay
+            // que bajar a "hls" desde la ficha.
+            var protocolo = cx.Publico("protocol", "hls_s");
+            var esWebsocket = VmsProtocolos.EsWebsocket(protocolo);
+
             var cuerpo = JsonSerializer.Serialize(new
             {
                 // El manual se contradice: la tabla de parámetros dice
@@ -135,15 +147,19 @@ namespace Servicios.Vms
                 cameraIndexCodes = camaraCodigo,
                 cameraIndexCode  = camaraCodigo,
                 streamType       = tipo,
-                // hls_s es HLS sobre TLS y lo añadió la OpenAPI V3.1.1; la
-                // especificación de SECAD exige cifrado en tránsito, así que es
-                // el valor por defecto. Un HikCentral en 3.1.0 no lo conoce:
-                // ahí hay que bajar a "hls" desde la ficha.
-                protocol         = cx.Publico("protocol", "hls_s"),
+                protocol         = protocolo,
                 transmode        = int.TryParse(cx.Publico("transmode", "1"), out var tm) ? tm : 1,
+                // Obligatorio con protocol «websocket» (0-ws, 1-wss) y no
+                // existe en el resto de protocolos, así que se manda solo ahí.
+                // Por defecto 1: el tramo que ve el navegador va cifrado.
+                requestWebsocketProtocol = esWebsocket && !VmsProtocolos.EsSeguroPorNombre(protocolo)
+                    ? (int.TryParse(cx.Publico("requestWebsocketProtocol", "1"), out var rw) ? rw : 1)
+                    : (int?)null,
             });
 
-            var r = await LlamarAsync(cx, RutaPreview, cuerpo, ct);
+            // El websocket SOLO se puede pedir por la v1: la v2 no lleva
+            // «requestWebsocketProtocol» en su cuerpo.
+            var r = await LlamarAsync(cx, esWebsocket ? RutaPreviewV1 : RutaPreview, cuerpo, ct);
             if (!r.Ok) return DtoVmsResultado<DtoVmsStream>.Mal(r.Mensaje);
 
             // La v2 es la versión POR LOTES: devuelve «data.list[0].url», no
@@ -161,8 +177,15 @@ namespace Servicios.Vms
             var url = Texto(nodo, "url");
             if (string.IsNullOrWhiteSpace(url))
                 return DtoVmsResultado<DtoVmsStream>.Mal(
-                    "El VMS aceptó la petición pero no devolvió URL. Suele significar que esa cámara " +
-                    "no tiene sub-stream en H.264, que es lo único que HLS admite.");
+                    esWebsocket
+                        // Por WebSocket decodifica el jsDecoder, que admite
+                        // H.265: culpar al códec aquí mandaría a buscar donde no
+                        // es. Lo habitual es que la cámara no esté en línea o
+                        // que el Partner no tenga permiso sobre ella.
+                        ? "El VMS aceptó la petición pero no devolvió URL. Revise que la cámara esté " +
+                          "en línea y que el Partner tenga permiso sobre ella."
+                        : "El VMS aceptó la petición pero no devolvió URL. Suele significar que esa " +
+                          "cámara no tiene sub-stream en H.264, que es lo único que HLS admite.");
 
             // Cuando el stream sale por un servidor de medios, el manual
             // antepone un marcador entre corchetes —«[sms:preview]rtsp://…»—
@@ -177,9 +200,13 @@ namespace Servicios.Vms
 
             return DtoVmsResultado<DtoVmsStream>.Bien(new DtoVmsStream
             {
-                Url           = url,
-                Autenticacion = Texto(nodo, "authentication"),
-                Protocolo     = cx.Publico("protocol", "hls_s"),
+                Url             = url,
+                Autenticacion   = Texto(nodo, "authentication"),
+                Protocolo       = protocolo,
+                // Qué sabe reproducir eso. El navegador no puede deducirlo de la
+                // URL con fiabilidad, y equivocarse es lo que ya rompió el video
+                // una vez (el camino nativo contra la CSP).
+                Reproductor     = VmsProtocolos.Reproductor(protocolo),
                 TipoStream    = tipo,
             });
         }
