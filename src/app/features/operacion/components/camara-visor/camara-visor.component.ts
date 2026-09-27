@@ -1,5 +1,5 @@
 import {
-  ChangeDetectionStrategy, Component, ElementRef, OnDestroy,
+  ChangeDetectionStrategy, Component, ElementRef, HostListener, OnDestroy,
   computed, effect, inject, input, output, signal, untracked, viewChild,
 } from '@angular/core';
 import Hls from 'hls.js';
@@ -39,6 +39,20 @@ export class CamaraVisorComponent implements OnDestroy {
   readonly nodo     = signal('');
   readonly urlActual = signal('');
 
+  // ── Ventana flotante ─────────────────────────────────────────────────────
+  // Antes el visor era un modal con fondo oscuro: abrir una cámara dejaba el
+  // resto del módulo inservible, que es justo lo contrario de lo que necesita
+  // un despachador —mirar la cámara MIENTRAS trabaja el caso—.
+  private static readonly ANCHO_MIN = 320;
+  private static readonly CLAVE_GEOMETRIA = 'secad_camara_visor_geo';
+
+  readonly pos        = signal<{ x: number; y: number }>({ x: 0, y: 0 });
+  readonly ancho      = signal(640);
+  readonly minimizada = signal(false);
+  readonly moviendo   = signal(false);
+
+  private readonly ventana = viewChild<ElementRef<HTMLElement>>('ventana');
+
   private hls: Hls | null = null;
 
   readonly titulo = computed(() => {
@@ -68,7 +82,13 @@ export class CamaraVisorComponent implements OnDestroy {
         this.error.set('');
         this.urlActual.set('');
         this.nodo.set('');
-        if (c?.camaraCodigo) this.pedirUrl(c.camaraCodigo);
+        if (c?.camaraCodigo) {
+          // Al abrir se recupera dónde y de qué tamaño la dejó el operador la
+          // última vez: mover la ventana a su sitio en cada apertura sería
+          // tratar al despachador como si no supiera lo que quiere.
+          this.restaurarGeometria();
+          this.pedirUrl(c.camaraCodigo);
+        }
       });
     });
 
@@ -203,6 +223,132 @@ export class CamaraVisorComponent implements OnDestroy {
 
   pantallaCompleta(): void {
     this.video()?.nativeElement.requestFullscreen?.().catch(() => { /* el navegador puede negarlo */ });
+  }
+
+  // ── Arrastrar y redimensionar ────────────────────────────────────────────
+  //
+  // Con eventos de puntero y no con la librería de arrastre de CDK a
+  // propósito: aquí hace falta controlar también el recorte contra los bordes
+  // de la pantalla y la persistencia, y mezclar el transform de CDK con una
+  // posición guardada da más trabajo del que ahorra.
+
+  empezarArrastre(ev: PointerEvent): void {
+    if (ev.button !== 0) return;
+    const inicio = { x: ev.clientX, y: ev.clientY };
+    const desde  = this.pos();
+    const asa    = ev.currentTarget as HTMLElement;
+
+    this.moviendo.set(true);
+    asa.setPointerCapture(ev.pointerId);
+
+    const mover = (e: PointerEvent) =>
+      this.pos.set(this.recortar(
+        desde.x + (e.clientX - inicio.x),
+        desde.y + (e.clientY - inicio.y)));
+
+    const soltar = () => {
+      this.moviendo.set(false);
+      asa.removeEventListener('pointermove', mover);
+      asa.removeEventListener('pointerup', soltar);
+      asa.removeEventListener('pointercancel', soltar);
+      this.guardarGeometria();
+    };
+
+    asa.addEventListener('pointermove', mover);
+    asa.addEventListener('pointerup', soltar);
+    asa.addEventListener('pointercancel', soltar);
+    ev.preventDefault();
+  }
+
+  empezarRedimension(ev: PointerEvent): void {
+    if (ev.button !== 0) return;
+    const inicio = { x: ev.clientX, y: ev.clientY };
+    const desde  = this.ancho();
+    const asa    = ev.currentTarget as HTMLElement;
+
+    asa.setPointerCapture(ev.pointerId);
+
+    // Solo se gobierna el ancho; el alto lo fija el 16:9 del marco. Así la
+    // imagen nunca queda con franjas negras. El gesto vertical también cuenta,
+    // convertido a su equivalente horizontal, para que arrastrar la esquina en
+    // diagonal se sienta natural.
+    const mover = (e: PointerEvent) => {
+      const dx = e.clientX - inicio.x;
+      const dy = (e.clientY - inicio.y) * (16 / 9);
+      this.ancho.set(this.anchoValido(desde + Math.max(dx, dy)));
+      this.pos.set(this.recortar(this.pos().x, this.pos().y));
+    };
+
+    const soltar = () => {
+      asa.removeEventListener('pointermove', mover);
+      asa.removeEventListener('pointerup', soltar);
+      asa.removeEventListener('pointercancel', soltar);
+      this.guardarGeometria();
+    };
+
+    asa.addEventListener('pointermove', mover);
+    asa.addEventListener('pointerup', soltar);
+    asa.addEventListener('pointercancel', soltar);
+    ev.preventDefault();
+    ev.stopPropagation();
+  }
+
+  alternarMinimizada(): void {
+    this.minimizada.update(v => !v);
+    this.pos.set(this.recortar(this.pos().x, this.pos().y));
+    this.guardarGeometria();
+  }
+
+  /** Si cambia el tamaño de la pantalla, la ventana no puede quedar fuera. */
+  @HostListener('window:resize')
+  alRedimensionarPantalla(): void {
+    this.ancho.set(this.anchoValido(this.ancho()));
+    this.pos.set(this.recortar(this.pos().x, this.pos().y));
+  }
+
+  private anchoValido(a: number): number {
+    const tope = Math.max(CamaraVisorComponent.ANCHO_MIN,
+                          Math.min(1280, window.innerWidth - 24));
+    return Math.round(Math.min(tope, Math.max(CamaraVisorComponent.ANCHO_MIN, a)));
+  }
+
+  /**
+   * Deja la ventana dentro de la pantalla. Se exige que quede visible al menos
+   * la cabecera: una ventana arrastrada fuera del borde no se podría recuperar.
+   */
+  private recortar(x: number, y: number): { x: number; y: number } {
+    const alto = this.ventana()?.nativeElement.offsetHeight ?? 260;
+    const maxX = Math.max(8, window.innerWidth  - this.ancho() - 8);
+    const maxY = Math.max(8, window.innerHeight - Math.min(alto, 120) - 8);
+    return {
+      x: Math.round(Math.min(maxX, Math.max(8, x))),
+      y: Math.round(Math.min(maxY, Math.max(8, y))),
+    };
+  }
+
+  /** Posición y tamaño sobreviven entre aperturas y entre sesiones. */
+  private guardarGeometria(): void {
+    try {
+      localStorage.setItem(CamaraVisorComponent.CLAVE_GEOMETRIA, JSON.stringify({
+        ...this.pos(), ancho: this.ancho(), minimizada: this.minimizada(),
+      }));
+    } catch { /* modo privado o almacenamiento lleno: no es motivo para fallar */ }
+  }
+
+  private restaurarGeometria(): void {
+    let guardado: { x?: number; y?: number; ancho?: number; minimizada?: boolean } | null = null;
+    try {
+      const crudo = localStorage.getItem(CamaraVisorComponent.CLAVE_GEOMETRIA);
+      guardado = crudo ? JSON.parse(crudo) : null;
+    } catch { guardado = null; }
+
+    this.ancho.set(this.anchoValido(guardado?.ancho ?? 640));
+    this.minimizada.set(!!guardado?.minimizada);
+
+    // Por defecto, abajo a la derecha: es donde menos tapa la consola.
+    const x = guardado?.x ?? (window.innerWidth  - this.ancho() - 24);
+    const y = guardado?.y ?? (window.innerHeight - 420);
+    this.pos.set(this.recortar(x, y));
   }
 
   ngOnDestroy(): void { this.soltarReproductor(); }

@@ -1,35 +1,54 @@
-// Visor de cámara CCTV. Se monta por encima del detalle del evento sin
-// taparlo del todo: el despachador sigue viendo el caso mientras mira video.
-.cv-fondo {
-  position: fixed;
-  inset: 0;
-  z-index: 1400;
-  background: rgba(8, 12, 28, .55);
-  backdrop-filter: blur(2px);
-}
+// Visor de cámara CCTV: ventana FLOTANTE, no modal.
+//
+// Antes era un modal con fondo oscuro, y abrir una cámara dejaba el resto del
+// módulo inservible. Un despachador necesita justo lo contrario: mirar la
+// cámara MIENTRAS lee el caso, despacha una unidad o escribe una anotación.
+// Por eso no hay backdrop, la ventana se mueve, se redimensiona, se minimiza,
+// y recuerda dónde la dejaron.
 
 .cv {
   position: fixed;
   z-index: 1401;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: min(880px, 94vw);
   display: flex;
   flex-direction: column;
-  border-radius: 14px;
+  border-radius: 12px;
   overflow: hidden;
   background: var(--ui-surface, #fff);
-  box-shadow: 0 24px 60px rgba(8, 12, 28, .40);
+  border: 1px solid rgba(8, 12, 28, .14);
+  // Sombra marcada: es lo que separa la ventana del contenido que sigue
+  // vivo debajo, ahora que no hay fondo oscuro que lo haga.
+  box-shadow: 0 18px 44px rgba(8, 12, 28, .34), 0 2px 8px rgba(8, 12, 28, .18);
 
+  // Mientras se arrastra se quita la transición para que siga al puntero sin
+  // retraso, y se avisa al navegador de que va a moverse.
+  transition: box-shadow .15s ease;
+  will-change: left, top, width;
+
+  &--moviendo {
+    user-select: none;
+    box-shadow: 0 26px 60px rgba(8, 12, 28, .44);
+  }
+
+  &--minimizada {
+    .cv__cuerpo { display: none; }
+    border-radius: 10px;
+  }
+
+  // ── Cabecera: además de identificar, es el asa de arrastre ──────────────
   &__cab {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    padding: 10px 14px;
-    background: var(--policia-medio, #002a66);
+    padding: 9px 12px;
+    background: linear-gradient(180deg,
+                var(--policia-medio, #002a66) 0%,
+                color-mix(in srgb, var(--policia-medio, #002a66) 88%, #000) 100%);
     color: #fff;
+    cursor: grab;
+    touch-action: none;   // el gesto lo gobierna el componente, no el scroll
+
+    .cv--moviendo & { cursor: grabbing; }
   }
 
   &__ident {
@@ -38,12 +57,14 @@
     gap: 10px;
     min-width: 0;
 
-    > i { font-size: calc(15px * var(--font-size-scale, 1)); opacity: .85; }
+    > i { font-size: calc(15px * var(--font-size-scale, 1)); opacity: .85; flex: 0 0 auto; }
   }
+
+  &__ident-txt { min-width: 0; }
 
   &__titulo {
     margin: 0;
-    font-size: calc(13.5px * var(--font-size-scale, 1));
+    font-size: calc(13px * var(--font-size-scale, 1));
     font-weight: 700;
     // El nombre de una cámara puede ser largo; se corta antes de empujar los
     // botones fuera de la cabecera.
@@ -54,35 +75,40 @@
 
   &__dir {
     margin: 2px 0 0;
-    font-size: calc(11px * var(--font-size-scale, 1));
-    opacity: .78;
+    font-size: calc(10.5px * var(--font-size-scale, 1));
+    opacity: .76;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
-  &__acciones { display: flex; gap: 6px; flex: 0 0 auto; }
+  &__acciones { display: flex; gap: 5px; flex: 0 0 auto; }
 
   &__btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 30px;
-    height: 30px;
+    width: 28px;
+    height: 28px;
     border: 0;
-    border-radius: 8px;
+    border-radius: 7px;
     background: rgba(255, 255, 255, .14);
     color: #fff;
     cursor: pointer;
+    transition: background .12s ease;
 
-    &:hover { background: rgba(255, 255, 255, .26); }
+    &:hover { background: rgba(255, 255, 255, .28); }
     &:focus-visible { outline: 2px solid #fff; outline-offset: 1px; }
-    &--cerrar:hover { background: rgba(220, 38, 38, .85); }
+    &--cerrar:hover { background: rgba(220, 38, 38, .9); }
   }
+
+  &__cuerpo { position: relative; }
 
   &__marco {
     position: relative;
     // 16:9 fijo: el contenedor no debe saltar de alto cuando el stream
     // arranca y se conoce la resolución real.
     aspect-ratio: 16 / 9;
-    max-height: 70vh;
     background: #05070f;
   }
 
@@ -91,6 +117,7 @@
     height: 100%;
     object-fit: contain;
     background: #05070f;
+    display: block;
 
     &--oculto { visibility: hidden; }
   }
@@ -103,23 +130,23 @@
     align-items: center;
     justify-content: center;
     gap: 10px;
-    padding: 20px;
+    padding: 18px;
     color: #e2e8f0;
     text-align: center;
 
-    > i { font-size: calc(24px * var(--font-size-scale, 1)); opacity: .8; }
-    > p { margin: 0; max-width: 46ch; font-size: calc(12px * var(--font-size-scale, 1)); line-height: 1.5; }
+    > i { font-size: calc(22px * var(--font-size-scale, 1)); opacity: .8; }
+    > p { margin: 0; max-width: 42ch; font-size: calc(11.5px * var(--font-size-scale, 1)); line-height: 1.5; }
 
     &--error > i { color: #fbbf24; }
   }
 
   &__reintentar {
-    padding: 7px 14px;
+    padding: 6px 13px;
     border: 1px solid rgba(255, 255, 255, .3);
     border-radius: 8px;
     background: transparent;
     color: #e2e8f0;
-    font-size: calc(11.5px * var(--font-size-scale, 1));
+    font-size: calc(11px * var(--font-size-scale, 1));
     cursor: pointer;
 
     &:hover { background: rgba(255, 255, 255, .12); }
@@ -130,15 +157,17 @@
     flex-wrap: wrap;
     align-items: center;
     gap: 6px;
-    padding: 9px 14px;
-    border-top: 1px solid rgba(21, 27, 59, .12);
+    // Hueco a la derecha para que el asa de tamaño no pise los chips.
+    padding: 8px 26px 8px 12px;
+    border-top: 1px solid rgba(21, 27, 59, .1);
+    background: var(--ui-surface, #fff);
   }
 
   &__chip {
     padding: 3px 9px;
     border-radius: 999px;
     background: rgba(21, 27, 59, .07);
-    font-size: calc(10.5px * var(--font-size-scale, 1));
+    font-size: calc(10px * var(--font-size-scale, 1));
     font-weight: 600;
 
     &--ok  { background: rgba(34, 197, 94, .16);  color: #15803d; }
@@ -148,12 +177,50 @@
   &__nodo {
     margin-left: auto;
     color: var(--ui-text-muted, #6b7280);
-    font-size: calc(10px * var(--font-size-scale, 1));
+    font-size: calc(9.5px * var(--font-size-scale, 1));
     font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   }
 
+  // ── Asa de redimensión, esquina inferior derecha ─────────────────────────
+  &__asa {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    cursor: nwse-resize;
+    touch-action: none;
+
+    // Las tres rayitas diagonales que todo el mundo reconoce como «estirar».
+    &::after {
+      content: '';
+      position: absolute;
+      right: 3px;
+      bottom: 3px;
+      width: 11px;
+      height: 11px;
+      background: repeating-linear-gradient(
+        135deg,
+        var(--ui-text-muted, #94a3b8) 0 1.5px,
+        transparent 1.5px 4px);
+      opacity: .65;
+    }
+
+    &:hover::after, &:focus-visible::after { opacity: 1; }
+    &:focus-visible { outline: 2px solid var(--policia-medio, #002a66); outline-offset: -2px; }
+  }
+
+  // En pantallas estrechas no tiene sentido una ventana movible: ocupa el
+  // ancho disponible y se queda quieta.
   @media (max-width: 720px) {
-    width: 96vw;
+    left: 2vw !important;
+    right: 2vw;
+    width: 96vw !important;
+
+    &__asa { display: none; }
     &__nodo { margin-left: 0; width: 100%; }
   }
 }
