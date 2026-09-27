@@ -262,3 +262,62 @@ Debe haber **una** fila por apertura, y también las negadas con su motivo.
 3. **AppKey, AppSecret, IP:puerto TLS** y el usuario vinculado al Partner.
 4. ¿Las cámaras tienen **sub-stream en H.264**?
 5. ¿Cuántos streams simultáneos admite la licencia?
+
+## La CSP: el último obstáculo, y es nuestro
+
+Contra un HikCentral real, con la integración funcionando y la cámara ya
+visible en el despacho, el video seguía sin verse. El motivo lo dijo la
+consola del navegador:
+
+```
+Loading media from 'https://10.x.x.x/proxy/.../live.m3u8' violates the
+following Content Security Policy directive: "media-src 'self' blob:
+mediastream: https://radio.policia.gov.co:8080 https://live.truckers.fm"
+```
+
+**La Content Security Policy de SECAD bloquea el video de las cámaras.** Está
+declarada como `<meta>` en `src/index.html`, y no puede listar el host del VMS
+porque es distinto en cada municipio.
+
+### Lo que sí se arregló en el código
+
+El visor probaba **primero** el reproductor nativo del navegador y solo después
+hls.js. Con el nativo, la URL va en el `src` del `<video>` y la gobierna
+`media-src`. Con hls.js, los segmentos se descargan por XHR y se le entregan al
+`<video>` como `blob:` —que la CSP ya permite—, así que **solo hace falta que
+`connect-src` conozca el VMS**. Se invirtió el orden: hls.js primero, nativo
+solo como último recurso.
+
+Eso reduce el problema a una sola directiva, pero no lo elimina.
+
+### Lo que hay que decidir para producción
+
+`connect-src` tiene que incluir el origen del VMS (o del nodo edge que sirva el
+video). Tres caminos, y hay que escoger uno:
+
+| Opción | Cómo | Coste |
+|---|---|---|
+| **Listar los hosts en la CSP** | Sustituir la lista en `index.html` al construir la imagen, desde una variable de entorno con los VMS de ese despliegue | Simple; obliga a reconstruir el frontend al añadir un municipio |
+| **Emitir la CSP como cabecera HTTP** desde nginx | nginx la compone con la lista de su despliegue | Más flexible; la cabecera manda sobre el `<meta>` |
+| **Servir el video desde un origen propio** (el nodo edge) | El navegador habla siempre con un host de SECAD | Encaja con el diseño del edge, pero es el trozo que falta implementar |
+
+Lo que **no** se debe hacer es abrir `connect-src` a `https:` en general: eso
+deja que cualquier XSS exfiltre datos a donde quiera, y la CSP dejaría de
+servir para lo que está.
+
+### Para probar en local
+
+Mientras se decide, en una instalación de pruebas basta con añadir el host a
+las dos directivas en `src/index.html`:
+
+```
+media-src   'self' blob: mediastream: ... https://IP-DEL-HIKCENTRAL
+connect-src 'self' ... https://IP-DEL-HIKCENTRAL
+```
+
+> **Por qué no lo detectamos antes:** la página suelta `hls_probar.html`
+> reproduce el mismo video sin problema, porque es un archivo local sin la CSP
+> de SECAD. Una prueba que no pasa por el `index.html` de la aplicación no
+> ejercita su CSP — y esa era justo la pieza que fallaba.
+
+---

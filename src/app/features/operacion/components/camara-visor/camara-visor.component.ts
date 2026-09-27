@@ -108,16 +108,31 @@ export class CamaraVisorComponent implements OnDestroy {
   }
 
   private engancharVideo(el: HTMLVideoElement, url: string): void {
+    // hls.js PRIMERO, y el reproductor nativo solo como último recurso.
+    //
+    // Antes se probaba al revés, y eso rompía el video contra un HikCentral
+    // real: los navegadores que dicen saber reproducir HLS de forma nativa
+    // reciben la URL en el src del <video>, y entonces la petición la gobierna
+    // «media-src» de la Content Security Policy, que no puede listar el host
+    // del VMS porque es distinto en cada municipio. Con hls.js los segmentos
+    // se descargan por XHR y se le entregan al <video> como «blob:», que la
+    // CSP ya permite: así solo hace falta que «connect-src» conozca el VMS.
+    if (Hls.isSupported()) {
+      this.reproducirConHlsJs(el, url);
+      return;
+    }
+
     if (el.canPlayType('application/vnd.apple.mpegurl')) {
       el.src = url;
       el.play().catch(() => { /* el navegador puede exigir un gesto del usuario */ });
       return;
     }
 
-    if (!Hls.isSupported()) {
-      this.error.set('Este navegador no puede reproducir HLS. Use Chrome, Edge o Firefox actualizados.');
-      return;
-    }
+    this.error.set('Este navegador no puede reproducir HLS. Use Chrome, Edge o Firefox actualizados.');
+    return;
+  }
+
+  private reproducirConHlsJs(el: HTMLVideoElement, url: string): void {
 
     this.hls = new Hls({
       // El despacho quiere ver lo que pasa AHORA: se limita cuánto se queda
