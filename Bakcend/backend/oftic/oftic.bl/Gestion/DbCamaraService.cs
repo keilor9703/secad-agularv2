@@ -135,12 +135,45 @@ namespace Negocio.Gestion
                 Autenticacion = r.Datos.Autenticacion,
                 Protocolo     = r.Datos.Protocolo,
                 Reproductor   = r.Datos.Reproductor,
+                RutaGateway   = r.Datos.RutaGateway,
                 CamaraNombre  = camara.Nombre,
                 // De dónde salió la URL. Si el video no carga, saber por qué
                 // nodo iba es la mitad del diagnóstico.
                 Nodo          = string.IsNullOrWhiteSpace(cx.NodoEdgeUrl) ? "central" : cx.NodoEdgeUrl,
             });
         }
+
+        public async Task<bool> AutorizarLecturaGatewayAsync(
+            string camaraCodigo, int sitioGraba, string usuario, string? ip, CancellationToken ct)
+        {
+            // El gateway pregunta por CADA lectura, así que esto se ejecuta
+            // también en cada reconexión del navegador. Es una consulta por
+            // código y sitio: barata, y es justo la frontera que hay que
+            // comprobar.
+            var camara = await _repo.GetPorCodigoAsync(camaraCodigo, sitioGraba, ct);
+            var ok = camara is not null
+                  && camara.IntegracionId is > 0
+                  && camara.Operativa != false;
+
+            await _repo.RegistrarVisualizacionAsync(
+                camara, camaraCodigo, null, null, sitioGraba, usuario, ip,
+                ok, ok ? null : "El gateway pidió autorización para una cámara que no puede ver.",
+                ct, AccionGateway,
+                // El detalle dice por dónde entró: una lectura por el gateway no
+                // es lo mismo que una consulta de URL, y al revisar la bitácora
+                // conviene distinguirlas.
+                "gateway/webrtc");
+
+            if (!ok)
+                _logger.LogWarning(
+                    "El gateway pidió ver la cámara {Cod} para {Usuario} (sitio {Sitio}) y se le negó.",
+                    camaraCodigo, usuario, sitioGraba);
+
+            return ok;
+        }
+
+        /// <summary>Acción con la que se audita una lectura servida por el gateway.</summary>
+        private const string AccionGateway = "VER_GATEWAY";
 
         public async Task<(bool Ok, string Mensaje, DtoPtzResultado? Datos)> ControlarPtzAsync(
             string camaraCodigo, int sitioGraba, DtoPtzPeticion p,

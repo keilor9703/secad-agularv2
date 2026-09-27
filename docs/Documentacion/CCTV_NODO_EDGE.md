@@ -13,7 +13,13 @@ Son dos flujos distintos y conviene no confundirlos:
 | Flujo | Recorrido | Quién lo inicia |
 |---|---|---|
 | **API** (catálogo, pedir URL de video) | Backend central → **edge** → VMS | El servidor |
-| **Video** (`.m3u8` y segmentos) | Navegador del despachador → **edge** → VMS | El puesto de trabajo |
+| **Video HLS** (`.m3u8` y segmentos) | Navegador del despachador → **edge** → VMS | El puesto de trabajo |
+| **Video WebRTC** (baja latencia) | Navegador → **gateway en el edge** ← RTSP ← VMS | El puesto de trabajo |
+
+> El tercer flujo es el que baja la latencia de ~7 s a prácticamente nada: el
+> edge no solo hace de proxy, también corre un **gateway de medios** que toma el
+> RTSP del VMS y lo republica por WebRTC. Está medido y documentado en
+> `CCTV_LATENCIA.md`; aquí solo se describe el recorrido.
 
 **El video no pasa por Bogotá en ningún momento.** El edge, el VMS y los
 despachadores están en el mismo municipio, así que el salto extra son

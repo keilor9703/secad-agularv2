@@ -275,6 +275,32 @@ builder.Services.AddHttpClient(Servicios.Vms.HikCentralVmsReader.NombreCliente, 
             ? HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
             : null,
 });
+// Gateway de medios del nodo edge: convierte el RTSP del VMS en WebRTC para el
+// navegador. Es la vía de baja latencia que no exige instalar nada en el puesto
+// (ver docs/Documentacion/CCTV_LATENCIA.md). Cliente aparte del de HikCentral
+// porque el gateway es un servidor nuestro, con su propio certificado y su
+// propio tiempo de espera.
+builder.Services.AddHttpClient(Servicios.Vms.GatewayMedios.NombreCliente, c =>
+{
+    c.Timeout = TimeSpan.FromSeconds(
+        builder.Configuration.GetValue("Vms:GatewayTimeoutSegundos", 8));
+})
+.ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+{
+    ServerCertificateCustomValidationCallback =
+        builder.Configuration.GetValue("Vms:AceptarCertificadoPropio", true)
+            ? HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+            : null,
+});
+builder.Services.AddSingleton<Servicios.Vms.GatewayMedios>();
+
+// Token que autoriza al navegador a leer UNA cámara por el gateway, durante un
+// rato corto. El gateway se lo pregunta a SECAD por HTTP antes de servir video.
+builder.Services.AddSingleton<Api.Services.GatewayVideoTokenService>();
+// Resuelve el CAD de una petición sin JWT ni llave de API: la que hace el
+// gateway de medios al preguntar si puede servir una cámara.
+builder.Services.AddScoped<Api.Services.ResolutorTenant>();
+
 builder.Services.AddSingleton<Servicios.ApiInterfaz.IVmsReader, Servicios.Vms.HikCentralVmsReader>();
 builder.Services.AddSingleton<Servicios.ApiInterfaz.IVmsReaderFactory, Servicios.Vms.VmsReaderFactory>();
 

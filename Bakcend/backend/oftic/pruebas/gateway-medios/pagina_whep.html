@@ -1,0 +1,60 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Medición de latencia WebRTC vs HLS</title>
+<body style="background:#111;color:#eee;font:13px system-ui;margin:0;padding:12px">
+<h1 style="font-size:15px">WebRTC (WHEP) vs HLS — mismo origen</h1>
+<div style="display:flex;gap:12px">
+  <div><p>WebRTC</p><video id="vw" muted playsinline style="width:420px;background:#000"></video></div>
+  <div><p>HLS</p><video id="vh" muted playsinline style="width:420px;background:#000"></video></div>
+</div>
+<pre id="log" style="white-space:pre-wrap"></pre>
+
+<script src="hls.min.js"></script>
+<script type="module">
+// Se importa el MÓDULO DEL REPO compilado, no una copia: lo que se mide es el
+// cliente que va a producción.
+import { conectar } from './whep.js';
+
+const log = (t) => { document.getElementById('log').textContent += t + '\n'; };
+window.__estado = { listoWebrtc: false, listoHls: false, error: '' };
+
+const BITS = 10;
+/**
+ * Lee el contador binario quemado en la imagen: 10 recuadros de 20 px, el bit i
+ * encendido = blanco. Sin OCR y exacto — es lo que permite comparar los dos
+ * reproductores fotograma a fotograma.
+ */
+function leerContador(video) {
+  if (!video.videoWidth) return null;
+  const c = document.createElement('canvas');
+  c.width = video.videoWidth; c.height = video.videoHeight;
+  const g = c.getContext('2d', { willReadFrequently: true });
+  g.drawImage(video, 0, 0);
+  let n = 0;
+  for (let i = 0; i < BITS; i++) {
+    // Centro de cada recuadro: x = i*24+4, ancho 20 → centro i*24+14, y = 14.
+    const d = g.getImageData(i * 24 + 14, 14, 1, 1).data;
+    if (d[0] > 128) n |= (1 << i);
+  }
+  return n;
+}
+window.__leer = () => leerContador(document.getElementById('vw'));
+
+const params = new URLSearchParams(location.search);
+const urlWhep = params.get('whep');
+const urlHls  = params.get('hls');
+
+// ── WebRTC, con el cliente de producción ────────────────────────────────────
+try {
+  const vw = document.getElementById('vw');
+  window.__sesion = await conectar({ url: urlWhep, token: params.get('token'), video: vw, alFallar: m => { window.__estado.error = m; log('WHEP falló: ' + m); } });
+  window.__metricas = () => window.__sesion.metricas();
+  vw.addEventListener('playing', () => { window.__estado.listoWebrtc = true; log('WebRTC reproduciendo'); });
+  log('WHEP: oferta aceptada');
+} catch (e) {
+  window.__estado.error = String(e?.message ?? e);
+  log('WHEP error: ' + window.__estado.error);
+}
+
+
+</script>

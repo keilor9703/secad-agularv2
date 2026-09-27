@@ -78,6 +78,22 @@ describe('CamaraVisorComponent — elección de reproductor', () => {
     expect(msg.toLowerCase()).toContain('hls');
   });
 
+  it('WebRTC va al <video>, no al lienzo, y no pasa por hls.js', async () => {
+    svc.protocolo = 'rtsp_s';
+    svc.reproductor = 'webrtc';
+    svc.url = 'http://edge.local:8889/cam-1001/whep';
+    await montar();
+
+    // WebRTC y HLS comparten el <video>: uno entra por MSE y el otro por
+    // srcObject. El lienzo es solo del jsDecoder.
+    expect(comp.usaJsDecoder()).toBe(false);
+    expect(fixture.nativeElement.querySelector('video')).not.toBeNull();
+    // En este navegador de pruebas no hay WebRTC, así que lo que se comprueba es
+    // que se intentó por ahí y el motivo llega al operador en vez de quedarse en
+    // la consola.
+    expect(comp.error()).not.toBe('');
+  });
+
   it('un protocolo que ningún navegador reproduce se explica nombrándolo', async () => {
     svc.protocolo = 'rtsp';
     svc.reproductor = 'ninguno';

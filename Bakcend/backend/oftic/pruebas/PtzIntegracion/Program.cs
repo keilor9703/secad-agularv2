@@ -47,6 +47,8 @@ sc.AddSingleton<IConfiguration>(cfg);
 sc.AddSingleton<ISnowflakeGenerator, Servicios.Snowflake.SnowflakeGenerator>();
 sc.AddSingleton<ICifradoSecretos, CifradoSecretos>();
 sc.AddHttpClient(HikCentralVmsReader.NombreCliente, c => c.Timeout = TimeSpan.FromSeconds(15));
+sc.AddHttpClient(GatewayMedios.NombreCliente, c => c.Timeout = TimeSpan.FromSeconds(8));
+sc.AddSingleton<GatewayMedios>();
 sc.AddSingleton<IVmsReader, HikCentralVmsReader>();
 sc.AddSingleton<IVmsReaderFactory, VmsReaderFactory>();
 sc.AddSingleton<TenantContext>();

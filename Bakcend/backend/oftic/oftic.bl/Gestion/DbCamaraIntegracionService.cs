@@ -64,7 +64,21 @@ namespace Negocio.Gestion
                                     "retraso. WebSocket baja el retraso a 1-3 s y admite H.265, pero exige " +
                                     "instalar el jsDecoder de Hikvision en cada puesto y solo funciona en " +
                                     "Windows con Chrome o Firefox. RTSP y RTMP no se ofrecen: ningún " +
-                                    "navegador los reproduce." }
+                                    "navegador los reproduce sin ayuda." },
+                    new() { Key = "gatewayUrl", Nombre = "URL del gateway de medios", Tipo = "text", Requerido = false,
+                            Ayuda = "Solo con protocolo RTSP. Es el gateway del nodo edge (MediaMTX) tal como " +
+                                    "lo ve el NAVEGADOR del despachador; convierte el RTSP del VMS en WebRTC, " +
+                                    "que es la forma de ver el video casi en tiempo real sin instalar nada en " +
+                                    "el puesto.",
+                            Ejemplo = "https://edge-tunja.policia.gov.co:8889" },
+                    new() { Key = "gatewayApiUrl", Nombre = "API del gateway de medios", Tipo = "text", Requerido = false,
+                            Ayuda = "API de control del gateway, como la ve el SERVIDOR. Si se configura, SECAD " +
+                                    "registra sola cada cámara al abrirla. Si se deja vacía, las rutas hay que " +
+                                    "mantenerlas a mano en el gateway.",
+                            Ejemplo = "http://10.41.0.20:9997" },
+                    new() { Key = "gatewayToken", Nombre = "Token de la API del gateway", Tipo = "password",
+                            Requerido = false, Secreto = true,
+                            Ayuda = "Solo si la API del gateway está protegida. No se muestra una vez guardado." }
                 }
             },
             new DtoVmsDriverDescriptor

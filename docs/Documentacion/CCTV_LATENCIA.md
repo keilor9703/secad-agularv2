@@ -78,7 +78,7 @@ los fotogramas en un canvas del navegador.
 
 ---
 
-## 3. Camino B — gateway de medios en el nodo edge (WebRTC)
+## 3. Camino B — gateway de medios en el nodo edge (WebRTC) — **ELEGIDO E IMPLEMENTADO**
 
 El nodo edge —que ya está en el diseño y hay que desplegar de todos modos— corre
 un gateway (MediaMTX o go2rtc), toma el **RTSP** del HikCentral y lo republica
@@ -99,6 +99,84 @@ actualizar un servicio más en cada sede. A cambio se quita de encima una
 dependencia propietaria, el requisito de Windows y la instalación en cada
 puesto.
 
+### Medido, no estimado
+
+Se montó el banco completo —MediaMTX real, navegador real, API de SECAD real,
+PostgreSQL real; lo único falso es la cámara— y se midió con un contador binario
+quemado en la imagen que leen a la vez el navegador y un lector de referencia por
+RTSP. Sin OCR y sin sincronizar relojes. Detalle en
+`Bakcend/backend/oftic/pruebas/gateway-medios/README.md`.
+
+| | |
+|---|---|
+| Retraso del navegador frente al lector de referencia | **+11 ms** (mediana de 40 muestras) |
+| Búfer de jitter del navegador | 7 ms por fotograma |
+| Paquetes perdidos | 0 de 332 fotogramas |
+
+**El transporte WebRTC no añade latencia apreciable.** Frente a los 5-7 s que HLS
+impone por su estructura de segmentos, no es una diferencia de grado.
+
+Lo que la medición no dice, y conviene no vender de más:
+
+- Todo corría en una máquina: no hay salto de red. En la LAN de una sede se
+  suman milisegundos, no segundos.
+- El codificador del HikCentral añade su propio retraso, que no está medido.
+- El códec del banco fue VP8 porque la Chromium del contenedor no trae H264 para
+  WebRTC. El Chrome de un puesto sí, y MediaMTX pasa el H264 sin transcodificar.
+
+### Cómo queda montado
+
+```
+HikCentral ──RTSP──► gateway (nodo edge) ──WebRTC/WHEP──► navegador
+                          │
+                          └──¿puede este token ver esta cámara?──► API de SECAD
+```
+
+1. El operador abre la cámara. SECAD le pide a HikCentral la URL **RTSP**
+   (`protocol: rtsp_s`).
+2. SECAD registra la ruta en el gateway por su API de control
+   (`sourceOnDemand`: solo se conecta al VMS cuando alguien mira).
+3. SECAD devuelve al navegador la URL **WHEP** y un **token firmado** de vida
+   corta, atado a esa cámara, ese usuario y ese CAD.
+4. El navegador abre el WebRTC. El gateway, antes de servir un solo fotograma,
+   **le pregunta a SECAD** si ese token autoriza esa ruta.
+5. SECAD valida, comprueba las mismas reglas que al entregar la URL —la cámara
+   es de este CAD y está operativa— y **audita la lectura** (`accion =
+   VER_GATEWAY`).
+
+El punto 4 es el importante: el video sale por un puerto que antes no existía, y
+sin esa pregunta cualquiera que alcanzara el gateway vería cualquier cámara
+registrada. Probado en los tres casos: con token válido se ve; sin token no; con
+el token de otra cámara tampoco.
+
+### Lo que hay que configurar en la integración
+
+| Campo | Qué es | Ejemplo |
+|---|---|---|
+| Protocolo de video | `rtsp_s` (o `rtsp`) | |
+| URL del gateway de medios | El gateway **como lo ve el navegador** | `https://edge-tunja.policia.gov.co:8889` |
+| API del gateway de medios | La API de control **como la ve el servidor**. Si se deja vacía, las rutas se mantienen a mano | `http://10.41.0.20:9997` |
+| Token de la API del gateway | Solo si la API está protegida | |
+
+Y en el `mediamtx.yml` del edge:
+
+```yaml
+authMethod: http
+authHTTPAddress: https://secad.policia.gov.co/api/Camaras/gateway/autorizar
+authHTTPExclude:
+  - action: api        # el registro de rutas lo hace SECAD con su propia credencial
+  - action: publish
+api: true
+apiAddress: :9997      # NO exponer fuera de la red de la sede
+webrtc: true
+webrtcAddress: :8889
+```
+
+> ⚠️ La API de control del gateway permite apuntar cualquier ruta a cualquier
+> RTSP. **No debe ser alcanzable desde fuera de la sede**, y el puerto 9997 no va
+> publicado. El 8889 (WebRTC) sí lo alcanza el navegador del despachador, y está
+> protegido por la pregunta a SECAD.
+
 ---
 
 ## 4. Comparación, sin rodeos
@@ -110,9 +188,10 @@ puesto.
 | Instalar en cada puesto | no | **sí** | no |
 | Ataduras | ninguna | Windows + Chrome/Firefox | ninguna |
 | Quién lo mantiene | nadie | Hikvision | nosotros |
-| Estado en SECAD | **funcionando** | todo menos la llamada al SDK | por hacer |
+| Estado en SECAD | **funcionando** | todo menos la llamada al SDK | **funcionando y medido** |
 
-**Recomendación:** el camino B. Da menos latencia que el A, no exige tocar los
+**Decidido: el camino B**, implementado y medido. Lo que sigue es el
+razonamiento con el que se eligió. Da menos latencia que el A, no exige tocar los
 puestos, no ata el despacho a Windows ni a un SDK propietario, y aprovecha un
 servidor que ya hay que poner. El A tiene sentido si la Policía ya tiene el
 jsDecoder desplegado por otro sistema, o si el gateway no se puede meter en la

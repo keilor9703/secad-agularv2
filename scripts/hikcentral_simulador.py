@@ -202,6 +202,14 @@ class Handler(BaseHTTPRequestHandler):
             url = f"{'wss' if seguro else 'ws'}://{host}/ws/{cod}?token=simulado"
             return self._responder(200, self._forma(v1, url))
 
+        # RTSP: no se reproduce en un navegador. En SECAD va al gateway de medios
+        # del nodo edge, que lo republica por WebRTC. Se devuelve con el marcador
+        # «[sms:preview]» que antepone el HikCentral real cuando el stream sale
+        # por un servidor de medios, para comprobar que el driver lo quita.
+        if protocolo in ("rtsp", "rtsp_s"):
+            destino = CFG.get("rtsp_destino") or f"rtsp://127.0.0.1:8554/{cod}"
+            return self._responder(200, self._forma(v1, f"[sms:preview]{destino}"))
+
         # El real falla así cuando piden HLS de un main stream en H.265.
         if protocolo.startswith("hls") and int(req.get("streamType", 0)) != 1:
             return self._responder(200, {"code": "0", "msg": "Success",
@@ -298,6 +306,9 @@ def main():
     ap.add_argument("--app-secret", default="SK-simulador")
     ap.add_argument("--user-id", default="svc_secad_cctv")
     ap.add_argument("--camaras", help="JSON con la lista de cámaras a reportar.")
+    ap.add_argument("--rtsp-destino", default=None,
+                    help="URL RTSP que se devuelve con protocol=rtsp/rtsp_s. Por defecto "
+                         "rtsp://127.0.0.1:8554/<codigo>.")
     ap.add_argument("--url-publica", default=None,
                     help="Base con la que se arma la URL de video que recibe el navegador. "
                          "Por defecto http://127.0.0.1:<puerto>; póngala si el navegador "
@@ -306,6 +317,7 @@ def main():
 
     CFG.update(app_key=a.app_key, app_secret=a.app_secret, user_id=a.user_id,
                camaras=json.load(open(a.camaras, encoding="utf-8")) if a.camaras else CAMARAS_DEMO,
+               rtsp_destino=a.rtsp_destino,
                url_publica=a.url_publica or f"http://127.0.0.1:{a.puerto}")
 
     print(f"Simulador de HikCentral en http://0.0.0.0:{a.puerto}")

@@ -37,6 +37,7 @@ namespace Servicios.Vms
         private const int SegundosParaParar = 10;
 
         private readonly IHttpClientFactory _http;
+        private readonly GatewayMedios _gateway;
         private readonly ILogger<HikCentralVmsReader> _logger;
 
         private static readonly JsonSerializerOptions Json = new()
@@ -44,10 +45,12 @@ namespace Servicios.Vms
             PropertyNameCaseInsensitive = true,
         };
 
-        public HikCentralVmsReader(IHttpClientFactory http, ILogger<HikCentralVmsReader> logger)
+        public HikCentralVmsReader(
+            IHttpClientFactory http, GatewayMedios gateway, ILogger<HikCentralVmsReader> logger)
         {
-            _http   = http;
-            _logger = logger;
+            _http    = http;
+            _gateway = gateway;
+            _logger  = logger;
         }
 
         // ── Operaciones ──────────────────────────────────────────────────────
@@ -193,6 +196,14 @@ namespace Servicios.Vms
             if (url!.StartsWith('[') && url.IndexOf(']') > 0)
                 url = url[(url.IndexOf(']') + 1)..];
 
+            // ── Camino del gateway: RTSP no lo reproduce ningún navegador ────
+            // El RTSP no sale hacia el navegador. Se le entrega al gateway del
+            // nodo edge, que lo republica por WebRTC, y el navegador recibe una
+            // URL WHEP. Es la vía de baja latencia que no exige instalar nada en
+            // el puesto de despacho.
+            if (VmsProtocolos.EsPorGateway(protocolo))
+                return await PorGatewayAsync(cx, camaraCodigo, url!, protocolo, ct);
+
             // El VMS devuelve la URL apuntando a sí mismo. Si hay edge, el
             // navegador del despachador tiene que ir por él: se le cambia el
             // origen conservando ruta y query, que es donde va el token.
@@ -208,6 +219,48 @@ namespace Servicios.Vms
                 // una vez (el camino nativo contra la CSP).
                 Reproductor     = VmsProtocolos.Reproductor(protocolo),
                 TipoStream    = tipo,
+            });
+        }
+
+        /// <summary>
+        /// Registra el RTSP de la cámara en el gateway del nodo edge y devuelve
+        /// la URL WHEP que el navegador sabe abrir.
+        /// </summary>
+        private async Task<DtoVmsResultado<DtoVmsStream>> PorGatewayAsync(
+            DtoVmsConexion cx, string camaraCodigo, string urlRtsp, string protocolo,
+            CancellationToken ct)
+        {
+            var gatewayUrl = cx.Publico("gatewayUrl");
+            var apiUrl     = cx.Publico("gatewayApiUrl");
+
+            if (string.IsNullOrWhiteSpace(gatewayUrl))
+                return DtoVmsResultado<DtoVmsStream>.Mal(
+                    "Esta integración está configurada con RTSP, que ningún navegador reproduce, y no " +
+                    "tiene gateway de medios configurado. Ponga la URL del gateway del nodo edge, o " +
+                    "cambie el protocolo a HLS.");
+
+            var ruta = GatewayMedios.RutaDeCamara(camaraCodigo);
+
+            // Si no hay API configurada se asume que las rutas las mantiene quien
+            // administra el gateway a mano. Es un despliegue válido —un municipio
+            // con veinte cámaras fijas— y no hay por qué exigir la API.
+            if (!string.IsNullOrWhiteSpace(apiUrl))
+            {
+                var r = await _gateway.AsegurarRutaAsync(
+                    apiUrl, cx.Secreto("gatewayToken"), ruta, urlRtsp, ct);
+                if (!r.Ok) return DtoVmsResultado<DtoVmsStream>.Mal(r.Mensaje);
+            }
+
+            return DtoVmsResultado<DtoVmsStream>.Bien(new DtoVmsStream
+            {
+                Url         = GatewayMedios.UrlWhep(gatewayUrl, ruta),
+                Protocolo   = protocolo,
+                Reproductor = VmsProtocolos.ReproductorWebrtc,
+                RutaGateway = ruta,
+                // La autenticación del stream NO es la del VMS aquí: el token que
+                // autoriza la lectura lo emite SECAD y lo pone la capa de negocio,
+                // que es la que sabe quién está pidiendo la cámara.
+                Autenticacion = null,
             });
         }
 

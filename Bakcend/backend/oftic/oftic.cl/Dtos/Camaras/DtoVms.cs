@@ -32,6 +32,12 @@ namespace Comun.Dtos.Camaras
         /// navegador mirando la URL.
         /// </summary>
         public string  Reproductor    { get; set; } = VmsProtocolos.ReproductorHls;
+        /// <summary>
+        /// Ruta de la cámara en el gateway de medios, cuando el video va por ahí.
+        /// La necesita la capa de negocio para emitir el token que autoriza la
+        /// lectura: el driver no sabe quién está pidiendo la cámara.
+        /// </summary>
+        public string? RutaGateway    { get; set; }
         /// <summary>0 main (suele H.265) · 1 sub-stream (H.264, el que reproduce el navegador).</summary>
         public int     TipoStream     { get; set; }
     }

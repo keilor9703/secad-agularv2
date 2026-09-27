@@ -95,6 +95,12 @@ namespace Comun.Dtos.Camaras
         /// que adivinarlo mirando la URL.
         /// </summary>
         public string  Reproductor   { get; set; } = VmsProtocolos.ReproductorHls;
+        /// <summary>
+        /// Ruta en el gateway de medios, cuando el video va por ahí. No se manda
+        /// al navegador como dato útil para él: viaja porque el controlador la
+        /// necesita para emitir el token de autorización.
+        /// </summary>
+        public string? RutaGateway   { get; set; }
         public string  CamaraNombre  { get; set; } = string.Empty;
         /// <summary>
         /// Nodo desde el que se pidió la URL. Informativo para el operador:

@@ -69,7 +69,7 @@ export const PTZ = {
 } as const;
 
 /** Con qué se reproduce lo que devolvió el VMS. Lo decide el backend. */
-export type Reproductor = 'hls' | 'jsdecoder' | 'ninguno';
+export type Reproductor = 'hls' | 'webrtc' | 'jsdecoder' | 'ninguno';
 
 export interface DtoStreamCamara {
   url:           string;

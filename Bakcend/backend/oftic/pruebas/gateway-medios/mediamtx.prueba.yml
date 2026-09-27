@@ -1,0 +1,48 @@
+logLevel: info
+logDestinations: [stdout]
+
+# API de control: es la que usaría el backend de SECAD para registrar la cámara.
+api: true
+apiAddress: :9997
+
+# Autorización delegada a SECAD: MediaMTX pregunta por cada lectura.
+authMethod: http
+authHTTPAddress: http://127.0.0.1:5224/api/Camaras/gateway/autorizar
+# La propia API se deja sin pedir permiso, para no tener que autenticar el
+# registro de rutas en esta prueba.
+authHTTPExclude:
+  - action: api
+  - action: publish
+  # Artefacto DEL BANCO DE PRUEBAS, no del despliegue real: aquí la «cámara» es
+  # otra ruta de este mismo MediaMTX, así que cuando tira del origen se pide
+  # permiso a sí mismo y SECAD se lo niega (no lleva token). En producción la
+  # fuente es el RTSP del HikCentral, que es externo, y esto no ocurre.
+  - action: read
+    path: origen
+  - action: read
+    path: origen-vp8
+
+rtsp: true
+rtspAddress: :8554
+rtspTransports: [tcp]
+
+webrtc: true
+webrtcAddress: :8889
+webrtcEncryption: false
+# Sin STUN/TURN: cliente y servidor están en la misma máquina.
+webrtcICEServers2: []
+webrtcLocalUDPAddress: :8189
+
+hls: true
+hlsAddress: :8888
+# Como HikCentral: segmentos de ~2 s. Es lo que hace comparable la medición.
+hlsVariant: mpegts
+hlsSegmentCount: 7
+hlsSegmentDuration: 2s
+hlsAllowOrigin: '*'
+rtmp: false
+srt: false
+
+paths:
+  # Hace de «cámara»: aquí publica ffmpeg con un reloj quemado en la imagen.
+  origen:

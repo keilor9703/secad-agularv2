@@ -7,6 +7,7 @@ import {
   CamaraService, DtoCamara, DtoStreamCamara, PTZ,
 } from '../../../../core/services/operacion/camara.service';
 import * as jsDecoder from './jsdecoder';
+import { conectar as conectarWhep, SesionWhep } from './whep';
 
 /**
  * Reproduce una cámara CCTV en vivo.
@@ -47,7 +48,10 @@ export class CamaraVisorComponent implements OnDestroy {
   /** Contenedor donde pinta el jsDecoder; el SDK exige un div, no un <video>. */
   private readonly lienzo = viewChild<ElementRef<HTMLElement>>('lienzo');
 
-  /** true = este stream lo pinta el jsDecoder, no el <video>. */
+  /**
+   * true = este stream lo pinta el jsDecoder sobre un div. HLS y WebRTC van los
+   * dos al <video>: uno por MSE y el otro por srcObject.
+   */
   readonly usaJsDecoder = computed(() => this.stream()?.reproductor === 'jsdecoder');
 
   // ── Ventana flotante ─────────────────────────────────────────────────────
@@ -102,6 +106,7 @@ export class CamaraVisorComponent implements OnDestroy {
 
   private hls: Hls | null = null;
   private decodificador: jsDecoder.Reproductor | null = null;
+  private whep: SesionWhep | null = null;
 
   readonly titulo = computed(() => {
     const c = this.camara();
@@ -190,6 +195,14 @@ export class CamaraVisorComponent implements OnDestroy {
    */
   private abrirReproductor(el: HTMLElement, url: string): void {
     const datos = this.stream();
+
+    if (datos?.reproductor === 'webrtc') {
+      // Video por WebRTC desde el gateway del nodo edge: es la vía de latencia
+      // mínima y no necesita nada instalado en el puesto. El token autoriza la
+      // lectura y lo valida el gateway contra SECAD.
+      void this.abrirWhep(el as HTMLVideoElement, url, datos.autenticacion);
+      return;
+    }
 
     if (datos?.reproductor === 'jsdecoder') {
       // Baja latencia por WebSocket. Hoy esto informa de qué falta en vez de
@@ -286,7 +299,26 @@ export class CamaraVisorComponent implements OnDestroy {
     el.play().catch(() => { /* autoplay bloqueado: el usuario le dará al play */ });
   }
 
+  private async abrirWhep(
+    el: HTMLVideoElement, url: string, token: string | null,
+  ): Promise<void> {
+    try {
+      this.whep = await conectarWhep({
+        url, token, video: el,
+        // Una caída posterior no puede quedarse callada: el operador tiene que
+        // saber que lo que ve dejó de actualizarse.
+        alFallar: motivo => this.error.set(motivo),
+      });
+    } catch (e) {
+      this.error.set((e as Error)?.message ?? 'No se pudo abrir el video del municipio.');
+    }
+  }
+
   private soltarReproductor(): void {
+    if (this.whep) {
+      try { this.whep.destruir(); } catch { /* ya cerrada */ }
+      this.whep = null;
+    }
     if (this.decodificador) {
       try { this.decodificador.destruir(); } catch { /* ya destruido */ }
       this.decodificador = null;

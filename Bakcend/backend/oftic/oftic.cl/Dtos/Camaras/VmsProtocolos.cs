@@ -27,7 +27,17 @@ namespace Comun.Dtos.Camaras
         /// <summary>Con qué reproductor abre el navegador este stream.</summary>
         public const string ReproductorHls       = "hls";
         public const string ReproductorJsDecoder = "jsdecoder";
+        public const string ReproductorWebrtc    = "webrtc";
         public const string ReproductorNinguno   = "ninguno";
+
+        /// <summary>
+        /// true cuando el video no lo sirve el VMS sino el gateway de medios del
+        /// nodo edge: SECAD le pide a HikCentral el RTSP y el navegador recibe
+        /// una URL WHEP. Es la vía de baja latencia que no exige instalar nada en
+        /// el puesto (ver CCTV_LATENCIA.md).
+        /// </summary>
+        public static bool EsPorGateway(string? protocolo) =>
+            Igual(protocolo, Rtsp) || Igual(protocolo, RtspS);
 
         public static bool EsWebsocket(string? protocolo) =>
             Igual(protocolo, WebSocket) || Igual(protocolo, WebSocketSeguro);
@@ -40,12 +50,18 @@ namespace Comun.Dtos.Camaras
         public static bool EsSeguroPorNombre(string? protocolo) =>
             Igual(protocolo, WebSocketSeguro);
 
-        public static string Reproductor(string? protocolo) => protocolo?.Trim().ToLowerInvariant() switch
-        {
-            Hls or HlsS                     => ReproductorHls,
-            WebSocket or WebSocketSeguro    => ReproductorJsDecoder,
-            _                               => ReproductorNinguno,
-        };
+        /// <summary>
+        /// Con qué reproductor abre el navegador. RTSP depende de si hay gateway:
+        /// con él el navegador recibe WebRTC; sin él, RTSP no lo reproduce nadie.
+        /// </summary>
+        public static string Reproductor(string? protocolo, bool hayGateway = false) =>
+            protocolo?.Trim().ToLowerInvariant() switch
+            {
+                Hls or HlsS                  => ReproductorHls,
+                WebSocket or WebSocketSeguro => ReproductorJsDecoder,
+                Rtsp or RtspS when hayGateway => ReproductorWebrtc,
+                _                            => ReproductorNinguno,
+            };
 
         /// <summary>
         /// Opciones que se le ofrecen al administrador en la ficha de la
@@ -55,10 +71,12 @@ namespace Comun.Dtos.Camaras
         /// </summary>
         public static readonly (string Valor, string Etiqueta)[] Opciones =
         {
-            (HlsS, "HLS sobre TLS (hls_s) — compatible, ~7 s de retraso"),
+            (HlsS, "HLS sobre TLS (hls_s) — compatible con todo, ~7 s de retraso"),
             (Hls,  "HLS sin TLS (hls) — solo para HikCentral 3.1.0"),
-            (WebSocketSeguro, "WebSocket seguro (websocket_s) — baja latencia, exige jsDecoder en el puesto"),
-            (WebSocket,       "WebSocket (websocket) — baja latencia, exige jsDecoder en el puesto"),
+            (RtspS, "RTSP seguro por gateway (rtsp_s) — latencia mínima, exige gateway en el nodo edge"),
+            (Rtsp,  "RTSP por gateway (rtsp) — latencia mínima, exige gateway en el nodo edge"),
+            (WebSocketSeguro, "WebSocket seguro (websocket_s) — baja latencia, exige jsDecoder en cada puesto"),
+            (WebSocket,       "WebSocket (websocket) — baja latencia, exige jsDecoder en cada puesto"),
         };
 
         private static bool Igual(string? a, string b) =>
