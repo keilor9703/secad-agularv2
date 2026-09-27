@@ -29,7 +29,7 @@ param(
     [string] $Usuario      = "postgres",
     [Parameter(Mandatory = $true)]
     [string] $Password,
-    [string] $BaseMaestra  = "Secad",
+    [string] $BaseMaestra  = "secad",
     [string] $BaseTenant   = "secad_bogota",
     [string] $CodDane      = "11001"
 )
@@ -114,12 +114,34 @@ Write-Host "   $($v.Substring(0, [Math]::Min(50, $v.Length)))..."
 Write-Host ""
 Write-Host "2/4 - Bases de datos" -ForegroundColor Cyan
 foreach ($b in @($BaseMaestra, $BaseTenant)) {
+
+    # Los nombres van SIN comillas en el SQL: PowerShell se come las comillas
+    # dobles al pasar argumentos a un .exe nativo, asi que CREATE DATABASE
+    # "Secad" le llegaba a psql como CREATE DATABASE Secad y PostgreSQL lo
+    # plegaba a minusculas. Se creaba "secad" y el script se conectaba despues
+    # a "Secad", que no existia. Por eso el nombre tiene que ser un
+    # identificador que no necesite comillas.
+    if ($b -cnotmatch '^[a-z_][a-z0-9_]*$') {
+        Write-Host "El nombre de base '$b' necesitaria comillas en SQL." -ForegroundColor Red
+        Write-Host "Usa solo minusculas, digitos y guion bajo."          -ForegroundColor Red
+        exit 1
+    }
+
     $existe = & $psql -h $PgHost -p $Puerto -U $Usuario -d postgres -t -A `
                       -c "SELECT 1 FROM pg_database WHERE datname = '$b'"
     if ($existe -eq "1") {
-        Write-Host "   $b ya existía."
+        Write-Host "   $b ya existia."
     } else {
-        Invoke-Psql -Base "postgres" -Sql "CREATE DATABASE ""$b"""
+        Invoke-Psql -Base "postgres" -Sql "CREATE DATABASE $b"
+
+        # Comprobar el EFECTO, no solo el codigo de salida de psql: es lo que
+        # habria cazado el problema de las comillas en el acto.
+        $ok = & $psql -h $PgHost -p $Puerto -U $Usuario -d postgres -t -A `
+                      -c "SELECT 1 FROM pg_database WHERE datname = '$b'"
+        if ($ok -ne "1") {
+            Write-Host "psql dijo que creo la base pero '$b' no aparece." -ForegroundColor Red
+            exit 1
+        }
         Write-Host "   $b creada." -ForegroundColor Green
     }
 }
