@@ -31,7 +31,12 @@ param(
     [string] $Password,
     [string] $BaseMaestra  = "secad",
     [string] $BaseTenant   = "secad_bogota",
-    [string] $CodDane      = "11001"
+    [string] $CodDane      = "11001",
+    # Quien podra entrar a /super. El superadministrador es una autoridad SOBRE
+    # todos los CAD y vive en la maestra, no en los roles del tenant: ninguna
+    # migracion lo siembra a proposito (ver V66). En una instalacion de cero,
+    # sin esto, el menu de superadministrador no le aparece a nadie.
+    [string] $SuperAdmin   = "admin"
 )
 
 $ErrorActionPreference = "Stop"
@@ -175,6 +180,13 @@ ON CONFLICT (cod_dane) DO UPDATE SET
 "@
 Invoke-Psql -Base $BaseMaestra -Sql $sqlTenant
 Write-Host "   tenant $CodDane -> $BaseTenant en ${PgHost}:${Puerto}" -ForegroundColor Green
+
+if ($SuperAdmin) {
+    $su = $SuperAdmin.ToLower()
+    $sqlSuper = "INSERT INTO secad_super_admins (username, nombre, cod_dane_origen, activo, usuario_creacion) VALUES ('$su', 'Superadministrador de la instalacion local', '$CodDane', TRUE, 'preparar_local_windows') ON CONFLICT (username) DO UPDATE SET activo = TRUE"
+    Invoke-Psql -Base $BaseMaestra -Sql $sqlSuper
+    Write-Host "   superadministrador: $su  (cierra sesion y vuelve a entrar para que tome efecto)" -ForegroundColor Green
+}
 
 $usuarios = Invoke-Psql -Base $BaseTenant -Sql "SELECT count(*) FROM ctr_usuarios"
 Write-Host "   usuarios en el CAD: $usuarios  (V2 siembra 'admin')"
