@@ -135,14 +135,31 @@ export class CamaraVisorComponent implements OnDestroy {
   private reproducirConHlsJs(el: HTMLVideoElement, url: string): void {
 
     this.hls = new Hls({
-      // El despacho quiere ver lo que pasa AHORA: se limita cuánto se queda
-      // atrás el reproductor en vez de dejarlo acumular buffer.
-      liveSyncDurationCount: 2,
-      lowLatencyMode: true,
+      // ── Por qué NO se usa el modo de baja latencia ──────────────────────
+      //
+      // lowLatencyMode es para LL-HLS, que exige que el servidor publique
+      // segmentos parciales (#EXT-X-PART). HikCentral no lo hace: emite HLS
+      // normal. Con ese modo, y con liveSyncDurationCount en 2, el
+      // reproductor se pega tanto al borde de la emisión que consume más
+      // rápido de lo que el VMS publica, y se queda esperando el siguiente
+      // segmento una y otra vez: el video se congela cada segundo con el
+      // círculo de carga, aunque la red esté perfecta.
+      //
+      // Comprobado contra un HikCentral real: con estos valores tartamudea;
+      // con los de abajo reproduce continuo. El precio son unos segundos más
+      // de retraso respecto al directo, que para mirar una cámara del
+      // municipio no cambia ninguna decisión del despachador.
+      lowLatencyMode: false,
+      liveSyncDurationCount: 3,
+      // Techo de memoria: una cámara abierta mucho rato no debe crecer sin
+      // límite en el navegador del despachador.
+      backBufferLength: 30,
       // La URL es de corta vida; reintentar eternamente solo esconde el fallo.
+      // Un reintento más en los segmentos absorbe el tropiezo puntual de red
+      // sin llegar a tapar una caída real.
       manifestLoadingMaxRetry: 2,
       levelLoadingMaxRetry: 2,
-      fragLoadingMaxRetry: 3,
+      fragLoadingMaxRetry: 4,
     });
     this.hls.on(Hls.Events.ERROR, (_e, data) => {
       // El detalle va siempre al log del navegador, fatal o no: cuando el
