@@ -165,6 +165,11 @@ namespace Servicios.Vms
             if (url!.StartsWith('[') && url.IndexOf(']') > 0)
                 url = url[(url.IndexOf(']') + 1)..];
 
+            // El VMS devuelve la URL apuntando a sí mismo. Si hay edge, el
+            // navegador del despachador tiene que ir por él: se le cambia el
+            // origen conservando ruta y query, que es donde va el token.
+            url = NodoEdge.ReescribirOrigen(url, cx.NodoEdgeUrl);
+
             return DtoVmsResultado<DtoVmsStream>.Bien(new DtoVmsStream
             {
                 Url           = url,
@@ -221,8 +226,14 @@ namespace Servicios.Vms
                 "POST", accept, md5, ContentType, date: null, firmadas, ruta);
             var firma = HikSignature.Firmar(cadena, appSecret);
 
+            // La firma NO cubre el host (y «Host» está entre las cabeceras que el
+            // gateway excluye), así que la misma petición firmada se puede
+            // mandar al nodo edge para que la reenvíe al VMS. El edge nunca ve
+            // el AppSecret: firma el central.
+            var destino = NodoEdge.Destino(cx.NodoEdgeUrl, baseUrl);
+
             var cliente = _http.CreateClient(NombreCliente);
-            using var req = new HttpRequestMessage(HttpMethod.Post, baseUrl + ruta)
+            using var req = new HttpRequestMessage(HttpMethod.Post, destino + ruta)
             {
                 Content = new StringContent(cuerpoJson, Encoding.UTF8),
             };
