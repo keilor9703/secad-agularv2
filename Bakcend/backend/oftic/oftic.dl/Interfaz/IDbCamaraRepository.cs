@@ -31,10 +31,15 @@ namespace Datos.Interfaz
 
         Task<DtoCamara?> GetPorCodigoAsync(string camaraCodigo, int sitioGraba, CancellationToken ct);
 
-        /// <summary>Deja constancia de que alguien pidió ver una cámara. También si se le negó.</summary>
+        /// <summary>
+        /// Deja constancia de que alguien pidió ver o mover una cámara. También si
+        /// se le negó. <paramref name="accion"/> es VER para el video y el comando
+        /// PTZ (PAN_LEFT, ZOOM_IN, GOTO_PRESET...) cuando se movió la cámara; el
+        /// detalle guarda los parámetros del movimiento para poder reconstruirlo.
+        /// </summary>
         Task RegistrarVisualizacionAsync(
             DtoCamara? camara, string camaraCodigo, long? pedidoId, long? eventoId,
             int sitioGraba, string usuario, string? ip, bool concedido, string? motivo,
-            CancellationToken ct);
+            CancellationToken ct, string accion = "VER", string? detalle = null);
     }
 }

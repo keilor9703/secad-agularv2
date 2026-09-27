@@ -32,6 +32,14 @@
           <i class="fa-solid" [class.fa-chevron-up]="minimizada()"
              [class.fa-chevron-down]="!minimizada()" aria-hidden="true"></i>
         </button>
+        @if (c.tienePtz && urlActual() && !minimizada()) {
+          <button type="button" class="cv__btn" [class.cv__btn--on]="panelPtz()"
+                  (pointerdown)="$event.stopPropagation()"
+                  title="Mover la cámara" aria-label="Mover la cámara"
+                  [attr.aria-pressed]="panelPtz()" (click)="alternarPanelPtz()">
+            <i class="fa-solid fa-up-down-left-right" aria-hidden="true"></i>
+          </button>
+        }
         @if (urlActual() && !minimizada()) {
           <button type="button" class="cv__btn" (pointerdown)="$event.stopPropagation()"
                   title="Pantalla completa" aria-label="Pantalla completa"
@@ -68,6 +76,83 @@
           </div>
         }
       </div>
+
+      <!-- ── Mando PTZ ─────────────────────────────────────────────────────
+           Mantener pulsado mueve; soltar para. Cada pulsación es un paso corto
+           que el backend arranca Y PARA: no existe un «arranca» suelto que
+           pueda quedarse sin su «para» si se cierra el navegador. -->
+      @if (c.tienePtz && panelPtz()) {
+        <div class="cv__ptz" (pointerdown)="$event.stopPropagation()">
+          <div class="cv__cruz" role="group" aria-label="Mover la cámara">
+            @for (b of botonera; track b.cmd) {
+              <button type="button" class="cv__dpad" [style.grid-area]="b.area"
+                      [title]="b.titulo" [attr.aria-label]="b.titulo"
+                      [disabled]="!!ptzEnCurso()"
+                      (pointerdown)="empezarMovimiento(b.cmd, $event)"
+                      (pointerup)="terminarMovimiento()"
+                      (pointerleave)="terminarMovimiento()"
+                      (keydown.enter)="unToque(b.cmd)"
+                      (keydown.space)="unToque(b.cmd)">
+                <i class="fa-solid {{ b.icono }}" aria-hidden="true"></i>
+              </button>
+            }
+            <span class="cv__cruz-centro" aria-hidden="true">
+              @if (ptzEnCurso()) {
+                <i class="fa-solid fa-circle-notch fa-spin"></i>
+              } @else {
+                <i class="fa-solid fa-video"></i>
+              }
+            </span>
+          </div>
+
+          <div class="cv__ptz-col">
+            <div class="cv__zoom" role="group" aria-label="Zoom">
+              <button type="button" class="cv__dpad" title="Acercar" aria-label="Acercar"
+                      [disabled]="!!ptzEnCurso()"
+                      (pointerdown)="empezarMovimiento(PTZ.acercar, $event)"
+                      (pointerup)="terminarMovimiento()" (pointerleave)="terminarMovimiento()"
+                      (keydown.enter)="unToque(PTZ.acercar)">
+                <i class="fa-solid fa-magnifying-glass-plus" aria-hidden="true"></i>
+              </button>
+              <button type="button" class="cv__dpad" title="Alejar" aria-label="Alejar"
+                      [disabled]="!!ptzEnCurso()"
+                      (pointerdown)="empezarMovimiento(PTZ.alejar, $event)"
+                      (pointerup)="terminarMovimiento()" (pointerleave)="terminarMovimiento()"
+                      (keydown.enter)="unToque(PTZ.alejar)">
+                <i class="fa-solid fa-magnifying-glass-minus" aria-hidden="true"></i>
+              </button>
+            </div>
+
+            <label class="cv__vel">
+              <span>Velocidad</span>
+              <input type="range" min="20" max="60" step="10"
+                     [value]="ptzVelocidad()"
+                     (input)="ptzVelocidad.set(+$any($event.target).value)"
+                     [attr.aria-valuetext]="ptzVelocidad()">
+            </label>
+
+            <!-- Los presets los configura quien instala la cámara en el VMS;
+                 SECAD no sabe cuáles existen, así que se pide el número. -->
+            <div class="cv__preset">
+              <label>
+                <span class="cv__preset-txt">Preset</span>
+                <input type="number" min="1" max="256" inputmode="numeric" placeholder="1-256"
+                       [value]="preset() ?? ''"
+                       (input)="preset.set($any($event.target).value ? +$any($event.target).value : null)"
+                       (keydown.enter)="irAPreset()">
+              </label>
+              <button type="button" class="cv__preset-ir" [disabled]="!!ptzEnCurso()"
+                      (click)="irAPreset()" title="Enviar la cámara al preset">Ir</button>
+            </div>
+          </div>
+
+          @if (ptzAviso()) {
+            <p class="cv__ptz-aviso" role="status">
+              <i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i> {{ ptzAviso() }}
+            </p>
+          }
+        </div>
+      }
 
       <footer class="cv__pie">
         <span class="cv__chip" [class.cv__chip--ok]="c.estado === 1"

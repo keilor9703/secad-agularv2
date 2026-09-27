@@ -100,6 +100,8 @@
     &:hover { background: rgba(255, 255, 255, .28); }
     &:focus-visible { outline: 2px solid #fff; outline-offset: 1px; }
     &--cerrar:hover { background: rgba(220, 38, 38, .9); }
+    // El mando PTZ queda abierto o cerrado: el botón lo dice.
+    &--on { background: rgba(255, 255, 255, .42); }
   }
 
   &__cuerpo { position: relative; }
@@ -150,6 +152,127 @@
     cursor: pointer;
 
     &:hover { background: rgba(255, 255, 255, .12); }
+  }
+
+  // ── Mando PTZ ────────────────────────────────────────────────────────────
+  // Va DEBAJO del video, no encima: tapar la imagen con los botones que sirven
+  // para apuntarla es justo lo que no se quiere al mover una cámara.
+  &__ptz {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 14px;
+    padding: 10px 12px;
+    border-top: 1px solid rgba(21, 27, 59, .1);
+    background: color-mix(in srgb, var(--ui-surface, #fff) 92%, var(--policia-medio, #002a66));
+  }
+
+  &__cruz {
+    display: grid;
+    grid-template-columns: repeat(3, 30px);
+    grid-template-rows: repeat(3, 30px);
+    gap: 3px;
+    flex: 0 0 auto;
+  }
+
+  &__cruz-centro {
+    grid-area: 2 / 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--ui-text-muted, #94a3b8);
+    font-size: calc(10px * var(--font-size-scale, 1));
+  }
+
+  &__dpad {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border: 1px solid rgba(21, 27, 59, .14);
+    border-radius: 7px;
+    background: var(--ui-surface, #fff);
+    color: var(--policia-medio, #002a66);
+    font-size: calc(11px * var(--font-size-scale, 1));
+    cursor: pointer;
+    // El gesto lo gobierna el componente: sin esto, mantener pulsado en una
+    // tablet arrastra la página en vez de mover la cámara.
+    touch-action: none;
+    user-select: none;
+    transition: background .1s ease, transform .06s ease;
+
+    &:hover:not(:disabled) { background: rgba(0, 42, 102, .1); }
+    &:active:not(:disabled) { transform: scale(.93); background: rgba(0, 42, 102, .18); }
+    &:focus-visible { outline: 2px solid var(--policia-medio, #002a66); outline-offset: 1px; }
+
+    // Mientras un comando está en vuelo el mando entero se bloquea: el backend
+    // rechaza dos movimientos simultáneos sobre la misma cámara, así que dejar
+    // los botones activos solo produciría avisos de error.
+    &:disabled { opacity: .45; cursor: progress; }
+  }
+
+  &__ptz-col { display: flex; flex-direction: column; gap: 7px; min-width: 0; }
+
+  &__zoom { display: flex; gap: 4px; }
+
+  &__vel {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: calc(9.5px * var(--font-size-scale, 1));
+    color: var(--ui-text-muted, #6b7280);
+    text-transform: uppercase;
+    letter-spacing: .04em;
+
+    input { width: 92px; accent-color: var(--policia-medio, #002a66); }
+  }
+
+  &__preset {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+
+    label { display: flex; align-items: center; gap: 6px; }
+
+    input {
+      width: 66px;
+      padding: 3px 6px;
+      border: 1px solid rgba(21, 27, 59, .18);
+      border-radius: 6px;
+      background: var(--ui-surface, #fff);
+      color: inherit;
+      font-size: calc(10.5px * var(--font-size-scale, 1));
+    }
+  }
+
+  &__preset-txt {
+    font-size: calc(9.5px * var(--font-size-scale, 1));
+    color: var(--ui-text-muted, #6b7280);
+    text-transform: uppercase;
+    letter-spacing: .04em;
+  }
+
+  &__preset-ir {
+    padding: 4px 11px;
+    border: 0;
+    border-radius: 6px;
+    background: var(--policia-medio, #002a66);
+    color: #fff;
+    font-size: calc(10px * var(--font-size-scale, 1));
+    font-weight: 700;
+    cursor: pointer;
+
+    &:disabled { opacity: .5; cursor: progress; }
+  }
+
+  &__ptz-aviso {
+    flex: 1 0 100%;
+    margin: 0;
+    color: #b45309;
+    font-size: calc(10px * var(--font-size-scale, 1));
+    line-height: 1.45;
   }
 
   &__pie {
@@ -222,5 +345,6 @@
 
     &__asa { display: none; }
     &__nodo { margin-left: 0; width: 100%; }
+    &__ptz { justify-content: center; }
   }
 }

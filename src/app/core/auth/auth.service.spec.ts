@@ -22,6 +22,11 @@ describe('AuthService — quién es SuperAdministrador', () => {
 
   const ROL = 'http://schemas.microsoft.com/ws/2008/06/identity/claims/role';
 
+  // La misma clave que usa AuthService. Estaba puesta como 'sisge_token', del
+  // proyecto anterior, así que el servicio no encontraba el token y la prueba
+  // del rol 2 fallaba por eso —no porque el control de acceso estuviera mal—.
+  const CLAVE_TOKEN = 'secad_token';
+
   beforeEach(() => {
     TestBed.configureTestingModule({ providers: [provideHttpClient(), AuthService] });
     auth = TestBed.inject(AuthService);
@@ -31,14 +36,14 @@ describe('AuthService — quién es SuperAdministrador', () => {
   afterEach(() => localStorage.clear());
 
   it('un Administrador (rol 1) NO es super administrador', () => {
-    localStorage.setItem('sisge_token', token({ [ROL]: ['1'], es_admin: 'true', es_super_admin: 'false' }));
+    localStorage.setItem(CLAVE_TOKEN, token({ [ROL]: ['1'], es_admin: 'true', es_super_admin: 'false' }));
 
     expect(auth.esSuperAdmin()).toBe(false);
     expect(auth.isCurrentUserSuperAdmin()).toBe(false);
   });
 
   it('un SuperAdministrador (rol 2) sí lo es, y las dos vías coinciden', () => {
-    localStorage.setItem('sisge_token', token({ [ROL]: ['1', '2'], es_admin: 'true', es_super_admin: 'true' }));
+    localStorage.setItem(CLAVE_TOKEN, token({ [ROL]: ['1', '2'], es_admin: 'true', es_super_admin: 'true' }));
 
     expect(auth.esSuperAdmin()).toBe(true);
     expect(auth.isCurrentUserSuperAdmin()).toBe(true);

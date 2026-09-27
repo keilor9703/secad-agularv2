@@ -79,3 +79,5 @@ V74__integraciones_canales_destino.sql
 # de visualización, y cad_camaras preparada para el censo institucional.
 V75__camaras_edge_cifrado_auditoria.sql
 V76__camaras_censo_institucional.sql
+# V77: la auditoria de camaras distingue ver de mover (control PTZ).
+V77__camaras_ptz_auditoria.sql

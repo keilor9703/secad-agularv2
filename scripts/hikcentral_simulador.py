@@ -36,11 +36,12 @@ Endpoints que atiende
 ─────────────────────
     POST /artemis/api/resource/v1/cameras          catálogo paginado
     POST /artemis/api/video/v2/cameras/previewURLs URL de video
+    POST /artemis/api/video/v1/ptzs/controlling    control PTZ (arranca / para)
     GET  /hls/<id>.m3u8                            manifiesto de prueba
     GET  /__diagnostico                            qué ha visto el simulador
     GET  /__reset                                  limpia el diagnóstico
 """
-import argparse, base64, hashlib, hmac, json, sys
+import argparse, base64, hashlib, hmac, json, sys, time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 # Cabeceras que el gateway EXCLUYE del cálculo de la firma (§3.2). Firmar una
@@ -62,8 +63,18 @@ CAMARAS_DEMO = [
      "capabilitySet": "vss",         "regionIndexCode": "NORTE",  "status": 1},
 ]
 
+# Comandos PTZ que acepta §5.4.23. Se listan aquí a mano, tomados del manual,
+# y NO se importan de ningún sitio compartido con SECAD: si el driver se
+# inventara un nombre, aquí tiene que salir rechazado. La errata «FOUCS_FAR»
+# se copia tal cual porque es lo que el gateway acepta de verdad.
+PTZ_COMANDOS = {
+    "LEFT", "RIGHT", "UP", "DOWN", "LEFT_UP", "LEFT_DOWN", "RIGHT_UP", "RIGHT_DOWN",
+    "ZOOM_IN", "ZOOM_OUT", "FOCUS_NEAR", "FOUCS_FAR", "IRIS_ENLARGE", "IRIS_REDUCE",
+    "GOTO_PRESET", "RUN_PATROL",
+}
+
 CFG = {}
-diagnostico = {"firmas_ok": 0, "firmas_mal": [], "peticiones": [], "hls": []}
+diagnostico = {"firmas_ok": 0, "firmas_mal": [], "peticiones": [], "hls": [], "ptz": []}
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -156,7 +167,59 @@ class Handler(BaseHTTPRequestHandler):
                     "url": f"{base}/hls/{cod}_{req.get('streamType')}.m3u8",
                     "authentication": "token-efimero-de-prueba"}]}})
 
+        if self.path == "/artemis/api/video/v1/ptzs/controlling":
+            return self._ptz(req)
+
         return self._responder(404, {"code": "0x02404", "msg": "Not found"})
+
+    def _ptz(self, req):
+        """
+        Control PTZ. Valida el cuerpo con los límites del manual y anota cada
+        comando con su hora, para que una prueba pueda comprobar lo que de
+        verdad importa: que a un arranque (action 0) le sigue SIEMPRE una
+        parada (action 1), y cuánto tiempo pasó entre los dos.
+
+        Los códigos de error de abajo son representativos, no literales: el
+        número exacto varía entre versiones del gateway. Lo que se está
+        verificando es que el driver trate como fallo cualquier código que no
+        sea «0», no que sepa traducir un número concreto.
+        """
+        cod     = req.get("cameraIndexCode")
+        comando = (req.get("command") or "").upper()
+        accion  = req.get("action")
+
+        camara = next((c for c in CFG["camaras"] if c["cameraIndexCode"] == cod), None)
+        diagnostico["ptz"].append({
+            "camara": cod, "command": comando, "action": accion,
+            "speed": req.get("speed"), "presetIndex": req.get("presetIndex"),
+            "patrolIndex": req.get("patrolIndex"), "t": round(time.monotonic(), 4),
+        })
+
+        if camara is None:
+            return self._responder(200, {"code": "0x02100003", "msg": "Camera does not exist"})
+        if comando not in PTZ_COMANDOS:
+            return self._responder(200, {"code": "0x00000002", "msg": f"Invalid command: {comando}"})
+        if accion not in (0, 1):
+            return self._responder(200, {"code": "0x00000002", "msg": "action must be 0 or 1"})
+
+        # Una cámara fija no se mueve: el gateway lo rechaza, no lo ignora.
+        # Que esto salte significa que SECAD dejó pasar una cámara sin PTZ.
+        if "ptz" not in [x.strip().lower() for x in camara.get("capabilitySet", "").split(",")]:
+            return self._responder(200, {"code": "0x02100005", "msg": "Camera does not support PTZ"})
+
+        vel = req.get("speed")
+        if vel is not None and not (20 <= int(vel) <= 60):
+            return self._responder(200, {"code": "0x00000002", "msg": f"speed out of range: {vel}"})
+        if comando == "GOTO_PRESET" and not (isinstance(req.get("presetIndex"), int)
+                                             and 1 <= req["presetIndex"] <= 256):
+            return self._responder(200, {"code": "0x00000002", "msg": "presetIndex must be 1..256"})
+        if comando == "RUN_PATROL" and not (isinstance(req.get("patrolIndex"), int)
+                                            and 1 <= req["patrolIndex"] <= 8):
+            return self._responder(200, {"code": "0x00000002", "msg": "patrolIndex must be 1..8"})
+
+        # §4.4.5: la operación es asíncrona; el gateway confirma que la aceptó,
+        # no que la cámara ya llegó.
+        return self._responder(200, {"code": "0", "msg": "Success", "data": None})
 
     # ── GET: HLS de prueba y diagnóstico ─────────────────────────────────
     def do_GET(self):
@@ -174,7 +237,7 @@ class Handler(BaseHTTPRequestHandler):
             return self._responder(200, b"", "video/mp2t")
 
         if self.path == "/__reset":
-            diagnostico.update({"firmas_ok": 0, "firmas_mal": [], "peticiones": [], "hls": []})
+            diagnostico.update({"firmas_ok": 0, "firmas_mal": [], "peticiones": [], "hls": [], "ptz": []})
             return self._responder(200, {"ok": True})
 
         if self.path == "/__diagnostico":

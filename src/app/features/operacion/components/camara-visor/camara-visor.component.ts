@@ -3,7 +3,7 @@ import {
   computed, effect, inject, input, output, signal, untracked, viewChild,
 } from '@angular/core';
 import Hls from 'hls.js';
-import { CamaraService, DtoCamara } from '../../../../core/services/operacion/camara.service';
+import { CamaraService, DtoCamara, PTZ } from '../../../../core/services/operacion/camara.service';
 
 /**
  * Reproduce una cámara CCTV en vivo.
@@ -53,6 +53,42 @@ export class CamaraVisorComponent implements OnDestroy {
 
   private readonly ventana = viewChild<ElementRef<HTMLElement>>('ventana');
 
+  // ── Control PTZ ──────────────────────────────────────────────────────────
+  // El backend mueve UN PASO por llamada: arranca el giro y lo para él mismo
+  // antes de responder. Aquí eso se traduce en mantener pulsado = encadenar
+  // pasos, esperando cada respuesta antes de pedir el siguiente. Nunca hay dos
+  // comandos en vuelo sobre la misma cámara (el backend los rechaza) y ningún
+  // fallo del navegador puede dejar la cámara girando.
+  private static readonly PASO_MS   = 350;
+  private static readonly MAX_PASOS = 20;   // ~7 s manteniendo pulsado
+
+  /** Comando que se está ejecutando, o '' si ninguno. Bloquea los botones. */
+  readonly ptzEnCurso  = signal('');
+  readonly ptzAviso    = signal('');
+  readonly panelPtz    = signal(false);
+  readonly ptzVelocidad = signal(40);
+  readonly preset      = signal<number | null>(null);
+
+  readonly PTZ = PTZ;
+
+  /**
+   * La cruceta. Se declara aquí y no en la plantilla para que el orden del
+   * grid y los nombres de los comandos vivan en un solo sitio.
+   */
+  readonly botonera = [
+    { cmd: PTZ.arribaIzq, area: '1 / 1', icono: 'fa-arrow-up-left',    titulo: 'Arriba e izquierda' },
+    { cmd: PTZ.arriba,    area: '1 / 2', icono: 'fa-arrow-up',         titulo: 'Arriba' },
+    { cmd: PTZ.arribaDer, area: '1 / 3', icono: 'fa-arrow-up-right',   titulo: 'Arriba y derecha' },
+    { cmd: PTZ.izquierda, area: '2 / 1', icono: 'fa-arrow-left',       titulo: 'Izquierda' },
+    { cmd: PTZ.derecha,   area: '2 / 3', icono: 'fa-arrow-right',      titulo: 'Derecha' },
+    { cmd: PTZ.abajoIzq,  area: '3 / 1', icono: 'fa-arrow-down-left',  titulo: 'Abajo e izquierda' },
+    { cmd: PTZ.abajo,     area: '3 / 2', icono: 'fa-arrow-down',       titulo: 'Abajo' },
+    { cmd: PTZ.abajoDer,  area: '3 / 3', icono: 'fa-arrow-down-right', titulo: 'Abajo y derecha' },
+  ] as const;
+
+  /** Se pone a false al soltar el botón; corta la cadena de pasos. */
+  private manteniendo = false;
+
   private hls: Hls | null = null;
 
   readonly titulo = computed(() => {
@@ -78,6 +114,10 @@ export class CamaraVisorComponent implements OnDestroy {
       const c = this.camara();
       untracked(() => {
         this.soltarReproductor();
+        this.manteniendo = false;
+        this.ptzEnCurso.set('');
+        this.ptzAviso.set('');
+        this.panelPtz.set(false);
         this.urlEnganchada = '';
         this.error.set('');
         this.urlActual.set('');
@@ -225,6 +265,95 @@ export class CamaraVisorComponent implements OnDestroy {
     this.video()?.nativeElement.requestFullscreen?.().catch(() => { /* el navegador puede negarlo */ });
   }
 
+  // ── PTZ ──────────────────────────────────────────────────────────────────
+
+  alternarPanelPtz(): void {
+    this.panelPtz.update(v => !v);
+    this.ptzAviso.set('');
+  }
+
+  /**
+   * Mantener pulsado mueve; soltar para. Se encadenan pasos cortos en vez de
+   * mandar un «arranca» y confiar en que llegue el «para»: si el navegador se
+   * cierra a mitad, lo único que pasa es que no se pide el paso siguiente.
+   */
+  empezarMovimiento(comando: string, ev: Event): void {
+    ev.preventDefault();
+    ev.stopPropagation();
+    if (this.ptzEnCurso()) return;
+    this.manteniendo = true;
+    void this.cadenaDePasos(comando);
+  }
+
+  terminarMovimiento(): void { this.manteniendo = false; }
+
+  private async cadenaDePasos(comando: string): Promise<void> {
+    for (let n = 0; n < CamaraVisorComponent.MAX_PASOS; n++) {
+      const seguir = await this.unPaso(comando);
+      // Se para al soltar, al fallar, o al llegar al tope: mantener pulsado por
+      // accidente no debe martillear el VMS indefinidamente —la propia OpenAPI
+      // pide no llamar seguido—.
+      if (!seguir || !this.manteniendo) return;
+    }
+    this.ptzAviso.set('Movimiento detenido por seguridad. Vuelva a pulsar para seguir.');
+  }
+
+  /** Un paso. Devuelve false si no conviene seguir. */
+  private unPaso(comando: string, extra: { preset?: number } = {}): Promise<boolean> {
+    const c = this.camara();
+    if (!c?.camaraCodigo) return Promise.resolve(false);
+
+    this.ptzEnCurso.set(comando);
+    this.ptzAviso.set('');
+
+    return new Promise<boolean>(resolver => {
+      this.svc.ptz(c.camaraCodigo!, {
+        comando,
+        velocidad:  this.ptzVelocidad(),
+        duracionMs: CamaraVisorComponent.PASO_MS,
+        eventoId:   this.eventoId() ?? undefined,
+        ...extra,
+      }).subscribe({
+        next: r => {
+          this.ptzEnCurso.set('');
+          // El backend avisa cuando el VMS aceptó el giro pero no confirmó la
+          // parada. Callarlo sería lo peor: la cámara puede seguir moviéndose.
+          if (r.data && !r.data.detenida) this.ptzAviso.set(r.message);
+          resolver(!!r.success);
+        },
+        error: e => {
+          this.ptzEnCurso.set('');
+          this.ptzAviso.set(e?.error?.message ?? 'No se pudo mover la cámara.');
+          resolver(false);
+        },
+      });
+    });
+  }
+
+  /** Un toque = un paso, para quien prefiera pulsar en vez de mantener. */
+  unToque(comando: string): void {
+    if (this.ptzEnCurso()) return;
+    this.manteniendo = false;
+    void this.unPaso(comando);
+  }
+
+  irAPreset(): void {
+    const n = this.preset();
+    if (n == null || n < 1 || n > 256) {
+      this.ptzAviso.set('El preset debe estar entre 1 y 256.');
+      return;
+    }
+    if (this.ptzEnCurso()) return;
+    this.manteniendo = false;
+    void this.unPaso(PTZ.irAPreset, { preset: n });
+  }
+
+  // Soltar el ratón fuera de la ventana también tiene que cortar la cadena.
+  @HostListener('window:pointerup')
+  @HostListener('window:pointercancel')
+  @HostListener('window:blur')
+  alSoltarFuera(): void { this.terminarMovimiento(); }
+
   // ── Arrastrar y redimensionar ────────────────────────────────────────────
   //
   // Con eventos de puntero y no con la librería de arrastre de CDK a
@@ -351,5 +480,8 @@ export class CamaraVisorComponent implements OnDestroy {
     this.pos.set(this.recortar(x, y));
   }
 
-  ngOnDestroy(): void { this.soltarReproductor(); }
+  ngOnDestroy(): void {
+    this.manteniendo = false;
+    this.soltarReproductor();
+  }
 }

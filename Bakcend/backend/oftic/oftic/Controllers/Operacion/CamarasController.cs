@@ -65,5 +65,29 @@ namespace Api.Controllers.Operacion
                 ? Ok(new { success = true, message = mensaje, data = datos })
                 : UnprocessableEntity(new { success = false, message = mensaje });
         }
+
+        /// <summary>
+        /// Mueve una cámara PTZ un paso acotado: el backend arranca el
+        /// movimiento y lo para él mismo antes de responder. No hay endpoint de
+        /// «parar» a propósito —si el navegador se cerrara entre el arranque y
+        /// la parada, la cámara se quedaría girando—, así que la petición
+        /// tarda lo que dura el movimiento.
+        /// </summary>
+        [HttpPost("{codigo}/ptz")]
+        public async Task<IActionResult> Ptz(
+            string codigo, [FromBody] DtoPtzPeticion peticion, CancellationToken ct = default)
+        {
+            if (peticion is null)
+                return BadRequest(new { success = false, message = "Falta el comando PTZ." });
+
+            var (ok, mensaje, datos) = await _svc.ControlarPtzAsync(
+                codigo, SitioGraba, peticion, Usuario, Ip, ct);
+
+            // Mismo criterio que el stream: la petición era válida, lo que no se
+            // puede es mover esa cámara ahora. El operador necesita el motivo.
+            return ok
+                ? Ok(new { success = true, message = mensaje, data = datos })
+                : UnprocessableEntity(new { success = false, message = mensaje });
+        }
     }
 }

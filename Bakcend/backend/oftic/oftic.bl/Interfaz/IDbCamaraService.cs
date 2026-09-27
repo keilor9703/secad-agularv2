@@ -21,5 +21,15 @@ namespace Negocio.Interfaz
         Task<(bool Ok, string Mensaje, DtoStreamCamara? Datos)> ObtenerStreamAsync(
             string camaraCodigo, int sitioGraba, long? pedidoId, long? eventoId,
             string usuario, string? ip, CancellationToken ct);
+
+        /// <summary>
+        /// Mueve una cámara PTZ un paso acotado. Pasa por los mismos controles
+        /// que el video —la cámara tiene que ser de este CAD y estar operativa—
+        /// y además exige que el inventario la declare PTZ y que el driver
+        /// sepa moverla. Cada movimiento queda auditado con su comando.
+        /// </summary>
+        Task<(bool Ok, string Mensaje, DtoPtzResultado? Datos)> ControlarPtzAsync(
+            string camaraCodigo, int sitioGraba, DtoPtzPeticion peticion,
+            string usuario, string? ip, CancellationToken ct);
     }
 }

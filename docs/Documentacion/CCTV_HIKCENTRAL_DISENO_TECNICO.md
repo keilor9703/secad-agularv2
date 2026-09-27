@@ -196,8 +196,26 @@ Respuesta — **ojo, la v2 es por lotes y devuelve una lista**:
 > cámara no tiene sub-stream H.264, su HLS fallará; en ese caso quedaría para una
 > fase con transcodificación o el player WebSocket/JsDecoder de Hikvision.
 
-### 4.3 (Fase posterior) PTZ — `POST /artemis/api/video/v1/ptzs/controlling`
-Para cámaras móviles. Fuera del alcance del piloto.
+### 4.3 PTZ — `POST /artemis/api/video/v1/ptzs/controlling`
+
+**Implementado.** Ver `CCTV_PTZ.md` para el diseño completo y el porqué.
+
+La API es de **arrancar** (`action: 0`) y **parar** (`action: 1`), y si el parar
+no llega la cámara sigue girando indefinidamente. Por eso SECAD **no** expone
+las dos mitades: su operación es *mueve un paso acotado* —el backend arranca,
+espera y para él mismo dentro de la misma llamada—, y mantener pulsado en el
+visor encadena pasos cortos. Ningún fallo del navegador puede dejar una cámara
+girando.
+
+| Parámetro | Rango del manual |
+|---|---|
+| `speed` | 20–60 (por defecto 40) |
+| `presetIndex` | 1–256 (con `GOTO_PRESET`) |
+| `patrolIndex` | 1–8 (con `RUN_PATROL`) |
+
+Cabecera `userId` obligatoria, como en el resto de la API. §4.4.5 advierte que
+la operación es asíncrona y pide **no bajar la frecuencia de llamada**: el
+gateway confirma que aceptó el comando, no que la cámara ya llegó.
 
 ---
 
@@ -310,7 +328,13 @@ sean solo un driver nuevo, sin tocar el resto (igual que abstrajimos GESPO).
   en el mapa + reproductor HLS del sub-stream. Feature flag + auditoría.
 - **Fase 2:** baja latencia / H.265 vía player WebSocket (JsDecoder de Hikvision) o
   media gateway, si se requiere.
-- **Fase 3:** PTZ, playback post-evento (`playbackURLs`), guardar clip al caso.
+- **Fase 3:** ~~PTZ~~ (hecho — `CCTV_PTZ.md`), playback post-evento
+  (`playbackURLs`), guardar clip al caso.
+
+> Con el PTZ dentro, la **fase 2 deja de ser opcional**: mover una cámara
+> mirando una imagen de hace 7 s hace que el operador se pase de largo. Bajar la
+> latencia a 1–3 s con el jsDecoder por WebSocket pasa a ser prerrequisito de
+> que el PTZ sea usable en operación, no una mejora.
 - **Nacional:** nuevos drivers `IVmsReader` por proveedor (Genetec, Bosch…).
 
 ---

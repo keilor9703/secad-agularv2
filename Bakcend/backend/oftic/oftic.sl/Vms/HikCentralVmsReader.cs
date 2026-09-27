@@ -19,12 +19,17 @@ namespace Servicios.Vms
     /// navegador, que baja el stream directo del servidor de medios. Meter el
     /// video por Kestrel tumbaría el servidor con tres operadores mirando.
     /// </summary>
-    public class HikCentralVmsReader : IVmsReader
+    public class HikCentralVmsReader : IVmsReader, IVmsPtz
     {
         public string Driver => VmsDrivers.HikCentral;
 
         private const string RutaCamaras  = "/artemis/api/resource/v1/cameras";
         private const string RutaPreview  = "/artemis/api/video/v2/cameras/previewURLs";
+        // PTZ es v1: no existe v2 de este endpoint (§5.4.23).
+        private const string RutaPtz      = "/artemis/api/video/v1/ptzs/controlling";
+
+        /// <summary>Tope para la llamada de parada PTZ, que lleva su propio token.</summary>
+        private const int SegundosParaParar = 10;
 
         private readonly IHttpClientFactory _http;
         private readonly ILogger<HikCentralVmsReader> _logger;
@@ -176,6 +181,106 @@ namespace Servicios.Vms
                 Autenticacion = Texto(nodo, "authentication"),
                 Protocolo     = cx.Publico("protocol", "hls_s"),
                 TipoStream    = tipo,
+            });
+        }
+
+        // ── PTZ ──────────────────────────────────────────────────────────────
+
+        /// <summary>
+        /// Mueve la cámara un paso acotado. Ver IVmsPtz para por qué no se
+        /// exponen «arrancar» y «parar» por separado.
+        /// </summary>
+        public async Task<DtoVmsResultado<DtoPtzResultado>> MoverAsync(
+            DtoVmsConexion cx, string camaraCodigo, DtoPtzPeticion p, CancellationToken ct)
+        {
+            if (string.IsNullOrWhiteSpace(camaraCodigo))
+                return DtoVmsResultado<DtoPtzResultado>.Mal("Falta el código de la cámara.");
+            if (!PtzComandos.EsValido(p.Comando))
+                return DtoVmsResultado<DtoPtzResultado>.Mal($"Comando PTZ desconocido: «{p.Comando}».");
+
+            var comando = p.Comando.ToUpperInvariant();
+            var puntual = PtzComandos.Puntuales.Contains(comando);
+
+            if (comando == PtzComandos.IrAPreset && p.Preset is not (>= 1 and <= 256))
+                return DtoVmsResultado<DtoPtzResultado>.Mal("El preset debe estar entre 1 y 256.");
+            if (comando == PtzComandos.CorrerPatrulla && p.Patrulla is not (>= 1 and <= 8))
+                return DtoVmsResultado<DtoPtzResultado>.Mal("La patrulla debe estar entre 1 y 8.");
+
+            // El manual acota la velocidad entre 20 y 60 y usa 40 por defecto.
+            // Fuera de rango el VMS rechaza la petición entera.
+            var velocidad = Math.Clamp(p.Velocidad ?? 40, 20, 60);
+
+            // La duración se acota aquí y no se confía al cliente: es el único
+            // freno que impide que un navegador manipulado deje una cámara
+            // girando. Dos segundos es de sobra para un ajuste fino; para
+            // recorridos largos están los presets.
+            var duracion = Math.Clamp(p.DuracionMs ?? 400, 100, 2000);
+
+            async Task<DtoVmsResultado<JsonElement?>> Enviar(int accion, CancellationToken cancel)
+            {
+                var cuerpo = JsonSerializer.Serialize(new
+                {
+                    cameraIndexCode = camaraCodigo,
+                    command         = comando,
+                    action          = accion,
+                    speed           = velocidad,
+                    presetIndex     = p.Preset,
+                    patrolIndex     = p.Patrulla,
+                });
+                return await LlamarAsync(cx, RutaPtz, cuerpo, cancel);
+            }
+
+            // El «parar» NO viaja con el token del operador. Si viajara, cancelar
+            // la petición —cerrar la pestaña, un timeout de Kestrel— cancelaría
+            // precisamente la llamada que devuelve la cámara a su sitio, y la
+            // dejaría girando. Lleva token propio, con tope para no colgar el
+            // hilo si el gateway no responde.
+            async Task<DtoVmsResultado<JsonElement?>> Parar()
+            {
+                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(SegundosParaParar));
+                return await Enviar(1, cts.Token);
+            }
+
+            var arranque = await Enviar(0, ct);
+            if (!arranque.Ok)
+                return DtoVmsResultado<DtoPtzResultado>.Mal(arranque.Mensaje);
+
+            // Un preset o una patrulla los ejecuta el VMS por su cuenta: mandarle
+            // «parar» detrás abortaría el recorrido a medias.
+            if (puntual)
+                return DtoVmsResultado<DtoPtzResultado>.Bien(new DtoPtzResultado
+                {
+                    Ok = true, Comando = comando, DuracionMs = 0, Detenida = true,
+                    Mensaje = comando == PtzComandos.IrAPreset
+                        ? $"Cámara enviada al preset {p.Preset}."
+                        : $"Patrulla {p.Patrulla} iniciada.",
+                });
+
+            try
+            {
+                await Task.Delay(duracion, ct);
+            }
+            catch (OperationCanceledException)
+            {
+                // Que el operador cancele la petición no puede dejar la cámara
+                // moviéndose: se para igual, con un token limpio.
+                await Parar();
+                throw;
+            }
+
+            // El «parar» va SIEMPRE, aunque el token del operador ya esté
+            // cancelado: es lo único que devuelve la cámara a un estado conocido.
+            var parada = await Parar();
+
+            return DtoVmsResultado<DtoPtzResultado>.Bien(new DtoPtzResultado
+            {
+                Ok         = true,
+                Comando    = comando,
+                DuracionMs = duracion,
+                Detenida   = parada.Ok,
+                Mensaje    = parada.Ok
+                    ? "Movimiento completado."
+                    : "La cámara se movió, pero el VMS no confirmó la parada: " + parada.Mensaje,
             });
         }
 

@@ -1,0 +1,26 @@
+<!-- Arnés de prueba del control PTZ. NO está en oftic.sln a propósito: no es
+     parte de lo que se publica, y meterlo en la solución haría que cada
+     «dotnet build» del API compilara también esto. Se corre a mano; el README
+     de al lado dice cómo. -->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>PtzIntegracion</RootNamespace>
+    <AssemblyName>PtzIntegracion</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../oftic.cl/Comun.csproj" />
+    <ProjectReference Include="../../oftic.dl/Datos.csproj" />
+    <ProjectReference Include="../../oftic.sl/Servicios.csproj" />
+    <ProjectReference Include="../../oftic.bl/Negocio.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Las mismas versiones que arrastran los proyectos del API: una versión
+         menor aquí rompe la restauración con NU1605. -->
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.2" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.2" />
+  </ItemGroup>
+</Project>

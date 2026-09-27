@@ -367,21 +367,38 @@ LIMIT  1";
         // AUDITORÍA
         // ════════════════════════════════════════════════════════════════════
 
+        /// <summary>
+        /// Deja de escribir «accion» y «detalle» si la base todavía no tiene
+        /// V77. El despliegue levanta la API ANTES de correr las migraciones,
+        /// así que durante esos minutos la columna no existe: sin esto, cada
+        /// consulta de video perdería su registro de auditoría justo en el
+        /// momento más delicado, el de un despliegue.
+        /// </summary>
+        private static bool _sinColumnasV77;
+
         public async Task RegistrarVisualizacionAsync(
             DtoCamara? camara, string camaraCodigo, long? pedidoId, long? eventoId,
             int sitioGraba, string usuario, string? ip, bool concedido, string? motivo,
-            CancellationToken ct)
+            CancellationToken ct, string accion = "VER", string? detalle = null)
         {
             try
             {
                 await using var conn = await _tenant.DataSource.OpenConnectionAsync(ct);
                 await using var cmd = conn.CreateCommand();
-                cmd.CommandText = @"
+                cmd.CommandText = _sinColumnasV77
+                    ? @"
 INSERT INTO cad_camaras_visualizacion
     (id, camara_id, camara_codigo, integracion_id, pedido_id, evento_id,
      sitio_graba, usuario, ip, concedido, motivo, fecha)
 VALUES
-    (@id, @camId, @cod, @int, @ped, @evt, @sg, @usr, @ip, @ok, @motivo, NOW())";
+    (@id, @camId, @cod, @int, @ped, @evt, @sg, @usr, @ip, @ok, @motivo, NOW())"
+                    : @"
+INSERT INTO cad_camaras_visualizacion
+    (id, camara_id, camara_codigo, integracion_id, pedido_id, evento_id,
+     sitio_graba, usuario, ip, concedido, motivo, accion, detalle, fecha)
+VALUES
+    (@id, @camId, @cod, @int, @ped, @evt, @sg, @usr, @ip, @ok, @motivo,
+     @accion, @detalle, NOW())";
                 cmd.Parameters.AddWithValue("id",    _snowflake.NextId());
                 cmd.Parameters.AddWithValue("camId", (object?)camara?.Id ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("cod",   Recortar(camaraCodigo, 64));
@@ -393,7 +410,20 @@ VALUES
                 cmd.Parameters.AddWithValue("ip",    (object?)Recortar(ip, 64) ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("ok",    concedido);
                 cmd.Parameters.AddWithValue("motivo", (object?)Recortar(motivo, 300) ?? DBNull.Value);
+                if (!_sinColumnasV77)
+                {
+                    cmd.Parameters.AddWithValue("accion",  Recortar(accion, 24) ?? "VER");
+                    cmd.Parameters.AddWithValue("detalle", (object?)Recortar(detalle, 160) ?? DBNull.Value);
+                }
                 await cmd.ExecuteNonQueryAsync(ct);
+            }
+            // 42703 = columna inexistente: la base aún no tiene V77. Se apunta
+            // y se reintenta sin esas columnas, para no perder el registro.
+            catch (PostgresException ex) when (ex.SqlState == "42703" && !_sinColumnasV77)
+            {
+                _sinColumnasV77 = true;
+                await RegistrarVisualizacionAsync(camara, camaraCodigo, pedidoId, eventoId,
+                    sitioGraba, usuario, ip, concedido, motivo, ct, accion, detalle);
             }
             catch (NpgsqlException ex)
             {
