@@ -202,7 +202,10 @@ def main():
     ap.add_argument("--app-secret", required=True)
     ap.add_argument("--user-id",    required=True, help="Usuario vinculado al Partner")
     ap.add_argument("--camara",     help="cameraIndexCode para pedir además la URL de video")
-    ap.add_argument("--protocol",   default="hls_s", help="hls_s (por defecto) | hls")
+    ap.add_argument("--protocol",   default="hls_s",
+                    help="hls_s (por defecto) | hls | rtsp_s | rtsp. Los rtsp son para el "
+                         "camino de baja latencia: el navegador no los abre, los consume el "
+                         "gateway de medios del nodo edge.")
     ap.add_argument("--stream-type", type=int, default=1, help="1 = sub-stream | 0 = main")
     ap.add_argument("--paginas",    type=int, default=1, help="Cuántas páginas de 20 listar")
     ap.add_argument("--verificar-tls", action="store_true",
@@ -307,9 +310,20 @@ def main():
         print(f"✓ {url}")
     if nodo.get("authentication"):
         print("  (trae además un campo 'authentication' para el stream)")
-    print("\n  Esa URL es la que el navegador del despachador tiene que poder abrir.")
-    print("  Si el host que aparece ahí no es alcanzable desde el puesto de")
-    print("  despacho, el video no se verá aunque la integración esté bien.")
+    if a.protocol.startswith("rtsp"):
+        # Con RTSP la URL NO es para el navegador, y confundirlo es el error más
+        # fácil de cometer aquí. Se dice qué hacer con ella.
+        print("\n  Esa URL es RTSP: NINGÚN navegador la abre. La consume el gateway de")
+        print("  medios (MediaMTX) del nodo edge, que la republica por WebRTC.")
+        print("\n  Antes de configurar nada en SECAD, compruebe que se puede ver:")
+        print("    • Ábrala en VLC: Medio → Abrir ubicación de red → pegue la URL.")
+        print("    • Si VLC muestra imagen, el gateway también va a poder.")
+        print("    • Si VLC pide usuario y contraseña, el gateway los va a necesitar")
+        print("      igual: ahí es donde hay que mirar antes de seguir.")
+    else:
+        print("\n  Esa URL es la que el navegador del despachador tiene que poder abrir.")
+        print("  Si el host que aparece ahí no es alcanzable desde el puesto de")
+        print("  despacho, el video no se verá aunque la integración esté bien.")
     return 0
 
 
