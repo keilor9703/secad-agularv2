@@ -28,11 +28,14 @@ namespace Servicios.ApiInterfaz
             DtoVmsConexion cx, int pagina, int tamano, CancellationToken ct);
 
         /// <summary>
-        /// URL para reproducir una cámara en vivo. La devuelve el VMS y es de
-        /// El manual dice que la URL es «permanently valid» (§5.4.12 y
-        /// §5.4.13): NO caduca sola. Por eso no se guarda en ninguna parte y se
-        /// pide de nuevo en cada apertura —cada petición queda auditada, y así
-        /// una URL filtrada es un incidente acotado y no un acceso permanente
+        /// URL para reproducir una cámara en vivo, tal como la entrega el VMS.
+        ///
+        /// SECAD NO la guarda en ninguna parte: la pide de nuevo en cada
+        /// apertura, y cada petición queda auditada. La razón es que no se puede
+        /// dar por hecho que caduque —el manual de HikCentral, por ejemplo,
+        /// describe la suya como «permanently valid»—, así que hay que tratarla
+        /// como una llave sin fecha de vencimiento. Pedirla cada vez convierte
+        /// una URL filtrada en un incidente acotado y no en un acceso permanente
         /// que nadie vuelve a mirar.
         /// </summary>
         Task<DtoVmsResultado<DtoVmsStream>> ObtenerStreamAsync(
