@@ -84,20 +84,43 @@ namespace Negocio.Gestion
             new DtoVmsDriverDescriptor
             {
                 Driver      = VmsDrivers.OnvifRtsp,
-                Nombre      = "Genérico ONVIF / RTSP",
-                Descripcion = "Cámaras o NVR sueltos por RTSP. Requiere un media gateway (go2rtc/MediaMTX) que convierta RTSP→WebRTC/HLS.",
+                Nombre      = "Cámaras o NVR por RTSP (genérico)",
+                Descripcion = "Para municipios sin VMS central: un NVR de la estación o cámaras sueltas. " +
+                              "Sirve con cualquier marca que hable RTSP (Hikvision, Dahua, Axis, Bosch, ONVIF). " +
+                              "El video sale por el gateway de medios del nodo edge.",
                 Icono       = "fa-solid fa-video",
                 RequiereGateway = true,
                 Campos = new()
                 {
-                    new() { Key = "rtspPlantilla", Nombre = "Plantilla URL RTSP", Tipo = "text", Requerido = true,
-                            Ayuda = "Use {usuario},{clave},{host},{canal}.",
-                            Ejemplo = "rtsp://{usuario}:{clave}@{host}:554/Streaming/Channels/{canal}02" },
-                    new() { Key = "usuario", Nombre = "Usuario", Tipo = "text", Requerido = false },
-                    new() { Key = "clave",   Nombre = "Contraseña", Tipo = "password", Requerido = false, Secreto = true },
-                    new() { Key = "gatewayUrl", Nombre = "URL del media gateway", Tipo = "text", Requerido = true,
-                            Ayuda = "go2rtc/MediaMTX que expone el stream al navegador (WebRTC/HLS).",
-                            Ejemplo = "https://gateway.local:1984" }
+                    new() { Key = "host", Nombre = "Dirección del equipo", Tipo = "text", Requerido = true,
+                            Ayuda = "IP o nombre del NVR o de la cámara, sin «rtsp://».",
+                            Ejemplo = "10.41.7.98" },
+                    new() { Key = "puerto", Nombre = "Puerto RTSP", Tipo = "text", Requerido = false,
+                            Ayuda = "554 en casi todos los equipos.", Ejemplo = "554" },
+                    new() { Key = "canales", Nombre = "Canales", Tipo = "text", Requerido = true,
+                            Ayuda = "Qué canales tiene el equipo. Admite rangos y listas: «1-16», «1,3,5», " +
+                                    "«1-8,12». SECAD no los adivina: crea exactamente los que se declaren.",
+                            Ejemplo = "1-16" },
+                    new() { Key = "rtspPlantilla", Nombre = "Plantilla de la URL RTSP", Tipo = "text", Requerido = true,
+                            Ayuda = "Cambia según la marca. Se reemplazan {usuario}, {clave}, {host}, {puerto} " +
+                                    "y {canal}. Hikvision: /Streaming/Channels/{canal}02 — Dahua: " +
+                                    "/cam/realmonitor?channel={canal}&subtype=1 — Axis: " +
+                                    "/axis-media/media.amp?camera={canal}",
+                            Ejemplo = "rtsp://{usuario}:{clave}@{host}:{puerto}/Streaming/Channels/{canal}02" },
+                    new() { Key = "usuario", Nombre = "Usuario del equipo", Tipo = "text", Requerido = false },
+                    new() { Key = "clave",   Nombre = "Contraseña del equipo", Tipo = "password", Requerido = false,
+                            Secreto = true,
+                            Ayuda = "Va en la URL RTSP que recibe el gateway. Nunca sale hacia el navegador." },
+                    new() { Key = "gatewayUrl", Nombre = "URL del gateway de medios", Tipo = "text", Requerido = true,
+                            Ayuda = "El gateway del nodo edge tal como lo ve el NAVEGADOR del despachador. " +
+                                    "Es obligatorio: ningún navegador reproduce RTSP por su cuenta.",
+                            Ejemplo = "https://edge-tunja.policia.gov.co:8889" },
+                    new() { Key = "gatewayApiUrl", Nombre = "API del gateway de medios", Tipo = "text", Requerido = false,
+                            Ayuda = "API de control del gateway, como la ve el SERVIDOR. Si se configura, SECAD " +
+                                    "registra sola cada cámara al abrirla.",
+                            Ejemplo = "http://10.41.0.20:9997" },
+                    new() { Key = "gatewayToken", Nombre = "Token de la API del gateway", Tipo = "password",
+                            Requerido = false, Secreto = true }
                 }
             }
         };

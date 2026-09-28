@@ -302,6 +302,11 @@ builder.Services.AddSingleton<Api.Services.GatewayVideoTokenService>();
 builder.Services.AddScoped<Api.Services.ResolutorTenant>();
 
 builder.Services.AddSingleton<Servicios.ApiInterfaz.IVmsReader, Servicios.Vms.HikCentralVmsReader>();
+// Driver genérico por RTSP, para los municipios que no tienen VMS central sino
+// un NVR o cámaras sueltas —que son la mayoría—. Comprueba el estado hablando
+// RTSP de verdad con el equipo, así que necesita la sonda.
+builder.Services.AddSingleton<Servicios.Vms.RtspSonda>();
+builder.Services.AddSingleton<Servicios.ApiInterfaz.IVmsReader, Servicios.Vms.OnvifRtspVmsReader>();
 builder.Services.AddSingleton<Servicios.ApiInterfaz.IVmsReaderFactory, Servicios.Vms.VmsReaderFactory>();
 
 builder.Services.AddScoped<IDbCamaraIntegracionRepository, DbCamaraIntegracionRepository>();

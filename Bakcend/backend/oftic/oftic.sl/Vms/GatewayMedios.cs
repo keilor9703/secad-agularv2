@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text;
 using System.Text.Json;
+using Comun.Dtos.Camaras;
 using Microsoft.Extensions.Logging;
 
 namespace Servicios.Vms
@@ -70,7 +71,8 @@ namespace Servicios.Vms
             // Primero patch: es lo que ocurre casi siempre, porque la ruta ya
             // existe de la apertura anterior.
             var patch = await EnviarAsync(HttpMethod.Patch,
-                $"{baseUrl}/v3/config/paths/patch/{Uri.EscapeDataString(ruta)}", cuerpo, token, ct);
+                $"{baseUrl}/v3/config/paths/patch/{Uri.EscapeDataString(ruta)}", cuerpo, token, ct,
+                codigoEsperado: HttpStatusCode.NotFound);
             if (patch.Ok) return (true, "Ruta actualizada en el gateway.");
 
             if (patch.Codigo != HttpStatusCode.NotFound)
@@ -81,6 +83,52 @@ namespace Servicios.Vms
             return add.Ok
                 ? (true, "Ruta creada en el gateway.")
                 : (false, $"El gateway rechazó crear la ruta: {add.Mensaje}");
+        }
+
+        /// <summary>
+        /// Publica un RTSP en el gateway y devuelve lo que el navegador necesita
+        /// para verlo.
+        ///
+        /// Vive aquí y no dentro de un driver porque NO tiene nada de ninguna
+        /// marca: recibe una URL RTSP, y RTSP lo hablan HikCentral, un NVR
+        /// suelto, una cámara ONVIF y cualquier VMS del mercado. El driver solo
+        /// aporta de dónde salió esa URL.
+        /// </summary>
+        public async Task<DtoVmsResultado<DtoVmsStream>> PublicarAsync(
+            DtoVmsConexion cx, string camaraCodigo, string urlRtsp, string protocolo,
+            CancellationToken ct)
+        {
+            var gatewayUrl = cx.Publico("gatewayUrl");
+            var apiUrl     = cx.Publico("gatewayApiUrl");
+
+            if (string.IsNullOrWhiteSpace(gatewayUrl))
+                return DtoVmsResultado<DtoVmsStream>.Mal(
+                    "Esta integración entrega el video por RTSP, que ningún navegador reproduce, y no " +
+                    "tiene gateway de medios configurado. Ponga la URL del gateway del nodo edge.");
+
+            var ruta = RutaDeCamara(camaraCodigo);
+
+            // Si no hay API configurada se asume que las rutas las mantiene quien
+            // administra el gateway a mano. Es un despliegue válido —un municipio
+            // con veinte cámaras fijas— y no hay por qué exigir la API.
+            if (!string.IsNullOrWhiteSpace(apiUrl))
+            {
+                var r = await AsegurarRutaAsync(
+                    apiUrl, cx.Secreto("gatewayToken"), ruta, urlRtsp, ct);
+                if (!r.Ok) return DtoVmsResultado<DtoVmsStream>.Mal(r.Mensaje);
+            }
+
+            return DtoVmsResultado<DtoVmsStream>.Bien(new DtoVmsStream
+            {
+                Url         = UrlWhep(gatewayUrl, ruta),
+                Protocolo   = protocolo,
+                Reproductor = VmsProtocolos.ReproductorWebrtc,
+                RutaGateway = ruta,
+                // La credencial del stream NO es la del VMS aquí: el token que
+                // autoriza la lectura lo emite SECAD, y lo pone la capa de
+                // negocio, que es la que sabe quién está pidiendo la cámara.
+                Autenticacion = null,
+            });
         }
 
         /// <summary>URL WHEP que se le entrega al navegador.</summary>
@@ -102,7 +150,8 @@ namespace Servicios.Vms
         }
 
         private async Task<(bool Ok, HttpStatusCode Codigo, string Mensaje)> EnviarAsync(
-            HttpMethod metodo, string url, string cuerpo, string? token, CancellationToken ct)
+            HttpMethod metodo, string url, string cuerpo, string? token, CancellationToken ct,
+            HttpStatusCode? codigoEsperado = null)
         {
             try
             {
@@ -119,8 +168,15 @@ namespace Servicios.Vms
 
                 if (resp.IsSuccessStatusCode) return (true, resp.StatusCode, texto);
 
-                _logger.LogWarning("El gateway de medios respondió {Codigo} a {Metodo} {Url}: {Cuerpo}",
-                    (int)resp.StatusCode, metodo.Method, url, Recortar(texto));
+                // Un código que ya se esperaba no es un aviso. El 404 del PATCH
+                // es el camino normal la primera vez que se abre una cámara, y
+                // registrarlo como advertencia enseña a ignorar las advertencias.
+                if (resp.StatusCode == codigoEsperado)
+                    _logger.LogDebug("El gateway respondió {Codigo} a {Metodo} {Url}, como se esperaba.",
+                        (int)resp.StatusCode, metodo.Method, url);
+                else
+                    _logger.LogWarning("El gateway de medios respondió {Codigo} a {Metodo} {Url}: {Cuerpo}",
+                        (int)resp.StatusCode, metodo.Method, url, Recortar(texto));
                 return (false, resp.StatusCode, $"HTTP {(int)resp.StatusCode}. {Recortar(texto)}");
             }
             catch (TaskCanceledException) when (!ct.IsCancellationRequested)

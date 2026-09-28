@@ -200,6 +200,11 @@ sede por política de infraestructura.
 Los dos caminos **conviven**: el protocolo se elige por integración, así que un
 municipio puede ir por WebRTC y otro quedarse en HLS sin tocar código.
 
+> El gateway no es solo para HikCentral. Recibe una URL RTSP, y RTSP lo hablan
+> todos los equipos: por eso el mismo gateway sirve para los municipios que no
+> tienen VMS central sino un NVR o cámaras sueltas. Ver
+> `CCTV_DRIVER_RTSP_GENERICO.md`.
+
 ---
 
 ## 5. Qué preguntarle a Hikvision
