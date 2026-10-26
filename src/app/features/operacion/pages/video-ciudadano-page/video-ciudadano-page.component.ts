@@ -4,12 +4,16 @@ import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import * as signalR from '@microsoft/signalr';
 import { environment } from '../../../../../environments/environment';
+import { ColaDeCandidatos } from '../../../../shared/utils/webrtc-candidatos.util';
+import { ICE_RESPALDO, IceServerDto, aRtcIceServers } from '../../../../shared/utils/webrtc-ice.util';
 
 interface DtoVideoSesionPublica {
   valido: boolean;
   estado: string;
   mensaje: string;
   sesionId: string;
+  /** STUN y TURN con credenciales efímeras; la API los entrega solo si el enlace es válido. */
+  iceServers?: IceServerDto[];
 }
 
 /** Payload de chat tal como lo emite VideoSignalingHub (ya persistido). */
@@ -71,21 +75,17 @@ export class VideoCiudadanoPageComponent implements OnInit, OnDestroy {
   private sesionId = '';
   private hub: signalR.HubConnection | null = null;
   private pc: RTCPeerConnection | null = null;
+  private readonly candidatos = new ColaDeCandidatos();
   private localStream: MediaStream | null = null;
   private facingModeActual: 'environment' | 'user' = 'environment';
   private watchId: number | null = null;
 
-  /** Ver comentario equivalente en video-llamada.service.ts (lado despachador). */
-  private construirIceServers(): RTCIceServer[] {
-    const servers: RTCIceServer[] = [{ urls: 'stun:stun.l.google.com:19302' }];
-    const turnUrls = (environment as Partial<{ turnUrls: string[] }>).turnUrls;
-    const turnUsername = (environment as Partial<{ turnUsername: string }>).turnUsername;
-    const turnCredential = (environment as Partial<{ turnCredential: string }>).turnCredential;
-    if (turnUrls?.length) {
-      servers.push({ urls: turnUrls, username: turnUsername, credential: turnCredential });
-    }
-    return servers;
-  }
+  /**
+   * Servidores ICE. Llegan en la respuesta que valida el enlace (ver
+   * video-llamada.service.ts, lado despachador): las credenciales TURN las firma
+   * el servidor y caducan, así que no hay ninguna escrita en el JavaScript.
+   */
+  private iceServers: RTCIceServer[] = [...ICE_RESPALDO];
 
   constructor() {
     this.token = this.route.snapshot.paramMap.get('token') ?? '';
@@ -103,6 +103,7 @@ export class VideoCiudadanoPageComponent implements OnInit, OnDestroy {
             return;
           }
           this.sesionId = r.sesionId;
+          this.iceServers = aRtcIceServers(r.iceServers);
           this.pedirPermisos();
         },
         error: () => {
@@ -191,6 +192,7 @@ export class VideoCiudadanoPageComponent implements OnInit, OnDestroy {
     this.hub.on('offer', async (sdp: string) => {
       this.prepararPeerConnection();   // cierra la anterior si existía
       await this.pc!.setRemoteDescription({ type: 'offer', sdp });
+      await this.candidatos.vaciar(this.pc!);
       const answer = await this.pc!.createAnswer();
       await this.pc!.setLocalDescription(answer);
       await this.hub!.invoke('SendAnswer', this.sesionId, answer.sdp);
@@ -198,8 +200,9 @@ export class VideoCiudadanoPageComponent implements OnInit, OnDestroy {
     });
 
     this.hub.on('ice-candidate', async (candidateJson: string) => {
-      if (!this.pc) return;
-      try { await this.pc.addIceCandidate(JSON.parse(candidateJson)); } catch { /* candidato tardío, ignorar */ }
+      // Pueden llegar antes que la oferta: se guardan hasta tener descripción remota.
+      if (!this.pc) { this.candidatos.guardar(candidateJson); return; }
+      await this.candidatos.recibir(this.pc, candidateJson);
     });
 
     // El despachador se cayó SIN colgar. La llamada no se termina: él puede
@@ -276,7 +279,7 @@ export class VideoCiudadanoPageComponent implements OnInit, OnDestroy {
     // nueva y la conexión anterior ya está muerta. Cerrarla antes de crear la
     // siguiente evita dejar transceivers y candidatos huérfanos.
     this.pc?.close();
-    this.pc = new RTCPeerConnection({ iceServers: this.construirIceServers() });
+    this.pc = new RTCPeerConnection({ iceServers: this.iceServers });
 
     this.localStream?.getTracks().forEach(track => this.pc!.addTrack(track, this.localStream!));
 

@@ -23,6 +23,7 @@ namespace Api.Controllers.Operacion
         private readonly IDbVideoLlamadaService   _videoService;
         private readonly IDbPedidoService         _pedidoService;
         private readonly VideoSessionTokenService _sessionToken;
+        private readonly TurnCredentialService   _turn;
         private readonly IConfiguration           _configuration;
         private readonly ILogger<VideoLlamadaController> _logger;
 
@@ -30,12 +31,14 @@ namespace Api.Controllers.Operacion
             IDbVideoLlamadaService videoService,
             IDbPedidoService pedidoService,
             VideoSessionTokenService sessionToken,
+            TurnCredentialService turn,
             IConfiguration configuration,
             ILogger<VideoLlamadaController> logger)
         {
             _videoService  = videoService;
             _pedidoService = pedidoService;
             _sessionToken  = sessionToken;
+            _turn          = turn;
             _configuration = configuration;
             _logger        = logger;
         }
@@ -218,8 +221,19 @@ namespace Api.Controllers.Operacion
         }
 
         /// <summary>
+        /// Servidores ICE (STUN y TURN) para el navegador del despachador. Las
+        /// credenciales TURN caducan: se piden al iniciar o reconectar la
+        /// llamada, no se guardan en el JavaScript publicado.
+        /// </summary>
+        [HttpGet("ice")]
+        public ActionResult<IReadOnlyList<DtoIceServer>> ObtenerIce()
+            => Ok(_turn.Generar(User.FindFirstValue(ClaimTypes.Name) ?? "despachador"));
+
+        /// <summary>
         /// Único endpoint anónimo: la página pública del ciudadano lo llama para
         /// saber si su enlace todavía es válido antes de pedir cámara/micrófono.
+        /// De paso le entrega los servidores ICE: ya presentó un token válido y
+        /// un enlace vencido no recibe ninguna credencial.
         /// </summary>
         [HttpGet("publico/{token}")]
         [AllowAnonymous]
@@ -229,7 +243,13 @@ namespace Api.Controllers.Operacion
             if (data is null)
                 return Ok(new DtoVideoSesionPublica { Valido = false, Mensaje = "Este enlace ya no es válido o expiró." });
 
-            return Ok(new DtoVideoSesionPublica { Valido = true, Estado = "PENDIENTE", SesionId = data.SesionId });
+            return Ok(new DtoVideoSesionPublica
+            {
+                Valido     = true,
+                Estado     = "PENDIENTE",
+                SesionId   = data.SesionId,
+                IceServers = _turn.Generar($"ciudadano-{data.SesionId}").ToList(),
+            });
         }
 
         // ─── Helpers ──────────────────────────────────────────────────────────
