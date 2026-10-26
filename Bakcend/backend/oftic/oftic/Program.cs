@@ -13,7 +13,9 @@ using Datos.Interfaz;
 using Datos.Interfaz.GestionDocumental;
 using Datos.Tenant;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.FileProviders;
+using ofic.Security;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Negocio.Gestion;
@@ -165,6 +167,11 @@ builder.Services.AddSingleton<MfaSessionTokenService>();
 // al cliente correspondiente. Cambiar de proveedor (Infobip ⇄ Inalambria
 // Express) es editar esa tabla desde la UI, sin redeploy.
 builder.Services.AddSingleton<VideoSessionTokenService>();
+// Credenciales TURN efímeras (HMAC con un secreto que solo conoce el backend y
+// coturn). Reemplaza la credencial permanente que estaba escrita en el
+// JavaScript público. Ver TurnCredentialService y docs/turn-coturn.md.
+builder.Services.TryAddSingleton(TimeProvider.System);
+builder.Services.AddSingleton<TurnCredentialService>();
 builder.Services.AddHttpClient<IInfobipSmsSender, InfobipSmsSender>(c =>
     c.Timeout = TimeSpan.FromSeconds(15));
 builder.Services.AddHttpClient<IInalambriaExpressSmsSender, InalambriaExpressSmsSender>(c =>
@@ -387,6 +394,29 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 var app = builder.Build();
+
+// ── Secretos que conservan el valor del repositorio ────────────────────────
+// appsettings.json trae marcadores para que el proyecto arranque en un equipo
+// de desarrollo, y la aplicación funciona IGUAL con ellos: no hay ningún
+// síntoma. Por eso se avisa siempre, y con Seguridad:ExigirSecretos=true en
+// producción se niega a arrancar. Está apagado por defecto para no tumbar un
+// servidor que hoy funciona al actualizarlo; se enciende con los valores ya
+// puestos. Nunca se registra el valor, solo el nombre de la clave.
+{
+    var hallazgos = ConfiguracionSegura.Revisar(app.Configuration);
+    foreach (var h in hallazgos)
+        app.Logger.LogWarning("Configuración insegura: {Clave} {Motivo}.", h.Clave, h.Motivo);
+
+    if (hallazgos.Count > 0
+        && app.Environment.IsProduction()
+        && app.Configuration.GetValue<bool>("Seguridad:ExigirSecretos"))
+    {
+        throw new InvalidOperationException(
+            "Seguridad:ExigirSecretos está activo y hay secretos sin configurar: " +
+            string.Join(", ", hallazgos.Select(h => h.Clave)) +
+            ". Defínalos por variable de entorno (ver .env.example).");
+    }
+}
 
 app.UseCors("DevCors");
 

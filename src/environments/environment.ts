@@ -12,11 +12,12 @@
   eventoMediaBaseUrl: 'http://srvdockergusof.policia.gov.co:8088',
   videoInstitucionalApiUrl: 'http://srvdockergusof.policia.gov.co:8088/api/VideoInstitucional',
 
-  // Servidor TURN propio para la videollamada WebRTC (coturn). Vacío por
-  // defecto: sin TURN solo queda STUN, que falla en muchas redes celulares con
-  // NAT simétrico de operador — ver video-llamada.service.ts.
-  turnUrls: [] as string[],
-  turnUsername: '',
-  turnCredential: '',
+  // TURN (retransmisión de la videollamada en redes móviles): YA NO se configura
+  // aquí. Antes este archivo llevaba la dirección del servidor y una credencial
+  // permanente, y como todo lo que hay en `environment` viaja en el JavaScript
+  // público, cualquiera podía usar nuestro coturn como retransmisor propio.
+  // Ahora el backend entrega credenciales efímeras firmadas (GET
+  // /api/VideoLlamada/ice y la respuesta de /VideoLlamada/publico/{token}).
+  // Se configuran en el servidor con Turn__Urls y Turn__Secret: docs/turn-coturn.md.
 };
 

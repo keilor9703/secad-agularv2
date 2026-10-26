@@ -3,6 +3,9 @@ import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, firstValueFrom } from 'rxjs';
 import * as signalR from '@microsoft/signalr';
 import { environment } from '../../../../environments/environment';
+import { ICE_RESPALDO, obtenerIceServers } from '../../../shared/utils/webrtc-ice.util';
+import { ColaDeCandidatos } from '../../../shared/utils/webrtc-candidatos.util';
+import { mensajeSinImagen, resumirEstadisticas } from '../../../shared/utils/webrtc-diagnostico.util';
 import { AuthService } from '../../auth/auth.service';
 
 export interface DtoCrearVideoSesionRequest {
@@ -18,6 +21,9 @@ export interface DtoCrearVideoSesionResult {
   fechaExpira: string;
   smsEnviado: boolean;
 }
+
+/** Espera tras conectar antes de comprobar que llegan medios. */
+export const ESPERA_MEDIOS_MS = 8000;
 
 export type EstadoLlamada = 'inactiva' | 'esperando' | 'conectando' | 'conectada' | 'finalizada' | 'error';
 
@@ -108,6 +114,10 @@ export class VideoLlamadaService {
   // El chat ya no usa RTCDataChannel: viaja por el Hub para quedar registrado.
   private micStream: MediaStream | null = null;
 
+  private readonly candidatos = new ColaDeCandidatos();
+  private flujoRemoto: MediaStream | null = null;
+  private verificacionMedios: ReturnType<typeof setTimeout> | null = null;
+
   private readonly estadoSubject = new BehaviorSubject<EstadoLlamada>('inactiva');
   readonly estado$: Observable<EstadoLlamada> = this.estadoSubject.asObservable();
 
@@ -131,21 +141,12 @@ export class VideoLlamadaService {
   readonly ubicacion$: Observable<UbicacionCiudadano | null> = this.ubicacionSubject.asObservable();
 
   /**
-   * Servidores ICE — STUN público de Google siempre incluido; el TURN propio
-   * (coturn) se agrega solo si viene configurado en environment.ts. Sin TURN,
-   * muchas redes celulares con NAT simétrico de operador no logran completar
-   * el flujo real de medios aunque el ICE parezca "conectado".
+   * Servidores ICE de la llamada en curso. Se piden a la API al iniciar o
+   * reconectar, porque las credenciales TURN las firma el servidor y caducan:
+   * ya no hay ninguna escrita en el JavaScript publicado. Hasta que lleguen,
+   * y si no llegan, queda el STUN público.
    */
-  private construirIceServers(): RTCIceServer[] {
-    const servers: RTCIceServer[] = [{ urls: 'stun:stun.l.google.com:19302' }];
-    const turnUrls = (environment as Partial<{ turnUrls: string[] }>).turnUrls;
-    const turnUsername = (environment as Partial<{ turnUsername: string }>).turnUsername;
-    const turnCredential = (environment as Partial<{ turnCredential: string }>).turnCredential;
-    if (turnUrls?.length) {
-      servers.push({ urls: turnUrls, username: turnUsername, credential: turnCredential });
-    }
-    return servers;
-  }
+  private iceServers: RTCIceServer[] = [...ICE_RESPALDO];
 
   constructor(private http: HttpClient, private authService: AuthService) {}
 
@@ -213,11 +214,13 @@ export class VideoLlamadaService {
     this.hub.on('answer', async (sdp: string) => {
       if (!this.pc) return;
       await this.pc.setRemoteDescription({ type: 'answer', sdp });
+      await this.candidatos.vaciar(this.pc);
     });
 
     this.hub.on('ice-candidate', async (candidateJson: string) => {
       if (!this.pc) return;
-      try { await this.pc.addIceCandidate(JSON.parse(candidateJson)); } catch { /* candidato tardío, ignorar */ }
+      // Si llega antes que la respuesta se guarda; antes se perdía en silencio.
+      await this.candidatos.recibir(this.pc, candidateJson);
     });
 
     // El ciudadano colgó: hay que GUARDAR la grabación antes de desmontar todo.
@@ -262,6 +265,7 @@ export class VideoLlamadaService {
     // sirviendo aunque el video no logre establecerse.
     this.chatDisponibleSubject.next(true);
 
+    this.iceServers = await obtenerIceServers(this.http, `${this.base}/ice`);
     this.prepararPeerConnection();
   }
 
@@ -269,11 +273,23 @@ export class VideoLlamadaService {
     // Al reconectar, la conexión anterior quedó muerta: cerrarla antes de crear
     // la nueva o el navegador se queda con transceivers huérfanos.
     this.pc?.close();
-    this.pc = new RTCPeerConnection({ iceServers: this.construirIceServers() });
+    this.candidatos.reiniciar();
+    this.cancelarVerificacionMedios();
+    this.flujoRemoto = null;
+    this.pc = new RTCPeerConnection({ iceServers: this.iceServers });
 
     this.pc.ontrack = (ev) => {
-      this.remoteStreamSubject.next(ev.streams[0] ?? null);
+      // Si el otro extremo no asocia la pista a un stream, `streams[0]` viene
+      // vacío y el <video> quedaba en negro aunque la pista sí llegara.
+      let flujo = ev.streams[0];
+      if (!flujo) {
+        this.flujoRemoto ??= new MediaStream();
+        if (!this.flujoRemoto.getTracks().includes(ev.track)) this.flujoRemoto.addTrack(ev.track);
+        flujo = this.flujoRemoto;
+      }
+      this.remoteStreamSubject.next(flujo);
       this.estadoSubject.next('conectada');
+      this.programarVerificacionMedios();
     };
 
     this.pc.onicecandidate = (ev) => {
@@ -289,6 +305,7 @@ export class VideoLlamadaService {
       const st = this.pc?.connectionState;
       if (st === 'connected') {
         this.estadoSubject.next('conectada');
+        this.programarVerificacionMedios();
       } else if (st === 'failed' || st === 'disconnected') {
         if (this.grabacionActiva) {
           this.errorSubject.next('Se perdió la conexión con el ciudadano. La grabación se guardó automáticamente.');
@@ -506,7 +523,35 @@ export class VideoLlamadaService {
     this.finalizarLocal();
   }
 
+  /**
+   * «Conectada» no garantiza que llegue imagen: la ICE puede cerrar y no pasar
+   * medios (TURN caído, puertos). Pasado un rato se miden los bytes recibidos
+   * y, si no hay imagen, se le dice al operador dónde mirar.
+   */
+  private programarVerificacionMedios(): void {
+    if (this.verificacionMedios) return;
+    this.verificacionMedios = setTimeout(() => void this.verificarMedios(), ESPERA_MEDIOS_MS);
+  }
+
+  private cancelarVerificacionMedios(): void {
+    if (this.verificacionMedios) clearTimeout(this.verificacionMedios);
+    this.verificacionMedios = null;
+  }
+
+  private async verificarMedios(): Promise<void> {
+    this.verificacionMedios = null;
+    const pc = this.pc;
+    if (!pc) return;
+    try {
+      const resumen = resumirEstadisticas(await pc.getStats());
+      const aviso = mensajeSinImagen(resumen);
+      console.info('[videollamada] medios', resumen);
+      if (aviso) this.errorSubject.next(aviso);
+    } catch { /* getStats no disponible: no hay nada que decir */ }
+  }
+
   private finalizarLocal(): void {
+    this.cancelarVerificacionMedios();
     this.pc?.close();
     this.pc = null;
     this.hub?.stop();

@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Pruebas del backend. Vive junto a `oftic/` y NO está en `oftic.sln`, a
+    propósito: la imagen de Docker restaura esa solución, y meter aquí los
+    paquetes de prueba la haría más lenta sin aportar nada al despliegue.
+
+    Se corren con:   dotnet test Bakcend/backend/oftic/oftic.tests/Api.Tests.csproj
+  -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../oftic/Api.csproj" />
+    <!-- El appsettings.json REAL del repositorio, para comprobar que la guardia
+         de secretos sí detecta los marcadores que de verdad trae. -->
+    <None Include="../oftic/appsettings.json" Link="appsettings.repo.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

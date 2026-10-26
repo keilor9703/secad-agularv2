@@ -177,5 +177,24 @@ namespace Comun.Dtos.Operacion
         /// <summary>Necesario en el cliente para relayar señalización (SendAnswer/SendIceCandidate) tras unirse al Hub.</summary>
         [JsonNumberHandling(JsonNumberHandling.WriteAsString | JsonNumberHandling.AllowReadingFromString)]
         public long   SesionId { get; set; }
+
+        /// <summary>
+        /// Servidores ICE (STUN y TURN) que el navegador del ciudadano debe usar.
+        /// Las credenciales TURN son efímeras y las firma el servidor: ver
+        /// TurnCredentialService. Van en esta respuesta, y no en el JavaScript
+        /// publicado, para que no haya ninguna credencial permanente que robar.
+        /// </summary>
+        public List<DtoIceServer> IceServers { get; set; } = new();
+    }
+
+    /// <summary>
+    /// Un servidor ICE con la forma exacta de RTCIceServer, para que el
+    /// navegador lo use tal cual. Username y Credential van solo en TURN.
+    /// </summary>
+    public class DtoIceServer
+    {
+        public string[] Urls       { get; set; } = Array.Empty<string>();
+        public string?  Username   { get; set; }
+        public string?  Credential { get; set; }
     }
 }

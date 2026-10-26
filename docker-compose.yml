@@ -103,6 +103,23 @@ services:
       # Igual que la anterior: protege los endpoints de ingesta externa
       # (PlantaTel/Chat/SMS) y en appsettings.json es un marcador.
       - RecepcionExterna__ApiKey=${RECEPCION_EXTERNA_API_KEY}
+      # TURN para la videollamada, con credenciales EFÍMERAS que firma este
+      # backend (docs/turn-coturn.md). Ya no hay ninguna credencial escrita en
+      # el JavaScript público. Con TURN_URLS vacío solo se entrega STUN, que es
+      # lo que había antes: la llamada abre donde el NAT del ciudadano lo
+      # permite y no en muchas redes móviles.
+      - Turn__Urls=${TURN_URLS:-}
+      - Turn__Secret=${TURN_SECRET:-}
+      - Turn__TtlSeconds=${TURN_TTL_SECONDS:-3600}
+      # Clave que cifra las llaves de API guardadas (Hub de Integraciones).
+      # El valor por defecto es el MARCADOR de appsettings.json, para no cambiar
+      # el comportamiento de un servidor que todavía no la define; con
+      # EXIGIR_SECRETOS=true la API se niega a arrancar mientras siga así.
+      - ApiKeys__ClaveCifrado=${API_KEYS_CLAVE_CIFRADO:-Q0FNQklBUl9FTl9QUk9EVUNDSU9OXzMyX2J5dGVzISE=}
+      # Si es true y hay secretos con su valor de relleno, la API no arranca
+      # (solo en Production). Apagado por defecto: enciéndalo cuando ya estén
+      # todos definidos en .env. Sin importar este valor, los avisa en el log.
+      - Seguridad__ExigirSecretos=${EXIGIR_SECRETOS:-false}
       - AppSettings__UploadsPath=/app/uploads
       # Dominio público real de este despliegue. VideoLlamadaController lo usa
       # para armar el enlace .../video/{token} que recibe el ciudadano; sin
