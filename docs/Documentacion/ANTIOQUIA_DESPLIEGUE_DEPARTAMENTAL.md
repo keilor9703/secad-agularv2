@@ -156,7 +156,7 @@ Datos que **necesito de usted** para dejar las fichas listas:
 
 | | Nacional | Antioquia | Efecto |
 |---|---|---|---|
-| Aplicación + base de datos | 3 de aplicación (2 CPU de 24 núcleos, 1 TB) + 2 de BD (2 CPU de 32 núcleos, 512 GB) con motor comercial propietario | **2 servidores idénticos** (1 CPU de 32 núcleos, 256 GB), cada uno con aplicación y BD, con PostgreSQL con soporte | De 5 equipos a 2; sin licencia del motor propietario; la placa admite crecer |
+| Aplicación + base de datos | 3 de aplicación (2 CPU de 24 núcleos, 1 TB) + 2 de BD (2 CPU de 32 núcleos, 512 GB) con motor comercial propietario | **2 servidores idénticos** (2 CPU de 32 núcleos, 512 GB), cada uno con aplicación y BD, con PostgreSQL con soporte | De 5 equipos a 2; sin licencia del motor propietario; la placa admite crecer |
 | Servidor de IA | 1 con GPU de 141 GB | **Eliminado** | La partida más cara |
 | CCTV/WebRTC | 1 con Windows | **2 de medios, Linux, sin Windows** | Resiliencia y sin licencia Windows |
 | Seguridad/monitoreo | 1 con 1 TB, 30 TB, Windows | **1 pequeño (o máquina virtual), Linux, con testigo**; los secretos van en los 2 del núcleo | Resiliencia a menor costo |
@@ -207,15 +207,15 @@ Si esos cambios también se quieren en el pliego nacional, hay que llevarlos all
 
 | Equipo | Cantidad | Precio de lista por unidad (USD), con 3 años de soporte | Observación |
 |---|---|---|---|
-| Servidor del núcleo (1 CPU 32 núcleos, 256 GB, 2×1,92 TB + 4×3,84 TB NVMe, 4×25 GbE) | 2 | 18.000 – 32.000 | Lo más caro es la memoria y los discos. Es el mismo modelo en la opción A y en la B |
+| Servidor del núcleo (2 CPU de 32 núcleos, 512 GB, 2×1,92 TB + 8×3,84 TB NVMe, 6×25 GbE) | 2 | 40.000 – 65.000 | Lo más caro es la memoria y los discos. Es el mismo modelo en la opción A y en la B |
 | Servidor de medios (1 CPU 24 núcleos, 128 GB, 2×1,92 TB NVMe) | 2 | 10.000 – 16.000 | |
 | Servidor de plataforma (16 núcleos, 128 GB, 4 NVMe) | 1 | 8.000 – 13.000 | Si se usa una máquina virtual existente, este costo desaparece |
 | Edge Tipo A (16 núcleos, 128 GB, 4 NVMe) | 2 por sede | 8.000 – 13.000 | Más UPS de 3 kVA: 2.000 – 3.500 |
 | Edge Tipo B (12 núcleos, 64 GB, 4 NVMe) | 1 por sede | 5.000 – 8.000 | Más UPS de 1,5 kVA: 800 – 1.500 |
 
 **Resumen del núcleo con opción B:** los 2 servidores del núcleo suman unos
-**36.000 a 64.000 USD**, y con los 2 de medios y el de plataforma, unos
-**64.000 a 109.000 USD**. En la opción A el precio de los 2 servidores es el
+**80.000 a 130.000 USD**, y con los 2 de medios y el de plataforma, unos
+**108.000 a 175.000 USD**. En la opción A el precio de los 2 servidores es el
 mismo; lo que cambia es el riesgo, no la compra.
 
 **Lo que no está en esas cifras y puede pesar tanto o más:**
@@ -224,3 +224,23 @@ mismo; lo que cambia es el riesgo, no la compra.
 - Soporte anual de PostgreSQL y de Linux después del tercer año.
 - Instalación, capacitación y pruebas del contratista.
 - El desarrollo pendiente del edge (§4) y del despliegue multinodo (§5).
+
+### 11.1 Con un presupuesto de 200.000 a 300.000 USD solo para aplicación y BD
+
+La carga de Antioquia no necesita tanta potencia: el sobrante conviene gastarlo
+en **resiliencia y vida útil**, no en núcleos que no se van a usar. Por orden:
+
+1. **Un tercer servidor idéntico del núcleo** (≈ 40.000–65.000 USD). Con dos,
+   mientras uno está en mantenimiento o averiado **no queda redundancia**; con
+   tres, sí, y el clúster de base de datos tiene quórum propio sin depender del
+   testigo externo. Es lo que más reduce el riesgo.
+2. **Extender garantía y soporte a 5 años** en los equipos.
+3. **Capacidad de crecimiento**: memoria y discos libres para llegar a 1 TB sin
+   cambiar de servidor.
+4. **El sitio alterno** (ficha 10).
+
+Con 3 servidores del núcleo se gastarían unos 120.000 a 195.000 USD, que cabe
+en el presupuesto con margen. Aclaración para el pliego: los **criterios de
+dimensionamiento** de la ficha 0.2 son el sustento técnico de por qué se piden
+esas especificaciones; un equipo muy por encima de la carga necesita ese
+respaldo si un órgano de control lo pregunta.

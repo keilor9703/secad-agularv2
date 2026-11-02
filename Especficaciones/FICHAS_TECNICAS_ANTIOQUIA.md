@@ -65,12 +65,12 @@ las que se verificarán en las pruebas de aceptación (§0.3).
 |---|---|---|---|
 | 1.1 | Cantidad: **2**, de idénticas características. | | |
 | 1.2 | Marca / Modelo: Especificar. | | |
-| 1.3 | Tipo: rack, máximo 2U. La placa debe admitir un segundo procesador y al menos 1 TB de memoria, sin reemplazar el equipo. | | |
-| 1.4 | Procesador: 1 procesador de la generación más reciente del fabricante, mínimo **32 núcleos**, velocidad base mínima 2,8 GHz. | | |
-| 1.5 | Memoria: **256 GB** DDR5, 5600 MT/s o superior, instalada de forma balanceada entre los canales. | | |
+| 1.3 | Tipo: rack, máximo 2U. La placa debe admitir hasta 2 TB de memoria. | | |
+| 1.4 | Procesador: **2 procesadores** de la generación más reciente del fabricante, mínimo **32 núcleos cada uno (64 en total)**, velocidad base mínima 2,8 GHz. | | |
+| 1.5 | Memoria: **512 GB** DDR5, 5600 MT/s o superior, instalada de forma balanceada entre todos los canales de ambos procesadores, ampliable a 2 TB. | | |
 | 1.6 | Almacenamiento del sistema: 2 unidades NVMe de 1,92 TB, intercambiables en caliente, en RAID 1. | | |
-| 1.7 | Almacenamiento de datos: mínimo **7 TB efectivos** en unidades NVMe intercambiables en caliente, en RAID 10 (o RAID 1 sobre un mínimo de 4 unidades), con controladora de caché protegida. | | |
-| 1.8 | Red: dos o más tarjetas con un total de 4 puertos a 10/25 GbE, activo/activo contra dos switches distintos, con módulos y cables incluidos. Un enlace dedicado de servidor a servidor para la replicación. | | |
+| 1.7 | Almacenamiento de datos: mínimo **15 TB efectivos** en unidades NVMe intercambiables en caliente, en RAID 10 (o RAID 1 sobre un mínimo de 4 unidades), con controladora de caché protegida. | | |
+| 1.8 | Red: dos o más tarjetas con un total de **6 puertos a 25 GbE**: 4 de servicio, activo/activo contra dos switches distintos, y 2 dedicados a la replicación de servidor a servidor. Módulos y cables incluidos. | | |
 | 1.9 | Gestión remota fuera de banda, licenciada, con consola virtual, monitoreo y alertas, e instalación remota del sistema operativo. | | |
 | 1.10 | Fuentes de poder y ventiladores redundantes, intercambiables en caliente. | | |
 | 1.11 | Sistema operativo: distribución Linux empresarial, con suscripción de soporte del fabricante por mínimo 3 años. **No se requieren licencias de sistemas operativos Windows.** | | |
