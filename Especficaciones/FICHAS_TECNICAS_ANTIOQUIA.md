@@ -1,5 +1,9 @@
 # Fichas técnicas — Despliegue departamental de Antioquia
 
+> **Las especificaciones de SERVIDORES en el formato del pliego nacional** (Word y PDF) están en
+> `ESPECIFICACION TECNICA SERVIDORES ANTIOQUIA.docx` y `.pdf`, en esta misma carpeta.
+> Este archivo conserva además las fichas de almacenamiento, red, respaldo y sitio alterno.
+>
 > **Cómo usar este documento.** Está redactado para pegarse en el pliego: sin
 > marcas ni fabricantes, con la misma estructura de tabla que las fichas
 > actuales (Descripción · Cumple · No cumple). Lo que está entre `[corchetes]`
