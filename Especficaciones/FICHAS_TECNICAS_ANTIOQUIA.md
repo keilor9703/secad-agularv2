@@ -44,48 +44,49 @@ las que se verificarán en las pruebas de aceptación (§0.3).
 | N.° | Descripción | Cumple | No cumple |
 |---|---|---|---|
 | 0.3.1 | El contratista ejecutará una **prueba de carga** que demuestre los criterios 0.2.1 a 0.2.4 simultáneos durante mínimo 2 horas, con tiempo de respuesta del percentil 95 menor a 1 s en las operaciones de recepción y despacho. | | |
-| 0.3.2 | Prueba de **falla de un nodo** de cada capa (aplicación, base de datos, medios, plataforma) con el servicio activo: el servicio no se interrumpe más de 60 segundos y no se pierde ningún caso en curso. | | |
-| 0.3.3 | Prueba de **conmutación automática de la base de datos**: tiempo máximo de 60 s y pérdida de datos cero en el pico de carga. | | |
+| 0.3.2 | Prueba de **falla de un servidor del núcleo** y de **un servidor de medios**, con el servicio activo: el servicio no se interrumpe más de 60 segundos y no se pierde ningún caso en curso. | | |
+| 0.3.3 | Prueba de **conmutación automática de la base de datos y de la aplicación**: tiempo máximo de 60 s y pérdida de datos cero en el pico de carga. | | |
 | 0.3.4 | Prueba de **restauración** de un respaldo completo y de recuperación a un punto en el tiempo, documentada. | | |
 | 0.3.5 | Prueba de **pérdida del enlace** entre un nodo edge y el núcleo, y de reconexión posterior, conforme a lo definido en la ficha 5. | | |
 | 0.3.6 | Todas las pruebas se entregarán con informe firmado y datos crudos. El supervisor podrá repetirlas. | | |
 
 ---
 
-## 1. Servidores de capa media (aplicación)
+## 1. Servidores del núcleo (aplicación y base de datos)
+
+> **Configuración de uso.** Se contratan **2 servidores idénticos**. Cada uno
+> aloja la aplicación y una instancia de la base de datos: uno actúa como
+> principal y el otro como respaldo en caliente, con conmutación automática (ver
+> 1.14 y 1.15). El mismo modelo de servidor sirve también si la entidad decide
+> separar los roles (uno de aplicación y otro de base de datos, sin conmutación
+> automática, ver numeral 1.16).
 
 | N.° | Descripción | Cumple | No cumple |
 |---|---|---|---|
-| 1.1 | Cantidad: **3** (operación activa en los tres, tolerante a la falla de uno). | | |
+| 1.1 | Cantidad: **2**, de idénticas características. | | |
 | 1.2 | Marca / Modelo: Especificar. | | |
-| 1.3 | Tipo: rack, máximo 1U. La placa debe admitir un segundo procesador y al menos 1 TB de memoria, sin reemplazar el equipo. | | |
-| 1.4 | Procesador: 1 procesador de la generación más reciente del fabricante, mínimo **24 núcleos**, velocidad base mínima 2,8 GHz. | | |
-| 1.5 | Memoria: **256 GB** DDR5, 5600 MT/s o superior, ocupando los canales de forma balanceada. | | |
-| 1.6 | Almacenamiento interno: 2 unidades NVMe de 1,92 TB, intercambiables en caliente, en RAID 1, con controladora de caché protegida. | | |
-| 1.7 | Red: dos o más tarjetas con un total de 4 puertos a 10/25 GbE, en configuración activo/activo contra dos switches distintos, con módulos y cables incluidos y compatibles con los switches de destino. | | |
-| 1.8 | Gestión remota: tarjeta de gestión fuera de banda, licenciada, con consola virtual, monitoreo y alertas, e instalación remota del sistema operativo. | | |
-| 1.9 | Redundancia: fuentes de poder y ventiladores redundantes, intercambiables en caliente. | | |
-| 1.10 | Sistema operativo: distribución Linux empresarial, con suscripción de soporte del fabricante por mínimo 3 años, dentro de la matriz de compatibilidad del equipo. **No se requieren licencias de sistemas operativos propietarios de escritorio ni de servidor Windows.** | | |
-| 1.11 | Plataforma de ejecución: el contratista dejará instalada y configurada la plataforma de contenedores con la que se despliegan los servicios del SECAD, en alta disponibilidad entre los tres nodos. | | |
-| 1.12 | Los equipos se entregan instalados, con sistema operativo, conectados y con los servicios del SECAD desplegados y productivos. | | |
+| 1.3 | Tipo: rack, máximo 2U. La placa debe admitir un segundo procesador y al menos 1 TB de memoria, sin reemplazar el equipo. | | |
+| 1.4 | Procesador: 1 procesador de la generación más reciente del fabricante, mínimo **32 núcleos**, velocidad base mínima 2,8 GHz. | | |
+| 1.5 | Memoria: **256 GB** DDR5, 5600 MT/s o superior, instalada de forma balanceada entre los canales. | | |
+| 1.6 | Almacenamiento del sistema: 2 unidades NVMe de 1,92 TB, intercambiables en caliente, en RAID 1. | | |
+| 1.7 | Almacenamiento de datos: mínimo **7 TB efectivos** en unidades NVMe intercambiables en caliente, en RAID 10 (o RAID 1 sobre un mínimo de 4 unidades), con controladora de caché protegida. | | |
+| 1.8 | Red: dos o más tarjetas con un total de 4 puertos a 10/25 GbE, activo/activo contra dos switches distintos, con módulos y cables incluidos. Un enlace dedicado de servidor a servidor para la replicación. | | |
+| 1.9 | Gestión remota fuera de banda, licenciada, con consola virtual, monitoreo y alertas, e instalación remota del sistema operativo. | | |
+| 1.10 | Fuentes de poder y ventiladores redundantes, intercambiables en caliente. | | |
+| 1.11 | Sistema operativo: distribución Linux empresarial, con suscripción de soporte del fabricante por mínimo 3 años. **No se requieren licencias de sistemas operativos Windows.** | | |
+| 1.12 | Plataforma de ejecución: el contratista dejará instalada y configurada la plataforma de contenedores con la que se despliegan los servicios del SECAD, en los dos servidores. | | |
+| 1.13 | Motor de base de datos: **PostgreSQL**, versión estable vigente, con **soporte empresarial 7x24 de mínimo 3 años** para la totalidad de instancias. Una base de datos independiente por municipio (hasta 125), con agrupación de conexiones. | | |
+| 1.14 | Alta disponibilidad de la base de datos: replicación en flujo entre los dos servidores, **conmutación automática** con regla anti-doble-principal, usando el nodo testigo de la ficha 4. Tiempo máximo de conmutación 60 s; pérdida de datos cero en operación normal. | | |
+| 1.15 | Alta disponibilidad de la aplicación: la aplicación opera activa en un servidor y lista en el otro, con **conmutación automática** en máximo 60 s y sin pérdida de casos en curso. | | |
+| 1.16 | Variante de roles separados (si la entidad la elige antes de la adjudicación): los mismos dos equipos, uno dedicado a aplicación y otro a base de datos, sin conmutación automática; con respaldo fuera de los servidores, un repuesto en sitio y restauración probada, y con el tiempo máximo de interrupción aceptado por la entidad dejado por escrito. | | |
+| 1.17 | Respaldo continuo: archivado de los registros de transacciones al almacenamiento de la ficha 6, con recuperación a un punto en el tiempo (PITR) de mínimo 14 días. | | |
+| 1.18 | Servicio de plataforma que queda instalado en los dos servidores en alta disponibilidad: **gestión de secretos y llaves**. | | |
+| 1.19 | Los equipos se entregan instalados, con sistema operativo, conectados y con los servicios del SECAD desplegados y productivos. | | |
 
-## 2. Servidores de bases de datos
+## 2. (Reservada)
 
-| N.° | Descripción | Cumple | No cumple |
-|---|---|---|---|
-| 2.1 | Cantidad: **2**, más el nodo testigo de la ficha 4 (quórum de tres miembros para conmutación automática segura). | | |
-| 2.2 | Marca / Modelo: Especificar. | | |
-| 2.3 | Tipo: rack, máximo 2U. La placa debe admitir un segundo procesador y al menos 1 TB de memoria. | | |
-| 2.4 | Procesador: 1 procesador de la generación más reciente, mínimo **32 núcleos**, velocidad base mínima 2,8 GHz. | | |
-| 2.5 | Memoria: **256 GB** DDR5, 5600 MT/s o superior. | | |
-| 2.6 | Almacenamiento de datos: mínimo **7 TB efectivos** en unidades NVMe, intercambiables en caliente, en RAID 10 (o RAID 1 sobre un mínimo de 4 unidades). Almacenamiento independiente para el sistema operativo, en RAID 1. | | |
-| 2.7 | Red: 4 puertos a 10/25 GbE en activo/activo, con módulos incluidos. Un puerto o enlace dedicado a la replicación entre los dos nodos. | | |
-| 2.8 | Gestión remota, fuentes y ventiladores redundantes, igual que 1.8 y 1.9. | | |
-| 2.9 | Motor de base de datos: **PostgreSQL**, versión estable vigente, con **soporte empresarial 7x24 de mínimo 3 años** para la totalidad de instancias. | | |
-| 2.10 | Alta disponibilidad: replicación en flujo con **conmutación automática** y regla anti-doble-primario, usando el testigo de la ficha 4. Tiempo máximo de conmutación 60 s; pérdida de datos cero en operación normal. | | |
-| 2.11 | Respaldo continuo: archivado de los registros de transacciones al almacenamiento de la ficha 6, con recuperación a un punto en el tiempo (PITR) de mínimo 14 días. | | |
-| 2.12 | Aislamiento por municipio: el diseño debe soportar una base de datos independiente por inquilino (125), con agrupación de conexiones. | | |
-| 2.13 | Sistema operativo: igual que 1.10. | | |
+> La capa de aplicación y la de base de datos se agruparon en la ficha 1. El
+> número se conserva para no alterar las referencias de las demás fichas.
 
 ## 3. Servidores de medios en tiempo real (videollamada)
 
@@ -99,20 +100,17 @@ las que se verificarán en las pruebas de aceptación (§0.3).
 | 3.6 | Red: 4 puertos a 10/25 GbE en activo/activo. Cada servidor debe tener **una dirección IP pública dedicada** y acceso de entrada UDP/TCP a los puertos de señalización y de relevo de medios. | | |
 | 3.7 | Capacidad: retransmisión (STUN/TURN) de al menos **200 sesiones simultáneas** y 1 Gbps sostenido por servidor, sin transcodificación. | | |
 | 3.8 | Autenticación del relevo con credenciales efímeras firmadas por el servidor de la aplicación (sin credenciales permanentes). | | |
-| 3.9 | Sistema operativo y gestión: igual que 1.8 a 1.10. | | |
+| 3.9 | Sistema operativo y gestión: igual que 1.9 a 1.11. | | |
 
-## 4. Servidores de plataforma (secretos, monitoreo y testigo)
+## 4. Servidor de plataforma (testigo, monitoreo y registros)
 
 | N.° | Descripción | Cumple | No cumple |
 |---|---|---|---|
-| 4.1 | Cantidad: **2**, en alta disponibilidad. | | |
-| 4.2 | Tipo: rack, máximo 1U. | | |
-| 4.3 | Procesador: 1 procesador, mínimo **16 núcleos**. | | |
-| 4.4 | Memoria: **128 GB** DDR5. | | |
-| 4.5 | Almacenamiento: 2 unidades NVMe de 1,92 TB en RAID 1 (sistema) y 2 unidades NVMe de 3,84 TB en RAID 1 (registros y métricas). | | |
-| 4.6 | Red: 4 puertos a 10/25 GbE en activo/activo. | | |
-| 4.7 | Servicios que quedan instalados y en alta disponibilidad: **gestión de secretos y llaves**; **monitoreo y alertas** (métricas, disponibilidad, SNMP/Redfish); **registros centralizados** con retención de mínimo 12 meses; **caché y bus de mensajería distribuida** para los servicios de la aplicación; y el **nodo testigo** del clúster de bases de datos. | | |
-| 4.8 | Sistema operativo y gestión: igual que 1.8 a 1.10. | | |
+| 4.1 | Cantidad: **1**, ubicado **fuera** de los dos servidores del núcleo. Puede ser un equipo físico o una máquina virtual dedicada con recursos equivalentes, preferiblemente en otro sitio (por ejemplo el alterno de la ficha 10). | | |
+| 4.2 | Recursos mínimos: 16 núcleos, 128 GB de memoria, 2 unidades NVMe de 1,92 TB en RAID 1 (sistema) y 2 unidades NVMe de 3,84 TB en RAID 1 (registros y métricas). Si es físico: rack máximo 1U, 4 puertos 10/25 GbE, fuentes y ventiladores redundantes. | | |
+| 4.3 | Servicios que quedan instalados: **nodo testigo** del clúster de bases de datos y de la aplicación (voto de desempate); **monitoreo y alertas** (métricas, disponibilidad, SNMP/Redfish); **registros centralizados** con retención de mínimo 12 meses. | | |
+| 4.4 | Si este equipo se detiene, los servicios del núcleo **siguen funcionando**; solo se suspende la conmutación automática, y debe emitirse alerta inmediata. | | |
+| 4.5 | Sistema operativo y gestión: igual que 1.9 y 1.11. | | |
 
 ## 5. Nodos edge en los CAD locales
 
@@ -140,7 +138,7 @@ indica cuál corresponde a cada CAD.
 | 5.13 | Funciones del edge: pasarela de medios de cámaras, servicio mínimo de despacho y una réplica local de la información de la sede. | | |
 | 5.14 | Con el enlace caído, el CAD sigue operando con las funciones mínimas que defina el Anexo de funcionalidad edge, durante un mínimo de **72 horas**, y al restablecerse el enlace sincroniza sin duplicados ni pérdida de eventos. | | |
 | 5.15 | Los identificadores de los registros creados en el edge no pueden colisionar con los del núcleo. | | |
-| 5.16 | Sistema operativo y gestión remota: igual que 1.8 y 1.10. | | |
+| 5.16 | Sistema operativo y gestión remota: igual que 1.9 y 1.11. | | |
 | 5.17 | Suministro, instalación y puesta en marcha en sitio, y capacitación al personal del CAD. | | |
 
 ## 6. Almacenamiento (grabaciones, adjuntos y respaldos)
@@ -176,7 +174,7 @@ indica cuál corresponde a cada CAD.
 
 | N.° | Descripción | Cumple | No cumple |
 |---|---|---|---|
-| 8.1 | Software de respaldo con licenciamiento para mínimo **12 servidores** físicos o virtuales, con soporte del fabricante 7x24 por 3 años. | | |
+| 8.1 | Software de respaldo con licenciamiento para mínimo **8 servidores** físicos o virtuales, con soporte del fabricante 7x24 por 3 años. | | |
 | 8.2 | Debe respaldar bases de datos PostgreSQL con recuperación a un punto en el tiempo, archivos y servidores completos. | | |
 | 8.3 | Cifrado de los respaldos y copia inmutable en el almacenamiento de la ficha 6. | | |
 | 8.4 | Verificación automática de que el respaldo se puede restaurar, con informe. | | |
@@ -193,14 +191,14 @@ indica cuál corresponde a cada CAD.
 | 9.4 | Capacitación certificada al personal técnico de la entidad: mínimo 40 horas en administración de plataforma, bases de datos, respaldo y recuperación. | | |
 | 9.5 | Documentación técnica (memoria, diagramas, procedimientos, guías de incidentes) en formato editable, aprobada por el supervisor. | | |
 | 9.6 | Seguridad: cifrado de datos en reposo y en tránsito, auditoría de accesos y cumplimiento de la Ley 1581 de 2012 y de los lineamientos ISO/IEC 27001 y 27002 de la entidad. | | |
-| 9.7 | **Escalabilidad:** el diseño debe permitir agregar después un nodo de procesamiento de inteligencia artificial, otros servidores de aplicación o más sedes edge sin rediseñar la red ni el centro de datos. | | |
+| 9.7 | **Escalabilidad:** el diseño debe permitir agregar después un nodo de procesamiento de inteligencia artificial, más servidores de aplicación o más sedes edge sin rediseñar la red ni el centro de datos. | | |
 
 ## 10. Sitio alterno de contingencia (opcional, recomendado)
 
 | N.° | Descripción | Cumple | No cumple |
 |---|---|---|---|
 | 10.1 | Ubicación: un sitio distinto del principal, en `[otra sede / servicio de alojamiento]`, con enlace dedicado al principal. | | |
-| 10.2 | Equipos: 1 servidor de aplicación (ficha 1), 1 servidor de base de datos (ficha 2) y 1 sistema de almacenamiento con capacidad mínima de 150 TB útiles (ficha 6). | | |
+| 10.2 | Equipos: 1 servidor del núcleo (ficha 1) y 1 sistema de almacenamiento con capacidad mínima de 150 TB útiles (ficha 6). | | |
 | 10.3 | Replicación asíncrona continua de bases de datos y almacenamiento: **RPO ≤ 5 minutos**. | | |
 | 10.4 | Recuperación ante desastre: **RTO ≤ 60 minutos**, con procedimiento documentado y una prueba de conmutación por año. | | |
 

@@ -96,9 +96,14 @@ manejarlo:
 Mi recomendación es la primera, pero **no firmar 5.14 sin una estimación de
 cuánto cuesta construirlo**.
 
-## 5. Un hallazgo técnico que afecta el diseño de la capa de aplicación
+## 5. Un hallazgo técnico: aplicación activa en varios nodos
 
-La ficha 1 pide **3 servidores de aplicación** detrás de un balanceador. Hoy el
+> **Con la opción B (dos servidores, aplicación activa en uno y en espera en el
+> otro) esto NO bloquea el despliegue.** Aplica solo si algún día se pasa a
+> aplicación activa en varios nodos a la vez (opción C de la conversación, o más
+> nodos en el futuro). Se deja documentado para ese momento.
+
+Una aplicación activa en **varios** servidores detrás de un balanceador no funciona hoy. El
 SECAD está hecho para correr en un solo servidor (`docker-compose.yml`), y
 `Program.cs` registra `AddSignalR()` **sin** un respaldo compartido entre
 instancias (no hay Redis ni equivalente en el código).
@@ -117,7 +122,8 @@ Hay que construir, antes del despliegue de tres nodos:
   sirve para eso).
 - Que el estado que hoy viva en la memoria de un proceso salga de ahí.
 
-Hasta entonces, la alta disponibilidad de la capa de aplicación es de papel.
+Hasta entonces, la aplicación solo puede estar activa en un nodo a la vez; el
+otro queda en espera y asume si el primero falla. Eso es lo que pide la ficha 1.
 
 ## 6. Supuestos que hay que confirmar con datos reales
 
@@ -150,11 +156,10 @@ Datos que **necesito de usted** para dejar las fichas listas:
 
 | | Nacional | Antioquia | Efecto |
 |---|---|---|---|
-| Aplicación | 3 × (2 CPU de 24 núcleos, 1 TB) | 3 × (1 CPU de 24 núcleos, 256 GB) | Bastante menos CPU y RAM; la placa admite crecer |
-| Base de datos | 2 × (2 CPU de 32 núcleos, 512 GB) con motor comercial propietario | 2 × (1 CPU de 32 núcleos, 256 GB) con PostgreSQL con soporte | Menos hardware y sin licencia del motor propietario |
+| Aplicación + base de datos | 3 de aplicación (2 CPU de 24 núcleos, 1 TB) + 2 de BD (2 CPU de 32 núcleos, 512 GB) con motor comercial propietario | **2 servidores idénticos** (1 CPU de 32 núcleos, 256 GB), cada uno con aplicación y BD, con PostgreSQL con soporte | De 5 equipos a 2; sin licencia del motor propietario; la placa admite crecer |
 | Servidor de IA | 1 con GPU de 141 GB | **Eliminado** | La partida más cara |
 | CCTV/WebRTC | 1 con Windows | **2 de medios, Linux, sin Windows** | Resiliencia y sin licencia Windows |
-| Seguridad/monitoreo | 1 con 1 TB, 30 TB, Windows | **2 pequeños, Linux, con testigo** | Resiliencia a menor costo |
+| Seguridad/monitoreo | 1 con 1 TB, 30 TB, Windows | **1 pequeño (o máquina virtual), Linux, con testigo**; los secretos van en los 2 del núcleo | Resiliencia a menor costo |
 | Almacenamiento | 512 TB todo NVMe, 2 sistemas (principal y alterno) | 150 TB con nivel de capacidad más barato, 1 sistema | Mucho más barato |
 | Red | Dependía de switches existentes de marca | Switches y firewall incluidos, omisibles | Se acota por quién los provee |
 | Respaldo | 20 instancias de un producto nombrado | Genérico, 12 servidores | Sin direccionamiento |
@@ -163,7 +168,18 @@ Datos que **necesito de usted** para dejar las fichas listas:
 **No estimo precios**: dependen del fabricante y de la fecha. Con esto se
 pueden pedir cotizaciones.
 
-## 8. Lo que corrige de las especificaciones nacionales
+## 8. Opción A, B o C: cómo quedó
+
+La ficha 1 está escrita para la **opción B** (2 servidores idénticos, ambos con
+aplicación y BD, conmutación automática y un testigo). El numeral 1.16 describe
+la **opción A** (un servidor de aplicación y otro de BD, sin conmutación
+automática) usando **el mismo hardware**, así que se puede cambiar de opinión
+antes de adjudicar sin reescribir la ficha ni cambiar la cotización.
+
+Para volver a la **opción C** (3 de aplicación + 2 de BD) habría que reabrir la
+ficha, y primero resolver lo de §5.
+
+## 9. Lo que corrige de las especificaciones nacionales
 
 Las fichas de Antioquia ya incluyen los arreglos que señalé en la revisión
 anterior: más de un servidor en las capas críticas, nodo testigo en la base de
@@ -171,7 +187,7 @@ datos, Linux en lugar de Windows, criterios de capacidad con prueba de carga,
 objetivos RPO/RTO, definición de la plataforma de ejecución, y sitio alterno.
 Si esos cambios también se quieren en el pliego nacional, hay que llevarlos allá.
 
-## 9. Próximos pasos sugeridos
+## 10. Próximos pasos sugeridos
 
 1. Contestar la lista de §6.
 2. Decidir el manejo del edge (§4): hito de desarrollo o alcance reducido.
@@ -179,3 +195,32 @@ Si esos cambios también se quieren en el pliego nacional, hay que llevarlos all
    comprometer la alta disponibilidad de aplicación.
 4. Revisión jurídica de §3.
 5. Con eso, cerrar las fichas y pedir cotizaciones.
+
+## 11. Cuánto puede costar cada servidor
+
+> **Esto NO son cotizaciones.** Son órdenes de magnitud de precio de lista de
+> marcas empresariales, de mi conocimiento general hasta mediados de 2026. Los
+> precios de la memoria y de los discos NVMe han variado mucho en el último año,
+> así que la brecha entre un cotizante y otro puede ser grande. No incluyen IVA
+> (19 %), importación, fletes ni la instalación en sitio. Multiplique los dólares
+> por la TRM del día. **Pida al menos tres cotizaciones.**
+
+| Equipo | Cantidad | Precio de lista por unidad (USD), con 3 años de soporte | Observación |
+|---|---|---|---|
+| Servidor del núcleo (1 CPU 32 núcleos, 256 GB, 2×1,92 TB + 4×3,84 TB NVMe, 4×25 GbE) | 2 | 18.000 – 32.000 | Lo más caro es la memoria y los discos. Es el mismo modelo en la opción A y en la B |
+| Servidor de medios (1 CPU 24 núcleos, 128 GB, 2×1,92 TB NVMe) | 2 | 10.000 – 16.000 | |
+| Servidor de plataforma (16 núcleos, 128 GB, 4 NVMe) | 1 | 8.000 – 13.000 | Si se usa una máquina virtual existente, este costo desaparece |
+| Edge Tipo A (16 núcleos, 128 GB, 4 NVMe) | 2 por sede | 8.000 – 13.000 | Más UPS de 3 kVA: 2.000 – 3.500 |
+| Edge Tipo B (12 núcleos, 64 GB, 4 NVMe) | 1 por sede | 5.000 – 8.000 | Más UPS de 1,5 kVA: 800 – 1.500 |
+
+**Resumen del núcleo con opción B:** los 2 servidores del núcleo suman unos
+**36.000 a 64.000 USD**, y con los 2 de medios y el de plataforma, unos
+**64.000 a 109.000 USD**. En la opción A el precio de los 2 servidores es el
+mismo; lo que cambia es el riesgo, no la compra.
+
+**Lo que no está en esas cifras y puede pesar tanto o más:**
+
+- Almacenamiento de 150 TB, red, firewall y respaldo (fichas 6 a 8).
+- Soporte anual de PostgreSQL y de Linux después del tercer año.
+- Instalación, capacitación y pruebas del contratista.
+- El desarrollo pendiente del edge (§4) y del despliegue multinodo (§5).
